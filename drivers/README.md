@@ -3,6 +3,18 @@
 ## Current Members:
 Evan Eidt, Jack Hammerberg, Luke Weaver
 
+## ADC Drivers:
+* Name: FCBBADC (Flight Computer & Bay Board Analog to Digital Converter)
+* Init ADCs in batch
+* Read in batch
+* Convert to raw in batch
+* Convert to voltages in batch (float32 array)
+* Driver Functions:
+    * Init
+    * Get Raw Values
+    * Get Raw Voltages
+    * Get Voltages & Timestamps
+
 ## Chips:
 * LAN8742A-CZ
     * [LAN8742A-CZ Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/DS_LAN8742_00001989A.pdf)
