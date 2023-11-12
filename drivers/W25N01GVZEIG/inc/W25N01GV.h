@@ -95,7 +95,7 @@
 #ifndef W25N01GV_H	// Begin header include protection
 #define W25N01GV_H
 
-#include "stm32f4xx_hal.h"
+#include "stm32h7xx_hal.h"
 
 #ifdef HAL_SPI_MODULE_ENABLED	// Begin SPI include protection
 
