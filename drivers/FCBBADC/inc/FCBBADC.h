@@ -10,6 +10,10 @@
 
 #include "stm32h7xx_hal.h"
 
+//Needed callback function for DMA
+extern volatile uint8_t dma_transfer_complete;
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc1);
+
 //Starts DMA for all ADCs
 int ADCinit(ADC_HandleTypeDef* hadc1, uint8_t channels, uint16_t* adc_values);
 
