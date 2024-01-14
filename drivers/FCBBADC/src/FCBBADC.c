@@ -6,29 +6,55 @@
  *
 */
 
-//Follow these instructions for how to setup DMA for the ADCs
-//https://www.digikey.com/en/maker/projects/getting-started-with-stm32-working-with-adc-and-dma/f5009db3a3ed4370acaf545a3370c30c
-
 #include "../inc/FCBBADC.h"
 
-//Initialize the ADCs and set to DMA mode.
-//Channels is the amount of analog pins that will be read
-//The Bay Boards will have around 40
-//This determines the size of the buffer
-//Returns the ADC value buffer
-int ADCinit(ADC_HandleTypeDef* hadc1, uint8_t channels, uint16_t* adc_values) {
-    HAL_ADC_Start_DMA(hadc1, (uint32_t*)adc_values, (uint32_t)channels);
-    return 0;
-}
-
-int readAllADC(uint16_t* adc_values, uint8_t channels, float* voltage_values) {
-    for (int i = 0; i < channels; i++) {
-        voltage_values[i] = (float)adc_values[i] * 3.3 / 4096.0; //Convert each ADC value to a voltage value
+//Initializes the ADCs and gets the array of channels to read
+int ADCinit(ADC_HandleTypeDef* hadc1) {
+    // Start the ADC conversion
+	if (HAL_ADC_Start(hadc1) != HAL_OK) {
+        //Error_Handler();
+        return 1;
     }
     return 0;
 }
 
-int readADC(uint16_t adc_value[], uint8_t channel, float voltage_value) {
-    voltage_value = (float)adc_value[channel] * 3.3 / 4096.0;
+//Gives the raw value of the ADCs (0-4095) in an array that contains all channels
+int readADCRaw(ADC_HandleTypeDef* hadc1, int channels, float* adcValues, int maxDelayPerChannel) {
+    HAL_ADC_Start(hadc1);
+    // Loop through the channels
+    for (int i = 0; i < channels; i++) {
+        // Wait for the ADC conversion to complete
+
+    	/*
+    	if (HAL_ADC_PollForConversion(hadc1, maxDelayPerChannel) != HAL_OK) {
+            //Error_Handler();
+            return 1;
+        }
+		*/
+    	HAL_ADC_PollForConversion(hadc1, maxDelayPerChannel);
+        // Get the ADC value
+        // This will also increment the ADC channel for the next time we call HAL_ADC_PollForConversion()
+        uint32_t adcValue = HAL_ADC_GetValue(hadc1);
+
+        // Store the ADC value in the channels array
+        adcValues[i] = (float)adcValue;
+    }
+    HAL_ADC_Stop(hadc1);
+    /*
+    if (HAL_ADC_Stop(hadc1) != HAL_OK) {
+        //Error_Handler();
+        return 1;
+    }
+	*/
+    return 0;
+}
+
+//Gives the voltage of the ADCs (0-3.3V) in an array that contains all channels
+int readADCVolt(ADC_HandleTypeDef* hadc1, int channels, float* adcValues, int maxDelayPerChannel) {
+    return 0;
+}
+
+//Gives the voltage and timestamps of all ADCs (0-3.3V) in an array that contains all channels
+int readADC(ADC_HandleTypeDef* hadc1, int channels, float* adcValues, int maxDelayPerChannel) {
     return 0;
 }

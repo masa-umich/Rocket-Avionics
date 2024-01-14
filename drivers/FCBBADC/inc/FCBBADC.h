@@ -10,13 +10,16 @@
 
 #include "stm32h7xx_hal.h"
 
-//Starts DMA for all ADCs
-int ADCinit(ADC_HandleTypeDef* hadc1, uint8_t channels, uint16_t* adc_values);
+//Initializes the ADCs and gets the array of channels to read
+int ADCinit(ADC_HandleTypeDef* hadc1);
 
-//Read all adcs and return the voltage values in a float array
-int readAllADC(uint16_t* adc_value, uint8_t channels, float* voltage_values);
+//Gives the raw value of the ADCs (0-4095) in an array (defined in ADCinit())
+int readADCRaw(ADC_HandleTypeDef* hadc1, int channels, float* adcValues, int maxDelayPerChannel);
 
-//Read a single adc and return the voltage value
-int readADC(uint16_t adc_value[], uint8_t channel, float voltage_value);
+//Gives the voltage of the ADCs (0-3.3V) in an array (defined in ADCinit())
+int readADCVolt(ADC_HandleTypeDef* hadc1, int channels, float* adcValues, int maxDelayPerChannel);
+
+//Gives the voltage and timestamps of all ADCs (0-3.3V) in an array (defined in ADCinit())
+int readADC(ADC_HandleTypeDef* hadc1, int channels, float* adcValues, int maxDelayPerChannel);
 
 #endif    // End header include protection
