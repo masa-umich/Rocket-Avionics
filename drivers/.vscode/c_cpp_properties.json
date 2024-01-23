@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/Users/Jack/Projects/MASA/STM32-Testing/STM32_Nucleo_H723ZG_Drivers_Testing/",
+                "C:/Users/Jack/Projects/MASA/STM32-Testing/STM32_Nucleo_H723ZG_Drivers_Testing/Drivers/STM32H7xx_HAL_Driver/Inc",
+                "C:/Users/Jack/Projects/MASA/STM32-Testing/STM32_Nucleo_H723ZG_Drivers_Testing/Core/Inc",
+                "C:/Users/Jack/Projects/MASA/STM32-Testing/STM32_Nucleo_H723ZG_Drivers_Testing/Drivers/CMSIS/Device/ST/STM32H7xx/Include",
+                "C:/Users/Jack/Projects/MASA/STM32-Testing/STM32_Nucleo_H723ZG_Drivers_Testing/Middlewares/Third_Party/FreeRTOS/Source/include",
+                "C:/Users/Jack/Projects/MASA/STM32-Testing/STM32_Nucleo_H723ZG_Drivers_Testing/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F",
+                "C:/Users/Jack/Projects/MASA/STM32-Testing/STM32_Nucleo_H723ZG_Drivers_Testing/Drivers/CMSIS/Include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}

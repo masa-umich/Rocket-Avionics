@@ -8,29 +8,60 @@
 #ifndef LSM6DSO32XTR_H	// Begin header include protection
 #define LSM6DSO32XTR_H
 
+#define WHO_AM_I_REG_ADDR (uint8_t) 0x0F //Who am I register address
+#define WHO_AM_I_REG_VAL (uint8_t) 0x6C //Who am I register value
+
+#include <stm32h723xx.h>
 #include "stm32h7xx_hal.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
+typedef struct {
+    SPI_HandleTypeDef* hspi;
+    
+    GPIO_TypeDef * CS_GPIO_Port;
+    uint16_t CS_GPIO_Pin;
+} IMU;
+
+typedef struct {
+    //Acceleration in g
+    float accel_x;
+    float accel_y;
+    float accel_z;
+} Accel;
+
+typedef struct {
+    //Angular Rate in deg/sec
+    float ang_rate_x;
+    float ang_rate_y;
+    float ang_rate_z;
+} AngRate;
+
+//Chip select
+void IMUchipSelect(IMU* IMU);
+
+//Chip release
+void IMUchipRelease(IMU* IMU);
+
+//Read register from IMU
+HAL_StatusTypeDef IMUread(IMU* IMU, uint8_t reg_addr, uint8_t rx_buffer, uint8_t num_bytes, uint8_t timeout);
+
+//Write register from IMU
+HAL_StatusTypeDef IMUwrite(IMU* IMU, uint8_t tx_buffer, uint8_t num_bytes, uint8_t timeout);
+
 //Initialize IMU
-int IMUinit(SPI_HandleTypeDef* hspi1, int timeout);
+int IMUinit(SPI_HandleTypeDef* hspi, IMU* IMU, GPIO_TypeDef * CS_GPIO_Port, uint16_t CS_GPIO_Pin);
+
+//Get acceleration from IMU
+int IMUgetAccel(IMU* IMU, Accel* accel);
+
+//Get angular rate from IMU
+int IMUgetAngRate(IMU* IMU, AngRate* AngRate);
+
+//Get temperature from IMU
+int IMUgetTemp(IMU* IMU, float* temp);
 
 //Send command to IMU
 int IMUsend();
-
-//Read register from IMU
-int IMUread();
-
-//Write register from IMU
-int IMUwrite();
-
-//Get acceleration from IMU
-int IMUgetAccel();
-
-//Get angular rate from IMU
-int IMUgetAngRate();
-
-//Get temperature from IMU
-int IMUgetTemp();
 
 #endif    // End header include protection
