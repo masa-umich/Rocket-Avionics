@@ -2,6 +2,7 @@
     "C_Cpp.default.compilerPath": "C:\\msys64\\mingw64\\bin\\g++.exe",
     "files.associations": {
         "*.toml": "toml",
-        "stm32h723xx.h": "c"
+        "stm32h723xx.h": "c",
+        "lsm6dso32xtr.h": "c"
     }
 }

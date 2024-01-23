@@ -8,14 +8,16 @@
 #include "../inc/LSM6DSO32XTR.h"
 
 //Temp convert
-float IMUfloatConvert(uint8_t H_Byte, uint8_t L_Byte) {
+float IMUtempConvert(uint8_t H_Byte, uint8_t L_Byte) {
     int16_t temp_raw = (H_Byte << 8) | L_Byte; // Combine the two bytes into one 16 bit number
+	
     if (temp_raw & 0x8000) { // If the sign bit is set
         temp_raw = ~temp_raw + 1; // Calculate two's complement
         temp_raw = -temp_raw; // Convert to negative
     }
-    float scale_factor = 0.00190734863; // 125/2^16 (operating range divided by ADC resolution)
-    float temp = temp_raw * scale_factor; // Convert to degrees C
+
+    float temp = temp_raw*SCALING_FACTOR_TEMP; // Convert to degrees C
+
     return temp;
 }
 
@@ -94,7 +96,7 @@ int IMUgetTemp(IMU* IMU, float* temp) {
 	uint8_t buf[2];
 
 	IMUread(IMU, OUT_TEMP_L, buf, 2);
-	*temp = IMUfloatConvert(buf[1], buf[0]);
+	*temp = IMUtempConvert(buf[1], buf[0]);
 
 	return 0;
 }
