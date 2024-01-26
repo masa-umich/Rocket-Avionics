@@ -92,60 +92,100 @@
 // Constants
 #define g                           (float)9.80665 //Acceleration due to gravity in m/s^2
 #define WHO_AM_I_REG_VAL            (uint8_t)0x6C //Who am I register value
-#define FULLSCALE_ACCEL             (uint8_t)8 //Full scale acceleration in g 
+#define FULLSCALE_ACCEL             (uint8_t)4 //Full scale acceleration in g 
 #define FULLSCALE_GYRO              (uint16_t)2000 //Full scale angular rate in deg/sec
 #define FULLSCALE_TEMP              (uint8_t)125 //Full scale temperature (-40 to 85 deg C)
-#define SCALING_FACTOR_TEMP         (float)FULLSCALE_TEMP/65535 //Scaling factor for temperature (deg C/ADC res)
+#define RESOLUTION_ACCEL            (uint8_t)32767 //the maximum value of a signed 16 bit integer in 2's compliment
+#define RESOLUTION_GYRO             (uint8_t)32767 //the maximum value of a signed 16 bit integer in 2's compliment
+#define RESOLUTION_TEMP             (uint8_t)65535 //the maximum value of an unsigned 16 bit integer (adc resolution)
+#define SCALING_FACTOR_ACCEL        (float)FULLSCALE_ACCEL/32767 //Scaling factor for acceleration (g/Accel res)
+#define SCALING_FACTOR_GYRO         (float)FULLSCALE_GYRO/32767 //Scaling factor for angular rate (deg/sec/Gyro res)
+#define SCALING_FACTOR_TEMP         (float)FULLSCALE_TEMP/65535 //Scaling factor for temperature (deg C/Temp ADC res)
+
+/*
+* Note: These default configs are a bit arbitrary. 
+* I chose the + or - 4g range because according to the Limelight Master Sheet
+* (Specifically the MASTRAN portion) max acceleration should be around 2.5g
+* So for resolution sake, I figure it's best to go with close to double that value.
+*
+* As for the gyro, I just went with the highest DPS I could, which is 2000dps.
+* This would be about 5.5 rpm and ideally, our rocket shouldn't be spinning much anyway
+*
+* Finally, for polling rate, although some things like ADCs, I've been told we should be able
+* to sample at somewhere around 200hz (this target has shifted around a bit), not all sensors need
+* a polling rate nearly that high. But there's no real disadvantage to having a higher polling rate
+* and it allows for better future proofing and more flexibility in the future. I guess you could also
+* oversample and average, but I'm not going to implement that here.
+*
+* If you want to find other configuration values for the IMU, check out the datasheet
+*/
+#define DEFAULT_CONF_ACCEL          (uint8_t)0x50 // 01010000 208hz, + or - 4g range
+#define DEFAULT_CONF_GYRO           (uint8_t)0x5C // 01011100 208hz, + or - 2000dps range
 
 typedef struct {
+    //SPI stuff
     SPI_HandleTypeDef* hspi;
     uint16_t SPI_TIMEOUT;
     GPIO_TypeDef * CS_GPIO_Port;
     uint16_t CS_GPIO_Pin;
+
+    //Offset values
+    float XL_x_offset;
+    float XL_y_offset;
+    float XL_z_offset;
+    float G_x_offset;
+    float G_y_offset;
+    float G_z_offset;
 } IMU;
 
 typedef struct {
     //Acceleration in g
-    float accel_x;
-    float accel_y;
-    float accel_z;
+    float XL_x;
+    float XL_y;
+    float XL_z;
 } Accel;
 
 typedef struct {
     //Angular Rate in deg/sec
-    float ang_rate_x;
-    float ang_rate_y;
-    float ang_rate_z;
+    float G_x;
+    float G_y;
+    float G_z;
 } AngRate;
 
 //Temp convert
-float IMUtempConvert(uint8_t H_Byte, uint8_t L_Byte);
+float IMU_tempConvert(uint8_t H_Byte, uint8_t L_Byte);
+
+//Accel convert
+float IMU_accelConvert(uint8_t H_Byte, uint8_t L_Byte);
+
+//Gyro convert
+float IMU_gyroConvert(uint8_t H_Byte, uint8_t L_Byte);
 
 //Chip select
-void IMUchipSelect(IMU* IMU);
+void IMU_chipSelect(IMU* IMU);
 
 //Chip release
-void IMUchipRelease(IMU* IMU);
+void IMU_chipRelease(IMU* IMU);
 
 //Read register from IMU
-HAL_StatusTypeDef IMUread(IMU* IMU, uint8_t reg_addr, uint8_t rx_buffer, uint8_t num_bytes);
+HAL_StatusTypeDef IMU_read(IMU* IMU, uint8_t reg_addr, uint8_t rx_buffer, uint8_t num_bytes);
 
 //Write register from IMU
-HAL_StatusTypeDef IMUwrite(IMU* IMU, uint8_t tx_buffer, uint8_t num_bytes);
+HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t tx_buffer, uint8_t num_bytes);
 
 //Initialize IMU
-int IMUinit(SPI_HandleTypeDef* hspi, IMU* IMU, GPIO_TypeDef * CS_GPIO_Port, uint16_t CS_GPIO_Pin, uint16_t SPI_TIMEOUT);
+int IMU_init(SPI_HandleTypeDef* hspi, IMU* IMU, GPIO_TypeDef * CS_GPIO_Port, uint16_t CS_GPIO_Pin, uint16_t SPI_TIMEOUT);
 
 //Get acceleration from IMU
-int IMUgetAccel(IMU* IMU, Accel* accel);
+int IMU_getAccel(IMU* IMU, Accel* accel);
 
 //Get angular rate from IMU
-int IMUgetAngRate(IMU* IMU, AngRate* AngRate);
+int IMU_getAngRate(IMU* IMU, AngRate* AngRate);
 
 //Get temperature from IMU
-int IMUgetTemp(IMU* IMU, float* temp);
+int IMU_getTemp(IMU* IMU, float* temp);
 
 //Send command to IMU
-int IMUsend();
+int IMU_send(IMU* IMU, uint8_t cmd, uint8_t value);
 
 #endif    // End header include protection
