@@ -95,9 +95,9 @@
 #define FULLSCALE_ACCEL             (uint8_t)4 //Full scale acceleration in g 
 #define FULLSCALE_GYRO              (uint16_t)2000 //Full scale angular rate in deg/sec
 #define FULLSCALE_TEMP              (uint8_t)125 //Full scale temperature (-40 to 85 deg C)
-#define RESOLUTION_ACCEL            (uint8_t)32767 //the maximum value of a signed 16 bit integer in 2's compliment
-#define RESOLUTION_GYRO             (uint8_t)32767 //the maximum value of a signed 16 bit integer in 2's compliment
-#define RESOLUTION_TEMP             (uint8_t)65535 //the maximum value of an unsigned 16 bit integer (adc resolution)
+#define RESOLUTION_ACCEL            (uint16_t)32767 //the maximum value of a signed 16 bit integer in 2's compliment
+#define RESOLUTION_GYRO             (uint16_t)32767 //the maximum value of a signed 16 bit integer in 2's compliment
+#define RESOLUTION_TEMP             (uint16_t)65535 //the maximum value of an unsigned 16 bit integer (adc resolution)
 #define SCALING_FACTOR_ACCEL        (float)FULLSCALE_ACCEL/32767 //Scaling factor for acceleration (g/Accel res)
 #define SCALING_FACTOR_GYRO         (float)FULLSCALE_GYRO/32767 //Scaling factor for angular rate (deg/sec/Gyro res)
 #define SCALING_FACTOR_TEMP         (float)FULLSCALE_TEMP/65535 //Scaling factor for temperature (deg C/Temp ADC res)
@@ -168,13 +168,13 @@ void IMU_chipSelect(IMU* IMU);
 void IMU_chipRelease(IMU* IMU);
 
 //Read register from IMU
-HAL_StatusTypeDef IMU_read(IMU* IMU, uint8_t reg_addr, uint8_t rx_buffer, uint8_t num_bytes);
+HAL_StatusTypeDef IMU_read(IMU* IMU, uint8_t reg_addr, uint8_t* rx_buffer, uint8_t num_bytes);
 
 //Write register from IMU
-HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t tx_buffer, uint8_t num_bytes);
+HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t* tx_buffer, uint8_t num_bytes);
 
 //Initialize IMU
-int IMU_init(SPI_HandleTypeDef* hspi, IMU* IMU, GPIO_TypeDef * CS_GPIO_Port, uint16_t CS_GPIO_Pin, uint16_t SPI_TIMEOUT);
+int IMU_init(/*SPI_HandleTypeDef* hspi, */IMU* IMU/*, GPIO_TypeDef * CS_GPIO_Port, uint16_t CS_GPIO_Pin, uint16_t SPI_TIMEOUT*/);
 
 //Get acceleration from IMU
 int IMU_getAccel(IMU* IMU, Accel* accel);
