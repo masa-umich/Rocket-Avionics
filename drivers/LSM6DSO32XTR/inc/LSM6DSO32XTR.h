@@ -121,6 +121,15 @@
 */
 #define DEFAULT_CONF_ACCEL          (uint8_t)0x50 // 01010000 208hz, + or - 4g range
 #define DEFAULT_CONF_GYRO           (uint8_t)0x5C // 01011100 208hz, + or - 2000dps range
+// Other default configs, read the config for more info but it's mostly just setting stuff to default
+#define DEFAULT_CONF_CTRL3_C		(uint8_t)0x02 // 00000010
+#define DEFAULT_CONF_CTRL4_C        (uint8_t)0x00
+#define DEFAULT_CONF_CTRL5_C        (uint8_t)0x00
+#define DEFAULT_CONF_CTRL6_C        (uint8_t)0x10 // 00010000
+#define DEFAULT_CONF_CTRL7_G        (uint8_t)0x80 // 10000000
+#define DEFAULT_CONF_CTRL8_XL       (uint8_t)0x00
+#define DEFAULT_CONF_CTRL9_XL       (uint8_t)0x00
+#define DEFAULT_CONF_CTRL10_C       (uint8_t)0x00 // Disables timestamps
 
 typedef struct {
     //SPI stuff

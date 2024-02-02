@@ -9,12 +9,7 @@
 
 //Temp convert
 float IMU_tempConvert(uint8_t H_Byte, uint8_t L_Byte) {
-    int16_t temp_raw = (int16_t)(H_Byte << 8) + L_Byte; // Combine the two bytes into one 16 bit number
-	
-    if (temp_raw & 0x8000) { // If the sign bit is set
-        temp_raw = ~temp_raw + 1; // Calculate two's complement
-        temp_raw = -temp_raw; // Convert to negative
-    }
+    int16_t temp_raw = (int16_t)(H_Byte << 8) + L_Byte; // Combine the two bytes into one 16 bit number. This is already formatted for an int16_t
 
     float temp = temp_raw*SCALING_FACTOR_TEMP; // Convert to degrees C
 
@@ -23,26 +18,16 @@ float IMU_tempConvert(uint8_t H_Byte, uint8_t L_Byte) {
 
 //IMU convert
 float IMU_accelConvert(uint8_t H_Byte, uint8_t L_Byte) {
-	int16_t accel_raw = (int16_t)(H_Byte << 8) + L_Byte; // Combine the two bytes into one 16 bit number
-	
-	if (accel_raw & 0x8000) { // If the sign bit is set
-		accel_raw = ~accel_raw + 1; // Calculate two's complement
-		accel_raw = -accel_raw; // Convert to negative
-	}
+	int16_t accel_raw = (int16_t)(H_Byte << 8) + L_Byte; // Combine the two bytes into one 16 bit number. This is already formatted for an int16_t
 
-	float accel = accel_raw*SCALING_FACTOR_ACCEL; // Convert to g
+	float accel = (accel_raw*SCALING_FACTOR_ACCEL)*g; // Convert to m/s^2
 
 	return accel;
 }
 
 //Gyro convert
 float IMU_gyroConvert(uint8_t H_Byte, uint8_t L_Byte) {
-	int16_t gyro_raw = (int16_t)(H_Byte << 8) + L_Byte; // Combine the two bytes into one 16 bit number
-	
-	if (gyro_raw & 0x8000) { // If the sign bit is set
-		gyro_raw = ~gyro_raw + 1; // Calculate two's complement
-		gyro_raw = -gyro_raw; // Convert to negative
-	}
+	int16_t gyro_raw = (int16_t)(H_Byte << 8) + L_Byte; // Combine the two bytes into one 16 bit number. This is already formatted for an int16_t
 
 	float gyro = gyro_raw*SCALING_FACTOR_GYRO; // Convert to dps
 
@@ -91,71 +76,88 @@ HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t* tx_buffer, uint8_t num_bytes) {
 }
 
 //Initialize IMU
-int IMU_init(/*SPI_HandleTypeDef* hspi, */IMU* IMU/*, GPIO_TypeDef * CS_GPIO_Port, uint16_t CS_GPIO_Pin, uint16_t SPI_TIMEOUT*/) {
-	/*
-	IMU->hspi = hspi;
-	IMU->CS_GPIO_Port = CS_GPIO_Port;
-	IMU->CS_GPIO_Pin = CS_GPIO_Pin;
-	IMU->SPI_TIMEOUT = SPI_TIMEOUT;
-	*/
+int IMU_init(IMU* IMU) {
+	uint8_t buffer[12];
 
 	//Read WHO_AM_I register
-	uint8_t rx_buffer;
-	IMU_read(IMU, WHO_AM_I_REG_ADDR, &rx_buffer, 1);
+	IMU_read(IMU, WHO_AM_I_REG_ADDR, buffer, 1);
 	//Check if WHO_AM_I register is correct
-	if (rx_buffer != WHO_AM_I_REG_VAL) {
+	if (buffer[0] != WHO_AM_I_REG_VAL) {
 		return -1;
 	}
 
-	uint8_t cmd_buf[12];
-
 	//Set up accelerometer
-	cmd_buf[0] = CTRL1_XL;
-	cmd_buf[1] = DEFAULT_CONF_ACCEL; // 01010000 208hz, + or - 4g range
-	IMU_write(IMU, cmd_buf, 2);
+	buffer[0] = CTRL1_XL;
+	buffer[1] = DEFAULT_CONF_ACCEL; // 01010000 208hz, + or - 4g range
+	IMU_write(IMU, buffer, 1);
 
 	//Set up gyroscope
-	cmd_buf[0] = CTRL2_G;
-	cmd_buf[1] = DEFAULT_CONF_GYRO; // 01011100 208hz, + or - 2000dps range
-	IMU_write(IMU, cmd_buf, 2);
+	buffer[0] = CTRL2_G;
+	buffer[1] = DEFAULT_CONF_GYRO; // 01011100 208hz, + or - 2000dps range
+	IMU_write(IMU, buffer, 1);
+
+	//Main control register
+	buffer[0] = CTRL3_C;
+	buffer[1] = DEFAULT_CONF_CTRL3_C;
+	IMU_write(IMU, buffer, 1);
+
+	//Other default configs
+	buffer[0] = CTRL4_C;
+	buffer[1] = DEFAULT_CONF_CTRL4_C;
+	IMU_write(IMU, buffer, 1);
+
+	buffer[0] = CTRL5_C;
+	buffer[1] = DEFAULT_CONF_CTRL5_C;
+	IMU_write(IMU, buffer, 1);
+
+	buffer[0] = CTRL6_C;
+	buffer[1] = DEFAULT_CONF_CTRL6_C; 
+	IMU_write(IMU, buffer, 1);
+
+	buffer[0] = CTRL7_G;
+	buffer[1] = DEFAULT_CONF_CTRL7_G;
+	IMU_write(IMU, buffer, 1);
+
+	buffer[0] = CTRL8_XL;
+	buffer[1] = DEFAULT_CONF_CTRL8_XL;
+	IMU_write(IMU, buffer, 1);
+
+	buffer[0] = CTRL9_XL;
+	buffer[1] = DEFAULT_CONF_CTRL9_XL;
+	IMU_write(IMU, buffer, 1);
+
+	buffer[0] = CTRL10_C;
+	buffer[1] = DEFAULT_CONF_CTRL10_C;
+	IMU_write(IMU, buffer, 1);
 
 	return 0;
 }
 
 //Get acceleration from IMU
 int IMU_getAccel(IMU* IMU, Accel* accel) {
-	uint8_t buf[2];
+	uint8_t buf[6];
 
-	IMU_read(IMU, OUTX_L_A, &buf[0], 2);
-	IMU_read(IMU, OUTX_H_A, &buf[1], 2);
+	IMU_read(IMU, OUTX_L_A, buf, 6);
+	//We are able to do a single read because when doing multiple reads, it will automatically increment the register address
+	//This is good not only for code duplication, but also reduces overhead
+	//The option to disable this is in the datasheet under CTRL3_C
 	accel->XL_x = IMU_accelConvert(buf[1], buf[0]) + IMU->XL_x_offset;
-
-	IMU_read(IMU, OUTY_L_A, &buf[0], 2);
-	IMU_read(IMU, OUTY_H_A, &buf[1], 2);
-	accel->XL_y = IMU_accelConvert(buf[1], buf[0])+IMU->XL_y_offset;
-
-	IMU_read(IMU, OUTZ_L_A, &buf[0], 2);
-	IMU_read(IMU, OUTZ_H_A, &buf[1], 2);
-	accel->XL_z = IMU_accelConvert(buf[1], buf[0])+IMU->XL_z_offset;
+	accel->XL_y = IMU_accelConvert(buf[3], buf[2]) + IMU->XL_y_offset;
+	accel->XL_z = IMU_accelConvert(buf[5], buf[4]) + IMU->XL_z_offset;
 
 	return 0;
 }
 
 //Get angular rate from IMU
 int IMU_getAngRate(IMU* IMU, AngRate* AngRate) {
-	uint8_t buf[2];
+	uint8_t buf[6];
 
-	IMU_read(IMU, OUTX_L_G, &buf[0], 2);
-	IMU_read(IMU, OUTX_H_G, &buf[1], 2);
+	IMU_read(IMU, OUTX_L_G, buf, 6);
+	//Same as before, we can do a single read
 	AngRate->G_x = IMU_gyroConvert(buf[1], buf[0])+IMU->G_x_offset;
+	AngRate->G_y = IMU_gyroConvert(buf[3], buf[2])+IMU->G_y_offset;
+	AngRate->G_z = IMU_gyroConvert(buf[5], buf[4])+IMU->G_z_offset;
 
-	IMU_read(IMU, OUTY_L_G, &buf[0], 2);
-	IMU_read(IMU, OUTY_H_G, &buf[1], 2);
-	AngRate->G_y = IMU_gyroConvert(buf[1], buf[0])+IMU->G_y_offset;
-
-	IMU_read(IMU, OUTZ_L_G, &buf[0], 2);
-	IMU_read(IMU, OUTZ_H_G, &buf[1], 2);
-	AngRate->G_z = IMU_gyroConvert(buf[1], buf[0])+IMU->G_z_offset;
 	return 0;
 }
 
@@ -163,8 +165,8 @@ int IMU_getAngRate(IMU* IMU, AngRate* AngRate) {
 int IMU_getTemp(IMU* IMU, float* temp) {
 	uint8_t buf[2];
 
-	IMU_read(IMU, OUT_TEMP_L, &buf[0], 2);
-	IMU_read(IMU, OUT_TEMP_H, &buf[1], 2);
+	IMU_read(IMU, OUT_TEMP_L, buf, 2);
+
 	*temp = IMU_tempConvert(buf[1], buf[0]);
 
 	return 0;
