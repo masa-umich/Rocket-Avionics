@@ -36,12 +36,12 @@ float IMU_gyroConvert(uint8_t H_Byte, uint8_t L_Byte) {
 
 //Chip select
 void IMU_chipSelect(IMU* IMU) {
-	HAL_GPIO_WritePin(IMU->CS_GPIO_Port, IMU->CS_GPIO_Pin, GPIO_PIN_RESET); //CS pin
+	HAL_GPIO_WritePin(IMU->CS_GPIO_Port, IMU->CS_GPIO_Pin, 0); //CS pin
 }
 
 //Chip release
 void IMU_chipRelease(IMU* IMU) {
-	HAL_GPIO_WritePin(IMU->CS_GPIO_Port, IMU->CS_GPIO_Pin, GPIO_PIN_SET); //CS pin
+	HAL_GPIO_WritePin(IMU->CS_GPIO_Port, IMU->CS_GPIO_Pin, 1); //CS pin
 }
 
 //Read register from IMU
@@ -79,12 +79,20 @@ HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t* tx_buffer, uint8_t num_bytes) {
 int IMU_init(IMU* IMU) {
 	uint8_t buffer[12];
 
+	//Main control register
+	//This needs to be set first because this determines how
+	//future register controls work
+	buffer[0] = CTRL3_C;
+	buffer[1] = DEFAULT_CONF_CTRL3_C;
+	IMU_write(IMU, buffer, 1);
+
 	//Read WHO_AM_I register
 	IMU_read(IMU, WHO_AM_I_REG_ADDR, buffer, 1);
 	//Check if WHO_AM_I register is correct
 	if (buffer[0] != WHO_AM_I_REG_VAL) {
 		return -1;
 	}
+
 
 	//Set up accelerometer
 	buffer[0] = CTRL1_XL;
@@ -96,11 +104,7 @@ int IMU_init(IMU* IMU) {
 	buffer[1] = DEFAULT_CONF_GYRO; // 01011100 208hz, + or - 2000dps range
 	IMU_write(IMU, buffer, 1);
 
-	//Main control register
-	buffer[0] = CTRL3_C;
-	buffer[1] = DEFAULT_CONF_CTRL3_C;
-	IMU_write(IMU, buffer, 1);
-
+	/*
 	//Other default configs
 	buffer[0] = CTRL4_C;
 	buffer[1] = DEFAULT_CONF_CTRL4_C;
@@ -129,6 +133,7 @@ int IMU_init(IMU* IMU) {
 	buffer[0] = CTRL10_C;
 	buffer[1] = DEFAULT_CONF_CTRL10_C;
 	IMU_write(IMU, buffer, 1);
+	*/
 
 	return 0;
 }
