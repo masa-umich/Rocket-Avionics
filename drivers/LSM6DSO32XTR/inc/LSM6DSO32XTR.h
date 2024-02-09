@@ -8,13 +8,7 @@
 #ifndef LSM6DSO32XTR_H	// Begin header include protection
 #define LSM6DSO32XTR_H
 
-#ifdef STM32F4XX
-    #include "stm32f4xx_hal.h"
-#elif defined(STM32H723XX)
-    #include "stm32h723xx_hal.h"
-#else
-    #error "Incompatible MCU project detected. Please use an STM32F4 or STM32H7 MCU or modify driver for new HAL library."
-#endif
+#include "main.h"
 
 #ifndef FreeRTOS_H
     #include "FreeRTOS.h"
