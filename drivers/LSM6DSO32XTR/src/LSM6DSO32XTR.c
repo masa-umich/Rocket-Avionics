@@ -93,7 +93,6 @@ int IMU_init(IMU* IMU) {
 		return -1;
 	}
 
-
 	//Set up accelerometer
 	buffer[0] = CTRL1_XL;
 	buffer[1] = DEFAULT_CONF_ACCEL; // 01010000 208hz, + or - 4g range
@@ -106,6 +105,8 @@ int IMU_init(IMU* IMU) {
 
 	/*
 	//Other default configs
+	//Basically all of these are just setting the default values
+	//I added them for debugging and I think they may still be useful for later
 	buffer[0] = CTRL4_C;
 	buffer[1] = DEFAULT_CONF_CTRL4_C;
 	IMU_write(IMU, buffer, 1);

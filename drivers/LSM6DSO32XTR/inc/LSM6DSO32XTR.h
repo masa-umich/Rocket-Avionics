@@ -8,10 +8,20 @@
 #ifndef LSM6DSO32XTR_H	// Begin header include protection
 #define LSM6DSO32XTR_H
 
-#include <stm32h723xx.h> //I added this for intellisense to work, this might not be needed
-#include "stm32h7xx_hal.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#ifdef STM32F4XX
+    #include "stm32f4xx_hal.h"
+#elif defined(STM32H723XX)
+    #include "stm32h723xx_hal.h"
+#else
+    #error "Incompatible MCU project detected. Please use an STM32F4 or STM32H7 MCU or modify driver for new HAL library."
+#endif
+
+#ifndef FreeRTOS_H
+    #include "FreeRTOS.h"
+    #include "task.h"
+#else
+    #error "This library is designed for use with FreeRTOS. Please include the FreeRTOS library in your project."
+#endif
 
 // Begin register map
 #define FUNC_CFG_ACCESS             (uint8_t)0x01 //R/W - Function configuration access register address
@@ -121,7 +131,7 @@
 */
 #define DEFAULT_CONF_ACCEL          (uint8_t)0x50 // 01010000 208hz, + or - 4g range
 #define DEFAULT_CONF_GYRO           (uint8_t)0x5C // 01011100 208hz, + or - 2000dps range
-#define DEFAULT_CONF_CTRL3_C		(uint8_t)0x04 // 00000100 Main control register - register shifting is set to true
+#define DEFAULT_CONF_CTRL3_C		(uint8_t)0x04 // 000001001 Main control register - register shifting is set to true
 //Otther default configs
 #define DEFAULT_CONF_CTRL4_C        (uint8_t)0x00
 #define DEFAULT_CONF_CTRL5_C        (uint8_t)0x00
@@ -130,6 +140,7 @@
 #define DEFAULT_CONF_CTRL8_XL       (uint8_t)0x00
 #define DEFAULT_CONF_CTRL9_XL       (uint8_t)0x00
 #define DEFAULT_CONF_CTRL10_C       (uint8_t)0x00 // Disables timestamps
+#define SW_RESET_CONF_CTRL3_C		(uint8_t)0x05 // 00001001 This will reset the device (ik right who could've guessed)
 
 typedef struct {
     //SPI stuff
@@ -183,7 +194,7 @@ HAL_StatusTypeDef IMU_read(IMU* IMU, uint8_t reg_addr, uint8_t* rx_buffer, uint8
 HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t* tx_buffer, uint8_t num_bytes);
 
 //Initialize IMU
-int IMU_init(/*SPI_HandleTypeDef* hspi, */IMU* IMU/*, GPIO_TypeDef * CS_GPIO_Port, uint16_t CS_GPIO_Pin, uint16_t SPI_TIMEOUT*/);
+int IMU_init(IMU* IMU);
 
 //Get acceleration from IMU
 int IMU_getAccel(IMU* IMU, Accel* accel);
