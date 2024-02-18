@@ -145,6 +145,7 @@ typedef struct {
     float G_x_offset;
     float G_y_offset;
     float G_z_offset;
+
 } IMU;
 
 typedef struct {
