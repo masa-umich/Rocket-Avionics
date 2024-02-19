@@ -4,56 +4,80 @@
  *  Created on: Jan 16, 2024
  *      Author: evanm
  */
-
+#pragma once
 #ifndef INC_TCPSERVER_H_
 #define INC_TCPSERVER_H_
 
 #include "lwip/opt.h"
 #include "lwip/sys.h"
 #include "lwip/api.h"
+#include "lwip/sockets.h"
+#include "lwip.h"
 #include <string.h>
 #include <stdbool.h>
 
+#include "tsqueue.h"
 #include "gitcommit.h"
 
-typedef struct netconn	netconn;
+#define MAX_MSG_LEN 300
 
-#define MAX_MSG_LEN 200
-
-#define MAX_CONN_NUM 7
+#define MAX_CONN_NUM 8
 
 #define SERVER_PORT 50000
 
-static netconn* connections[MAX_CONN_NUM] = { NULL };
+#define ALL_CONNECTIONS -1
 
-static struct netconn *conn;
+struct message {
+	int connfd;
+	char* buf;
+	int len;
+};
+
+typedef enum {
+	PARSE_OK, PARSE_ERR,
+} parse_t;
+
+
+parse_t devparse(char *data, u16_t len, char *response, u16_t *ret_len,
+		int connfd);
 
 /*
  * Starts the TCP server
+ * Creates a listen thread, a recv thread, and a send thread
  */
 void server_init(void);
 
 /*
- * Sets the server in connection mode
- * When a connection is established, an ID is generated and pushed to the connections list for use
- * Server reenters connection mode
+ * Sets the server in listen mode
+ * When a connection is established, a fd is generated and pushed to the connections list for use
  */
-static void server_waitForClientConnection(void *arg);
+void server_listen(void *arg);
+
+void server_recv(void *arg);
+
+void server_send(void *args);
+
+void server_sendMsg(int dest, char* msg, int len);
+
+void server_retrieveMsg(struct message* msg);
 
 /*
- * Adds netconn to connections list and assigns a free ID to a netconn
- * RETURNS assigned ID, -1 for a rejected connection
+ * Adds socket to connections list
  */
-static int8_t server_addConnection(void);
+void server_addConnection(int connfd);
 
 /*
- * Removes netconn from connections list and frees ID for a new netconn to use
+ * Removes socket from connections list and frees fd for a new socket to use
  */
-static void server_removeConnection(u8_t ID);
+ void server_removeConnection(int connfd);
 
-static void server_recv(void *arg);
+ void server_removeAllConnections(void);
 
-static void server_broadcast(void *arg);
+ void server_setFDs(fd_set* rfds);
+
+ void server_handleRecv(fd_set* rfds);
+
+ void msgFreeCallback(void * data);
 
 
 #endif /* INC_TCPSERVER_H_ */

@@ -4,17 +4,23 @@
  *  Created on: Jan 16, 2024
  *      Author: evanm
  */
-#include <tcpserver.h>
-
-typedef enum {
-	PARSE_OK, PARSE_ERR,
-} parse_t;
+#include "../inc/tcpserver.h"
 
 extern RTC_HandleTypeDef hrtc;
 
+List* rxMsgBuffer;
+List* txMsgBuffer;
+
+extern ip4_addr_t ipaddr;
+
+int connections[MAX_CONN_NUM];
+
+sys_mutex_t* conn_mu;
+
 #ifndef DEVPARSE
 #define DEVPARSE
-parse_t devparse(char *data, u16_t len, char *response, u16_t *ret_len, struct netconn* newconn) {
+parse_t devparse(char *data, u16_t len, char *response, u16_t *ret_len,
+		int connfd) {
 	/*
 	 *  Data stores len number of bytes
 	 *
@@ -22,17 +28,18 @@ parse_t devparse(char *data, u16_t len, char *response, u16_t *ret_len, struct n
 	 *  	6 bits: opcode
 	 */
 
-	char* str;
+	char *str;
 
 	if (len > 0) {
 
-		u8_t opcode = (*data );//>> 2); // get opcode from first 6 bits
+		u8_t opcode = (*data); //>> 2); // get opcode from first 6 bits
 
 		switch (opcode) {
 		case 'A':
 			HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin); // Toggle LED1
 
-			str = "Toggled LED1\r\n";
+			str = malloc(15);
+			memcpy(str, "Toggled LED1\r\n", 15);
 			*ret_len = strlen(str);
 			strcpy(response, str);
 
@@ -45,22 +52,22 @@ parse_t devparse(char *data, u16_t len, char *response, u16_t *ret_len, struct n
 			// Clears IAP Flag in RTC Backup data Register 1
 			HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0xDEE2);
 			HAL_PWR_DisableBkUpAccess();
-
+/*
 			str = "IAP Flag Set\r\nResetting MCU\r\n";
 			*ret_len = strlen(str);
 			strcpy(response, str);
 
-			netconn_write(newconn, (void*)response, (size_t)*ret_len, NETCONN_COPY);
+			server_sendMsg(connfd, response, ret_len, 0);*/
 
 			NVIC_SystemReset();
 			break;
 
 		case 'R':
-			str = "Resetting MCU\r\n";
+			/*str = "Resetting MCU\r\n";
 			*ret_len = strlen(str);
 			strcpy(response, str);
 
-			netconn_write(newconn, (void*)response, (size_t)*ret_len, NETCONN_COPY);
+			server_sendMsg(connfd, response, ret_len, 0);*/
 
 			NVIC_SystemReset();
 			break;
@@ -72,8 +79,8 @@ parse_t devparse(char *data, u16_t len, char *response, u16_t *ret_len, struct n
 			break;
 
 		default:
-			str = "Unknown Command\r\n";
-			*ret_len = strlen(str);
+			str = malloc(18);
+			memcpy(str, "Unknown Command\r\n", 18);
 			strcpy(response, str);
 
 			break;
@@ -87,259 +94,276 @@ parse_t devparse(char *data, u16_t len, char *response, u16_t *ret_len, struct n
 }
 #endif
 
+void msgFreeCallback(void * data) {
+	free(data);
+}
+
 /*
  * Starts the TCP server
+ * Creates a listen thread, a recv thread, and a send thread
  */
 void server_init() {
 
+	memset(connections, -1, MAX_CONN_NUM * sizeof(int));
 
-	// prime server to connect to clients
-	if ( NULL == sys_thread_new("server_connection_thread", server_waitForClientConnection, NULL,
-			512, osPriorityNormal)) {
+	conn_mu = malloc(sizeof(sys_mutex_t));
+	err_t err = sys_mutex_new(conn_mu);
 
-	}
+	// size of list element is max message size + length and connfd integers
+	rxMsgBuffer = list_create(MAX_MSG_LEN + 2*sizeof(int), msgFreeCallback);
+	txMsgBuffer = list_create(MAX_MSG_LEN + 2*sizeof(int), msgFreeCallback);
 
-	if ( NULL == sys_thread_new("server_broadcast_thread", server_broadcast, NULL,
-				512, osPriorityNormal)) {
+	if (err == ERR_OK) {
 
+		// prime server to connect to clients
+		if ( NULL == sys_thread_new("server_listen_thread", server_listen, NULL, 512,
+						osPriorityNormal)) {
 		}
+
+		// prime server to receive messages from clients
+		if ( NULL == sys_thread_new("server_recv_thread", server_recv, NULL, 512,
+						osPriorityNormal)) {
+		}
+
+		// prime server to send messages to clients
+		if ( NULL == sys_thread_new("server_recv_thread", server_send, NULL, 512,
+						osPriorityNormal)) {
+		}
+	}
+	else {
+		printf("Error in server init\r\n");
+	}
 }
 
 /*
- * Sets the server in connection mode
- * When a connection is established, an ID is generated and pushed to the connections list for use
- * Server reenters connection mode
+ * Sets the server in listen mode
+ * When a connection is established, a fd is generated and pushed to the connections list for use
  */
-static void server_waitForClientConnection(void *arg) {
-	err_t err;
+void server_listen(void *arg) {
+	int err;
+	int listen_sockfd, connfd;
+	socklen_t clilen;
+
+	/* IPv4 socket address structure */
+	struct sockaddr_in serv, cli;
+	serv.sin_family = AF_INET;
+	serv.sin_port = htons(SERVER_PORT);
+	serv.sin_addr.s_addr = (in_addr_t) ipaddr.addr;
 
 	LWIP_UNUSED_ARG(arg);
 
-	/* Create a new connection identifier. */
-	conn = netconn_new(NETCONN_TCP);
+	/* Create a new socket fd for listening */
+	listen_sockfd = socket(AF_INET, SOCK_STREAM, 6); // 6 is the DARPA protocol # for tcp
 
-	if (conn != NULL) {
-		/* Bind connection to ephemeral port number 50000. */
-		err = netconn_bind(conn, IP4_ADDR_ANY, SERVER_PORT);
+	if (listen_sockfd != -1) {
+		/* Bind socket to server port */
+		err = bind(listen_sockfd, (struct sockaddr* ) &serv, sizeof(serv));
 
-		if (err == ERR_OK) {
+		if (err == 0) {
 			/* Tell connection to go into listening mode. */
-			netconn_listen(conn);
+			err = listen(listen_sockfd, MAX_CONN_NUM);
 
-			while (1) {
-				int8_t ID = server_addConnection();
+			for (;;) {
+				clilen = sizeof(cli);
 
-				if (ID != -1) {
-					// connection accepted, spawn recv thread
-					char thread_name[22];
-					snprintf(thread_name, 22, "server_recv_thread_%02d", ID);
-					netconn_write(connections[ID], (void*)thread_name, (size_t)22, NETCONN_COPY);
-					netconn_write(connections[ID], (void*)"\r\n", (size_t)2, NETCONN_COPY);
+				// Block until new connection, accept any that appear
+				connfd = accept(listen_sockfd, (struct sockaddr* ) &cli, &clilen);
 
-					if ( NULL == sys_thread_new(thread_name, server_recv, &ID,
-							512, osPriorityNormal) ) {
-						// Failed to instantiate, free socket
-						server_removeConnection(ID);
-					}
-
-				} // end if
-			} // end while
+				server_addConnection(connfd);
+			} // end for(;;)
+		} else { // Bind failed
+			close(listen_sockfd);
 		}
+	} else { // Socket creation failed
+
 	}
 }
 
 /*
- * Adds netconn to connections list and assigns a free ID to a netconn
- * RETURNS assigned ID, -1 for a rejected connection
+ * Adds socket to connections list
  */
-static int8_t server_addConnection() {
-	/* Grab new connection. */
-	netconn* newconn = malloc(sizeof(netconn*));
+void server_addConnection(int connfd) {
 
-	err_t err = netconn_accept(conn, &newconn);
+	sys_mutex_lock(conn_mu);
 
-	if (err == ERR_OK) {
-		for (int id = 0; id < MAX_CONN_NUM; ++id) {
-			if (connections[id] == NULL) {
-				// free ID found, assign to newconn
-				connections[id] = newconn;
+	for (int i = 0; i < MAX_CONN_NUM; ++i) {
+		if (connections[i] == -1) {
+			connections[i] = connfd;
 
-				 newconn->recv_timeout = 3000; // 3 sec timeout
+			sys_mutex_unlock(conn_mu);
+			return;
+		}
+	}
 
-				return id;
+	sys_mutex_unlock(conn_mu);
+
+}
+
+/*
+ * Removes socket from connections list and frees fd for a new socket to use
+ */
+void server_removeConnection(int connfd) {
+
+	sys_mutex_lock(conn_mu);
+
+	for (int i = 0; i < MAX_CONN_NUM; ++i) {
+		if (connections[i] == connfd) {
+			connections[i] = -1;
+			close(connfd);
+
+			sys_mutex_unlock(conn_mu);
+			return;
+		}
+	}
+
+	sys_mutex_unlock(conn_mu);
+}
+
+void server_removeAllConnections(void) {
+
+	sys_mutex_lock(conn_mu);
+
+	for (int i = 0; i < MAX_CONN_NUM; ++i) {
+		if (connections[i] != -1) {
+			close(connections[i]);
+			connections[i] = -1;
+		}
+	}
+
+	sys_mutex_unlock(conn_mu);
+}
+
+void server_setFDs(fd_set *rfds) {
+	FD_ZERO(rfds);
+
+	sys_mutex_lock(conn_mu);
+
+	for (int i = 0; i < MAX_CONN_NUM; ++i) {
+		if (connections[i] != -1) {
+			FD_SET(connections[i], rfds);
+		}
+	}
+
+	sys_mutex_unlock(conn_mu);
+}
+
+void server_handleRecv(fd_set *rfds) {
+
+	sys_mutex_lock(conn_mu);
+
+	for (int i = 0; i < MAX_CONN_NUM; ++i) {
+
+		if (connections[i] != -1) {
+			int connfd = connections[i];
+
+			if (FD_ISSET(connfd, rfds)) { // FD data recv
+
+				char* buf = malloc(MAX_MSG_LEN);
+
+				int n = recv(connfd, buf, MAX_MSG_LEN, 0);
+				// recv all waiting data
+
+				struct message msg = {connfd, buf, n};
+
+				list_push(rxMsgBuffer, (void*)(&msg));
+
 			}
 		}
+		sys_mutex_unlock(conn_mu);
 	}
-
-	// Out of space in connection array , reject connection
-	/* Close connection and discard connection identifier. */
-	netconn_close(newconn);
-	netconn_delete(newconn);
-
-	free(newconn);
-
-	return -1;
 }
 
-/*
- * Removes netconn from connections list and frees ID for a new netconn to use
- */
-static void server_removeConnection(u8_t ID) {
-	netconn* newconn = connections[ID];
+void server_recv(void *arg) {
+	fd_set rfds;
+	struct timeval tv;
+	int retval;
 
-	netconn_close(newconn);
-	netconn_delete(newconn);
-
-	free(newconn);
-
-	connections[ID] = NULL;
-}
-
-static void server_recv(void *arg) {
-	err_t err;
-	struct netbuf *buf;
-
-	char msg[MAX_MSG_LEN];
-	char smsg[MAX_MSG_LEN];
-
-	u8_t ID = ((int*)arg)[0];
-	netconn* newconn = connections[ID];
+	LWIP_UNUSED_ARG(arg);
 
 	/* Process the new connection. */
 	/* receive the data from the client */
-	for(;;) {
-		if (netconn_recv(newconn, &buf) == ERR_OK) {
-			/* Extract the address and port in case they are required */
-			do {
-					strncpy (msg, buf->p->payload, buf->p->len);   // get the message from the client
-					u16_t ret_len = 0;
+	for (;;) {
+		server_setFDs(&rfds);
 
-					parse_t rc = devparse(msg, buf->p->len, smsg, &ret_len, newconn);
+		// Wait 1 second
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
 
-					if (ret_len > 0) {
-						netconn_write(newconn, (void*)smsg, (size_t)ret_len, NETCONN_COPY);
-					}
+		retval = select(MAX_CONN_NUM+1, &rfds, NULL, NULL, &tv);
 
-					memset (msg, '\0', 100);  // clear the buffer
-				} while (netbuf_next(buf) >= 0);
-
-			netbuf_delete(buf);
-		}
-		// recv timeout or error
-		if (netconn_write(newconn, (void*)"", (size_t)1, NETCONN_COPY) != ERR_OK) {
-			// connection closed
-			break;
+		if (retval == -1) { // error
+			//server_probeConnections();
+		} else if (retval) { // FD_ISSET will have some true fd
+			server_handleRecv(&rfds);
+		} else { // timeout
+			/*if (server_sendMsg(newconn, (void*)"", (size_t)1, NETCONN_COPY) != ERR_OK) {
+			 // connection closed
+			 break;
+			 }*/
 		}
 	}
 
-	server_removeConnection(ID);
+	server_removeAllConnections();
 
 	vTaskDelete(NULL);
 }
 
-static void server_broadcast(void *arg) {
-	for (;;) {
+void server_sendMsg(int destIP, char* data, int len) {
+
+	if (destIP == ALL_CONNECTIONS) {
+		sys_mutex_lock(conn_mu);
 		for (int i = 0; i < MAX_CONN_NUM; ++i) {
-			if (connections[i] != NULL) {
-				netconn_write(connections[i], (void*)"data\r\n", (size_t)7, NETCONN_COPY);
+
+			if (connections[i] != -1) {
+				int connfd = connections[i];
+
+				struct message msg = {connfd, data, len};
+
+				list_push(txMsgBuffer, (void*)(&msg));
 			}
 		}
-		osDelay(1000);
-	}
-}
-/*
-// Send a message to a specific client
-void server_messageClient(std::shared_ptr<connection<T>> client, const message<T>& msg) {
-	// Check client is legitimate
-	if (client && client->IsConnected()) {
+		sys_mutex_unlock(conn_mu);
+	} else { // actual IP specified
+		sys_mutex_lock(conn_mu);
+//		for (int i = 0; i < MAX_CONN_NUM; ++i) {
+//
+//			if (connections[i] != -1 && connections[i]) {
+//				int connfd = connections[i];
 
-		client->Send(msg);
-	} else {
+				struct message msg = {destIP, data, len};
 
-		// Remove disconnected client
-		OnClientDisconnect(client);
-		client.reset();
-
-		// Physically remove it from the container
-		m_deqConnections.erase(
-			std::remove(m_deqConnections.begin(), m_deqConnections.end(), client), m_deqConnections.end());
+				list_push(txMsgBuffer, (void*)(&msg));
+//				break;
+//			}
+//		}
+		sys_mutex_unlock(conn_mu);
 	}
 }
 
-// Send message to all clients
-void server_messageAllClients(const message<T>& msg, std::shared_ptr<connection<T>> pIgnoreClient = nullptr) {
-	bool bInvalidClientExists = false;
+void server_retrieveMsg(struct message* msg) {
+	list_pop(rxMsgBuffer, (void*)(msg));
+}
 
-	// Iterate through all clients in container
-	for (auto& client : m_deqConnections) {
-		// Check client is legitimate
-		if (client && client->IsConnected()) {
+void server_send(void* args) {
+	LWIP_UNUSED_ARG(args);
 
-			if (client != pIgnoreClient)
-				client->Send(msg);
-		} else {
-			// Remove disconnected client
-			OnClientDisconnect(client);
-			client.reset();
+	char buf[MAX_MSG_LEN];
 
-			// Set this flag to remove dead client from container
-			bInvalidClientExists = true;
+	for (;;) {
+
+		struct message msg = {-1, buf, MAX_MSG_LEN};
+
+		list_pop(txMsgBuffer, (void*)(&msg));
+
+		if (-1 == send(msg.connfd, msg.buf, msg.len, 0)) { // opts = 0
+			// message failed to send
+			server_removeConnection(msg.connfd);
 		}
+
+		free(msg.buf);
 	}
 
-	// Remove dead clients, all at once to not invalidate the
-	// container as we iterate through it
-	if (bInvalidClientExists)
-		m_deqConnections.erase(
-			std::remove(m_deqConnections.begin(), m_deqConnections.end(), nullptr), m_deqConnections.end());
+	server_removeAllConnections();
+
+	vTaskDelete(NULL);
 }
-
-// Force server to respond to incoming messages
-// -1 sets to max value since size_t is unsigned
-void server_update(size_t nMaxMessages = -1, bool bWait = false) {
-	if (bWait) m_qMessagesIn.wait();
-
-	// Process as many messages as you can up to the value specified
-	size_t nMessageCount = 0;
-	while (nMessageCount < nMaxMessages && !m_qMessagesIn.empty()) {
-		// Grab the front message
-		auto msg = m_qMessagesIn.pop_front();
-
-		// Pass to message handler
-		OnMessage(msg.remote, msg.msg);
-
-		nMessageCount++;
-	}
-}
-
-// Called when a client connects, you can veto the connection by returning false
-bool server_onClientConnect(std::shared_ptr<connection<T>> client) {
-	return false;
-}
-
-// Called when a client appears to have disconnected
-virtual void OnClientDisconnect(std::shared_ptr<connection<T>> client) {
-
-}
-
-// Called when a message arrives
-virtual void OnMessage(std::shared_ptr<connection<T>> client, message<T>& msg) {
-
-}
-
-// Thread Safe Queue for incoming message packets
-tsqueue<owned_message<T>> m_qMessagesIn;
-
-// Container of active validated connections
-std::deque<std::shared_ptr<connection<T>>> m_deqConnections;
-
-// Order of declaration is important - it is also the order of initialisation
-asio::io_context m_asioContext;
-std::thread m_threadContext;
-
-// These things need an asio context
-tcp::acceptor m_asioAcceptor; // Handles new incoming connection attempts
-
-// Clients will be identified in the "wider system" via an ID
-uint32_t nIDCounter = 10000;
-*/
