@@ -11,8 +11,7 @@
 // Needed for readADC() as it also returns a timestamp
 extern uint64_t getTimestamp(void);
 
-// Internal function to get the ADC resolution, stupid that there isn't a HAL
-// function for this
+// Internal function to get the ADC resolution, stupid that there isn't a HAL function for this
 static int getADCResolution(ADC_HandleTypeDef* hadc1) {
   int resolution;
   switch (hadc1->Init.Resolution) {
