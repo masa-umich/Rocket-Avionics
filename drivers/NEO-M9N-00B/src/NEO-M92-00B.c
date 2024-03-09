@@ -5,7 +5,7 @@
  *      Author: Evan Eidt
  */
 
-#include "NEO-M92-00B.h"
+#include "../inc/NEO-M92-00B.h"
 
 int init_gps(gps_handler* hgps) {
 

@@ -8,7 +8,7 @@
 #ifndef FCBBADC_H	// Begin header include protection
 #define FCBBADC_H
 
-#include "stm32h7xx_hal.h"
+#include "main.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
