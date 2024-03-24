@@ -16,7 +16,7 @@ extern void valve_control(uint32_t valve, uint32_t state);
 extern void config_calibration(uint64_t* calibration_data);
 
 /* Decodes an incoming TCP packet and creates an outgoing packet if needed */
-int tcppacket_parse(struct packet *incoming_packet, struct packet *outgoing_packet) {
+int rx_tcppacket_parse(struct packet *incoming_packet, struct packet *outgoing_packet) {
     int ack = 0x05; // Acknowledge bit
     // Get the incoming packet data in bytes
     int *data = incoming_packet->packet;
@@ -27,7 +27,8 @@ int tcppacket_parse(struct packet *incoming_packet, struct packet *outgoing_pack
     switch (header) {
         case 0x01: // Telemetry data
             // Why are we getting a telemetry packet? We're supposed to be sending those?
-            break;
+            // Actually if we're flight computer we should send back these packets to the PC
+        	break;
         case 0x02: // Command packet
             // Get command type
             int command = data[1];
@@ -109,3 +110,8 @@ int tcppacket_encode(char* message, int message_length, struct packet *outgoing_
     outgoing_packet->packet_len = message_length;
     return 0;
 };
+
+/* Telemetry to packet */
+int telemetry_encode() {
+
+}
