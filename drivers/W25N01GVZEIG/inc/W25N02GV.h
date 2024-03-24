@@ -1,8 +1,8 @@
 /**
- * Header file for communicating with W25M02GV Flash Memory
- * Datasheet: https://www.winbond.com/resource-files/w25m02gv%20revf%20050918%20unsecured.pdf
+ * Header file for communicating with W25N02GV Flash Memory
+ * Datasheet: https://www.winbond.com/resource-files/W25N02GV%20revf%20050918%20unsecured.pdf
  *
- * NOTE: The W25M02GV is 2 W25N01GV's in a trenchcoat, so this "library"
+ * NOTE: The W25N02GV is 2 W25N01GV's in a trenchcoat, so this "library"
  * is just a wrapper around the W25N01GV functions.
  *
  * The references to "fc_flash" in this library are because this particular chip
@@ -15,14 +15,14 @@
  * Last edited February 21, 2021
  */
 
-#ifndef W25M02GV_H	// Begin header include protection
-#define W25M02GV_H
+#ifndef W25N02GV_H	// Begin header include protection
+#define W25N02GV_H
 
 #include "main.h"
 
 #ifdef HAL_SPI_MODULE_ENABLED	// Begin SPI include protection
 
-#include "W25N01GV.h"
+#include "../inc/W25N01GV.h"
 
 typedef struct {
 	W25N01GV_Flash flash0;
@@ -36,7 +36,7 @@ typedef struct {
 	uint8_t current_read_die;     // Track the die that has the next page to read
 
 	HAL_StatusTypeDef last_HAL_status;
-} W25M02GV_Flash;
+} W25N02GV_Flash;
 
 /**
  * Initializes the flash memory chip with SPI and pin information,
@@ -51,7 +51,7 @@ typedef struct {
  * @param cs_base    <GPIO_TypeDef*>      GPIO pin array the chip select pin is on
  * @param cs_pin     <uint16_t>           GPIO pin connected to flash chip select
  */
-void fc_init_flash(W25M02GV_Flash *fc_flash, SPI_HandleTypeDef *SPI_bus_in,
+void fc_init_flash(W25N02GV_Flash *fc_flash, SPI_HandleTypeDef *SPI_bus_in,
 		GPIO_TypeDef *cs_base_in, uint16_t cs_pin_in);
 
 /**
@@ -64,7 +64,7 @@ void fc_init_flash(W25M02GV_Flash *fc_flash, SPI_HandleTypeDef *SPI_bus_in,
  * @param flash      <W25N01GV_Flash*>    Struct used to store flash pins and addresses
  * @retval 1 if it read the ID back correctly, 0 if it didn't
  */
-uint8_t fc_ping_flash(W25M02GV_Flash *fc_flash);
+uint8_t fc_ping_flash(W25N02GV_Flash *fc_flash);
 
 /**
  * Resets the flash chip to it's power-on state. If the device is busy when
@@ -81,12 +81,12 @@ uint8_t fc_ping_flash(W25M02GV_Flash *fc_flash);
  * @param flash      <W25N01GV_Flash*>    Struct used to store flash pins and addresses
  * @retval 1 if the reset command executed, 0 if the device was busy and didn't reset.
  */
-uint8_t fc_reset_flash(W25M02GV_Flash *fc_flash);
+uint8_t fc_reset_flash(W25N02GV_Flash *fc_flash);
 
 /**
  * Erase the entire flash memory chip. Erasing means setting every byte to 0xFF.
  * This function also resets the address counters in the two W25N01GV_Flash structs
- * contained in the W25M02GV_Flash struct.
+ * contained in the W25N02GV_Flash struct.
  *
  * WARNING: This function will erase all data, and causes a substantial delay
  * on the order of 2-10 seconds. Only use it if you're absolutely sure.
@@ -94,7 +94,7 @@ uint8_t fc_reset_flash(W25M02GV_Flash *fc_flash);
  * @param flash      <W25N01GV_Flash*>    Struct used to store flash pins and addresses
  * @retval The number of memory blocks that failed to erase
  */
-uint16_t fc_erase_flash(W25M02GV_Flash *fc_flash);
+uint16_t fc_erase_flash(W25N02GV_Flash *fc_flash);
 
 /**
  * Writes data from an array to the W25N01GV flash memory chip.
@@ -117,7 +117,7 @@ uint16_t fc_erase_flash(W25M02GV_Flash *fc_flash);
  * @param num_bytes  <uint32_t>           Number of bytes to write to flash
  * @retval The number of memory blocks that failed to write
  */
-uint16_t fc_write_to_flash(W25M02GV_Flash *fc_flash, uint8_t *data, uint32_t num_bytes);
+uint16_t fc_write_to_flash(W25N02GV_Flash *fc_flash, uint8_t *data, uint32_t num_bytes);
 
 /**
  * Writes whatever is contained in the write buffer to flash.
@@ -127,7 +127,7 @@ uint16_t fc_write_to_flash(W25M02GV_Flash *fc_flash, uint8_t *data, uint32_t num
  *
  * @param flash      <W25N01GV_Flash*>    Struct used to store flash pins and addresses
  */
-uint16_t fc_finish_flash_write(W25M02GV_Flash *fc_flash);
+uint16_t fc_finish_flash_write(W25N02GV_Flash *fc_flash);
 
 /**
  * To be used before calling read_next_2KB_from_flash().
@@ -138,7 +138,7 @@ uint16_t fc_finish_flash_write(W25M02GV_Flash *fc_flash);
  *
  * @param flash      <W25N01GV_Flash*>    Struct used to store flash pins and addresses
  */
-void fc_reset_flash_read_pointer(W25M02GV_Flash *fc_flash);
+void fc_reset_flash_read_pointer(W25N02GV_Flash *fc_flash);
 
 /**
  * Reads a 2KB page into the supplied buffer, then increments a counter so it
@@ -150,7 +150,7 @@ void fc_reset_flash_read_pointer(W25M02GV_Flash *fc_flash);
  * @param flash      <W25N01GV_Flash*>    Struct used to store flash pins and addresses
  * @param buffer     <uint8_t*>           Buffer to hold 2048 bytes of data
  */
-void fc_read_next_2KB_from_flash(W25M02GV_Flash *fc_flash, uint8_t *buffer);
+void fc_read_next_2KB_from_flash(W25N02GV_Flash *fc_flash, uint8_t *buffer);
 
 /**
  * Returns the index of the current page. This function exists to abstract
@@ -160,7 +160,7 @@ void fc_read_next_2KB_from_flash(W25M02GV_Flash *fc_flash, uint8_t *buffer);
  *
  * Use the output of this function as the upper limit (inclusive) for loop counters when reading from flash.
  */
-uint32_t fc_flash_current_page(W25M02GV_Flash *fc_flash);
+uint32_t fc_flash_current_page(W25N02GV_Flash *fc_flash);
 
 /**
  * Returns the number of bytes remaining in the flash memory array that are
@@ -171,7 +171,7 @@ uint32_t fc_flash_current_page(W25M02GV_Flash *fc_flash);
  * @param flash      <W25N01GV_Flash*>    Struct used to store flash pins and addresses
  * @retval Number of free bytes remaining in the flash chip to write to
  */
-uint32_t fc_get_bytes_remaining(W25M02GV_Flash *fc_flash);
+uint32_t fc_get_bytes_remaining(W25N02GV_Flash *fc_flash);
 
 #endif	// end SPI include protection
 #endif	// end header include protection
