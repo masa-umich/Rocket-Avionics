@@ -5,7 +5,7 @@
  *      Author: jackmh
  */
 #include "../inc/tcppacket.h"
-#include <cstdint>
+#include <stdint.h>
 
 // Externs for incoming packet commands
 extern void fsm_transition(int transition);
@@ -19,7 +19,7 @@ extern void config_calibration(uint64_t* calibration_data);
 int rx_tcppacket_parse(struct packet *incoming_packet, struct packet *outgoing_packet) {
     int ack = 0x05; // Acknowledge bit
     // Get the incoming packet data in bytes
-    int *data = incoming_packet->packet;
+    char *data = incoming_packet->packet;
     int len = incoming_packet->packet_len; // We don't use this, but it's good to have
     // Get the first byte of the incoming packet
     int header = data[0];
@@ -73,7 +73,7 @@ int rx_tcppacket_parse(struct packet *incoming_packet, struct packet *outgoing_p
                     return -1;
             }
             // Make a success packet
-            tcppacket_encode((ack | header | command), 3, outgoing_packet);
+            //tcppacket_encode((ack | header | command), 3, outgoing_packet);
             break;
         case 0x03: // Valves
             data++; // Skip the header byte
@@ -86,18 +86,20 @@ int rx_tcppacket_parse(struct packet *incoming_packet, struct packet *outgoing_p
 
             valve_control(valve_selection, valve_state);
 
-            tcppacket_encode((ack | header | valve_selection | valve_state), 10, outgoing_packet); // Make a ack packet with the valve selection and state
+            //tcppacket_encode((ack | header | valve_selection | valve_state), 10, outgoing_packet); // Make a ack packet with the valve selection and state
 
             break;
         case 0x04: // Config calibration
             data++; // Skip the header byte
             config_calibration((uint64_t*)data); // Pass the data to the calibration function
-            tcppacket_encode((ack | header), 2, outgoing_packet); // Make a ack packet with the header byte
+            //tcppacket_encode((ack | header), 2, outgoing_packet); // Make a ack packet with the header byte
             break;
         default:
             // Invalid command
             // Make an error packet with a code and what we thought was sent
-            tcppacket_encode((ack | header | data), (2+len), outgoing_packet);
+
+            //char* return_message = strncat(ack << 8 | header);
+        	//tcppacket_encode(return_message, (2+len), outgoing_packet);
             return -1;
     }
 };
@@ -112,6 +114,6 @@ int tcppacket_encode(char* message, int message_length, struct packet *outgoing_
 };
 
 /* Telemetry to packet */
-int telemetry_encode() {
+int tx_telemetry_encode(void) {
 
-}
+};
