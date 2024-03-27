@@ -27,6 +27,7 @@
 #include "lwip/apps/lwiperf.h"
 #include "C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tcpserver.h"
 #include "C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tsqueue.h"
+#include "C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tcppacket.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -341,7 +342,30 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void fsm_transition(int transition) {
+	// use your imagination
+};
 
+void sw_reset(void) {
+
+};
+
+void set_bootloader(void) {
+
+};
+
+void get_git_hash(void) {
+
+};
+
+void valve_control(uint32_t valve, uint32_t state) {
+	HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+	// doing this for debug
+};
+
+void config_calibration(uint64_t* calibration_data) {
+
+};
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartTCPTask */
@@ -404,23 +428,26 @@ void StartHeartbeatTask(void const * argument)
 void StartRXMessages(void const * argument)
 {
   /* USER CODE BEGIN StartRXMessages */
-
-	char ret_buf[MAX_MSG_LEN];
 	char buf[MAX_MSG_LEN];
-
-	u16_t ret_len = 0;
-
   // Infinite loop
   for(;;)
   {
 	struct message msg = {-1, buf, MAX_MSG_LEN};
 	server_retrieveMsg(&msg);
-	parse_t rc = devparse(msg.buf, msg.len, ret_buf, &ret_len, msg.connfd);
+	// Ideally, server_retrieveMsg should give a packet type and a separate connection fd but that's a massive can of worms
+	// Instead we're going to make a packet type from a different packet type so it works with my code :)
+	struct packet rx_packet;
+	struct packet tx_packet;
 
-	if (ret_len > 0) {
-		server_sendMsg(msg.connfd, ret_buf, ret_len);
+	rx_packet.packet = msg.buf;
+	rx_packet.packet_len = msg.len;
+	rx_tcppacket_parse(&rx_packet, &tx_packet);
+
+	/*
+	if (tx_packet.len > 0) {
+		server_sendMsg(msg.connfd, tx_packet.packet, tx_packet.len);
 	}
-
+	*/
 	osDelay(1);
   }
 
