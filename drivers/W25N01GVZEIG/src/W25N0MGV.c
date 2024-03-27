@@ -15,46 +15,52 @@
 
 // TODO: Check include paths to make sure we actually need all of these things
 
-void fc_init_flashes(W25N02GV_Flash *fc_flashes, SPI_HandleTypeDef *SPI_busses_in, GPIO_TypeDef *cs_bases_in, uint16_t *cs_pins_in) {
+void fc_init_flashes(W25N0MGV_Flash *storage, SPI_HandleTypeDef *SPI_busses_in, GPIO_TypeDef *cs_bases_in, uint16_t *cs_pins_in) {
+	W25N02GV_Flash *fc_flashes = *storage.flashes;
 	for(int i = 0; i < NUM_FLASHES; i++) {
 		fc_init_flash(&fc_flashes[i].flash, &SPI_busses_in[i], &cs_bases_in[i], cs_pins_in[i]);
 	}
 }
 
-uint8_t fc_ping_flashes(W25N02GV_Flash *fc_flashes){
+uint8_t fc_ping_flashes(W25N0MGV_Flash *storage){
 	uint8_t status = 0;
+	W25N02GV_Flash *fc_flashes = *storage.flashes;
 	for(int i = 0; i < NUM_FLASHES; i++) {
 		status |= fc_ping_flash(&fc_flashes[i].flash);
 	}
 	return status;
 }
 
-uint8_t fc_reset_flashes(W25N02GV_Flash *fc_flashes){
+uint8_t fc_reset_flashes(W25N0MGV_Flash *storage){
 	uint8_t status = 0;
+	W25N02GV_Flash *fc_flashes = *storage.flashes;
 	for(int i = 0; i < NUM_FLASHES; i++) {
 		status |= fc_reset_flash(&fc_flashes[i].flash);
 	}
 	return status;
 }
 
-uint16_t fc_erase_flashes(W25N02GV_Flash *fc_flashes){
+uint16_t fc_erase_flashes(W25N0MGV_Flash *storage){
 	uint16_t status = 0;
+	W25N02GV_Flash *fc_flashes = *storage.flashes;
 	for(int i = 0; i < NUM_FLASHES; i++) {
 		status += fc_erase_flash(&fc_flashes[i].flash);
 	}
 	return status;
 }
 
-uint16_t fc_write_to_flashes(W25N02GV_Flash *fc_flashes, uint8_t *data, uint32_t num_bytes){
+uint16_t fc_write_to_flashes(W25N0MGV_Flash *storage, uint8_t *data, uint32_t num_bytes){
 	uint16_t status = 0;
+	W25N02GV_Flash *fc_flashes = *storage.flashes;
 	for(int i = 0; i < NUM_FLASHES; i++) {
 		status += fc_write_to_flash(&fc_flashes[i].flash, data, num_bytes);
 	}
 	return status;
 }
 
-uint16_t fc_finish_flash_writes(W25N02GV_Flash *fc_flashes){
+uint16_t fc_finish_flash_writes(W25N0MGV_Flash *storage){
 	uint16_t status = 0;
+	W25N02GV_Flash *fc_flashes = *storage.flashes;
 	for(int i = 0; i < NUM_FLASHES; i++) {
 		status += fc_finish_flash_write(&fc_flashes[i].flash);
 	}
