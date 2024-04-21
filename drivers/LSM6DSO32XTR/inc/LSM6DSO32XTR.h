@@ -18,6 +18,7 @@
 #endif
 
 // Begin register map
+#define IMU_I2C_ADDR					(uint8_t)(0x6A << 1) //Device Address when SDO is on ground
 #define IMU_FUNC_CFG_ACCESS             (uint8_t)0x01 //R/W - Function configuration access register address
 #define IMU_PIN_CTRL                    (uint8_t)0x02 //R/W - Pin control register address
 #define IMU_FIFO_CTRL1                  (uint8_t)0x07 //R/W - FIFO control register 1 address
@@ -125,7 +126,7 @@
 */
 #define IMU_DEFAULT_CONF_ACCEL          (uint8_t)0x50 // 01010000 208hz, + or - 4g range
 #define IMU_DEFAULT_CONF_GYRO           (uint8_t)0x5C // 01011100 208hz, + or - 2000dps range
-#define IMU_DEFAULT_CONF_CTRL3_C		(uint8_t)0x04 // 000001001 Main control register - register shifting is set to true
+#define IMU_DEFAULT_CONF_CTRL3_C		(uint8_t)0x04 // 00000100 Main control register - register shifting is set to true
 //Otther default configs
 #define IMU_DEFAULT_CONF_CTRL4_C        (uint8_t)0x00
 #define IMU_DEFAULT_CONF_CTRL5_C        (uint8_t)0x00
@@ -137,11 +138,9 @@
 #define IMU_SW_RESET_CONF_CTRL3_C		(uint8_t)0x05 // 00001001 This will reset the device (ik right who could've guessed)
 
 typedef struct {
-    //SPI stuff
-    SPI_HandleTypeDef* hspi;
-    uint16_t SPI_TIMEOUT;
-    GPIO_TypeDef * CS_GPIO_Port;
-    uint16_t CS_GPIO_Pin;
+    //I2C stuff
+	I2C_HandleTypeDef* hi2c;
+    uint16_t I2C_TIMEOUT;
 
     //Offset values
     float XL_x_offset;
@@ -150,7 +149,6 @@ typedef struct {
     float G_x_offset;
     float G_y_offset;
     float G_z_offset;
-
 } IMU;
 
 typedef struct {

@@ -5,7 +5,7 @@
  *      Author: jackmh
  */
 
-#include "../inc/LSM6DSO32XTR.h"
+#include "LSM6DSO32XTR.h"
 
 //Temp convert
 float IMU_tempConvert(uint8_t H_Byte, uint8_t L_Byte) {
@@ -34,28 +34,14 @@ float IMU_gyroConvert(uint8_t H_Byte, uint8_t L_Byte) {
 	return gyro;
 }
 
-//Chip select
-void IMU_chipSelect(IMU* IMU) {
-	HAL_GPIO_WritePin(IMU->CS_GPIO_Port, IMU->CS_GPIO_Pin, 0); //CS pin
-}
-
-//Chip release
-void IMU_chipRelease(IMU* IMU) {
-	HAL_GPIO_WritePin(IMU->CS_GPIO_Port, IMU->CS_GPIO_Pin, 1); //CS pin
-}
-
 //Read register from IMU
 HAL_StatusTypeDef IMU_read(IMU* IMU, uint8_t reg_addr, uint8_t* rx_buffer, uint8_t num_bytes) {
-	uint8_t reg_buffer[1] = {reg_addr | 0x80};  // Set register for reading
-
 	HAL_StatusTypeDef status;
 
 	taskENTER_CRITICAL();
 
-	IMU_chipSelect(IMU);
-	HAL_SPI_Transmit(IMU->hspi, (uint8_t *)reg_buffer, 1, IMU->SPI_TIMEOUT);
-	status = HAL_SPI_Receive(IMU->hspi, (uint8_t *)rx_buffer, num_bytes, IMU->SPI_TIMEOUT);
-	IMU_chipRelease(IMU);
+	HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR, &reg_addr, 1, IMU->I2C_TIMEOUT);
+	status = HAL_I2C_Master_Receive(IMU->hi2c, IMU_I2C_ADDR, (uint8_t *)rx_buffer, num_bytes, IMU->I2C_TIMEOUT);
 
 	taskEXIT_CRITICAL();
 	return status;
@@ -67,9 +53,7 @@ HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t* tx_buffer, uint8_t num_bytes) {
 
 	taskENTER_CRITICAL();
 
-	IMU_chipSelect(IMU);
-	status = HAL_SPI_Transmit(IMU->hspi, (uint8_t *)tx_buffer, num_bytes + 1, IMU->SPI_TIMEOUT);
-	IMU_chipRelease(IMU);
+	status = HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR, (uint8_t *)tx_buffer, num_bytes + 1, IMU->I2C_TIMEOUT);
 
 	taskEXIT_CRITICAL();
 	return status;
