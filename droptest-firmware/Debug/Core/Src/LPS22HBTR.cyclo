@@ -1,0 +1,16 @@
+../Core/Src/LPS22HBTR.c:11:7:BAR_presConvert	1
+../Core/Src/LPS22HBTR.c:19:7:BAR_altConvert	1
+../Core/Src/LPS22HBTR.c:27:7:BAR_tempConvert	1
+../Core/Src/LPS22HBTR.c:36:6:BAR_chipSelect	1
+../Core/Src/LPS22HBTR.c:41:6:BAR_chipRelease	1
+../Core/Src/LPS22HBTR.c:46:19:BAR_read	1
+../Core/Src/LPS22HBTR.c:63:19:BAR_write	1
+../Core/Src/LPS22HBTR.c:77:5:BAR_init	1
+../Core/Src/LPS22HBTR.c:89:5:BAR_getPres	1
+../Core/Src/LPS22HBTR.c:101:5:BAR_getAlt	1
+../Core/Src/LPS22HBTR.c:113:5:BAR_getTemp	1
+../Core/Src/LPS22HBTR.c:126:5:BAR_send	2
+../Core/Src/LPS22HBTR.c:142:5:BAR_whoami	2
+../Core/Src/LPS22HBTR.c:154:5:BAR_waitForPres	2
+../Core/Src/LPS22HBTR.c:163:5:BAR_waitForTemp	2
+../Core/Src/LPS22HBTR.c:172:5:BAR_Reset	1
