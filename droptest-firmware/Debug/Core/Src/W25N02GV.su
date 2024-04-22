@@ -1,6 +1,6 @@
-../Core/Src/W25N02GV.c:38:6:select_die	24	static,ignoring_inline_asm
+../Core/Src/W25N02GV.c:38:6:select_die	24	static
 ../Core/Src/W25N02GV.c:49:6:fc_init_flash	24	static
-../Core/Src/W25N02GV.c:71:9:fc_ping_flash	32	static,ignoring_inline_asm
+../Core/Src/W25N02GV.c:71:9:fc_ping_flash	32	static
 ../Core/Src/W25N02GV.c:92:9:fc_reset_flash	24	static
 ../Core/Src/W25N02GV.c:106:10:fc_erase_flash	24	static
 ../Core/Src/W25N02GV.c:123:10:fc_write_to_flash	32	static

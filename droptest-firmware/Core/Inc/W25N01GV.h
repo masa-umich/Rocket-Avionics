@@ -97,6 +97,13 @@
 
 #include "main.h"
 
+#ifndef FreeRTOS_H
+    #include "FreeRTOS.h"
+    #include "task.h"
+#else
+    #error "This library is designed for use with FreeRTOS. Please include the FreeRTOS library in your project."
+#endif
+
 #ifdef HAL_SPI_MODULE_ENABLED	// Begin SPI include protection
 
 // Number of pages that can be read from. See README and

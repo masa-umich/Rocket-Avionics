@@ -1,5 +1,5 @@
-../Core/Src/W25N01GV.c:133:13:spi_transmit	24	static,ignoring_inline_asm
-../Core/Src/W25N01GV.c:156:13:spi_transmit_receive	24	static,ignoring_inline_asm
+../Core/Src/W25N01GV.c:133:13:spi_transmit	24	static
+../Core/Src/W25N01GV.c:156:13:spi_transmit_receive	24	static
 ../Core/Src/W25N01GV.c:185:16:read_status_register	32	static
 ../Core/Src/W25N01GV.c:210:16:flash_is_busy	24	static
 ../Core/Src/W25N01GV.c:230:13:wait_for_operation	24	static
@@ -11,7 +11,7 @@
 ../Core/Src/W25N01GV.c:360:13:lock_flash	24	static
 ../Core/Src/W25N01GV.c:391:13:enable_write	24	static
 ../Core/Src/W25N01GV.c:408:13:disable_write	24	static
-../Core/Src/W25N01GV.c:425:13:write_page_to_buffer	32	static,ignoring_inline_asm
+../Core/Src/W25N01GV.c:425:13:write_page_to_buffer	32	static
 ../Core/Src/W25N01GV.c:458:13:program_buffer_to_memory	24	static
 ../Core/Src/W25N01GV.c:481:16:get_write_failure_status	24	static
 ../Core/Src/W25N01GV.c:509:16:get_erase_failure_status	24	static

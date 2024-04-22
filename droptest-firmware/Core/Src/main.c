@@ -24,7 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "LSM6DSO32XTR.h"
 #include "LPS22HBTR.h"
-#include "W25N02GV.h"
+#include "W25N01GV.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,6 +50,8 @@ I2C_HandleTypeDef hi2c5;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi6;
 
+UART_HandleTypeDef huart3;
+
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 
@@ -62,6 +64,7 @@ static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_I2C5_Init(void);
 static void MX_SPI6_Init(void);
+static void MX_USART3_UART_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -105,6 +108,7 @@ int main(void)
   MX_SPI1_Init();
   MX_I2C5_Init();
   MX_SPI6_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -127,7 +131,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 3072);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -323,11 +327,11 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -401,6 +405,54 @@ static void MX_SPI6_Init(void)
 }
 
 /**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart3.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart3, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart3, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -456,12 +508,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI4;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BAROM_INT_Pin */
-  GPIO_InitStruct.Pin = BAROM_INT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BAROM_INT_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pin : MCU_DIO3_Pin */
   GPIO_InitStruct.Pin = MCU_DIO3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -501,7 +547,30 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// Data structure:
+// 64 bit time stamp - Milliseconds since program start
+// 32 bit float - Pressure
+// 32 bit float - Temperature
+// 32 bit float*3 - Accel X, Y, Z
+// 32 bit float*3 - Gyro X, Y, Z
+// Total size: 8 + 4 + 4 + 12 + 12 = 40 Bytes per reading
+// To do this simply, we use a union, which allows us to mix data types and access the raw bytes of the data it stores
+// There are some great videos on YouTube explaining how this works
+union Data {
+    uint8_t bytes[40];
+    struct {
+        uint64_t timestamp;
+        float pressure;
+        float temperature;
+        float accel[3];
+        float gyro[3];
+    } values;
+};
 
+uint64_t getTimestamp(void) {
+	uint32_t timestamp = HAL_GetTick();
+	return (uint64_t)timestamp;
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -541,20 +610,58 @@ void StartDefaultTask(void const * argument)
   BAR1.pres_offset = 0;
   BAR1.alt_offset = 0;
 
+  union Data data;
+
+  W25N01GV_Flash flash;
+  init_flash(&flash, &hspi1, GPIOG, GPIO_PIN_10);
+
   if (IMU_init(&IMU1)) {
-  	  Error_Handler(); //We have not read the who am I register, so something is probably wrong
-    }
+  	Error_Handler(); //We have not read the who am I register, so something is probably wrong
+  }
 
   if (BAR_init(&BAR1)) {
 	  Error_Handler(); //We have not read the who am I register, so something is probably wrong
   }
 
-  for(;;) {
-	  vTaskDelayUntil(&xLastWakeTime, xFrequency);
-      BAR_getPres(&BAR1, &Pres);
-      BAR_getTemp(&BAR1, &Temp);
-      IMU_getAccel(&IMU1, &accel);
-      IMU_getAngRate(&IMU1, &gyro);
+  // Detect if the jumper is on read or write mode
+  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0)) { // Read mode
+
+	  finish_flash_write(&flash); // Finish writing, if we haven't already
+	  HAL_Delay(10000); // 10 second delay so that the client can setup
+	  uint32_t page = 0;
+	  uint8_t read_buffer[W25N01GV_BYTES_PER_PAGE];  // W25N01GV_BYTES_PER_PAGE == 2048 == 2KB
+	  reset_flash_read_pointer(&flash);
+
+	  while (page < flash.current_page) {
+		  read_next_2KB_from_flash(&flash, read_buffer);
+		  HAL_UART_Transmit(&huart3, read_buffer, sizeof(read_buffer), 1000);
+	  } // Break, we don't want to continue dumping flash
+
+  } else { // Write mode
+
+	  // Erase beginning flash contents
+	  erase_flash(&flash);
+	  flash.current_page = 0;
+
+	  for(;;) {
+		  vTaskDelayUntil(&xLastWakeTime, xFrequency);
+		  BAR_getPres(&BAR1, &Pres);
+		  BAR_getTemp(&BAR1, &Temp);
+		  IMU_getAccel(&IMU1, &accel);
+			IMU_getAngRate(&IMU1, &gyro);
+			// See comment at union def for info on this data structure
+			data.values.timestamp = getTimestamp();
+			data.values.pressure = Pres;
+			data.values.temperature = Temp;
+			data.values.accel[0] = accel.XL_x;
+			data.values.accel[1] = accel.XL_y;
+			data.values.accel[2] = accel.XL_z;
+			data.values.gyro[0] = gyro.G_x;
+			data.values.gyro[1] = gyro.G_y;
+			data.values.gyro[2] = gyro.G_z;
+			write_to_flash(&flash, data.bytes, 40);
+	  }
+	  finish_flash_write(&flash);
   }
   /* USER CODE END 5 */
 }

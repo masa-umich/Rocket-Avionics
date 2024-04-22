@@ -20,9 +20,16 @@
 
 #include "main.h"
 
+#ifndef FreeRTOS_H
+    #include "FreeRTOS.h"
+    #include "task.h"
+#else
+    #error "This library is designed for use with FreeRTOS. Please include the FreeRTOS library in your project."
+#endif
+
 #ifdef HAL_SPI_MODULE_ENABLED	// Begin SPI include protection
 
-#include "../Inc/W25N01GV.h"
+#include "W25N01GV.h"
 
 typedef struct {
 	W25N01GV_Flash flash0;

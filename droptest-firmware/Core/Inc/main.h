@@ -61,8 +61,6 @@ void Error_Handler(void);
 #define MODE_SWITCH_GPIO_Port GPIOC
 #define SPI6_CS_Pin GPIO_PIN_4
 #define SPI6_CS_GPIO_Port GPIOA
-#define BAROM_INT_Pin GPIO_PIN_8
-#define BAROM_INT_GPIO_Port GPIOD
 #define MCU_DIO3_Pin GPIO_PIN_15
 #define MCU_DIO3_GPIO_Port GPIOD
 #define MCU_DIO2_Pin GPIO_PIN_6
