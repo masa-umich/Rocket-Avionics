@@ -587,8 +587,8 @@ void StartDefaultTask(void const * argument)
   TickType_t xLastWakeTime;
   const TickType_t xFrequency = 100; //Milliseconds
   xLastWakeTime = xTaskGetTickCount();
-  float Pres = 0.0;
-  float Temp = 0.0;
+  float pres = 0.0;
+  float temp = 0.0;
   Accel accel = {0};
   AngRate gyro = {0};
 
@@ -645,21 +645,21 @@ void StartDefaultTask(void const * argument)
 
 	  for(;;) {
 		  vTaskDelayUntil(&xLastWakeTime, xFrequency);
-		  BAR_getPres(&BAR1, &Pres);
-		  BAR_getTemp(&BAR1, &Temp);
+		  BAR_getPres(&BAR1, &pres);
+		  BAR_getTemp(&BAR1, &temp);
 		  IMU_getAccel(&IMU1, &accel);
-			IMU_getAngRate(&IMU1, &gyro);
-			// See comment at union def for info on this data structure
-			data.values.timestamp = getTimestamp();
-			data.values.pressure = Pres;
-			data.values.temperature = Temp;
-			data.values.accel[0] = accel.XL_x;
-			data.values.accel[1] = accel.XL_y;
-			data.values.accel[2] = accel.XL_z;
-			data.values.gyro[0] = gyro.G_x;
-			data.values.gyro[1] = gyro.G_y;
-			data.values.gyro[2] = gyro.G_z;
-			write_to_flash(&flash, data.bytes, 40);
+		  IMU_getAngRate(&IMU1, &gyro);
+		  // See comment at union def for info on this data structure
+		  data.values.timestamp = getTimestamp();
+		  data.values.pressure = pres;
+		  data.values.temperature = temp;
+		  data.values.accel[0] = accel.XL_x;
+		  data.values.accel[1] = accel.XL_y;
+		  data.values.accel[2] = accel.XL_z;
+		  data.values.gyro[0] = gyro.G_x;
+		  data.values.gyro[1] = gyro.G_y;
+		  data.values.gyro[2] = gyro.G_z;
+		  write_to_flash(&flash, data.bytes, 40);
 	  }
 	  finish_flash_write(&flash);
   }

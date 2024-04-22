@@ -8,4 +8,4 @@
 ../Core/Src/main.c:460:13:MX_GPIO_Init	56	static
 ../Core/Src/main.c:570:10:getTimestamp	24	static
 ../Core/Src/main.c:583:6:StartDefaultTask	2744	static
-../Core/Src/main.c:674:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:673:6:Error_Handler	4	static,ignoring_inline_asm

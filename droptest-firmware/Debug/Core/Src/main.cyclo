@@ -8,4 +8,4 @@
 ../Core/Src/main.c:460:13:MX_GPIO_Init	1
 ../Core/Src/main.c:570:10:getTimestamp	1
 ../Core/Src/main.c:583:6:StartDefaultTask	5
-../Core/Src/main.c:674:6:Error_Handler	1
+../Core/Src/main.c:673:6:Error_Handler	1
