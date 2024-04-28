@@ -4,6 +4,9 @@ import time
 # Note: close the serial monitor in Arduino IDE before running this script.
 # Otherwise, the port will be busy and you will get an error.
 
+global default_data_file_name
+default_data_file_name = 'data'
+
 def get_ports():
     boards = []
     ports = list(serial.tools.list_ports.comports())
@@ -13,32 +16,48 @@ def get_ports():
     return boards
 
 def main():
-    while not get_ports():
-        print('No boards found. Make sure the board is connected. Retrying...', end='\r', flush=True)
+    if not get_ports():
+        while not get_ports():
+            print('No boards found. Make sure the board is connected. Retrying...', end='\r', flush=True)
+        print()
+    time.sleep(1) # The serial port takes a second before we can open it
     board = serial.Serial(get_ports()[0], 115200) # Open the serial port
-    print("\nConnected to", get_ports()[0])
+    print("Connected to", get_ports()[0])
     
     bytes_read_total = 0
-    start_time = time.time()
+    data = []
     
-    with open('data.bin', 'wb') as bin:
+    # Messy code that finds the next available data file name if the default is already taken
+    i = 0
+    data_file_name = default_data_file_name
+    while True:
+        try: 
+            if open(data_file_name + '.bin', 'rb'):
+                i += 1
+                data_file_name = default_data_file_name + str(i)
+        except:
+            break
+
+    with open(data_file_name + '.bin', 'wb') as bin:
         try:
             while True:
-                # Read data from the serial port
-                data = board.read(512) # Read 512 bytes
+                data.append(board.read(2048)) # Read 2048 bytes
+
+                # Print the amount of data read
                 bytes_read_total += len(data)
-                #print(data)
-                
-                # Save to binary file
-                bin.write(data)
-                
-                # Calculate transfer speed
-                elapsed_time = time.time() - start_time
-                transfer_speed = bytes_read_total / (1024 * elapsed_time)  # Convert bytes to KB and time to seconds
-                print(f"Transfer speed: {transfer_speed:.2f} KB/s", end='\r', flush=True)
+                data_read = bytes_read_total / 1024
+                print(f"Amount of data read: {data_read:.2f} KB", end='\r', flush=True)
+
+                # If all the data is 0xFF, we've reached the end of the file
+                if data[-1] == (b'\xff' * len(data[-1])):
+                    print("\nBad block of data, probably end of file", end='\r', flush=True)
+                    break
         except KeyboardInterrupt:
-            print('\nExiting...')
-            board.close()
+            pass
+        for data in data:
+            bin.write(data)
+        board.close()
+        print('\nExiting...')
 
 if __name__ == '__main__':
     main()

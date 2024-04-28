@@ -559,7 +559,8 @@ static void MX_GPIO_Init(void)
 union Data {
     uint8_t bytes[40];
     struct {
-        uint64_t timestamp;
+        //uint16_t header;
+    	uint64_t timestamp;
         float pressure;
         float temperature;
         float accel[3];
@@ -589,6 +590,7 @@ void StartDefaultTask(void const * argument)
   xLastWakeTime = xTaskGetTickCount();
   float pres = 0.0;
   float temp = 0.0;
+  #define block_offset (uint16_t)100*40
   Accel accel = {0};
   AngRate gyro = {0};
 
@@ -626,7 +628,7 @@ void StartDefaultTask(void const * argument)
   // Detect if the jumper is on read or write mode
   if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0)) { // Read mode
 
-	  finish_flash_write(&flash); // Finish writing, if we haven't already
+	  //finish_flash_write(&flash); // Finish writing, if we haven't already
 	  HAL_Delay(10000); // 10 second delay so that the client can setup
 	  uint32_t page = 0;
 	  uint8_t read_buffer[W25N01GV_BYTES_PER_PAGE];  // W25N01GV_BYTES_PER_PAGE == 2048 == 2KB
@@ -641,7 +643,12 @@ void StartDefaultTask(void const * argument)
 
 	  // Erase beginning flash contents
 	  erase_flash(&flash);
-	  flash.current_page = 0;
+	  add_test_delimiter(&flash);
+	  // There's some weird behavior with the first bit of the flash memory, so this makes an offset
+	  uint8_t flash_offset[block_offset] = {0x00};
+	  write_to_flash(&flash, flash_offset, block_offset);
+	  uint8_t data_start_header[10] = {0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00};
+	  write_to_flash(&flash, data_start_header, 10);
 
 	  for(;;) {
 		  vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -650,6 +657,7 @@ void StartDefaultTask(void const * argument)
 		  IMU_getAccel(&IMU1, &accel);
 		  IMU_getAngRate(&IMU1, &gyro);
 		  // See comment at union def for info on this data structure
+		  //data.values.header = 0xffff;
 		  data.values.timestamp = getTimestamp();
 		  data.values.pressure = pres;
 		  data.values.temperature = temp;
