@@ -1,0 +1,11 @@
+../Core/Src/W25N02GV.c:38:6:select_die	24	static
+../Core/Src/W25N02GV.c:49:6:fc_init_flash	24	static
+../Core/Src/W25N02GV.c:71:9:fc_ping_flash	32	static
+../Core/Src/W25N02GV.c:92:9:fc_reset_flash	24	static
+../Core/Src/W25N02GV.c:106:10:fc_erase_flash	24	static
+../Core/Src/W25N02GV.c:123:10:fc_write_to_flash	32	static
+../Core/Src/W25N02GV.c:156:10:fc_finish_flash_write	16	static
+../Core/Src/W25N02GV.c:174:6:fc_reset_flash_read_pointer	16	static
+../Core/Src/W25N02GV.c:181:6:fc_read_next_2KB_from_flash	16	static
+../Core/Src/W25N02GV.c:199:10:fc_flash_current_page	16	static
+../Core/Src/W25N02GV.c:208:10:fc_get_bytes_remaining	24	static
