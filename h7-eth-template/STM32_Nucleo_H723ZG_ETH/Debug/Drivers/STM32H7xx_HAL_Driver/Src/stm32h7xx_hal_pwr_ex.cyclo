@@ -34,5 +34,5 @@
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:1976:6:HAL_PWREx_ConfigAVD	5
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:2025:6:HAL_PWREx_EnableAVD	1
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:2035:6:HAL_PWREx_DisableAVD	1
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:2119:13:HAL_PWREx_AVDCallback	1
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:2046:6:HAL_PWREx_PVD_AVD_IRQHandler	5
+../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:2131:13:HAL_PWREx_AVDCallback	1
+../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:2046:6:HAL_PWREx_PVD_AVD_IRQHandler	7

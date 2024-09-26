@@ -13,4 +13,4 @@
 ../Core/Src/lwiperf.c:670:1:lwiperf_start_tcp_server	32	static
 ../Core/Src/lwiperf.c:758:7:lwiperf_start_tcp_client	72	static
 ../Core/Src/lwiperf.c:744:7:lwiperf_start_tcp_client_default	16	static
-../Core/Src/lwiperf.c:820:1:lwiperf_abort	16	static
+../Core/Src/lwiperf.c:820:1:lwiperf_abort	24	static

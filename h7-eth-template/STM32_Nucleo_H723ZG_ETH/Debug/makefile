@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (11.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -9,7 +9,6 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include dev-drivers/TCP/src/subdir.mk
 -include Middlewares/Third_Party/LwIP/system/OS/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/netif/ppp/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/netif/subdir.mk
@@ -76,8 +75,8 @@ all: main-build
 main-build: STM32_Nucleo_H723ZG_ETH.elf secondary-outputs
 
 # Tool invocations
-STM32_Nucleo_H723ZG_ETH.elf STM32_Nucleo_H723ZG_ETH.map: $(OBJS) $(USER_OBJS) C:\Users\Jack\Projects\MASA\STM32-Testing\STM32_Nucleo_H723ZG_ETH\STM32H723ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "STM32_Nucleo_H723ZG_ETH.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\Jack\Projects\MASA\STM32-Testing\STM32_Nucleo_H723ZG_ETH\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32_Nucleo_H723ZG_ETH.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+STM32_Nucleo_H723ZG_ETH.elf STM32_Nucleo_H723ZG_ETH.map: $(OBJS) $(USER_OBJS) C:\Users\Jack\Projects\MASA\Rocket-Avionics\h7-eth-template\STM32_Nucleo_H723ZG_ETH\STM32H723ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "STM32_Nucleo_H723ZG_ETH.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\Jack\Projects\MASA\Rocket-Avionics\h7-eth-template\STM32_Nucleo_H723ZG_ETH\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32_Nucleo_H723ZG_ETH.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -2,7 +2,7 @@
 ../Middlewares/Third_Party/LwIP/src/api/api_lib.c:703:1:netconn_recv_data_tcp	88	static
 ../Middlewares/Third_Party/LwIP/src/api/api_lib.c:149:1:netconn_new_with_proto_and_callback	48	static
 ../Middlewares/Third_Party/LwIP/src/api/api_lib.c:192:1:netconn_prepare_delete	40	static
-../Middlewares/Third_Party/LwIP/src/api/api_lib.c:233:1:netconn_delete	48	static
+../Middlewares/Third_Party/LwIP/src/api/api_lib.c:233:1:netconn_delete	40	static
 ../Middlewares/Third_Party/LwIP/src/api/api_lib.c:269:1:netconn_getaddr	48	static
 ../Middlewares/Third_Party/LwIP/src/api/api_lib.c:307:1:netconn_bind	40	static
 ../Middlewares/Third_Party/LwIP/src/api/api_lib.c:351:1:netconn_bind_if	40	static

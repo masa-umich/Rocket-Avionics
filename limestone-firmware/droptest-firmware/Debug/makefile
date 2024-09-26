@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (11.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -64,8 +64,8 @@ all: main-build
 main-build: droptest-firmware.elf secondary-outputs
 
 # Tool invocations
-droptest-firmware.elf droptest-firmware.map: $(OBJS) $(USER_OBJS) C:\Users\Jack\Projects\MASA\droptest-firmware\Rocket-Avionics\droptest-firmware\STM32H725ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "droptest-firmware.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\Jack\Projects\MASA\droptest-firmware\Rocket-Avionics\droptest-firmware\STM32H725ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="droptest-firmware.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+droptest-firmware.elf droptest-firmware.map: $(OBJS) $(USER_OBJS) C:\Users\Jack\Projects\MASA\Rocket-Avionics\limestone-firmware\droptest-firmware\STM32H725ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "droptest-firmware.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\Jack\Projects\MASA\Rocket-Avionics\limestone-firmware\droptest-firmware\STM32H725ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="droptest-firmware.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

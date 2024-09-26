@@ -23,7 +23,7 @@
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c:819:10:osSemaphoreRelease	16	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c:846:10:osSemaphoreDelete	8	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c:883:10:osPoolCreate	24	static
-../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c:936:7:osPoolAlloc	32	static,ignoring_inline_asm
+../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c:936:7:osPoolAlloc	16	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c:977:7:osPoolCAlloc	8	static
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c:996:10:osPoolFree	0	static
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c:1040:14:osMessageCreate	16	static

@@ -1,6 +1,5 @@
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:1619:1:netif_null_output_ip4	0	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:875:1:netif_issue_reports	8	static
-../Middlewares/Third_Party/LwIP/src/core/netif.c:457:1:netif_do_set_ipaddr.isra	24	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:177:1:netif_init	0	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:217:1:netif_input	16	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:500:1:netif_set_ipaddr	24	static
@@ -16,7 +15,7 @@
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:988:1:netif_set_link_up	8	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:1026:1:netif_set_link_down	0	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:1051:1:netif_set_link_callback	0	static
-../Middlewares/Third_Party/LwIP/src/core/netif.c:1656:1:netif_index_to_name	16	static
+../Middlewares/Third_Party/LwIP/src/core/netif.c:1656:1:netif_index_to_name	8	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:1676:1:netif_get_by_index	0	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:1701:1:netif_find	8	static
 ../Middlewares/Third_Party/LwIP/src/core/netif.c:1637:1:netif_name_to_index	8	static

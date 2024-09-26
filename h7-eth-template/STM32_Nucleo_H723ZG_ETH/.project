@@ -29,11 +29,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>dev-drivers</name>
-			<type>2</type>
-			<location>C:/Users/Jack/Projects/MASA/dev-drivers/Rocket-Avionics/drivers</location>
-		</link>
-	</linkedResources>
 </projectDescription>

@@ -1,5 +1,5 @@
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:218:1:recv_udp	32	static
-../Middlewares/Third_Party/LwIP/src/api/api_msg.c:514:1:setup_tcp	16	static
+../Middlewares/Third_Party/LwIP/src/api/api_msg.c:514:1:setup_tcp	8	static
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:1301:1:lwip_netconn_do_connected	24	static
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:1640:1:lwip_netconn_do_writemore	48	static
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:920:1:lwip_netconn_do_close_internal	32	static
@@ -12,7 +12,7 @@
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:705:1:netconn_alloc	24	static
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:794:1:netconn_free	16	static
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:827:1:netconn_drain	40	static
-../Middlewares/Third_Party/LwIP/src/api/api_msg.c:533:1:accept_function	32	static
+../Middlewares/Third_Party/LwIP/src/api/api_msg.c:533:1:accept_function	24	static
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:1113:1:lwip_netconn_do_delconn	16	static
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:1216:1:lwip_netconn_do_bind	8	static
 ../Middlewares/Third_Party/LwIP/src/api/api_msg.c:1256:1:lwip_netconn_do_bind_if	8	static

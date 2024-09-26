@@ -1,4 +1,4 @@
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:313:19:HAL_PWREx_ConfigSupply	11
+../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:313:19:HAL_PWREx_ConfigSupply	9
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:385:10:HAL_PWREx_GetSupplyConfig	1
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:413:19:HAL_PWREx_ControlVoltageScaling	4
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c:512:10:HAL_PWREx_GetVoltageRange	1

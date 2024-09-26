@@ -6,5 +6,5 @@
 ../Middlewares/Third_Party/LwIP/src/core/timeouts.c:290:1:sys_timeout	2
 ../Middlewares/Third_Party/LwIP/src/core/timeouts.c:317:1:sys_untimeout	6
 ../Middlewares/Third_Party/LwIP/src/core/timeouts.c:352:1:sys_check_timeouts	4
-../Middlewares/Third_Party/LwIP/src/core/timeouts.c:404:1:sys_restart_timeouts	3
+../Middlewares/Third_Party/LwIP/src/core/timeouts.c:404:1:sys_restart_timeouts	4
 ../Middlewares/Third_Party/LwIP/src/core/timeouts.c:426:1:sys_timeouts_sleeptime	2

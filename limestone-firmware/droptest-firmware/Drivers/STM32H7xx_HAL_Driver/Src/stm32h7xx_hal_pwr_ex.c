@@ -340,7 +340,7 @@ HAL_StatusTypeDef HAL_PWREx_ConfigSupply (uint32_t SupplySource)
   }
 
   /* Set the power supply configuration */
-  MODIFY_REG (PWR->CR3, PWR_SUPPLY_CONFIG_MASK, SupplySource);
+  //MODIFY_REG (PWR->CR3, PWR_SUPPLY_CONFIG_MASK, SupplySource);
 
   /* Get tick */
   tickstart = HAL_GetTick ();

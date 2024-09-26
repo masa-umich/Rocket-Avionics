@@ -1,4 +1,4 @@
-../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c:1134:15:prvReadBytesFromBuffer	32	static,ignoring_inline_asm
+../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c:1134:15:prvReadBytesFromBuffer	24	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c:1088:15:prvWriteBytesToBuffer.part.0	24	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c:661:15:prvWriteMessageToBuffer	24	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c:219:23:xStreamBufferGenericCreate	24	static,ignoring_inline_asm

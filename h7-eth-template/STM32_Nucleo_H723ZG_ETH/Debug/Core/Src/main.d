@@ -86,15 +86,15 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../LWIP/Target/ethernetif.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/tcpip.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/lwiperf.h \
- C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tcpserver.h \
+ ../Core/Inc/tcpserver.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/api.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/netbuf.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/sockets.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/inet.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/errno.h \
- C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tsqueue.h \
+ ../Core/Inc/main.h ../Core/Inc/tsqueue.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/freertos.h \
- C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\gitcommit.h
+ ../Core/Inc/gitcommit.h ../Core/Inc/tcppacket.h
 ../Core/Inc/main.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h:
 ../Core/Inc/stm32h7xx_hal_conf.h:
@@ -183,12 +183,14 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../LWIP/Target/ethernetif.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/tcpip.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/lwiperf.h:
-C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tcpserver.h:
+../Core/Inc/tcpserver.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/api.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/netbuf.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/sockets.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/inet.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/errno.h:
-C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tsqueue.h:
+../Core/Inc/main.h:
+../Core/Inc/tsqueue.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/freertos.h:
-C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\gitcommit.h:
+../Core/Inc/gitcommit.h:
+../Core/Inc/tcppacket.h:

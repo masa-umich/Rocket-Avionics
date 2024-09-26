@@ -25,9 +25,9 @@
 /* USER CODE BEGIN Includes */
 /* ETH_CODE: add lwiperf, see comment in StartDefaultTask function */
 #include "lwip/apps/lwiperf.h"
-#include "C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tcpserver.h"
-#include "C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tsqueue.h"
-#include "C:\Users\Jack\Projects\MASA\dev-drivers\Rocket-Avionics\drivers\tcp\inc\tcppacket.h"
+#include "tcpserver.h"
+#include "tsqueue.h"
+#include "tcppacket.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,7 +57,6 @@ osThreadId rxMessagesHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MPU_Initialize(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
@@ -80,9 +79,15 @@ void StartRXMessages(void const * argument);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
 
+  /* USER CODE BEGIN 1 */
+  //SystemClock_Config();
   /* USER CODE END 1 */
+
+  /* MPU Configuration--------------------------------------------------------*/
+  MPU_Config();
+
+  /* Enable the CPU Cache */
 
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();
@@ -95,11 +100,8 @@ int main(void)
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* MPU Configuration--------------------------------------------------------*/
-  MPU_Config();
-
   /* USER CODE BEGIN Init */
-
+  //HAL_TIM_Base_Init(&htim2); // Assuming you are using TIM1
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -152,6 +154,7 @@ int main(void)
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -174,29 +177,28 @@ void SystemClock_Config(void)
 
   /** Supply configuration update enable
   */
-  HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
+  HAL_PWREx_ConfigSupply(PWR_EXTERNAL_SOURCE_SUPPLY);
 
   /** Configure the main internal regulator output voltage
   */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
-  RCC_OscInitStruct.HSICalibrationValue = 64;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 16;
   RCC_OscInitStruct.PLL.PLLN = 125;
   RCC_OscInitStruct.PLL.PLLP = 1;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   RCC_OscInitStruct.PLL.PLLR = 2;
-  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_2;
+  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_1;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
   RCC_OscInitStruct.PLL.PLLFRACN = 0;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -217,7 +219,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -383,7 +385,7 @@ void StartTCPTask(void const * argument)
 
   server_init();
 	for (;;) {
-		osDelay(1);
+	  osDelay(1000);
 	}
 
   /* USER CODE END 5 */
@@ -404,7 +406,7 @@ void StartHeartbeatTask(void const * argument)
   for(;;)
   {
 	  // Heartbeat LED0
-	  HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
+	  HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_1); // FC Blue RGB LED
 
 	  char* msg = malloc(12);
 	  memcpy(msg, "heartbeat\r\n", 12);
@@ -454,7 +456,7 @@ void StartRXMessages(void const * argument)
   /* USER CODE END StartRXMessages */
 }
 
-/* MPU Configuration */
+ /* MPU Configuration */
 
 void MPU_Config(void)
 {
@@ -507,7 +509,7 @@ void MPU_Config(void)
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM6 interrupt took place, inside
+  * @note   This function is called  when TIM2 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -518,7 +520,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM6) {
+  if (htim->Instance == TIM2) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
