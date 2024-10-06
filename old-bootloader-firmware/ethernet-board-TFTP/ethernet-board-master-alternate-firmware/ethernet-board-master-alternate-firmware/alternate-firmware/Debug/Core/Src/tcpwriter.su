@@ -1,0 +1,4 @@
+../Core/Src/tcpwriter.c:30:13:tcpinit_thread	24	static
+../Core/Src/tcpwriter.c:104:13:tcpsend_thread	16	static
+../Core/Src/tcpwriter.c:117:6:tcpsend	32	static
+../Core/Src/tcpwriter.c:125:6:tcpwriter_init	16	static

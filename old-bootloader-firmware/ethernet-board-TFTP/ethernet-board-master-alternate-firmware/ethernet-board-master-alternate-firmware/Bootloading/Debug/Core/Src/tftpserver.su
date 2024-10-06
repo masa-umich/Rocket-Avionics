@@ -1,0 +1,11 @@
+../Drivers/CMSIS/Include/core_cm4.h:1939:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
+../Core/Src/tftpserver.c:57:20:IAP_tftp_decode_op	16	static
+../Core/Src/tftpserver.c:67:14:IAP_tftp_extract_block	24	static
+../Core/Src/tftpserver.c:79:13:IAP_tftp_set_opcode	16	static
+../Core/Src/tftpserver.c:91:13:IAP_tftp_set_block	32	static
+../Core/Src/tftpserver.c:105:14:IAP_tftp_send_ack_packet	40	static
+../Core/Src/tftpserver.c:155:13:IAP_wrq_recv_callback	552	static
+../Core/Src/tftpserver.c:227:12:IAP_tftp_process_write	32	static
+../Core/Src/tftpserver.c:274:13:IAP_tftp_recv_callback	32	static
+../Core/Src/tftpserver.c:323:13:IAP_tftp_cleanup_wr	16	static
+../Core/Src/tftpserver.c:346:6:IAP_tftpd_init	16	static
