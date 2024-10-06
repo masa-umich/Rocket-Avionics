@@ -1,0 +1,9 @@
+../Drivers/CMSIS/Include/core_cm4.h:1939:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
+../Core/Src/stm32f4xx_it.c:71:6:NMI_Handler	4	static
+../Core/Src/stm32f4xx_it.c:86:6:HardFault_Handler	8	static
+../Core/Src/stm32f4xx_it.c:102:6:MemManage_Handler	4	static
+../Core/Src/stm32f4xx_it.c:117:6:BusFault_Handler	4	static
+../Core/Src/stm32f4xx_it.c:132:6:UsageFault_Handler	4	static
+../Core/Src/stm32f4xx_it.c:147:6:DebugMon_Handler	4	static
+../Core/Src/stm32f4xx_it.c:167:6:TIM6_DAC_IRQHandler	8	static
+../Core/Src/stm32f4xx_it.c:181:6:ETH_IRQHandler	8	static

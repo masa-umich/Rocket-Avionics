@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name flight_ec-rescue)(type Legacy)(uri C:/Users/alexh/OneDrive/Documents/3_DesignTeams/masa/tsm-big-boy/Board/flight_ec-rescue.lib)(options "")(descr ""))
+  (lib (name future-controller-rescue)(type Legacy)(uri ${KIPRJMOD}/future-controller-rescue.lib)(options "")(descr ""))
+)
