@@ -5,6 +5,12 @@
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:466:14:prvInitialiseMutex	16	static
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:496:16:xQueueCreateMutex	32	static
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:512:16:xQueueCreateMutexStatic	40	static
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:532:15:xQueueGetMutexHolder	24	static
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:563:15:xQueueGetMutexHolderFromISR	24	static,ignoring_inline_asm
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:589:13:xQueueGiveMutexRecursive	40	static,ignoring_inline_asm
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:644:13:xQueueTakeMutexRecursive	40	static,ignoring_inline_asm
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:686:16:xQueueCreateCountingSemaphoreStatic	48	static,ignoring_inline_asm
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:714:16:xQueueCreateCountingSemaphore	32	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:740:12:xQueueGenericSend	64	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:950:12:xQueueGenericSendFromISR	72	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:1112:12:xQueueGiveFromISR	64	static,ignoring_inline_asm
@@ -17,6 +23,9 @@
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:1946:13:uxQueueSpacesAvailable	32	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:1963:13:uxQueueMessagesWaitingFromISR	32	static,ignoring_inline_asm
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:1975:6:vQueueDelete	24	static,ignoring_inline_asm
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2019:14:uxQueueGetQueueNumber	16	static
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2029:7:vQueueSetQueueNumber	16	static
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2039:10:ucQueueGetQueueType	16	static
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2049:21:prvGetDisinheritPriorityAfterTimeout	24	static
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2074:19:prvCopyDataToQueue	32	static
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2153:13:prvCopyDataFromQueue	16	static
@@ -28,3 +37,4 @@
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2648:7:vQueueAddToRegistry	24	static
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2677:14:pcQueueGetName	24	static
 ../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2705:7:vQueueUnregisterQueue	24	static
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c:2737:7:vQueueWaitForMessageRestricted	32	static

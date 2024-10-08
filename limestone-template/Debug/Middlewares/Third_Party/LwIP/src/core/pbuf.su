@@ -1,6 +1,3 @@
-../Middlewares/Third_Party/LwIP/src/core/pbuf.c:128:1:pbuf_free_ooseq	16	static
-../Middlewares/Third_Party/LwIP/src/core/pbuf.c:148:1:pbuf_free_ooseq_callback	16	static
-../Middlewares/Third_Party/LwIP/src/core/pbuf.c:157:1:pbuf_pool_is_empty	16	static
 ../Middlewares/Third_Party/LwIP/src/core/pbuf.c:179:1:pbuf_init_alloced_pbuf	24	static
 ../Middlewares/Third_Party/LwIP/src/core/pbuf.c:224:1:pbuf_alloc	56	static
 ../Middlewares/Third_Party/LwIP/src/core/pbuf.c:327:1:pbuf_alloc_reference	32	static

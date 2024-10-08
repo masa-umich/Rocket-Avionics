@@ -36,8 +36,6 @@ Middlewares/Third_Party/LwIP/src/apps/mqtt/mqtt.o: \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h \
- ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h \
- ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/debug.h \
@@ -54,26 +52,10 @@ Middlewares/Third_Party/LwIP/src/apps/mqtt/mqtt.o: \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/mqtt_priv.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/altcp.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/tcp.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/tcpbase.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/mem.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/pbuf.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/ip.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/netif.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/stats.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/memp.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/priv/memp_std.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/priv/memp_priv.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/priv/mem_priv.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/ip4.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/prot/ip4.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/ip6.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/prot/ip.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/icmp.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/prot/icmp.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/timeouts.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/sys.h \
  ../Middlewares/Third_Party/LwIP/system/arch/sys_arch.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../Core/Inc/FreeRTOSConfig.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h \
@@ -83,13 +65,9 @@ Middlewares/Third_Party/LwIP/src/apps/mqtt/mqtt.o: \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/mem.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/pbuf.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/altcp_tcp.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/altcp_tls.h
 ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/mqtt.h:
@@ -129,8 +107,6 @@ Middlewares/Third_Party/LwIP/src/apps/mqtt/mqtt.o: \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h:
-../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h:
-../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/debug.h:
@@ -147,26 +123,10 @@ Middlewares/Third_Party/LwIP/src/apps/mqtt/mqtt.o: \
 ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/mqtt_priv.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/altcp.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/tcp.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/tcpbase.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/mem.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/pbuf.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/ip.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/netif.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/stats.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/memp.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/priv/memp_std.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/priv/memp_priv.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/priv/mem_priv.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/ip4.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/prot/ip4.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/ip6.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/prot/ip.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/icmp.h:
-../Middlewares/Third_Party/LwIP/src/include/lwip/prot/icmp.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/timeouts.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/sys.h:
 ../Middlewares/Third_Party/LwIP/system/arch/sys_arch.h:
-../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h:
+../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
 ../Core/Inc/FreeRTOSConfig.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h:
@@ -176,12 +136,8 @@ Middlewares/Third_Party/LwIP/src/apps/mqtt/mqtt.o: \
 ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h:
+../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/mem.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/pbuf.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/altcp_tcp.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/altcp_tls.h:
