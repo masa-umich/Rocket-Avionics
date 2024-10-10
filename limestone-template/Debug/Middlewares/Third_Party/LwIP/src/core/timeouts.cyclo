@@ -1,3 +1,5 @@
+../Middlewares/Third_Party/LwIP/src/core/timeouts.c:144:1:tcpip_tcp_timer	3
+../Middlewares/Third_Party/LwIP/src/core/timeouts.c:166:1:tcp_timer_needed	4
 ../Middlewares/Third_Party/LwIP/src/core/timeouts.c:183:1:sys_timeout_abs	8
 ../Middlewares/Third_Party/LwIP/src/core/timeouts.c:232:1:lwip_cyclic_timer	2
 ../Middlewares/Third_Party/LwIP/src/core/timeouts.c:264:6:sys_timeouts_init	2

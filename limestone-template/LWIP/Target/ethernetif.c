@@ -43,7 +43,7 @@
 #define ETHIF_TX_TIMEOUT (2000U)
 /* USER CODE BEGIN OS_THREAD_STACK_SIZE_WITH_RTOS */
 /* Stack size of the interface thread */
-#define INTERFACE_THREAD_STACK_SIZE ( 350 )
+#define INTERFACE_THREAD_STACK_SIZE ( 1024 )
 /* USER CODE END OS_THREAD_STACK_SIZE_WITH_RTOS */
 /* Network interface name */
 #define IFNAME0 's'
@@ -105,13 +105,13 @@ static uint8_t RxAllocStatus;
 
 #pragma location=0x30000000
 ETH_DMADescTypeDef  DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
-#pragma location=0x30000080
+#pragma location=0x30000100
 ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
 
 #elif defined ( __CC_ARM )  /* MDK ARM Compiler */
 
 __attribute__((at(0x30000000))) ETH_DMADescTypeDef  DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
-__attribute__((at(0x30000080))) ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+__attribute__((at(0x30000100))) ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
 
 #elif defined ( __GNUC__ ) /* GNU Compiler */
 
@@ -133,11 +133,11 @@ __attribute__((section(".Rx_PoolSection"))) extern u8_t memp_memory_RX_POOL_base
 
 /* USER CODE BEGIN 2 */
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
-#pragma location = 0x30040200
+#pragma location = 0x30000200
 extern u8_t memp_memory_RX_POOL_base[];
 
 #elif defined ( __CC_ARM )  /* MDK ARM Compiler */
-__attribute__((at(0x30040200)) extern u8_t memp_memory_RX_POOL_base[];
+__attribute__((at(0x30000200)) extern u8_t memp_memory_RX_POOL_base[];
 
 #elif defined ( __GNUC__ ) /* GNU Compiler */
 __attribute__((section(".Rx_PoolSection"))) extern u8_t memp_memory_RX_POOL_base[];
@@ -676,6 +676,9 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef* ethHandle)
     GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* Peripheral interrupt init */
+    HAL_NVIC_SetPriority(ETH_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(ETH_IRQn);
   /* USER CODE BEGIN ETH_MspInit 1 */
 
   /* USER CODE END ETH_MspInit 1 */
@@ -710,6 +713,9 @@ void HAL_ETH_MspDeInit(ETH_HandleTypeDef* ethHandle)
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_7);
 
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13);
+
+    /* Peripheral interrupt Deinit*/
+    HAL_NVIC_DisableIRQ(ETH_IRQn);
 
   /* USER CODE BEGIN ETH_MspDeInit 1 */
 
@@ -802,7 +808,8 @@ void ethernet_link_thread(void* argument)
 
   struct netif *netif = (struct netif *) argument;
 /* USER CODE BEGIN ETH link init */
-
+#define HAL_ETH_Start HAL_ETH_Start_IT
+  LOCK_TCPIP_CORE();
 /* USER CODE END ETH link init */
 
   for(;;)
@@ -857,7 +864,10 @@ void ethernet_link_thread(void* argument)
   }
 
 /* USER CODE BEGIN ETH link Thread core code for User BSP */
-
+UNLOCK_TCPIP_CORE();
+osDelay(100);
+LOCK_TCPIP_CORE();
+continue;
 /* USER CODE END ETH link Thread core code for User BSP */
 
     osDelay(100);
@@ -867,22 +877,23 @@ void ethernet_link_thread(void* argument)
 void HAL_ETH_RxAllocateCallback(uint8_t **buff)
 {
 /* USER CODE BEGIN HAL ETH RxAllocateCallback */
-  struct pbuf_custom *p = LWIP_MEMPOOL_ALLOC(RX_POOL);
-  if (p)
-  {
-    /* Get the buff from the struct pbuf address. */
-    *buff = (uint8_t *)p + offsetof(RxBuff_t, buff);
-    p->custom_free_function = pbuf_free_custom;
-    /* Initialize the struct pbuf.
-    * This must be performed whenever a buffer's allocated because it may be
-    * changed by lwIP or the app, e.g., pbuf_free decrements ref. */
-    pbuf_alloced_custom(PBUF_RAW, 0, PBUF_REF, p, *buff, ETH_RX_BUFFER_SIZE);
-  }
-  else
-  {
-    RxAllocStatus = RX_ALLOC_ERROR;
-    *buff = NULL;
-  }
+
+	  struct pbuf_custom *p = LWIP_MEMPOOL_ALLOC(RX_POOL);
+	  if (p)
+	  {
+	    /* Get the buff from the struct pbuf address. */
+	    *buff = (uint8_t *)p + offsetof(RxBuff_t, buff);
+	    p->custom_free_function = pbuf_free_custom;
+	    /* Initialize the struct pbuf.
+	    * This must be performed whenever a buffer's allocated because it may be
+	    * changed by lwIP or the app, e.g., pbuf_free decrements ref. */
+	    pbuf_alloced_custom(PBUF_RAW, 0, PBUF_REF, p, *buff, ETH_RX_BUFFER_SIZE);
+	  }
+	  else
+	  {
+	    RxAllocStatus = RX_ALLOC_ERROR;
+	    *buff = NULL;
+	  }
 /* USER CODE END HAL ETH RxAllocateCallback */
 }
 
@@ -890,38 +901,38 @@ void HAL_ETH_RxLinkCallback(void **pStart, void **pEnd, uint8_t *buff, uint16_t 
 {
 /* USER CODE BEGIN HAL ETH RxLinkCallback */
 
-  struct pbuf **ppStart = (struct pbuf **)pStart;
-  struct pbuf **ppEnd = (struct pbuf **)pEnd;
-  struct pbuf *p = NULL;
+	  struct pbuf **ppStart = (struct pbuf **)pStart;
+	  struct pbuf **ppEnd = (struct pbuf **)pEnd;
+	  struct pbuf *p = NULL;
 
-  /* Get the struct pbuf from the buff address. */
-  p = (struct pbuf *)(buff - offsetof(RxBuff_t, buff));
-  p->next = NULL;
-  p->tot_len = 0;
-  p->len = Length;
+	  /* Get the struct pbuf from the buff address. */
+	  p = (struct pbuf *)(buff - offsetof(RxBuff_t, buff));
+	  p->next = NULL;
+	  p->tot_len = 0;
+	  p->len = Length;
 
-  /* Chain the buffer. */
-  if (!*ppStart)
-  {
-    /* The first buffer of the packet. */
-    *ppStart = p;
-  }
-  else
-  {
-    /* Chain the buffer to the end of the packet. */
-    (*ppEnd)->next = p;
-  }
-  *ppEnd  = p;
+	  /* Chain the buffer. */
+	  if (!*ppStart)
+	  {
+	    /* The first buffer of the packet. */
+	    *ppStart = p;
+	  }
+	  else
+	  {
+	    /* Chain the buffer to the end of the packet. */
+	    (*ppEnd)->next = p;
+	  }
+	  *ppEnd  = p;
 
-  /* Update the total length of all the buffers of the chain. Each pbuf in the chain should have its tot_len
-   * set to its own length, plus the length of all the following pbufs in the chain. */
-  for (p = *ppStart; p != NULL; p = p->next)
-  {
-    p->tot_len += Length;
-  }
+	  /* Update the total length of all the buffers of the chain. Each pbuf in the chain should have its tot_len
+	   * set to its own length, plus the length of all the following pbufs in the chain. */
+	  for (p = *ppStart; p != NULL; p = p->next)
+	  {
+	    p->tot_len += Length;
+	  }
 
-  /* Invalidate data cache because Rx DMA's writing to physical memory makes it stale. */
-  SCB_InvalidateDCache_by_Addr((uint32_t *)buff, Length);
+	  /* Invalidate data cache because Rx DMA's writing to physical memory makes it stale. */
+	  SCB_InvalidateDCache_by_Addr((uint32_t *)buff, Length);
 
 /* USER CODE END HAL ETH RxLinkCallback */
 }
@@ -930,12 +941,50 @@ void HAL_ETH_TxFreeCallback(uint32_t * buff)
 {
 /* USER CODE BEGIN HAL ETH TxFreeCallback */
 
-  pbuf_free((struct pbuf *)buff);
+	  pbuf_free((struct pbuf *)buff);
 
 /* USER CODE END HAL ETH TxFreeCallback */
 }
 
 /* USER CODE BEGIN 8 */
+/* ETH_CODE: add functions needed for proper multithreading support and check */
 
+static osThreadId_t lwip_core_lock_holder_thread_id;
+static osThreadId_t lwip_tcpip_thread_id;
+
+void sys_lock_tcpip_core(void){
+	sys_mutex_lock(&lock_tcpip_core);
+	lwip_core_lock_holder_thread_id = osThreadGetId();
+}
+
+void sys_unlock_tcpip_core(void){
+	lwip_core_lock_holder_thread_id = 0;
+	sys_mutex_unlock(&lock_tcpip_core);
+}
+
+void sys_check_core_locking(void){
+  /* Embedded systems should check we are NOT in an interrupt context here */
+
+  LWIP_ASSERT("Function called from interrupt context", (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) == 0);
+
+  if (lwip_tcpip_thread_id != 0) {
+	  osThreadId_t current_thread_id = osThreadGetId();
+
+#if LWIP_TCPIP_CORE_LOCKING
+	LWIP_ASSERT("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);
+	/* ETH_CODE: to easily check that example has correct handling of core lock
+	 * This will trigger breakpoint (__BKPT)
+	 */
+#warning Below check should be removed in production code
+	if(current_thread_id != lwip_core_lock_holder_thread_id) __BKPT(0);
+#else /* LWIP_TCPIP_CORE_LOCKING */
+	LWIP_ASSERT("Function called from wrong thread", current_thread_id == lwip_tcpip_thread_id);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+	LWIP_UNUSED_ARG(current_thread_id); /* for LWIP_NOASSERT */
+  }
+}
+void sys_mark_tcpip_thread(void){
+	lwip_tcpip_thread_id = osThreadGetId();
+}
 /* USER CODE END 8 */
 

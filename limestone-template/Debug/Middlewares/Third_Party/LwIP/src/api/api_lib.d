@@ -32,8 +32,12 @@ Middlewares/Third_Party/LwIP/src/api/api_lib.o: \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_i2c_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr_ex.h \
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rtc.h \
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rtc_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h \
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h \
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/debug.h \
@@ -82,7 +86,12 @@ Middlewares/Third_Party/LwIP/src/api/api_lib.o: \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/priv/tcpip_priv.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/tcpip.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/timeouts.h \
- ../Middlewares/Third_Party/LwIP/src/include/lwip/priv/tcp_priv.h
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/priv/tcp_priv.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/tcp.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/tcpbase.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/icmp.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/prot/icmp.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/prot/tcp.h
 ../Middlewares/Third_Party/LwIP/src/include/lwip/opt.h:
 ../LWIP/Target/lwipopts.h:
 ../Core/Inc/main.h:
@@ -116,8 +125,12 @@ Middlewares/Third_Party/LwIP/src/api/api_lib.o: \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_i2c_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr_ex.h:
+../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rtc.h:
+../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rtc_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h:
+../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h:
+../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/debug.h:
@@ -167,3 +180,8 @@ Middlewares/Third_Party/LwIP/src/api/api_lib.o: \
 ../Middlewares/Third_Party/LwIP/src/include/lwip/tcpip.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/timeouts.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/priv/tcp_priv.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/tcp.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/tcpbase.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/icmp.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/prot/icmp.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/prot/tcp.h:

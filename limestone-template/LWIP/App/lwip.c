@@ -54,7 +54,11 @@ osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
-
+static inline void tcipip_init_wrap(tcpip_init_done_fn initfunc, void *arg) {
+	tcpip_init(initfunc, arg);
+	LOCK_TCPIP_CORE();
+}
+#define tcpip_init tcipip_init_wrap
 /* USER CODE END 2 */
 
 /**
@@ -109,7 +113,7 @@ void MX_LWIP_Init(void)
 /* USER CODE END H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 3 */
-
+UNLOCK_TCPIP_CORE();
 /* USER CODE END 3 */
 }
 
