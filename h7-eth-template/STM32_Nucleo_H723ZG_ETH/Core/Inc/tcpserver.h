@@ -23,7 +23,7 @@
 
 #define MAX_CONN_NUM 8
 
-#define SERVER_PORT 50000
+#define SERVER_PORT 23
 
 #define ALL_CONNECTIONS -1
 
