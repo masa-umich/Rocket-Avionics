@@ -106,12 +106,13 @@ Evan Eidt, Jack Hammerberg, Luke Weaver
 
 *This driver has been copied from one that was written in 2020, pending testing
 
-* ??? - 
+* ADS1120 
     * Type: Temperature 
-    * Interface: SPI1
+    * Interface: SPI2
     * Driver Requirements:
         * Init
         * Send Command
         * Read Register
         * Write Register
         * Get Temperature
+        * Read All TCs and Attach Timestamps
