@@ -106,7 +106,7 @@ Evan Eidt, Jack Hammerberg, Luke Weaver
 
 *This driver has been copied from one that was written in 2020, pending testing
 
-* ??? - 
+* ADS1120 
     * Type: Temperature 
     * Interface: SPI1
     * Driver Requirements:
@@ -115,3 +115,4 @@ Evan Eidt, Jack Hammerberg, Luke Weaver
         * Read Register
         * Write Register
         * Get Temperature
+        * Read All TCs and Attach Timestamps
