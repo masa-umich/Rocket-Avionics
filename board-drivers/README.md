@@ -108,7 +108,7 @@ Evan Eidt, Jack Hammerberg, Luke Weaver
 
 * ADS1120 
     * Type: Temperature 
-    * Interface: SPI1
+    * Interface: SPI2
     * Driver Requirements:
         * Init
         * Send Command
