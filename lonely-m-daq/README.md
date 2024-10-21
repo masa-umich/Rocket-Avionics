@@ -14,7 +14,8 @@ If the board for whatever reason gets reset, either through the power blinking i
 So when you're changing the board over from sensor writing mode to data reading mode, MAKE SURE THE JUMPER IS SET TO POWER (red)!
 
 ### To read sensor data:
-Install Python3 if you haven't already\
+Install Python3 if you haven't already
+
 Install the Serial Python Module:
 ```python -m pip install pyserial```
 - **SET THE MODE JUMPER TO POWER (red)**\
