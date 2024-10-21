@@ -1,4 +1,5 @@
 ../Drivers/CMSIS/Include/core_cm7.h:2032:22:__NVIC_SetPriority	2
+../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c:159:6:SysTick_Handler	2
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c:174:22:SVC_Setup	1
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c:198:12:osKernelInitialize	3
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c:222:12:osKernelGetInfo	5

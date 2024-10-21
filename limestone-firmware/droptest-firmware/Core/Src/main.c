@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "LSM6DSO32XTR.h"
+//#include "LSM6DSO32XTR.h"
 #include "LPS22HBTR.h"
 #include "W25N01GV.h"
 /* USER CODE END Includes */

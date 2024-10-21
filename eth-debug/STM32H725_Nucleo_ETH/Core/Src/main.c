@@ -25,9 +25,9 @@
 /* USER CODE BEGIN Includes */
 /* ETH_CODE: add lwiperf, see comment in StartDefaultTask function */
 #include "lwip/apps/lwiperf.h"
-#include "tcpserver.h"
-#include "tsqueue.h"
-#include "tcppacket.h"
+//#include "tcpserver.h"
+//#include "tsqueue.h"
+//#include "tcppacket.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,8 +60,6 @@ SPI_HandleTypeDef hspi6;
 UART_HandleTypeDef huart10;
 
 osThreadId tcpTaskHandle;
-osThreadId HeartbeatTaskHandle;
-osThreadId rxMessagesHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -80,8 +78,6 @@ static void MX_SPI6_Init(void);
 static void MX_USART10_UART_Init(void);
 static void MX_RTC_Init(void);
 void StartTCPTask(void const * argument);
-void StartHeartbeatTask(void const * argument);
-void StartRXMessages(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -165,14 +161,6 @@ int main(void)
   /* definition and creation of tcpTask */
   osThreadDef(tcpTask, StartTCPTask, osPriorityAboveNormal, 0, 1024);
   tcpTaskHandle = osThreadCreate(osThread(tcpTask), NULL);
-
-  /* definition and creation of HeartbeatTask */
-  osThreadDef(HeartbeatTask, StartHeartbeatTask, osPriorityBelowNormal, 0, 1024);
-  HeartbeatTaskHandle = osThreadCreate(osThread(HeartbeatTask), NULL);
-
-  /* definition and creation of rxMessages */
-  osThreadDef(rxMessages, StartRXMessages, osPriorityIdle, 0, 1024);
-  rxMessagesHandle = osThreadCreate(osThread(rxMessages), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -793,78 +781,20 @@ void StartTCPTask(void const * argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
+  LOCK_TCPIP_CORE();
+  lwiperf_start_tcp_server_default(NULL, NULL);
 
-  server_init();
-	for (;;) {
-	  osDelay(1000);
-	}
+  //ip4_addr_t remote_addr;
+  //IP4_ADDR(&remote_addr, 192, 168, 50, 20);
+  //lwiperf_start_tcp_client_default(&remote_addr, NULL, NULL);
+  UNLOCK_TCPIP_CORE();
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1000);
+  }
 
   /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_StartHeartbeatTask */
-/**
-* @brief Function implementing the HeartbeatTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartHeartbeatTask */
-void StartHeartbeatTask(void const * argument)
-{
-  /* USER CODE BEGIN StartHeartbeatTask */
-  // Infinite loop
-
-  for(;;)
-  {
-	  // Heartbeat LED0
-	  HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-
-	  //char* msg = malloc(12);
-	  //memcpy(msg, "heartbeat\r\n", 12);
-
-	  //server_sendMsg(ALL_CONNECTIONS,  msg, 12);
-
-	  osDelay(500);
-
-  }
-
-  /* USER CODE END StartHeartbeatTask */
-}
-
-/* USER CODE BEGIN Header_StartRXMessages */
-/**
-* @brief Function implementing the rxMessages thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartRXMessages */
-void StartRXMessages(void const * argument)
-{
-  /* USER CODE BEGIN StartRXMessages */
-	char buf[MAX_MSG_LEN];
-  // Infinite loop
-  for(;;)
-  {
-	struct message msg = {-1, buf, MAX_MSG_LEN};
-	//server_retrieveMsg(&msg);
-	// Ideally, server_retrieveMsg should give a packet type and a separate connection fd but that's a massive can of worms
-	// Instead we're going to make a packet type from a different packet type so it works with my code :)
-	struct packet rx_packet;
-	struct packet tx_packet;
-
-	//rx_packet.packet = msg.buf;
-	//rx_packet.packet_len = msg.len;
-	//rx_tcppacket_parse(&rx_packet, &tx_packet);
-
-	/*
-	if (tx_packet.len > 0) {
-		server_sendMsg(msg.connfd, tx_packet.packet, tx_packet.len);
-	}
-	*/
-	osDelay(1);
-  }
-
-  /* USER CODE END StartRXMessages */
 }
 
  /* MPU Configuration */
