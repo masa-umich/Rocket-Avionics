@@ -57,16 +57,32 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SPI5_CS_Pin GPIO_PIN_6
+#define SPI5_CS_GPIO_Port GPIOF
 #define MODE_SW_Pin GPIO_PIN_0
 #define MODE_SW_GPIO_Port GPIOC
 #define RF_NSRT_Pin GPIO_PIN_2
 #define RF_NSRT_GPIO_Port GPIOC
+#define SPI6_CS_Pin GPIO_PIN_0
+#define SPI6_CS_GPIO_Port GPIOA
 #define TC_CS1_Pin GPIO_PIN_9
 #define TC_CS1_GPIO_Port GPIOD
 #define TC_CS2_Pin GPIO_PIN_10
 #define TC_CS2_GPIO_Port GPIOD
+#define VLV_EN3_Pin GPIO_PIN_8
+#define VLV_EN3_GPIO_Port GPIOG
+#define VLV_EN1_Pin GPIO_PIN_6
+#define VLV_EN1_GPIO_Port GPIOC
+#define VLV_EN2_Pin GPIO_PIN_8
+#define VLV_EN2_GPIO_Port GPIOA
+#define BUFF_CLR_Pin GPIO_PIN_9
+#define BUFF_CLR_GPIO_Port GPIOA
+#define BUFF_CLK_Pin GPIO_PIN_10
+#define BUFF_CLK_GPIO_Port GPIOA
 #define VLV_CTRL_Pin GPIO_PIN_15
 #define VLV_CTRL_GPIO_Port GPIOA
+#define SPI1_CS_Pin GPIO_PIN_10
+#define SPI1_CS_GPIO_Port GPIOG
 #define BUZZ_Pin GPIO_PIN_8
 #define BUZZ_GPIO_Port GPIOB
 #define LED_RED_Pin GPIO_PIN_9
