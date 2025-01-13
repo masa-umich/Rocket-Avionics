@@ -1,8 +1,0 @@
-../Drivers/CMSIS/Include/core_cm4.h:1939:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
-../Core/Src/tcpserver.c:17:9:devparse	40	static
-../Core/Src/tcpserver.c:93:6:server_init	16	static
-../Core/Src/tcpserver.c:113:13:server_waitForClientConnection	48	static
-../Core/Src/tcpserver.c:155:15:server_addConnection	24	static
-../Core/Src/tcpserver.c:187:13:server_removeConnection	24	static
-../Core/Src/tcpserver.c:198:13:server_recv	456	static
-../Core/Src/tcpserver.c:240:13:server_broadcast	32	static

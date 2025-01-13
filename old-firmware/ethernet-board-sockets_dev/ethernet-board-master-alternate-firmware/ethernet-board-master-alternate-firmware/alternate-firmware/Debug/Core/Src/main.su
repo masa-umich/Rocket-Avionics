@@ -1,0 +1,9 @@
+../Core/Src/main.c:73:5:main	104	static
+../Core/Src/main.c:153:6:SystemClock_Config	88	static
+../Core/Src/main.c:201:13:MX_RTC_Init	8	static
+../Core/Src/main.c:236:13:MX_GPIO_Init	48	static
+../Core/Src/main.c:302:6:StartTCPTask	16	static
+../Core/Src/main.c:324:6:StartHeartbeatTask	24	static
+../Core/Src/main.c:353:6:StartRXMessages	656	static
+../Core/Src/main.c:386:6:HAL_TIM_PeriodElapsedCallback	16	static
+../Core/Src/main.c:403:6:Error_Handler	4	static,ignoring_inline_asm

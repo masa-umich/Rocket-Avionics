@@ -1,0 +1,34 @@
+EESchema-LIBRARY Version 2.4
+#encoding utf-8
+#
+# MountingHole-engine_controller_series3-rescue-engine_controller_series3-rescue-flight_ec-rescue
+#
+DEF MountingHole-engine_controller_series3-rescue-engine_controller_series3-rescue-flight_ec-rescue MH 0 40 Y Y 1 F N
+F0 "MH" -300 200 49 H V C CNN
+F1 "MountingHole-engine_controller_series3-rescue-engine_controller_series3-rescue-flight_ec-rescue" -250 -200 49 H V C CNN
+F2 "" 0 0 49 H I C CNN
+F3 "" 0 0 49 H I C CNN
+DRAW
+C -300 0 100 0 1 0 N
+C -300 0 158 0 1 0 N
+X GND 1 0 0 200 L 50 50 1 1 I
+ENDDRAW
+ENDDEF
+#
+# TL1963A-33DCYR-engine_controller_series3-rescue-engine_controller_series3-rescue-flight_ec-rescue
+#
+DEF TL1963A-33DCYR-engine_controller_series3-rescue-engine_controller_series3-rescue-flight_ec-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 150 49 H V C CNN
+F1 "TL1963A-33DCYR-engine_controller_series3-rescue-engine_controller_series3-rescue-flight_ec-rescue" -450 -300 49 H V C CNN
+F2 "" 0 0 49 H I C CNN
+F3 "" 0 0 49 H I C CNN
+DRAW
+S -250 100 250 -250 0 1 0 f
+X VIN 1 -450 0 200 R 50 50 1 1 I
+X GND 2 -50 -450 200 U 50 50 1 1 I
+X OUT 3 450 0 200 L 50 50 1 1 I
+X TAB 4 50 -450 200 U 50 50 1 1 I
+ENDDRAW
+ENDDEF
+#
+#End Library
