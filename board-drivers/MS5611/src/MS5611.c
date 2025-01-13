@@ -24,7 +24,7 @@ HAL_StatusTypeDef MS5611_read(MS5611* BAR, uint8_t reg_addr, uint8_t* rx_buffer,
 	taskENTER_CRITICAL();
 	
 	MS5611_chipSelect(BAR);
-	status=HAL_SPI_Receive(BAR->hspi,(uint8_t *)rx_buffer, num_bytes,BAR->SPI_TIMEOUT);
+	status=HAL_SPI_Receive(BAR->hspi, (uint8_t *)rx_buffer, num_bytes, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 	
 	taskEXIT_CRITICAL();
@@ -39,19 +39,38 @@ HAL_StatusTypeDef MS5611_write(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_byte
 	taskENTER_CRITICAL();
 
 	MS5611_chipSelect(BAR);
-	status = HAL_SPI_Transmit(BAR->hspi, (uint8_t *)tx_buffer, num_bytes + 1, BAR->SPI_TIMEOUT);
+	status = HAL_SPI_Transmit(BAR->hspi, (uint8_t *)tx_buffer, 1, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 
 	taskEXIT_CRITICAL();
 	return status;
 }
 
+int MS5611_send(MS5611* BAR, uint8_t reg) {
+	if (MS5611_write(BAR, &reg, 1) == HAL_OK) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+uint8_t MS5611_recieve(MS5611* BAR, uint8_t reg, uint8_t rx_num_bytes) {
+	assert(rx_num_bytes <= 4); // we shouldn't need to read more than 24bits tbh
+	uint8_t rx_buffer[4]; // i don't wanna do malloc on this shi
+	if (MS5611_read(BAR, reg, &rx_buffer, rx_num_bytes) == HAL_OK) {
+		return rx_buffer;
+	} else {
+		return 0;
+	}
+}
+
 // Software and memory reset
 int MS5611_Reset(MS5611* BAR) {
-	MS5611_send(BAR, BAR_CTRL2_C, BAR_SW_RESET); // NEED REG MAP -- UPDATE TO NEW NAMES
-
-    HAL_Delay(50); // Ensure the reset is complete
-    return 0;
+	if (!MS5611_send(BAR, MS5611_RESET)) {
+		osDelay(5); // Time for reset
+    	return 0;
+	}
+	return 1;
 }
 
 // Read the programmable read only memory
@@ -60,23 +79,17 @@ int MS5611_readPROM(MS5611* BAR) {
 }
 
 //Pressure convert
-float MS5611_presConvert(uint8_t XL_Byte, uint8_t L_Byte, uint8_t H_Byte) {
+float MS5611_presConvert() {
 
 }
 
 //Altitude convert
-float MS5611_altConvert(uint8_t XL_Byte, uint8_t L_Byte, uint8_t H_Byte, float BAR_SEA_LEVEL_PRESS) {
+float MS5611_tempConvert() {
 
 }
 
-//Temperature convert
-float MS5611_tempConvert(uint8_t L_Byte, uint8_t H_Byte) {
-
-}
-
-//Initialize barometer
-int MS5611_init(MS5611* BAR) {
-
+int MS5611_compensateTemp(float* temp, float* pres) {
+	
 }
 
 //Get pressure from barometer
@@ -86,25 +99,5 @@ int MS5611_getPres(MS5611* BAR, float* pres) {
 
 //Get angular rate from barometer
 int MS5611_getAlt(MS5611* BAR, float* alt, float BAR_SEA_LEVEL_PRESS) {
-
-}
-
-//Get temperature from barometer
-int MS5611_getTemp(MS5611* BAR, float* temp) {
-
-}
-
-//Send command to barometer
-int MS5611_send(MS5611* BAR, uint8_t cmd, uint8_t value) { 
-
-}
-
-//Waits / blocks for the pressure data to be ready
-int MS5611_waitForPres(MS5611* BAR) {
-
-}
-
-//Waits / blocks for the temperature data to be ready
-int MS5611_waitForTemp(MS5611* BAR) {
 
 }
