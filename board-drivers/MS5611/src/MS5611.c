@@ -19,17 +19,39 @@ void MS5611_chipRelease(MS5611* BAR) {
 
 //Read register from barometer
 HAL_StatusTypeDef MS5611_read(MS5611* BAR, uint8_t reg_addr, uint8_t* rx_buffer, uint8_t num_bytes) {
+	HAL_StatusTypeDef status;
 
+	taskENTER_CRITICAL();
+	
+	MS5611_chipSelect(BAR);
+	status=HAL_SPI_Receive(BAR->hspi,(uint8_t *)rx_buffer, num_bytes,BAR->SPI_TIMEOUT);
+	MS5611_chipRelease(BAR);
+	
+	taskEXIT_CRITICAL();
+
+	return status;
 }
 
 //Write register from barometer
 HAL_StatusTypeDef MS5611_write(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_bytes) {
+	HAL_StatusTypeDef status;
 
+	taskENTER_CRITICAL();
+
+	MS5611_chipSelect(BAR);
+	status = HAL_SPI_Transmit(BAR->hspi, (uint8_t *)tx_buffer, num_bytes + 1, BAR->SPI_TIMEOUT);
+	MS5611_chipRelease(BAR);
+
+	taskEXIT_CRITICAL();
+	return status;
 }
 
 // Software and memory reset
 int MS5611_Reset(MS5611* BAR) {
+	MS5611_send(BAR, BAR_CTRL2_C, BAR_SW_RESET); // NEED REG MAP -- UPDATE TO NEW NAMES
 
+    HAL_Delay(50); // Ensure the reset is complete
+    return 0;
 }
 
 // Read the programmable read only memory
@@ -73,7 +95,7 @@ int MS5611_getTemp(MS5611* BAR, float* temp) {
 }
 
 //Send command to barometer
-int MS5611_send(MS5611* BAR, uint8_t cmd, uint8_t value) {
+int MS5611_send(MS5611* BAR, uint8_t cmd, uint8_t value) { 
 
 }
 

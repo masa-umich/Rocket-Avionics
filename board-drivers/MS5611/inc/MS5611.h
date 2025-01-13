@@ -17,6 +17,22 @@
     #error "This library is designed for use with FreeRTOS. Please include the FreeRTOS library in your project."
 #endif
 
+//Begin register map
+#define MS5611_RESET            (uint8_t)0x1E
+#define MS5611_D1_OSR_256       (uint8_t)0x40
+#define MS5611_D1_OSR_512       (uint8_t)0x42
+#define MS5611_D1_OSR_1024      (uint8_t)0x44
+#define MS5611_D1_OSR_2048      (uint8_t)0x46
+#define MS5611_D1_OSR_4096      (uint8_t)0x48
+#define MS5611_D2_OSR_256       (uint8_t)0x50
+#define MS5611_D2_OSR_512       (uint8_t)0x52
+#define MS5611_D2_OSR_1024      (uint8_t)0x54
+#define MS5611_D2_OSR_2048      (uint8_t)0x56
+#define MS5611_D2_OSR_4096      (uint8_t)0x58
+#define MS5611_ADC              (uint8_t)0x00
+#define MS5611_PROM             (uint8_t)0xA0 //A0 to AE
+//End register map
+
 typedef struct {
     //SPI stuff
     SPI_HandleTypeDef* hspi;
