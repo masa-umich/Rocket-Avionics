@@ -9,8 +9,13 @@
 #define FCBBADC_H
 
 #include "main.h"
-#include "FreeRTOS.h"
-#include "task.h"
+
+#ifndef FreeRTOS_H
+    #include "FreeRTOS.h"
+    #include "task.h"
+#else
+    #error "This library is designed for use with FreeRTOS. Please include the FreeRTOS library in your project."
+#endif
 
 //Gives the raw value of the ADCs (0-4095) in an array (defined in ADCinit())
 int readADCRaw(ADC_HandleTypeDef* hadc1, int channels, int* adcValues, int maxDelayPerChannel);

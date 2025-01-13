@@ -1,3 +1,0 @@
-../Core/Src/tcppacket.c:19:5:rx_tcppacket_parse	16
-../Core/Src/tcppacket.c:108:5:tcppacket_encode	1
-../Core/Src/tcppacket.c:117:5:tx_telemetry_encode	1

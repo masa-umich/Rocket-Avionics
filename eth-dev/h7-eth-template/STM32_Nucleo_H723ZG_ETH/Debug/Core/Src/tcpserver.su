@@ -1,0 +1,14 @@
+../Drivers/CMSIS/Include/core_cm7.h:2156:34:__NVIC_SystemReset	0	static,ignoring_inline_asm
+../Core/Src/tcpserver.c:97:6:msgFreeCallback	0	static
+../Core/Src/tcpserver.c:22:9:devparse	16	static
+../Core/Src/tcpserver.c:105:6:server_init	16	static
+../Core/Src/tcpserver.c:185:6:server_addConnection	16	static
+../Core/Src/tcpserver.c:142:6:server_listen	56	static
+../Core/Src/tcpserver.c:205:6:server_removeConnection	16	static
+../Core/Src/tcpserver.c:347:6:server_send	320	static
+../Core/Src/tcpserver.c:222:6:server_removeAllConnections	24	static
+../Core/Src/tcpserver.c:236:6:server_setFDs	16	static
+../Core/Src/tcpserver.c:250:6:server_handleRecv	48	static
+../Core/Src/tcpserver.c:276:6:server_recv	56	static
+../Core/Src/tcpserver.c:311:6:server_sendMsg	48	static
+../Core/Src/tcpserver.c:343:6:server_retrieveMsg	0	static

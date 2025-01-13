@@ -6,7 +6,7 @@
  *
  */
 
-#include "../inc/FCBBADC.h"
+#include "FCBBADC.h"
 
 // Needed for readADC() as it also returns a timestamp
 extern uint64_t getTimestamp(void);

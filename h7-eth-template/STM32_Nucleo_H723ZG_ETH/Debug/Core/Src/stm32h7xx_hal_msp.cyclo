@@ -1,3 +1,0 @@
-../Core/Src/stm32h7xx_hal_msp.c:64:6:HAL_MspInit	1
-../Core/Src/stm32h7xx_hal_msp.c:88:6:HAL_RTC_MspInit	3
-../Core/Src/stm32h7xx_hal_msp.c:122:6:HAL_RTC_MspDeInit	2
