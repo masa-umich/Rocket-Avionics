@@ -45,6 +45,14 @@ typedef struct {
     float alt_offset;
 } MS5611;
 
+enum OSR {
+    OSR_256 = 0,
+    OSR_512 = 1,
+    OSR_1024 = 2,
+    OSR_2048 = 3,
+    OSR_4096 = 4
+}
+
 //Pressure convert
 float MS5611_presConvert(MS5611 XL_Byte, uint8_t L_Byte, uint8_t H_Byte);
 

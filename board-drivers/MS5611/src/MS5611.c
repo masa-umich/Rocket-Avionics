@@ -18,7 +18,7 @@ void MS5611_chipRelease(MS5611* BAR) {
 }
 
 //Read register from barometer
-HAL_StatusTypeDef MS5611_read(MS5611* BAR, uint8_t reg_addr, uint8_t* rx_buffer, uint8_t num_bytes) {
+HAL_StatusTypeDef MS5611_read(MS5611* BAR, uint8_t* rx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
 	taskENTER_CRITICAL();
@@ -54,14 +54,11 @@ int MS5611_send(MS5611* BAR, uint8_t reg) {
 	}
 }
 
-uint8_t MS5611_recieve(MS5611* BAR, uint8_t reg, uint8_t rx_num_bytes) {
-	assert(rx_num_bytes <= 4); // we shouldn't need to read more than 24bits tbh
-	uint8_t rx_buffer[4]; // i don't wanna do malloc on this shi
-	if (MS5611_read(BAR, reg, &rx_buffer, rx_num_bytes) == HAL_OK) {
-		return rx_buffer;
-	} else {
-		return 0;
+int MS5611_recieve(MS5611* BAR, uint8_t rx_num_bytes, uint8_t* rx_buffer) {
+	if (MS5611_read(BAR, &rx_buffer, rx_num_bytes) != HAL_OK) {
+		return 1;
 	}
+	return 0;
 }
 
 // Software and memory reset
@@ -74,22 +71,74 @@ int MS5611_Reset(MS5611* BAR) {
 }
 
 // Read the programmable read only memory
-int MS5611_readPROM(MS5611* BAR) {
-
+// Note: prom_buffer must be of size 6
+int MS5611_readPROM(MS5611* BAR, uint16_t* prom_buffer) {
+	for (int i = 0; i < 6; i++) {
+		if (MS5611_send(BAR, MS5611_PROM + i)) {
+			return 1;
+		}
+		if (MS5611_recieve(BAR, 2, (uint8_t*)prom_buffer + (i*2))) {
+			return 1;
+		}
+	}
+	return 0;
 }
 
-//Pressure convert
-float MS5611_presConvert() {
-
+// Pressure convert
+// OSR is the 
+int MS5611_presConvert(MS5611* BAR, uint32_t pres, OSR osr) {
+	uint8_t cmd = 0x00;
+	switch (osr) {
+		case OSR_256:
+			cmd = MS5611_D1_OSR_256;
+		case OSR_512:
+			cmd = MS5611_D1_OSR_512;
+		case OSR_1024:
+			cmd = MS5611_D1_OSR_1024;
+		case OSR_2048:
+			cmd = MS5611_D1_OSR_2048;
+		case OSR_4096:
+			cmd = MS5611_D1_OSR_4096;
+		default:
+			return 1; // invalid OSR
+	}
+	if (cmd == 0x00) { return 1; } // invalid cmd
+	MS5611_send(BAR, cmd);
+	if (MS5611_recieve(BAR, 3, rx_buffer)) {
+		return 1;
+	}
+	uint32_t pres = (rx_buffer[0] << 16) | (rx_buffer[1] << 8) | (rx_buffer[2]);
+	return 0;
 }
 
 //Altitude convert
-float MS5611_tempConvert() {
-
+int MS5611_tempConvert(MS5611* BAR, uint32_t temp, OSR osr) {
+	uint8_t cmd = 0x00;
+	switch (osr) {
+		case OSR_256:
+			cmd = MS5611_D2_OSR_256;
+		case OSR_512:
+			cmd = MS5611_D2_OSR_512;
+		case OSR_1024:
+			cmd = MS5611_D2_OSR_1024;
+		case OSR_2048:
+			cmd = MS5611_D2_OSR_2048;
+		case OSR_4096:
+			cmd = MS5611_D2_OSR_4096;
+		default:
+			return 1; // invalid OSR
+	}
+	if (cmd == 0x00) { return 1; } // invalid cmd
+	MS5611_send(BAR, cmd);
+	if (MS5611_recieve(BAR, 3, rx_buffer)) {
+		return 1;
+	}
+	uint32_t temp = (rx_buffer[0] << 16) | (rx_buffer[1] << 8) | (rx_buffer[2]);
+	return 0;
 }
 
 int MS5611_compensateTemp(float* temp, float* pres) {
-	
+
 }
 
 //Get pressure from barometer
