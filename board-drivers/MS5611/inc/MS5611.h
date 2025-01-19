@@ -53,6 +53,18 @@ enum OSR {
     OSR_4096 = 4
 }
 
+typedef union {
+    uint16_t bytes[6];
+    struct {
+        uint16_t C1;
+        uint16_t C2;
+        uint16_t C3;
+        uint16_t C4;
+        uint16_t C5;
+        uint16_t C6;
+    }
+} MS5611_PROM_t;
+
 //Pressure convert
 float MS5611_presConvert(MS5611 XL_Byte, uint8_t L_Byte, uint8_t H_Byte);
 

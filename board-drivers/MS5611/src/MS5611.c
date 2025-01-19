@@ -72,12 +72,12 @@ int MS5611_Reset(MS5611* BAR) {
 
 // Read the programmable read only memory
 // Note: prom_buffer must be of size 6
-int MS5611_readPROM(MS5611* BAR, uint16_t* prom_buffer) {
+int MS5611_readPROM(MS5611* BAR, MS5611_PROM_t* prom_buffer) {
 	for (int i = 0; i < 6; i++) {
 		if (MS5611_send(BAR, MS5611_PROM + i)) {
 			return 1;
 		}
-		if (MS5611_recieve(BAR, 2, (uint8_t*)prom_buffer + (i*2))) {
+		if (MS5611_recieve(BAR, 2, prom_buffer.bytes[i])) {
 			return 1;
 		}
 	}
@@ -86,7 +86,7 @@ int MS5611_readPROM(MS5611* BAR, uint16_t* prom_buffer) {
 
 // Pressure convert
 // OSR is the 
-int MS5611_presConvert(MS5611* BAR, uint32_t &pres, OSR osr) {
+int MS5611_presConvert(MS5611* BAR, uint32_t* pres_raw, OSR osr) {
 	uint8_t cmd = 0x00;
 	switch (osr) {
 		case OSR_256:
@@ -112,7 +112,7 @@ int MS5611_presConvert(MS5611* BAR, uint32_t &pres, OSR osr) {
 }
 
 //Altitude convert
-int MS5611_tempConvert(MS5611* BAR, uint32_t temp, OSR osr) {
+int MS5611_tempConvert(MS5611* BAR, uint32_t* temp_raw, OSR osr) {
 	uint8_t cmd = 0x00;
 	switch (osr) {
 		case OSR_256:
@@ -137,8 +137,13 @@ int MS5611_tempConvert(MS5611* BAR, uint32_t temp, OSR osr) {
 	return 0;
 }
 
-int MS5611_compensateTemp(float* temp, float* pres) {
+int MS5611_compensateTemp(float* pres, uint32_t* pres_raw, uint32_t* temp_raw, MS6511_PROM_t prom) {
+	int32_t dT = temp_raw - prom.C5 * (2**8);
+	int32_t temp = 2000 + dT * prom.C6 / (2**23);
 
+	int64_t offset = prom.C2 * (2**16) + (prom.C4 * dT) / (2**7);
+	int64_t sensitivity = prom.C1 * (2**15) + (prom.C3 * dT) / (2**8);
+	pres = (pres_raw * sensitivity / (2**21) - offset) / (2**15);
 }
 
 //Get pressure from barometer
