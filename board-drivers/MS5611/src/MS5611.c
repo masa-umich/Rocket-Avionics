@@ -147,11 +147,17 @@ int MS5611_compensateTemp(float* pres, uint32_t* pres_raw, uint32_t* temp_raw, M
 }
 
 //Get pressure from barometer
-int MS5611_getPres(MS5611* BAR, float* pres) {
-
+int MS5611_getPres(MS5611* BAR, float* pres, OSR osr) {
+	MS5611_PROM_t prom;
+	MS5611_readPROM(BAR, prom) = 1 ? return 1;
+	uint32_t pres_raw;
+	uint32_t temp_raw;
+	MS5611_presConvert(BAR, pres_raw, osr) = 1 ? return 1;
+	MS5611_tempConvert(BAR, temp_raw, osr) = 1 ? return 1;
+	MS5611_compensateTemp(pres, pres_raw, temp_raw, prom) = 1 ? return 1;
 }
 
-//Get angular rate from barometer
+//Get rough altitude based on pressure
 int MS5611_getAlt(MS5611* BAR, float* alt, float BAR_SEA_LEVEL_PRESS) {
 
 }
