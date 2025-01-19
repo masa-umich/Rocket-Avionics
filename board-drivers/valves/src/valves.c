@@ -24,11 +24,12 @@ void VLV_Set_Voltage(Shift_Reg reg, uint8_t config) {
     // Shift in the configuration bits
     for (int i = 7; i >= 0; i--) {
         // Set the data (CTRL) pin
-        HAL_GPIO_WritePin(reg.VLV_CTR_GPIO_Port, reg.VLV_CTR_GPIO_Pin, (config & (1 << i)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-
+        GPIO_PinState state = config & (1 << i); // Get the i-th bit of config
+        HAL_GPIO_WritePin(reg.VLV_CTR_GPIO_Port, reg.VLV_CTR_GPIO_Pin, state);
         // Generate a clock pulse
         HAL_GPIO_WritePin(reg.VLV_CLK_GPIO_Port, reg.VLV_CLK_GPIO_Pin, GPIO_PIN_SET);
         vTaskDelay(pdMS_TO_TICKS(1)); // Small delay to meet timing requirements
+        // TODO: do this in a way that doesn't block, or at least blocks-less
         HAL_GPIO_WritePin(reg.VLV_CLK_GPIO_Port, reg.VLV_CLK_GPIO_Pin, GPIO_PIN_RESET);
         vTaskDelay(pdMS_TO_TICKS(1)); // Small delay to meet timing requirements
     }

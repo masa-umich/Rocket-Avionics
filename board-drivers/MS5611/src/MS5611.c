@@ -86,7 +86,7 @@ int MS5611_readPROM(MS5611* BAR, uint16_t* prom_buffer) {
 
 // Pressure convert
 // OSR is the 
-int MS5611_presConvert(MS5611* BAR, uint32_t pres, OSR osr) {
+int MS5611_presConvert(MS5611* BAR, uint32_t &pres, OSR osr) {
 	uint8_t cmd = 0x00;
 	switch (osr) {
 		case OSR_256:
