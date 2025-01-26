@@ -23,12 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "valves.h"
-//#include "tcpserver.h"
-//#include "tsqueue.h"
-//#include "tcppacket.h"
-//#include <lwip/sockets.h> // lwIP specific
-//#include <lwip/inet.h>    // For inet_addr()
+#include "MS5611.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -869,29 +864,7 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-	Shift_Reg reg = {0};
-	reg.VLV_CTR_GPIO_Port = GPIOA;
-	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
-	reg.VLV_CLK_GPIO_Port = GPIOA;
-	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
-	reg.VLV_CLR_GPIO_Port = GPIOA;
-	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
 
-	Valve VLV1 = {0};
-	VLV1.VLV_EN_GPIO_Port = GPIOC;
-	VLV1.VLV_EN_GPIO_Pin = VLV_EN1_Pin;
-
-	VLV_Set_Voltage(reg, 0b00000010);
-	//VLV_Set_Voltage(reg, 0xFF);
-
-	// fuck
-	//HAL_GPIO_WritePin(reg.VLV_CTR_GPIO_Port, reg.VLV_CTR_GPIO_Pin, GPIO_PIN_SET);
-
-	for (;;) {
-		VLV_Toggle(VLV1);
-		HAL_GPIO_TogglePin(GPIOE, LED_BLUE_Pin);
-		osDelay(1000);
-	}
   /* USER CODE END 5 */
 }
 
