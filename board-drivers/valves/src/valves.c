@@ -48,5 +48,5 @@ void VLV_Den(Valve vlv) {
 }
 
 bool isOpenLoad(Valve vlv) {
-    return HAL_GPIO_ReadPin(vlv.VLV_EN_GPIO_Port, vlv.VLV_EN_GPIO_Pin);
+    return HAL_GPIO_ReadPin(vlv.VLV_OLD_GPIO_Port, vlv.VLV_OLD_GPIO_Pin);
 }

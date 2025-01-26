@@ -24,7 +24,7 @@ HAL_StatusTypeDef MS5611_read(MS5611* BAR, uint8_t* rx_buffer, uint8_t num_bytes
 	taskENTER_CRITICAL();
 	
 	MS5611_chipSelect(BAR);
-	status=HAL_SPI_Receive(BAR->hspi, (uint8_t *)rx_buffer, num_bytes, BAR->SPI_TIMEOUT);
+	status = HAL_SPI_Receive(BAR->hspi, (uint8_t *)rx_buffer, num_bytes, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 	
 	taskEXIT_CRITICAL();
@@ -157,9 +157,7 @@ int MS5611_getPres(MS5611* BAR, float* pres, OSR osr) {
 	MS5611_compensateTemp(pres, pres_raw, temp_raw, prom) = 1 ? return 1;
 }
 
-//Get rough altitude (meters) based on pressure
-int MS5611_getAlt(MS5611* BAR, float* alt, float BAR_SEA_LEVEL_PRESS, OSR osr) {
-	float* pres;
-	MS5611_getPres(BAR,pres,osr) = 1 ? return 1;
-	alt = (1 - pow((pres / BAR_SEA_LEVEL_PRESS),0.1903)) * 145366.45 * 0.3048;
+//Get rough altitude based on pressure
+int MS5611_getAlt(MS5611* BAR, float* alt, float BAR_SEA_LEVEL_PRESS) {
+
 }

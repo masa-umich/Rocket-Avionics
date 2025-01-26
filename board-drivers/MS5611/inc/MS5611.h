@@ -93,7 +93,7 @@ int MS5611_init(MS5611* BAR);
 int MS5611_getPres(MS5611* BAR, float* pres);
 
 //Get angular rate from barometer
-int MS5611_getAlt(MS5611* BAR, float* alt, float BAR_SEA_LEVEL_PRESS, OSR osr);
+int MS5611_getAlt(MS5611* BAR, float* alt, float BAR_SEA_LEVEL_PRESS);
 
 //Get temperature from barometer
 int MS5611_getTemp(MS5611* BAR, float* temp);
