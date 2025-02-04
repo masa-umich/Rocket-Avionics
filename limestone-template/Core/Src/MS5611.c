@@ -48,7 +48,7 @@ HAL_StatusTypeDef MS5611_write(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_byte
 }
 
 int MS5611_send(MS5611* BAR, uint8_t reg) {
-	if (MS5611_write(BAR, &reg, 1) == HAL_OK) {
+	if (MS5611_write(BAR, &reg, 1) != HAL_OK) {
 		return 1;
 	} else {
 		return 0;

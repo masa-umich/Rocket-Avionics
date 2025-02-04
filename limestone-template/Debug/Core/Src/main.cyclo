@@ -12,6 +12,6 @@
 ../Core/Src/main.c:702:13:MX_USART10_UART_Init	5
 ../Core/Src/main.c:750:13:MX_GPIO_Init	1
 ../Core/Src/main.c:864:6:StartDefaultTask	1
-../Core/Src/main.c:873:6:MPU_Config	1
-../Core/Src/main.c:931:6:HAL_TIM_PeriodElapsedCallback	2
-../Core/Src/main.c:948:6:Error_Handler	1
+../Core/Src/main.c:889:6:MPU_Config	1
+../Core/Src/main.c:947:6:HAL_TIM_PeriodElapsedCallback	2
+../Core/Src/main.c:964:6:Error_Handler	1

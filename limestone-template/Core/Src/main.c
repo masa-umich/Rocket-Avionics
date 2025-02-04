@@ -80,7 +80,7 @@ UART_HandleTypeDef huart10;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 256 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
@@ -667,7 +667,7 @@ static void MX_SPI6_Init(void)
   hspi6.Init.Direction = SPI_DIRECTION_2LINES;
   hspi6.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi6.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi6.Init.CLKPhase = SPI_PHASE_2EDGE;
+  hspi6.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi6.Init.NSS = SPI_NSS_SOFT;
   hspi6.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
   hspi6.Init.FirstBit = SPI_FIRSTBIT_MSB;
@@ -769,8 +769,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, RF_NSRT_Pin|VLV_EN1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, SPI6_CS_Pin|VLV_EN2_Pin|BUFF_CLR_Pin|BUFF_CLK_Pin
-                          |VLV_CTRL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, SPI6_CS_Pin|BAR2_CS_Pin|VLV_EN2_Pin|BUFF_CLR_Pin
+                          |BUFF_CLK_Pin|VLV_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, TC_CS1_Pin|TC_CS2_Pin, GPIO_PIN_RESET);
@@ -804,8 +804,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SPI6_CS_Pin VLV_EN2_Pin */
-  GPIO_InitStruct.Pin = SPI6_CS_Pin|VLV_EN2_Pin;
+  /*Configure GPIO pins : SPI6_CS_Pin BAR2_CS_Pin VLV_EN2_Pin */
+  GPIO_InitStruct.Pin = SPI6_CS_Pin|BAR2_CS_Pin|VLV_EN2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -864,7 +864,23 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
+    MS5611 baro = {0};
+	baro.hspi = &hspi6;
+	baro.CS_GPIO_Pin = BAR2_CS_Pin;
+	baro.CS_GPIO_Port = BAR2_CS_GPIO_Port;
+	baro.SPI_TIMEOUT = 1000;
+	baro.pres_offset = 0;
+	baro.alt_offset = 0;
 
+	MS5611_PROM_t prom = {0};
+	float pres = 0;
+
+	MS5611_Reset(&baro);
+	MS5611_readPROM(&baro, &prom);
+
+	for (;;) {
+		MS5611_getPres(&baro, &pres, OSR_256);
+	}
   /* USER CODE END 5 */
 }
 

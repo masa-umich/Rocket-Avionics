@@ -65,6 +65,8 @@ void Error_Handler(void);
 #define RF_NSRT_GPIO_Port GPIOC
 #define SPI6_CS_Pin GPIO_PIN_0
 #define SPI6_CS_GPIO_Port GPIOA
+#define BAR2_CS_Pin GPIO_PIN_3
+#define BAR2_CS_GPIO_Port GPIOA
 #define TC_CS1_Pin GPIO_PIN_9
 #define TC_CS1_GPIO_Port GPIOD
 #define TC_CS2_Pin GPIO_PIN_10
