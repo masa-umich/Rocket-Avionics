@@ -15,19 +15,19 @@ const double acceleration_variance = ACCELERATION_SIGMA * ACCELERATION_SIGMA;
 const double model_variance = MODEL_SIGMA * MODEL_SIGMA;
 
 // Convert accelerometer and gyroscope noise densities to variances
-const double accel_noise_density = 120e-6;  //  ¦Ìg in g units
+const double accel_noise_density = 120e-6;  //  Â¦ÃŒg in g units
 const double gyro_noise_density = 3.8e-3;    // 3.8 mdps in dps units
-//¦Ìg/¡ÌHz
-//FS = ¡À4 g: 120
-//FS = ¡À8 g: 130
-//FS = ¡À16 g: 160
-//FS = ¡À32 g: 220
+//Â¦ÃŒg/Â¡ÃŒHz
+//FS = Â¡Ã€4 g: 120
+//FS = Â¡Ã€8 g: 130
+//FS = Â¡Ã€16 g: 160
+//FS = Â¡Ã€32 g: 220
 //Acceleration RMS noise in normal/low-power mode
 //mg(RMS)
-//FS = ¡À4 g 3.2
-//FS = ¡À8 g 3.4
-//FS = ¡À16 g 4.0
-//FS = ¡À32 g 5.4
+//FS = Â¡Ã€4 g 3.2
+//FS = Â¡Ã€8 g 3.4
+//FS = Â¡Ã€16 g 4.0
+//FS = Â¡Ã€32 g 5.4
 // Sampling frequency (in Hz)
 const double ODR = 100.0; // Replace with actual ODR used. 12.5 Hz up to 6.66 kHz 
 // Calculate noise variances
@@ -55,7 +55,7 @@ std::array<std::array<double, 3>, 3> P = {{
 // Convert barometer noise densities to variances
 const double Pressure_variance = 1.5;  //  mbar
 const double Pressure_resolution = 0.012;    // mbar
-// Pressure Accuracy 25¡ãC, 750 mbar: -1.5~+1.5 mbar
+// Pressure Accuracy 25Â¡Ã£C, 750 mbar: -1.5~+1.5 mbar
 // Pressure resolution: 0.065 / 0.042 / 0.027 / 0.018 / 0.012 @ Oversampling Ratio: 256 / 512 / 1024 / 2048 / 4096
 // Converting Pressure Noise to Altitude Noise:
 Delta_h = Delta_P / (air_density*gravity_acceleration);		// Density and g values will change. But to initiallize, can use ground values...
