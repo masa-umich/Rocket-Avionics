@@ -73,14 +73,17 @@ void MS5611_chipSelect(MS5611* BAR);
 void MS5611_chipRelease(MS5611* BAR);
 
 //Read register from barometer
-HAL_StatusTypeDef MS5611_read(MS5611* BAR, uint8_t* rx_buffer, uint8_t num_bytes);
+HAL_StatusTypeDef MS5611_transmit(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_bytes);
 
 //Write register from barometer
-HAL_StatusTypeDef MS5611_write(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_bytes);
+HAL_StatusTypeDef MS5611_receive(MS5611* BAR, uint8_t* rx_buffer, uint8_t num_bytes);
 
-int MS5611_send(MS5611* BAR, uint8_t reg);
+// Abstraction for reading a single register from the chip
+// Note: num_bytes is the combined size of tx_buffer and rx_buffer
+int MS5611_read(MS5611* BAR, uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t num_bytes);
 
-int MS5611_recieve(MS5611* BAR, uint8_t rx_num_bytes, uint8_t* rx_buffer);
+// Abstractions for writing a single register to the chip eg; for a command
+int MS5611_write(MS5611* BAR, uint8_t reg);
 
 // Software and memory reset
 int MS5611_Reset(MS5611* BAR);
@@ -88,6 +91,9 @@ int MS5611_Reset(MS5611* BAR);
 // Read the programmable read only memory
 // Note: prom_buffer must be of size 6
 int MS5611_readPROM(MS5611* BAR, MS5611_PROM_t* prom_buffer);
+
+// Read the ADC result, assuming you have asked for a conversion
+int MS5611_readADC(MS5611 *BAR, uint32_t *result);
 
 // Pressure convert
 // OSR is the "Over Sampling Rate" which determines the resolution of the pressure and temperature
@@ -100,10 +106,10 @@ int MS5611_tempConvert(MS5611* BAR, uint32_t* temp_raw, OSR osr);
 int MS5611_compensateTemp(float* pres, uint32_t pres_raw, uint32_t temp_raw, MS5611_PROM_t* prom);
 
 // Get pressure from barometer
-int MS5611_getPres(MS5611* BAR, float* pres, OSR osr);
+int MS5611_getPres(MS5611* BAR, float* pres, MS5611_PROM_t* prom, OSR osr);
 
 // Get rough altitude based on pressure
 // You probably shouldn't use this for apogee detection
-int MS5611_getAlt(MS5611* BAR, float* alt, float BAR_SEA_LEVEL_PRESS);
+int MS5611_getAlt(MS5611* BAR, float* pres, float* alt, float BAR_SEA_LEVEL_PRESS);
 
 #endif
