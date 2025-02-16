@@ -207,10 +207,13 @@ int MS5611_getPres(MS5611* BAR, float* pres, MS5611_PROM_t* prom, OSR osr) {
 }
 
 //Get rough altitude based on pressure
-int MS5611_getAlt(MS5611* BAR, float* pres, float* alt, float BAR_SEA_LEVEL_PRESS) {
-	  float tempA = (*pres/1013.25);
-	  float tempB = pow(tempA, 0.190284);
-	  float tempC = 1.0-tempB;
-	  *alt = tempC * 145366.45;
-	  return 0;
+int MS5611_getAlt(MS5611* BAR, float* alt, MS5611_PROM_t* prom, OSR osr) {
+	float pres = 0.0;
+	uint32_t pres_raw = 0;
+	uint32_t temp_raw = 0;
+	if (MS5611_presConvert(BAR, &pres_raw, osr) == 1) { return 1; }
+	if (MS5611_tempConvert(BAR, &temp_raw, osr) == 1) { return 1; }
+	if (MS5611_compensateTemp(&pres, pres_raw, temp_raw, prom) == 1) { return 1; }
+	*alt =  (1 - pow((pres/1013.25), 0.190284)) * 145366.45; // feet conversion
+	return 0;
 }

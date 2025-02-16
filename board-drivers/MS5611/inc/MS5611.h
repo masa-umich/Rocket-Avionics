@@ -108,8 +108,8 @@ int MS5611_compensateTemp(float* pres, uint32_t pres_raw, uint32_t temp_raw, MS5
 // Get pressure from barometer
 int MS5611_getPres(MS5611* BAR, float* pres, MS5611_PROM_t* prom, OSR osr);
 
-// Get rough altitude based on pressure
+// Get rough altitude in feet based on pressure
 // You probably shouldn't use this for apogee detection
-int MS5611_getAlt(MS5611* BAR, float* pres, float* alt, float BAR_SEA_LEVEL_PRESS);
+int MS5611_getAlt(MS5611* BAR, float* alt, MS5611_PROM_t* prom, OSR osr);
 
 #endif
