@@ -5,8 +5,8 @@
  *      Author: jackmh
  */
 
-#ifndef VALVES_H
-#define VALVES_H
+#ifndef VLVS_H
+#define VLVS_H
 
 #include "main.h"
 
