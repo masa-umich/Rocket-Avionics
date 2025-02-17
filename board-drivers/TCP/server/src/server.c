@@ -7,8 +7,16 @@
 
 #include "server.h"
 
+extern ip4_addr_t ipaddr; // get our IP address from somewhere (defined in the IOC)
 #define SERVER_PORT 5000
 #define MAX_CONN_NUM 8
+
+#define MAX_MSG_LEN 300 // I just took this from the old code, this might need to be larger
+List* rxMsgBuffer; // thread-safe queue for incoming messages
+List* txMsgBuffer; 
+
+int connections[MAX_CONN_NUM]; // List of active connections
+sys_mutex_t* conn_mu; // Mutex for the connections list
 
 // Function to initialize the server
 // Spins off a listener, reader, and writer task/thread 
@@ -40,8 +48,21 @@ int server_init(void) {
     // check if the tasks got created successfully
     if ((listenerTaskHandle == NULL) || 
         (readerTaskHandle == NULL) || 
-        (writerTaskHandle == NULL)) 
-    {
+        (writerTaskHandle == NULL)) {
+        return 1;
+    }
+
+    // make thread-safe queues for incoming and outgoing messages
+    rxMsgBuffer = list_create(MAX_MSG_LEN + 2*sizeof(int), msgFreeCallback);
+	txMsgBuffer = list_create(MAX_MSG_LEN + 2*sizeof(int), msgFreeCallback);
+
+    // make mutex for active connections
+    memset(connections, -1, MAX_CONN_NUM * sizeof(int)); // fill non-active connections with -1
+	conn_mu = malloc(sizeof(sys_mutex_t));
+	err_t err = sys_mutex_new(conn_mu);
+    
+    // check if the mutex got created successfully
+    if (err != ERR_OK) {
         return 1;
     } else {
         return 0;
@@ -82,23 +103,40 @@ void server_listener_thread(void *arg) {
 
         int connection_fd = accept(listen_sockfd, (struct sockaddr *)&connection_socket, &sizeof(connection_socket));
     
-        // handle the connection
-        // TODO: the rest of the code lol
+        // add the new connection to the active connections list
+        sys_mutex_lock(conn_mu);
+	    for (int i = 0; i < MAX_CONN_NUM; ++i) {
+	    	if (connections[i] == -1) { // -1 is an empty space in the list
+	    		connections[i] = connection_fd;
+
+	    		sys_mutex_unlock(conn_mu);
+	    		return;
+	    	}
+	    }
+	    sys_mutex_unlock(conn_mu);
     }
 
 }
 
 // Continually reads from the RX Message Buffer and processes new messages
+// Also removes them from the buffer after processing
 void server_reader_thread(void *arg) {
 
 }
 
-// Continually writes to the TX Message Buffer
+// Continually checks for new messages in the TX Message Buffer and sends them to the client
+// Also removes them from the buffer after sending
 void server_writer_thread(void *arg) {
 
 }
 
-// Adds a message to the TX Message Buffer to be sent to a client
+// Callback function to free message data
+// TBH I don't get why this is needed but it's for the TS-queue
+void msgFreeCallback(void * data) {
+	free(data);
+}
+
+// Helper function to add a message to the TX Message Buffer
 int sever_send(/* args that make sense once I write more code */) {
     return 1;
 }
