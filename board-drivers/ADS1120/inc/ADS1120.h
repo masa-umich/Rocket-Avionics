@@ -14,10 +14,12 @@
 #ifndef FreeRTOS_H
     #include "FreeRTOS.h"
     #include "task.h"
+	#include "semphr.h"
 #else
     #error "This library is designed for use with FreeRTOS. Please include the FreeRTOS library in your project."
 #endif
 
+#define TC_TASK_PRIORITY				1
 
 // Constants
 //Hard-Coded
@@ -26,6 +28,7 @@
 #define ADS_CONV_MODE_CONT            	(uint8_t)0x04
 #define ADS_CONV_MODE_SING            	(uint8_t)0x00 // Default
 #define ADS_INTERNAL_TEMP_DISABLED      (uint8_t)0x00 // Default
+#define ADS_INTERNAL_TEMP_ENABLED     	(uint8_t)0x02
 #define ADS_BURN_OUT_DISABLED           (uint8_t)0x00 // Default
 #define ADS_VOLT_REF_EXT_REF0           (uint8_t)0x40
 #define ADS_VOLT_REF_INT           		(uint8_t)0x00 // Default
@@ -34,7 +37,8 @@
 #define ADS_IDAC_DISABLED            	(uint8_t)0x00 // Default
 #define ADS_l1MUX_DISABLED            	(uint8_t)0x00 // Default
 #define ADS_l2MUX_DISABLED            	(uint8_t)0x00 // Default
-#define ADS_DRDY_MODE_ONLY_DRDY         (uint8_t)0x00 // Default
+#define ADS_DRDY_MODE_ONLY_DRDY         (uint8_t)0x00
+#define ADS_DRDY_MODE_BOTH				(uint8_t)0x02 // Default
 
 //Open
 #define ADS_MUX_AIN0_AIN1            	(uint8_t)0x00 // AIN0 is positive, AIN1 is negative
@@ -61,6 +65,8 @@
 #define ADS_DATA_RATE_600            	(uint8_t)0xA0 // 600 SPS ~ 600hz in normal mode
 #define ADS_DATA_RATE_1000            	(uint8_t)0xC0 // 1000 SPS ~ 1000hz in normal mode
 
+#define ADS_INTERNAL_TEMP_RATE			ADS_DATA_RATE_175
+#define ADS_INTERNAL_TEMP_DELAY			(uint32_t)500 // ms between internal temp readings
 // Type T thermocouple constants
 // Temperature -> Voltage when temperature > 0
 #define ADS_POLY_POS_C1					(double)3.8748106364e1
@@ -108,7 +114,7 @@
 
 // This represents a connection to a thermocouple NOT a chip.
 // Two different instances of this could represent connections on the same chip, but different input pins (mux)
-typedef struct {
+/*typedef struct {
     SPI_HandleTypeDef* hspi;
     uint16_t SPI_TIMEOUT;
     GPIO_TypeDef * CS_GPIO_Port;
@@ -118,10 +124,60 @@ typedef struct {
     uint8_t gain;
     uint8_t rate;
     double cold_junction_voltage; // microvolts
-} ADS1120;
+} ADS1120;*/
+
+typedef struct {
+	SPI_HandleTypeDef* hspi;
+	GPIO_TypeDef *DOUT_GPIO_Port;
+	uint16_t DOUT_GPIO_Pin;
+	uint16_t SPI_TIMEOUT;
+	GPIO_TypeDef *CS_GPIO_Port;
+	uint16_t CS_GPIO_Pin;
+	uint8_t mux;
+
+	uint8_t gain;
+	uint8_t rate;
+	double step_size;
+
+	int16_t current_raw;
+	uint64_t timestamp;
+	SemaphoreHandle_t reading_semaphore;
+} ADS_TC_t;
+
+typedef struct {
+	TaskHandle_t tc_task;
+	ADS_TC_t *TCs;
+	uint8_t TC_count;
 
 
-double ADS_convertRawToMicrovolts(ADS1120 *ADS, uint8_t MSB, uint8_t LSB); //DONE
+	int16_t raw_temp;
+	SemaphoreHandle_t temp_semaphore;
+	uint32_t last_temp;
+} ADS_Main_t;
+
+typedef struct {
+	SPI_HandleTypeDef* hspi;
+	GPIO_TypeDef *DOUT_GPIO_Port;
+	uint16_t DOUT_GPIO_Pin;
+	uint16_t SPI_TIMEOUT;
+	GPIO_TypeDef *CS_GPIO_Port;
+	uint16_t CS_GPIO_Pin;
+
+	ADS_TC_t* muxes[2];
+	uint8_t last_state;
+	uint8_t mux_count;
+	uint8_t current_mux;
+	uint32_t last_tick;
+	uint32_t timer_start;
+} ADS_Chip;
+
+typedef struct {
+	float temp_c;
+	uint64_t timestamp;
+	uint8_t error;
+} ADS_Reading_t;
+
+double ADS_convertRawToMicrovolts(ADS_TC_t *ADS, int16_t raw); //DONE
 
 // Microvolts in -> Celsius out
 float ADS_polyMicrovoltsToTemp(double microvolts); //DONE
@@ -129,28 +185,51 @@ float ADS_polyMicrovoltsToTemp(double microvolts); //DONE
 // Celsius in -> Microvolts out
 double ADS_polyTempToMicrovolts(float temp); //DONE
 
+// Configures each TC struct, does not actually communicate with the chip
+void ADS_configTC(ADS_TC_t *ADSTC, SPI_HandleTypeDef* hspi, GPIO_TypeDef *DOUT_GPIO_Port, uint16_t DOUT_GPIO_Pin, uint16_t SPI_TIMEOUT, GPIO_TypeDef *CS_GPIO_Port, uint16_t CS_GPIO_Pin, uint8_t mux, uint8_t gain, uint8_t rate); //DONE
+
+void ADSTC_chipSelect(ADS_TC_t *ADS); //DONE
+
+void ADSTC_chipRelease(ADS_TC_t *ADS); //DONE
+
+
+int ADS_init(ADS_Main_t *ADSMain, ADS_TC_t *TCs, uint8_t num_TCs); //DONE
+
+void vTCTask(void *pvParameters);
 // Configure byte 3 and 4 of chip, save cjc
 // reference_volts is in volts, cold_junction_temp is in celsius
-int ADS_init(ADS1120 *ADS, uint8_t mux, uint8_t gain, uint8_t rate, float cold_junction_temp);
+//int ADS_init(ADS1120 *ADS, uint8_t mux, uint8_t gain, uint8_t rate, float cold_junction_temp);
 
-HAL_StatusTypeDef ADS_write(ADS1120 *ADS, uint8_t *tx_buffer, uint8_t num_bytes); //DONE
+HAL_StatusTypeDef ADS_write(ADS_Chip *ADS, uint8_t *tx_buffer, uint8_t num_bytes); //DONE
 
-HAL_StatusTypeDef ADS_read(ADS1120 *ADS, uint8_t reg_addr, uint8_t *rx_buffer, uint8_t num_bytes); //DONE
+HAL_StatusTypeDef ADS_read(ADS_Chip *ADS, uint8_t reg_addr, uint8_t *rx_buffer, uint8_t num_bytes); //DONE
 
-void ADS_chipSelect(ADS1120 *ADS); //DONE
+void ADS_chipSelect(ADS_Chip *ADS); //DONE
 
-void ADS_chipRelease(ADS1120 *ADS); //DONE
+void ADS_chipRelease(ADS_Chip *ADS); //DONE
 
-int ADS_configure(ADS1120 *ADS, uint8_t mux, uint8_t gain, uint8_t rate, int check); //DONE
+int ADS_configure(ADS_Chip *ADS, uint8_t TC_index, int check); //DONE
 
-int ADS_configureChip(ADS1120 *ADS, int check);
+int ADS_configureChip(ADS_Chip *ADS, int check);
 
-int ADS_switchConf(ADS1120 *ADS);
+int ADS_switchConf(ADS_Chip *ADS, uint8_t TC_index);
 
-// Do all of the following while holding CS low: switch to correct conf, either monitor DOUT and then clock in reading and send an extra 16 SCLKs, or delay time and then use RDATA to get reading, then let go of CS
-// convert to microvolts, offset cjc voltage, convert to temp
-int ADS_readTemp(ADS1120 *ADS, float *temp);
+//int ADS_readTemp(ADS1120 *ADS, float *temp);
 
-//Either call ADS_readTemp multiple times, this is the easiest, but if more speed is needed, use the method of switching conf as a reading is being clocked in
-// ADS_readMultiple
+// read from one TC, no timestamp TC_num IS 0 INDEXED
+int ADS_readIndividual(ADS_Main_t *ADSMain, uint8_t TC_index, float *reading); //DONE
+
+// TC_num IS 0 INDEXED
+int ADS_readIndividualwTimestamp(ADS_Main_t *ADSMain, uint8_t TC_index, ADS_Reading_t *reading); // TODO ALMOST DONE
+
+// The array at readings must be at least as long as the number of TCs that were originally passed to ADS_init
+// Readings are returned in the order that they were passed to ADS_init
+// returns 1 if unable to take internal temp semaphore, all readings are invalid. If a reading is NAN, then its semaphore couldn't be taken.
+int ADS_readAll(ADS_Main_t *ADSMain, float *readings); // TODO ALMOST DONE
+
+// The array at readings must be at least as long as the number of TCs that were originally passed to ADS_init
+int ADS_readAllwTimestamps(ADS_Main_t *ADSMain, ADS_Reading_t *readings);
+
+int ADS_readInternalTemp(ADS_Main_t *ADSMain, float *temp);
+
 #endif

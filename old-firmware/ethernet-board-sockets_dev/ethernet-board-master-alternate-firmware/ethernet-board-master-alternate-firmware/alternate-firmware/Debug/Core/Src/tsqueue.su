@@ -1,7 +1,0 @@
-../Core/Src/tsqueue.c:16:6:list_push	16	static
-../Core/Src/tsqueue.c:20:6:list_pop	16	static
-../Core/Src/tsqueue.c:24:6:free_node_data	16	static
-../Core/Src/tsqueue.c:31:7:list_create	24	static
-../Core/Src/tsqueue.c:46:6:list_destroy	24	static
-../Core/Src/tsqueue.c:67:6:list_add	24	static
-../Core/Src/tsqueue.c:90:6:list_remove	24	static

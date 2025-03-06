@@ -1,0 +1,40 @@
+#forward application of pressure/temp calculations
+#Example values, these should be taken from PROM! 
+#Also, keep in mind we are looking at base 10 nums but the barometer
+#produces base-2 nums!
+
+C1 = 40127 #pressure sensitivty
+C2 = 36924 #pressure offset
+C3 = 23317 #temperature coefficient of pressure sensitivityS
+C4 = 23282 #temperature coefficient of pressure offset
+C5 = 33464 #reference temperature
+C6 = 28312 #temperature coefficient of the temperature
+D1 = 9085466 #digital pressure value
+D2 = 8569150 #digital temperature value
+
+dT = D2 - (C5 * 2 ** 8) 
+
+TEMP = 2000 + ((dT * C6) / 2 ** 23)
+
+OFF = (C2 * 2 ** 16) + ((C4 * dT) / 2 ** 7)
+
+SENS = (C1 * 2**15) + (C3 * dT) / 2**8
+
+#second order adjustments for cold temperatures 
+if TEMP < 2000: # is temp less than 20 C? 
+    T2 = (dT ** 2) / (2 ** 31)
+    OFF2 = (5 * (TEMP - 2000) ** 2) / 2
+    SENS2 = (5 * (TEMP - 2000) ** 2) / (2 ** 2)
+
+    if TEMP < 1500: #is temp less than -15 C?
+        OFF2 = OFF2 + (7 * (TEMP + 1500) ** 2)
+        SENS2 = SENS2 + (11 * ((TEMP + 1500) ** 2) / 2)
+
+    TEMP = TEMP - T2
+    OFF = OFF - OFF2
+    SENS = SENS - SENS2
+
+P = ((D1 * (SENS / 2 ** 21)) - OFF) / 2 ** 15
+
+print(round(P / 100, 2), " mbar")
+print(round(TEMP / 100, 2), " Celsius" )
