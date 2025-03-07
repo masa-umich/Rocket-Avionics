@@ -22,7 +22,7 @@ struct Detector
     int slope_i = 0;
     int slope_size = 0;
 
-    static const int CAPACITY = 10;
+    static const int CAPACITY = 20;
     double readings_1[CAPACITY]; 
     int index_1 = 0;
     int size_1 = 0;
@@ -31,7 +31,7 @@ struct Detector
     int index_2 = 0;
     int size_2 = 0;
 
-    double previous[5];
+    double previous[10];
     int prev_index = 0;
     int prev_size = 0;
 
@@ -50,7 +50,7 @@ struct Detector
         readings_1[index_1] = baro1;
         index_1++;
         index_1 = index_1 % CAPACITY;
-        size_1++;
+        size_1 = std::min(size_1 + 1, 20);
 
 
         if(std::isnan(baro2))
@@ -58,17 +58,18 @@ struct Detector
         readings_2[index_2] = baro2;
         index_2++;
         index_2 = index_2 % CAPACITY;
-        size_2++;
+        size_2 = std::min(size_2 + 1, 20);
 
         previous[prev_index] = (mean(size_1, readings_1) + mean(size_2, readings_2)) / 2;
         prev_index++;
-        prev_index = prev_index % 5;
-        prev_size++;
+        prev_index = prev_index % 10;
+        prev_size = std::min(prev_size + 1, 10);
 
-        if(prev_size > 1)
+        if(prev_size >= 10)
         {
-            slope[slope_i] = previous[(prev_index + 5 - 1) % 5 ] - previous[(prev_index + 5 - 2) % 5];
-            slope_size++;
+            slope[slope_i] = (previous[(prev_index + 10 - 1) % 10 ] - previous[(prev_index + 10 - 10) % 10]) / 10;
+            std::cout << slope[slope_i] << "\n";
+            slope_size = std::min(slope_size + 1, 10);
             slope_i = (slope_i + 1) % 10;
         }
     }
@@ -79,17 +80,7 @@ struct Detector
         if (slope_size < 10)
             return false;
         else
-        { // BAD and fragile approach, frequently fails to detect anything
-            // if (previous[prev_index] > previous[(prev_index + 5 - 1) % 5] &&
-            // previous[(prev_index + 5 - 1) % 5] > previous[(prev_index + 5 - 2) % 5] &&
-            // previous[(prev_index + 5 - 2) % 5] > previous[(prev_index + 5 - 3) % 5] &&
-            // previous[(prev_index + 5 - 3) % 5] > previous[(prev_index + 5 - 4) % 5])
-
-            // if (slope[0] > 0 && slope[1] > 0 && slope[2] > 
-            //     0 && slope[3] > 0 && slope[4] && slope[5] > 
-            //     0 && slope[6] > 0 && slope[7] > 0 && slope[8] > 
-            //     0 && slope[9] > 0)
-
+        { 
             int count = 0;
             for(int i = 0; i < 10; ++i)
             {
@@ -97,7 +88,7 @@ struct Detector
                     ++count;
             }
 
-            if(count >= 9)
+            if(count >= 8)
                 return true;
         }
         return false;
@@ -112,7 +103,8 @@ void launch()
     Barometer baro_1;
     Barometer baro_2;
     Detector detect;
-    //    bool apogee;
+    bool apogee_flag = false;
+    // int apogee_delay = 0;
 
     std::pair<int, int> baro1_D1_D2;
     std::pair<int, int> baro2_D1_D2;
@@ -126,12 +118,14 @@ void launch()
 
     inFS.close();
 
-    for (size_t i = 0; i < heights.size(); i += 5)
+    int i = 0;
+    while(i < heights.size())
+    // for (size_t i = 0; i < heights.size(); i += 5)
     {
         double current_height = heights[i];
 
         //13647
-        if (current_height > 18000)
+        if (current_height > 13647)
         {
             double P_true = env.compute_pressure(current_height);
             double T_true = env.compute_temp(current_height);
@@ -146,30 +140,60 @@ void launch()
             baro1_D1_D2 = baro_1.guess_and_check(P_noisy_1, T_noisy_1);
             baro2_D1_D2 = baro_2.guess_and_check(P_noisy_2, T_noisy_2);
 
-            auto [baro1_final_P, baro1_final_TEMP] = baro_1.forward_calculation(baro1_D1_D2.first / 100, baro1_D1_D2.second / 100);
-            auto [baro2_final_P, baro2_final_TEMP] = baro_2.forward_calculation(baro2_D1_D2.first / 100, baro2_D1_D2.second / 100);
+            auto [baro1_final_P, baro1_final_TEMP] = baro_1.forward_calculation(baro1_D1_D2.first, baro1_D1_D2.second);
+            auto [baro2_final_P, baro2_final_TEMP] = baro_2.forward_calculation(baro2_D1_D2.first, baro2_D1_D2.second);
 
             cout << setw(10) << left << current_height;
+            cout << setw(10) << baro1_final_P / 100 << setw(10) << baro2_final_P / 100;
+
             cout << setw(10) << right << static_cast<double>(i) / 100 << "\n";
 
-            if (detect.size_1 < 10 && detect.size_2 < 10)
+            if (detect.size_1 < 20 && detect.size_2 < 20)
             {
-                detect.insert(baro1_final_P, baro2_final_P);
+                // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
+                detect.insert(baro1_final_P / 100, baro2_final_P / 100);
             }
             else
             {
-                detect.insert(baro1_final_P, baro2_final_P);
-                if (detect.detect_apog())
+                // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
+                detect.insert(baro1_final_P / 100, baro2_final_P / 100);
+                if (detect.detect_apog() && apogee_flag == false)
                 {
-                    cout << "Apogee Detected at time: " << static_cast<double>(i) / 100 << "\n";
+                    cout << "Apogee Detected\n";
+                    apogee_flag = true;
+
                 }
             }
         }
+
+        if(i < 7722)
+            i += 5;
+        else
+            i += 1;
     }
 }
 
 int main()
 {
+    //Note 
+    //MASTRAN data for some reason skips to sampling every 0.05 seconds instead of 0.01 seconds 
+    //almost immediately after apogee. 
+    //That's why I update the loop variable i += 1 instead of i += 5 after index 7722 (apogee)
+    //In the AD system for the flight computer, we DONT wan't to do this.
+    //Thus, the time column (column 4 is not accurate after apogee, so just count the number of steps 
+    //until Apogee Detected is printed to the screen. Roughly 25 steps is 2.5 seconds.). 
+
+    //the output being printed is 
+    //height(m) baro_1 pressure (mbar) baro_2 pressure (mbar) time (s, only valid pre-apogee)
+    //Below I'm keeping track of the "slope" of the readings which should be consistently neg on the way up 
+    //and consistently pos on the way down. Hovers around 0 at apogee. 
+
+    //this detector currently smooths the data a little too much for my liking, we are consistently 
+    //getting detections at around 2.5 seconds post apogee, which is acceptable, and we have very little 
+    //risk of early detection but I'd like to shave that down to about 1 second post apogee. 
+
     launch();
+    // Barometer bar;
+    // bar.view_data();
 }
 
