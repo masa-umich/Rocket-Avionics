@@ -18,11 +18,11 @@ using namespace std;
 
 struct Detector
 {
-    double slope[10];
+    double slope[5];
     int slope_i = 0;
     int slope_size = 0;
 
-    static const int CAPACITY = 20;
+    static const int CAPACITY = 5;
     double readings_1[CAPACITY]; 
     int index_1 = 0;
     int size_1 = 0;
@@ -31,7 +31,7 @@ struct Detector
     int index_2 = 0;
     int size_2 = 0;
 
-    double previous[10];
+    double previous[5];
     int prev_index = 0;
     int prev_size = 0;
 
@@ -39,8 +39,8 @@ struct Detector
     {
         if (size == 0)
             return 0;
-        double sum = std::accumulate(arr, arr + size, 0);
-        return sum / size;
+        double sum = std::accumulate(arr, arr + size, 0.0);
+        return sum / static_cast<double>(size);
     }
 
     void insert(double baro1, double baro2)
@@ -50,7 +50,7 @@ struct Detector
         readings_1[index_1] = baro1;
         index_1++;
         index_1 = index_1 % CAPACITY;
-        size_1 = std::min(size_1 + 1, 20);
+        size_1 = std::min(size_1 + 1, 5);
 
 
         if(std::isnan(baro2))
@@ -58,37 +58,37 @@ struct Detector
         readings_2[index_2] = baro2;
         index_2++;
         index_2 = index_2 % CAPACITY;
-        size_2 = std::min(size_2 + 1, 20);
+        size_2 = std::min(size_2 + 1, 5);
 
         previous[prev_index] = (mean(size_1, readings_1) + mean(size_2, readings_2)) / 2;
         prev_index++;
-        prev_index = prev_index % 10;
-        prev_size = std::min(prev_size + 1, 10);
+        prev_index = prev_index % 5;
+        prev_size = std::min(prev_size + 1, 5);
 
-        if(prev_size >= 10)
+        if(prev_size >= 5)
         {
-            slope[slope_i] = (previous[(prev_index + 10 - 1) % 10 ] - previous[(prev_index + 10 - 10) % 10]) / 10;
+            slope[slope_i] = (previous[(prev_index + 5 - 1) % 5 ] - previous[(prev_index + 5 - 5) % 5]) / 5;
             std::cout << slope[slope_i] << "\n";
-            slope_size = std::min(slope_size + 1, 10);
-            slope_i = (slope_i + 1) % 10;
+            slope_size = std::min(slope_size + 1, 5);
+            slope_i = (slope_i + 1) % 5;
         }
     }
 
     bool detect_apog()
     {
         // if(prev_size < 5)
-        if (slope_size < 10)
+        if (slope_size < 5)
             return false;
         else
         { 
             int count = 0;
-            for(int i = 0; i < 10; ++i)
+            for(int i = 0; i < 5; ++i)
             {
                 if(slope[i] > 0)
                     ++count;
             }
 
-            if(count >= 8)
+            if(count >= 4)
                 return true;
         }
         return false;
@@ -148,7 +148,7 @@ void launch()
 
             cout << setw(10) << right << static_cast<double>(i) / 100 << "\n";
 
-            if (detect.size_1 < 20 && detect.size_2 < 20)
+            if (detect.size_1 < 5 && detect.size_2 < 5)
             {
                 // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
                 detect.insert(baro1_final_P / 100, baro2_final_P / 100);
