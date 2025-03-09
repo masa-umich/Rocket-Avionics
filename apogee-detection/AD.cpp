@@ -188,10 +188,6 @@ int main()
     //Below I'm keeping track of the "slope" of the readings which should be consistently neg on the way up 
     //and consistently pos on the way down. Hovers around 0 at apogee. 
 
-    //this detector currently smooths the data a little too much for my liking, we are consistently 
-    //getting detections at around 2.5 seconds post apogee, which is acceptable, and we have very little 
-    //risk of early detection but I'd like to shave that down to about 1 second post apogee. 
-
     launch();
     // Barometer bar;
     // bar.view_data();
