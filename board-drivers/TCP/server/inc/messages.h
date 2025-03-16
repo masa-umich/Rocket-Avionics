@@ -43,6 +43,10 @@ typedef struct {
 	// No additional data
 } HeartbeatMessage;
 
+#define MAX_TELEMETRY_MSG_SIZE (1 + 1 + 8 + (4 * MAX_TELEMETRY_CHANNELS))
+#define MAX_VALVE_COMMAND_MSG_SIZE (1 + 4 + 4)
+#define MAX_HEARTBEAT_MSG_SIZE 1
+#define MAX_MESSAGE_SIZE MAX_TELEMETRY_MSG_SIZE
 typedef struct {
 	MessageType type;
 	union {
@@ -51,5 +55,8 @@ typedef struct {
 		HeartbeatMessage heartbeat;
 	} data;
 } Message;
+
+int serialize_message(const Message *message, uint8_t *buffer, uint32_t buffer_size);
+int deserialize_message(const uint8_t *buffer, uint32_t buffer_size, Message *msg);
 
 #endif
