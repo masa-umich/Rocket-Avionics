@@ -16,8 +16,10 @@
 
 using namespace std;
 
-struct Detector
+class Detector
 {
+    public: 
+    
     double slope[5];
     int slope_i = 0;
     int slope_size = 0;
