@@ -18,13 +18,13 @@ the writing in the drawing in Section 10.1 of the
 datasheet is the same orientation as the writing on
 the IC itself.
 
-| IC Pin # | Dev Board Pin # | Function |
-|----------|-----------------|----------|
-| 1        | 5               | NC       |
-| 2        | 6               | NC       |
-| 3        | 7               | NC       |
-| 4        | 8               | VSS      |
-| 5        | 1               | SDA      |
-| 6        | 2               | SCL      |
-| 7        | 3               | !WC      |
-| 8        | 4               | VCC      |
+| Pin # | Function |
+|-------|----------|
+| 1     | NC       |
+| 2     | NC       |
+| 3     | NC       |
+| 4     | VSS      |
+| 5     | SDA      |
+| 6     | SCL      |
+| 7     | !WC      |
+| 8     | VCC      |
