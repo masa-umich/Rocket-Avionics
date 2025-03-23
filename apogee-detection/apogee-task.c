@@ -1,4 +1,5 @@
 #include "apogee-task.h"
+#include "math.h"
 
 float ad_mean(int size, float * arr)
 {
@@ -77,6 +78,12 @@ int detect_apog(Detector * detector)
     return 0;
 }
 
+int detect_MECO(Detector * detector)
+{
+    //probably need some different logic here than slope.
+    //checking for if IMU is nearing 1.2 or similar. 
+}
+
 void Detect_Apogee_Task(Detector * detector, float *bar1_mutex, float *bar2_mutex, int * apogee_flag)
 {
     if (detector->size_1 < 5 && detector->size_2 < 5){
@@ -86,10 +93,38 @@ void Detect_Apogee_Task(Detector * detector, float *bar1_mutex, float *bar2_mute
     else
     {
         insert(detector, bar1_mutex, bar2_mutex);
-        if (detect_apog(detect_apog) && *apogee_flag == 0)
+        if (detect_apog(detector) && *apogee_flag == 0)
         {
             printf("Apogee Detected\n");
             *apogee_flag = 1;
         }
     }  
 }
+
+// void insert_IMU_readings(Detector *monitor, Accel * IMU_1, Accel * IMU_2)
+// {
+//     float reading_1 = sqrt(pow(IMU_1->XL_x, 2) + pow(IMU_1->XL_y, 2) + pow(IMU_1->XL_z, 2));
+//     float reading_2 = qrt(pow(IMU_2->XL_x, 2) + pow(IMU_2->XL_y, 2) + pow(IMU_2->XL_z, 2));
+//     insert(monitor, &reading_1, &reading_2);
+// }
+
+void Detect_MECO_task(Detector * monitor, Accel * IMU_1, Accel * IMU_2, int * MECO_flag)
+{
+    float reading_1 = sqrt(pow(IMU_1->XL_x, 2) + pow(IMU_1->XL_y, 2) + pow(IMU_1->XL_z, 2));
+    float reading_2 = qrt(pow(IMU_2->XL_x, 2) + pow(IMU_2->XL_y, 2) + pow(IMU_2->XL_z, 2));
+
+    if (monitor->size_1 < 5 && monitor->size_2 < 5){
+        insert(monitor, &reading_1, &reading_2);
+    }
+    
+    else
+    {
+        insert(monitor, &reading_1, &reading_2);
+        if (detect_MECO(monitor) && *MECO_flag == 0)
+        {
+            printf("MECO Detected\n");
+            *MECO_flag = 1;
+        }
+    }  
+}
+
