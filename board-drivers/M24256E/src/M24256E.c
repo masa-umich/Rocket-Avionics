@@ -3,6 +3,18 @@
 #include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_gpio.h"
 
+#define EEPROM_DEV_SELECT_MEM          0b1010000 << 1
+#define EEPROM_DEV_SELECT_ID_PAGE      0b1011000 << 1
+#define EEPROM_DEV_SELECT_ID_PAGE_LOCK 0b1011000 << 1
+#define EEPROM_DEV_SELECT_CDA          0b1011000 << 1
+
+#define EEPROM_B1ADDR_ID_PAGE      0b000
+#define EEPROM_B1ADDR_ID_PAGE_LOCK 0b100
+#define EEPROM_B1ADDR_CDA          0b110 << 5
+
+#define EEPROM_B2ADDR_ID_PAGE_LOCK 0
+#define EEPROM_B2ADDR_CDA          0
+
 static inline void EEPROM_enableWrites(EEPROM_t* eeprom) {
     HAL_GPIO_WritePin(eeprom->WC.port, eeprom->WC.pin, GPIO_PIN_RESET);
 }
