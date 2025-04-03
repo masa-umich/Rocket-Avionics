@@ -34,8 +34,15 @@ typedef struct {
  * driver.
  */
 typedef struct {
+    // The STM32 HAL I2C handle.
     I2C_HandleTypeDef* hi2c;
+
+    // The write control pin (active-low).
     gpio_pin_t wc;
+
+    // The contents of the CDA register. NOTE: This variable stores a
+    // left-shifted version of the actual CDA register so that the device
+    // address lock (DAL) bit is ignored.
     uint8_t cda;
 } eeprom_t;
 
@@ -46,10 +53,11 @@ typedef struct {
  * of each function called.
  */
 typedef enum {
-    EEPROM_OK = 0x00U,
-    EEPROM_INVALID_ARG = 0x01U,
-    EEPROM_TX_ERROR = 0x02U,
-    EEPROM_RX_ERROR = 0x03U,
+    EEPROM_OK,
+    EEPROM_INVALID_ARG,
+    EEPROM_TX_ERROR,
+    EEPROM_RX_ERROR,
+    EEPROM_INIT_ERROR,
 } eeprom_status_t;
 
 /**
@@ -65,9 +73,9 @@ typedef enum {
  * @param eeprom  The uninitialized eeprom_t struct.
  * @param hi2c    The I2C handle, initialized by the STM32CubeIDE generated
  *                code.
- * @param WC_port The STM32 port where the write control (WC) pin is
+ * @param wc_port The STM32 port where the write control (WC) pin is
  *                connected.
- * @param WC_pin  The pin number where the write control (WC) pin is
+ * @param wc_pin  The pin number where the write control (WC) pin is
  *                connected.
  * @return        An eeprom_status_t indicating whether or not the
  *                initialization is successful. This function will only
@@ -75,7 +83,7 @@ typedef enum {
  *                be determined.
  */
 eeprom_status_t eeprom_init(eeprom_t* eeprom, I2C_HandleTypeDef* hi2c,
-                            GPIO_TypeDef* WC_port, uint16_t WC_pin);
+                            GPIO_TypeDef* wc_port, uint16_t wc_pin);
 
 /**
  * Write data to the EEPROM starting at addr.
@@ -86,8 +94,8 @@ eeprom_status_t eeprom_init(eeprom_t* eeprom, I2C_HandleTypeDef* hi2c,
  * completely written.
  *
  * If any of the data to be written extends past the last valid address
- * (i.e. if data + num_bytes > EEPROM_ID_PAGE_MAX_ADDR), this function will
- * NOT write any data and return EEPROM_INVALID_ARG.
+ * (i.e. if addr + num_bytes > EEPROM_MEM_MAX_ADDR), this function will NOT
+ * write any data and return EEPROM_INVALID_ARG.
  *
  * Datasheet: pp. 13-14
  *
