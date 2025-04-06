@@ -21,8 +21,9 @@ int ad_min(int x, int y)
 
 void insert(Detector * detector, float * bar1_mutex, float * bar2_mutex)
 {
-    float bar1_reading = *bar1_mutex / 100;
-    if(bar1_reading == 0.0){
+    
+    float bar1_reading = *bar1_mutex / 100.0; //Division by 100.0 may not be necessary here
+    if(bar1_reading == 0.0){                  //Depending on the barometer value received from the driver
         bar1_reading = ad_mean(detector->size_1, detector->readings_1);
     }
 
@@ -31,8 +32,8 @@ void insert(Detector * detector, float * bar1_mutex, float * bar2_mutex)
     detector->index_1 = detector->index_1 % AD_CAPACITY;
     detector->size_1 = ad_min(detector->size_1 + 1, 5);
 
-    float bar2_reading = *bar2_mutex / 100;
-    if(bar2_reading == 0.0){
+    float bar2_reading = *bar2_mutex / 100.0; //Division by 100.0 may not be necessary here 
+    if(bar2_reading == 0.0){                  //Depending on the barometer value received from the driver
         bar2_reading = ad_mean(detector->size_2, detector->readings_2);
     }
 
@@ -101,12 +102,6 @@ void Detect_Apogee_Task(Detector * detector, float *bar1_mutex, float *bar2_mute
     }  
 }
 
-// void insert_IMU_readings(Detector *monitor, Accel * IMU_1, Accel * IMU_2)
-// {
-//     float reading_1 = sqrt(pow(IMU_1->XL_x, 2) + pow(IMU_1->XL_y, 2) + pow(IMU_1->XL_z, 2));
-//     float reading_2 = qrt(pow(IMU_2->XL_x, 2) + pow(IMU_2->XL_y, 2) + pow(IMU_2->XL_z, 2));
-//     insert(monitor, &reading_1, &reading_2);
-// }
 
 void Detect_MECO_task(Detector * monitor, Accel * IMU_1, Accel * IMU_2, int * MECO_flag)
 {
@@ -128,3 +123,4 @@ void Detect_MECO_task(Detector * monitor, Accel * IMU_1, Accel * IMU_2, int * ME
     }  
 }
 
+/**/
