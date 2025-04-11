@@ -167,7 +167,9 @@ void launch()
         double current_height = heights[i];
 
         //13647
-        if (current_height > 13647)
+        // if (current_height > 13647)
+        if (current_height > 18100)
+
         {
             double P_true = env.compute_pressure(current_height);
             double T_true = env.compute_temp(current_height);
