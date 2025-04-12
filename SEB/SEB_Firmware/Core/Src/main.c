@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,7 +64,24 @@ static void MX_SPI2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#define BUFFER_SIZE 1 // Define the size of the buffer to hold received data
+uint8_t UART_rxBuffer[BUFFER_SIZE] = {0}; // Buffer to hold received UART data
+uint8_t UART_txBuffer[BUFFER_SIZE] = {0}; // Buffer to hold transmitted UART data
+uint8_t SPI_rxBuffer[BUFFER_SIZE] = {0}; // Buffer to hold received SPI data
+uint8_t SPI_txBuffer[BUFFER_SIZE] = {0}; // Buffer to hold transmitted SPI data
 
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
+	memcpy(UART_txBuffer, SPI_rxBuffer, BUFFER_SIZE); // Copy the received SPI rx buffer over to the UART tx buffer
+	HAL_UART_Transmit_IT(&huart2, UART_txBuffer, BUFFER_SIZE); // Send the data over UART
+	// Assume that there's a computer connected to UART
+	// and it will send us what we should send over SPI
+	HAL_UART_Receive_IT(&huart2, UART_rxBuffer, BUFFER_SIZE); // Receive anything sent over UART
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	memcpy(SPI_txBuffer, UART_rxBuffer, BUFFER_SIZE); // Copy the received UART rx buffer over to the SPI tx buffer
+	HAL_SPI_Transmit_IT(&hspi2, SPI_txBuffer, BUFFER_SIZE); // Send what was received over SPI
+}
 /* USER CODE END 0 */
 
 /**
@@ -106,14 +123,11 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while (1) {
+	HAL_StatusTypeDef status = HAL_SPI_Receive_IT(&hspi2, SPI_rxBuffer, BUFFER_SIZE);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);
-	HAL_Delay(500);
-	HAL_UART_Transmit(&huart2, (uint8_t*)"A", 1, 1000);
   }
   /* USER CODE END 3 */
 }
@@ -275,7 +289,7 @@ static void MX_SPI2_Init(void)
   hspi2.Instance = SPI2;
   hspi2.Init.Mode = SPI_MODE_SLAVE;
   hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
@@ -311,7 +325,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 9600;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -339,25 +353,31 @@ static void MX_USART2_UART_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, SPI1_CS_Pin|MCU_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(MCU_LED_GPIO_Port, MCU_LED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : SPI1_CS_Pin MCU_LED_Pin */
-  GPIO_InitStruct.Pin = SPI1_CS_Pin|MCU_LED_Pin;
+  /*Configure GPIO pin : PB12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : MCU_LED_Pin */
+  GPIO_InitStruct.Pin = MCU_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(MCU_LED_GPIO_Port, &GPIO_InitStruct);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
