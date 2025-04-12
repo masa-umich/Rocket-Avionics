@@ -48,11 +48,16 @@ static void pack_uint32_be(uint8_t *buf, uint32_t value) {
 // Function returns -1 on failure, and number of bytes serialized on success
 
 int serialize_telemetry(const TelemetryMessage *message, uint8_t *buffer, uint32_t buffer_size) {
-	int num_bytes = 1 + 1 + 8 + 4 * message->num_channels;
-	if (buffer_size < num_bytes) {
-		return -1;
+    if (message->num_channels > MAX_TELEMETRY_CHANNELS) {
+	   return -1;  // Too many telemetry channels
 	}
-
+    
+    int num_bytes = 1 + 1 + 8 + 4 * message->num_channels;
+	if (buffer_size < num_bytes) {
+		return -1;  // Buffer size too small
+	}
+	
+	// First byte already set by serialize_message()
 	buffer[1] = (uint8_t)message->board_id;
 	pack_uint64_be(&buffer[2], message->timestamp);
 
@@ -73,7 +78,7 @@ int serialize_valve_command(const ValveCommandMessage *message, uint8_t *buffer,
 	}
 
 	pack_uint32_be(&buffer[1], message->command_bitmask);
-	pack_uint32_be(&buffer[5], message->command_bitmask);
+	pack_uint32_be(&buffer[5], message->state_bitmask);
 
 	return num_bytes;
 }
