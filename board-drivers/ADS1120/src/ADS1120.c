@@ -8,8 +8,6 @@
 #include "ADS1120.h"
 //#include "semphr.h"
 
-extern void log_serial(char* msg, size_t length); // TODO remove
-
 extern uint64_t getTimestamp(void);
 
 void delay_us(uint32_t us) { // I found this online - why is it so difficult to delay less than a millisecond?
@@ -337,9 +335,9 @@ void vTCTask(void *pvParameters) {
 				}
 				else { // timeout reading, use RDATA command and then replace conf
 					/*
-					 RDATA command with 16 extra clock cycles?
-					 delay 1us
-					 write conf
+					RDATA command with 16 extra clock cycles?
+					delay 1us
+					write conf
 					 */
 					uint8_t read_txbuffer[3] = {0x10, 0x00, 0x00};
 					uint8_t rxbuffer[3] = {0x00, 0x00, 0x00};
@@ -495,7 +493,7 @@ int ADS_readIndividual(ADS_Main_t *ADSMain, uint8_t TC_index, float *reading) {
 			double process_reading = ADS_convertRawToMicrovolts(ADSMain->TCs + TC_index, raw);
 			process_reading += ADS_polyTempToMicrovolts(raw_ref * 0.0078125);
 			*reading = ADS_polyMicrovoltsToTemp(process_reading);
-			//*reading = raw_ref * 0.0078125;
+			//*reading = raw_ref * 0.0078125; //DEBUG
 
 			return 0;
 		}
@@ -516,14 +514,16 @@ int ADS_readIndividualwTimestamp(ADS_Main_t *ADSMain, uint8_t TC_index, ADS_Read
 			double process_reading = ADS_convertRawToMicrovolts(ADSMain->TCs + TC_index, raw);
 			process_reading += ADS_polyTempToMicrovolts(raw_ref * 0.0078125);
 			reading->temp_c = ADS_polyMicrovoltsToTemp(process_reading);
+			reading->error = 0;
 
 			return 0;
 		}
 	}
+	reading->error = 1;
 	return 1;
 }
 
-int ADS_readAll(ADS_Main_t *ADSMain, float *readings) { // TODO check logic for bugs
+int ADS_readAll(ADS_Main_t *ADSMain, float *readings) {
 	if(xSemaphoreTake(ADSMain->temp_semaphore, (TickType_t) 2) == pdTRUE) {
 		int16_t raw_ref = ADSMain->raw_temp;
 		xSemaphoreGive(ADSMain->temp_semaphore);
