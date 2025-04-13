@@ -2,7 +2,7 @@
  * ADS1120.c
  *
  *  Created on: November 24, 2024
- *      Author: felixfb
+ *      Author: Felix Foreman-Braunschweig
  */
 
 #include "ADS1120.h"
@@ -261,17 +261,11 @@ void vTCTask(void *pvParameters) {
 
 	for(;;) {
 		for(int k = 0;k < chip_count;k++) {
-			// call timer function (make it first)
-			// if it should be triggered, get state of dout pin or timeout
 			// update last_tick after timer returns 1 and dout is checked
 			// update timer_start and last_tick after mux is changed
 
 			// also if this is the first chip, get internal temp on timer
-
-
-			// TODO two options:
-			// change timeout spi bc it doesn't seem to work correctly after rdata, rdata works, but spi doesn't after. Is rdata wrong, or used wrong, or should cs be pulled low and then high again before wreg
-			// otherwise just increase delay and call it a day
+			
 			uint8_t read_and_switch = 0;
 			uint8_t timer = ADS_timerStatus(&(connected_chips[k]));
 			if(timer == 1) {
