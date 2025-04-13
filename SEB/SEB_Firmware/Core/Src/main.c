@@ -64,23 +64,27 @@ static void MX_SPI2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#define BUFFER_SIZE 1 // Define the size of the buffer to hold received data
+#define BUFFER_SIZE 16 // Max buffer size for SPI packet, in bytes
 uint8_t UART_rxBuffer[BUFFER_SIZE] = {0}; // Buffer to hold received UART data
-uint8_t UART_txBuffer[BUFFER_SIZE] = {0}; // Buffer to hold transmitted UART data
-uint8_t SPI_rxBuffer[BUFFER_SIZE] = {0}; // Buffer to hold received SPI data
+uint8_t UART_txBuffer[1] = {0}; // Buffer to hold transmitted UART data
+uint8_t SPI_rxBuffer[1] = {0}; // Buffer to hold received SPI data
 uint8_t SPI_txBuffer[BUFFER_SIZE] = {0}; // Buffer to hold transmitted SPI data
+volatile uint16_t received_size = 0;  // Track actual received bytes
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-	memcpy(UART_txBuffer, SPI_rxBuffer, BUFFER_SIZE); // Copy the received SPI rx buffer over to the UART tx buffer
-	HAL_UART_Transmit_IT(&huart2, UART_txBuffer, BUFFER_SIZE); // Send the data over UART
+	memcpy(UART_txBuffer, SPI_rxBuffer, 1); // Copy the received SPI rx buffer over to the UART tx buffer
+	HAL_UART_Transmit_IT(&huart2, UART_txBuffer, 1); // Send the data over UART
 	// Assume that there's a computer connected to UART
 	// and it will send us what we should send over SPI
-	HAL_UART_Receive_IT(&huart2, UART_rxBuffer, BUFFER_SIZE); // Receive anything sent over UART
+	HAL_UARTEx_ReceiveToIdle_IT(&huart2, UART_rxBuffer, BUFFER_SIZE); // Receive anything sent over UART
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	memcpy(SPI_txBuffer, UART_rxBuffer, BUFFER_SIZE); // Copy the received UART rx buffer over to the SPI tx buffer
-	HAL_SPI_Transmit_IT(&hspi2, SPI_txBuffer, BUFFER_SIZE); // Send what was received over SPI
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+  received_size = Size; // SPI responses can vary in length, this lets us know how many bytes we received and need to transmit
+
+  memcpy(SPI_txBuffer, UART_rxBuffer, received_size); // Copy the received UART rx buffer over to the SPI tx buffer
+
+	HAL_SPI_Transmit_IT(&hspi2, SPI_txBuffer, received_size);
 }
 /* USER CODE END 0 */
 
@@ -124,7 +128,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-	HAL_StatusTypeDef status = HAL_SPI_Receive_IT(&hspi2, SPI_rxBuffer, BUFFER_SIZE);
+	  HAL_SPI_Receive_IT(&hspi2, SPI_rxBuffer, 1); // kickstart the SPI relaying, only receive one byte at a time
+    //HAL_UARTEx_ReceiveToIdle_IT(&huart2, UART_rxBuffer, BUFFER_SIZE); 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

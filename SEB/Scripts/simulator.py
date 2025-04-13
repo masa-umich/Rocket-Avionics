@@ -1,8 +1,11 @@
 import serial.tools.list_ports
 import serial
 import time
+import random
 # Note: close the serial monitor in Arduino IDE before running this script.
 # Otherwise, the port will be busy and you will get an error.
+
+global ADC_result
 
 def get_ports():
     boards = []
@@ -14,23 +17,50 @@ def get_ports():
 
 def cmd_reset():
     print("Reset")
-    return 0x00 # Return a dummy value for reset
+    return None # No response needed
 
 def cmd_d1_convert(osr):
     print("D1 Convert with OSR:", osr)
-    return 0x00
+    # TODO: Replace with actual conversion logic
+    ADC_result = random.randint(0, 0xFFFFFF)
+    return None # No response, just internal operation
 
 def cmd_d2_convert(osr):
     print("D2 Convert with OSR:", osr)
-    return 0x00
+    # TODO: Replace with actual conversion logic
+    ADC_result = random.randint(0, 0xFFFFFF)
+    return None # No response, just internal operation
 
 def cmd_adc_read():
     print("ADC Read")
-    return 0x00
+    rx_buffer = bytes([0xFE, 
+                  (ADC_result >> 16) & 0xFF,  # High byte
+                  (ADC_result >> 8) & 0xFF,   # Middle byte
+                   ADC_result & 0xFF])         # Low byte
+    return (rx_buffer[1] << 16) | (rx_buffer[2] << 8) | rx_buffer[3]
 
 def cmd_prom_read(addr):
+    prom_buffer = []
     print("PROM Read from address:", addr)
-    return 0x00
+    
+    # Generate 6 random 16-bit values (0-65535)
+    # TODO: Replace with actual PROM read logic
+    prom_values = [random.randint(0, 0xFFFF) for _ in range(6)]
+
+    # Simulate device response for each PROM entry
+    for value in prom_values:
+        # Create response buffer with leading 0xFE and two data bytes
+        rx_buffer = bytes([
+            0xFE,              # Dummy byte
+            (value >> 8) & 0xFF,  # High byte
+            value & 0xFF       # Low byte
+        ])
+        
+        # Reconstruct value using C-style bit manipulation
+        reconstructed = (rx_buffer[1] << 8) | rx_buffer[2]
+        prom_buffer.append(reconstructed)
+    
+    return prom_buffer
 
 def parse_data(data):
     # take in the SPI command byte and compare it to all possible valid SPI commands
