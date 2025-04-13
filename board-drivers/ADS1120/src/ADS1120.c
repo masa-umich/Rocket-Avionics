@@ -124,7 +124,7 @@ int ADS_init(ADS_Main_t *ADSMain, ADS_TC_t *TCs, uint8_t num_TCs) {
 	xSemaphoreGive(ADSMain->temp_semaphore);
 
 	ADSMain->tc_task = NULL;
-	BaseType_t state = xTaskCreate(vTCTask, "Thermocouple measurement task", 2048, (void *)ADSMain, TC_TASK_PRIORITY, &(ADSMain->tc_task)); //TODO figure out correct stack size
+	BaseType_t state = xTaskCreate(vTCTask, "Thermocouple measurement task", 1024, (void *)ADSMain, TC_TASK_PRIORITY, &(ADSMain->tc_task)); //TODO figure out correct stack size
 	return state != pdPASS;
 }
 

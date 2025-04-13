@@ -398,8 +398,3 @@ void ADS_chipRelease(ADS_Chip *ADS);
 int ADS_switchConf(ADS_Chip *ADS, uint8_t TC_index);
 
 #endif
-
-/* NOTES FOR README
-If a read function fails to retrieve a reading, it doesn't mean that a new reading isn't ready. At the same time, you can call the read functions as often as you want, 
-if a new reading isn't ready it just returns the previous reading. Basically, whether or not a read function fails has nothing to do with if data is ready on the ADS1120 side.
-*/
