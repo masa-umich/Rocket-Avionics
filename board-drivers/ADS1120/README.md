@@ -42,6 +42,53 @@
 <a id="usage"></a>
 # Example Usage
 
+This example sets up 4 thermocouples connected to 2 chips. Both chips are connected to SPI 1 and the MISO pin is set as pin PA_6.
+
+Must define `getTimestamp()` somewhere earlier. This example sets up the timestamp to be the time since startup in milliseconds:
+```c
+uint64_t getTimestamp() {
+	return HAL_GetTick();
+}
+```
+
+```c
+ADS_Main_t main_handle = {0};
+ADS_TC_t multiTCs[4]; // Set up 4 thermocouples
+
+// Configure the 4 thermocouple connections.
+ADS_configTC(&multiTCs[0], &hspi1, GPIOA, GPIO_PIN_6, 0xffff, SPI2_CS1_GPIO_Port, SPI2_CS1_Pin, ADS_MUX_AIN2_AIN3, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
+ADS_configTC(&multiTCs[1], &hspi1, GPIOA, GPIO_PIN_6, 0xffff, SPI2_CS1_GPIO_Port, SPI2_CS1_Pin, ADS_MUX_AIN1_AIN0, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
+ADS_configTC(&multiTCs[2], &hspi1, GPIOA, GPIO_PIN_6, 0xffff, SPI2_CS2_GPIO_Port, SPI2_CS2_Pin, ADS_MUX_AIN2_AIN3, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
+ADS_configTC(&multiTCs[3], &hspi1, GPIOA, GPIO_PIN_6, 0xffff, SPI2_CS2_GPIO_Port, SPI2_CS2_Pin, ADS_MUX_AIN1_AIN0, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
+
+// Initialize and start the RTOS task
+ADS_init(&main_handle, multiTCs, 4);
+
+// Loop indefinitely, reading from every thermocouple twice a second
+for(;;) {
+    ADS_Reading_t readings[4];
+
+    int status = ADS_readAllwTimestamps(&main_handle, readings);
+    if(!status) {
+        // Iterate through the readings. The order will match the order of multiTCs.
+        for(int i = 0;i < 4;i++) {
+            if(!readings[i].error) {
+                // Do something with readings[i].temp_c and readings[i].timestamp
+                // Again, the thermocouple that this corresponds to is whichever is index i in multiTCs
+            }
+            else {
+                // Failed to retrieve this thermocouple temperature
+            }
+        }
+    }
+    else {
+        // Failed to retrieve internal temperature, all readings are invalid
+    }
+
+	osDelay(500);
+}
+```
+
 <a id="tips"></a>
 ## Tips
 
