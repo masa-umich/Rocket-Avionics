@@ -84,7 +84,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 
   memcpy(SPI_txBuffer, UART_rxBuffer, received_size); // Copy the received UART rx buffer over to the SPI tx buffer
 
-	HAL_SPI_Transmit_IT(&hspi2, SPI_txBuffer, received_size);
+  HAL_SPI_Transmit_IT(&hspi2, SPI_txBuffer, received_size);
+
 }
 /* USER CODE END 0 */
 
@@ -128,8 +129,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-	  HAL_SPI_Receive_IT(&hspi2, SPI_rxBuffer, 1); // kickstart the SPI relaying, only receive one byte at a time
-    //HAL_UARTEx_ReceiveToIdle_IT(&huart2, UART_rxBuffer, BUFFER_SIZE); 
+	HAL_SPI_Receive_IT(&hspi2, SPI_rxBuffer, 1); // kickstart the SPI relaying, only receive one byte at a time
+    HAL_UARTEx_ReceiveToIdle_IT(&huart2, UART_rxBuffer, BUFFER_SIZE);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

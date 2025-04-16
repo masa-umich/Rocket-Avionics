@@ -5,7 +5,9 @@ import random
 # Note: close the serial monitor in Arduino IDE before running this script.
 # Otherwise, the port will be busy and you will get an error.
 
-global ADC_result
+global ADC_result, PROM_values
+ADC_result = 0 # Placeholder for ADC result
+PROM_values = [ 40127, 36924, 23317, 23282, 33464, 28312 ]
 
 def get_ports():
     boards = []
@@ -33,38 +35,28 @@ def cmd_d2_convert(osr):
 
 def cmd_adc_read():
     print("ADC Read")
-    rx_buffer = bytes([0xFE, 
+    rx_buffer = bytes([0xFE,                  # this byte doesn't make sense to be here, but it's what the real chip does
                   (ADC_result >> 16) & 0xFF,  # High byte
                   (ADC_result >> 8) & 0xFF,   # Middle byte
-                   ADC_result & 0xFF])         # Low byte
-    return (rx_buffer[1] << 16) | (rx_buffer[2] << 8) | rx_buffer[3]
+                   ADC_result & 0xFF])        # Low byte
+    return rx_buffer
 
 def cmd_prom_read(addr):
-    prom_buffer = []
-    print("PROM Read from address:", addr)
-    
-    # Generate 6 random 16-bit values (0-65535)
-    # TODO: Replace with actual PROM read logic
-    prom_values = [random.randint(0, 0xFFFF) for _ in range(6)]
+    prom_buffer = 
 
-    # Simulate device response for each PROM entry
-    for value in prom_values:
-        # Create response buffer with leading 0xFE and two data bytes
-        rx_buffer = bytes([
-            0xFE,              # Dummy byte
-            (value >> 8) & 0xFF,  # High byte
-            value & 0xFF       # Low byte
-        ])
-        
-        # Reconstruct value using C-style bit manipulation
-        reconstructed = (rx_buffer[1] << 8) | rx_buffer[2]
-        prom_buffer.append(reconstructed)
-    
-    return prom_buffer
+
+    print("PROM Read from address:", addr)
+    rx_buffer = bytes([0xFE,
+                  (PROM_values[addr] >> 8) & 0xFF,  # High byte
+                  PROM_values[addr] & 0xFF])         # Low byte
+    return rx_buffer
 
 def parse_data(data):
     # take in the SPI command byte and compare it to all possible valid SPI commands
-    match data:
+    if (data & 0xF0) == 0xA0: # All possible PROM read commands
+        # Interpret bits 0, 1, and 2 of the command byte as the address
+        return cmd_prom_read(((0x0E & (data & 0x0F)) >> 1))
+    match data: # All other unique commands
         case 0x1E:
             return cmd_reset()
         case 0x40:
@@ -89,36 +81,6 @@ def parse_data(data):
             return cmd_d2_convert(4096)
         case 0x00:
             return cmd_adc_read()
-        case 0xA0:
-            return cmd_prom_read(0)
-        case 0xA1:
-            return cmd_prom_read(1)
-        case 0xA2:
-            return cmd_prom_read(2)
-        case 0xA3:
-            return cmd_prom_read(3)
-        case 0xA4:
-            return cmd_prom_read(4)
-        case 0xA5:
-            return cmd_prom_read(5)
-        case 0xA6:
-            return cmd_prom_read(6)
-        case 0xA7:
-            return cmd_prom_read(7)
-        case 0xA8:
-            return cmd_prom_read(8)
-        case 0xA9:
-            return cmd_prom_read(9)
-        case 0xAA:
-            return cmd_prom_read(10)
-        case 0xAB:
-            return cmd_prom_read(11)
-        case 0xAC:
-            return cmd_prom_read(12)
-        case 0xAD:
-            return cmd_prom_read(13)
-        case 0xAE:
-            return cmd_prom_read(14)
         case _:
             print("INVALID_COMMAND")
             return None
@@ -141,7 +103,7 @@ def main():
                 response = parse_data(data)
                 if response == None:
                     continue
-                print("Responding with: " + hex(response))
+                print("Responding with: " + hex(int(response)))
                 board.write(response)
 
         except serial.SerialException as e:
