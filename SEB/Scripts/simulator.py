@@ -42,9 +42,6 @@ def cmd_adc_read():
     return rx_buffer
 
 def cmd_prom_read(addr):
-    prom_buffer = 
-
-
     print("PROM Read from address:", addr)
     rx_buffer = bytes([0xFE,
                   (PROM_values[addr] >> 8) & 0xFF,  # High byte
@@ -91,27 +88,29 @@ def main():
             print('No boards found. Make sure the board is connected. Retrying...', end='\r', flush=True)
         print()
     time.sleep(1) # The serial port takes a second before we can open it
-    board = serial.Serial(get_ports()[0], 115200) # Open the serial port
+    board = serial.Serial(get_ports()[0], 115200, timeout=0.1) # Open the serial port
+    # Note: timeout=0.1 is needed so that we can read the serial port without blocking, allowing for keyboard interrupts
     print("Connected to", get_ports()[0])
 
     while True:
         try:
             data = board.read(1) # Read one byte
-            if data:
-                data = int.from_bytes(data, 'big') # Convert to integer
-                print("Received: " + hex(data))
-                response = parse_data(data)
-                if response == None:
-                    continue
-                print("Responding with: " + hex(int(response)))
-                board.write(response)
-
+            if not data:
+                continue
+            data = int.from_bytes(data, 'big') # Convert to integer
+            print("Received: " + hex(data))
+            response = parse_data(data)
+            if response == None:
+                continue
+            print("Responding with: " + response.hex())
+            board.write(response)
+        except KeyboardInterrupt:
+            print("Exiting...")
+            board.close()
+            break
         except serial.SerialException as e:
             print("Serial exception:", e)
             break
-        except KeyboardInterrupt:
-            print("Exiting...")
-            break
-
+            
 if __name__ == '__main__':
     main()

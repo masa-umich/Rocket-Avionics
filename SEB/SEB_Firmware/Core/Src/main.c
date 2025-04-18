@@ -72,11 +72,14 @@ uint8_t SPI_txBuffer[BUFFER_SIZE] = {0}; // Buffer to hold transmitted SPI data
 volatile uint16_t received_size = 0;  // Track actual received bytes
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-	memcpy(UART_txBuffer, SPI_rxBuffer, 1); // Copy the received SPI rx buffer over to the UART tx buffer
-	HAL_UART_Transmit_IT(&huart2, UART_txBuffer, 1); // Send the data over UART
-	// Assume that there's a computer connected to UART
-	// and it will send us what we should send over SPI
-	HAL_UARTEx_ReceiveToIdle_IT(&huart2, UART_rxBuffer, BUFFER_SIZE); // Receive anything sent over UART
+	// Respect the CS pin
+	if (HAL_GPIO_ReadPin(SPI2_CS_GPIO_Port, SPI2_CS_Pin) == GPIO_PIN_RESET) {
+		memcpy(UART_txBuffer, SPI_rxBuffer, 1); // Copy the received SPI rx buffer over to the UART tx buffer
+		HAL_UART_Transmit_IT(&huart2, UART_txBuffer, 1); // Send the data over UART
+		// Assume that there's a computer connected to UART
+		// and it will send us what we should send over SPI
+		HAL_UARTEx_ReceiveToIdle_IT(&huart2, UART_rxBuffer, BUFFER_SIZE); // Receive anything sent over UART
+	}
 }
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
@@ -369,11 +372,11 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MCU_LED_GPIO_Port, MCU_LED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PB12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  /*Configure GPIO pin : SPI2_CS_Pin */
+  GPIO_InitStruct.Pin = SPI2_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(SPI2_CS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MCU_LED_Pin */
   GPIO_InitStruct.Pin = MCU_LED_Pin;
