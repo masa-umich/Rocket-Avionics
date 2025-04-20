@@ -165,6 +165,7 @@ std::pair<int, int> Barometer::guess_and_check(double P, double TEMP)
    return {D1, D2};
 }
 
+
 double gaussian_random(double mean, double stddev)
 {
     static std::random_device rd;
@@ -172,6 +173,7 @@ double gaussian_random(double mean, double stddev)
     std::normal_distribution<double> distribution(mean, stddev);
     return distribution(gen);
 }
+
 
 void Barometer::view_data()
 {
