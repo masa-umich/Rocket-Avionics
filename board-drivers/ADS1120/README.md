@@ -13,6 +13,7 @@
 <br/><br/>
 
 # Contents
+ - [SPI Setup](#spisetup)
  - [Example Usage](#usage)
  - [Tips](#tips)
  - [Reference](#ref)
@@ -38,6 +39,15 @@
        - [vTCTask()](#task)
        - [ADS_configure()](#configChip)
        - [ADS_configureChip()](#configChipd)
+
+<a id="spisetup"></a>
+# SPI Setup
+
+* Frame Format: Motorola
+* Data Size: 8 bits
+* First Bit: MSB First
+* Clock Polarity: Low
+* Clock Phase: 2 Edge
 
 <a id="usage"></a>
 # Example Usage

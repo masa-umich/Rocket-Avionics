@@ -1,0 +1,8 @@
+[build-system]
+requires = ["scikit-build-core[pyproject]>=0.9", "pybind11[global]"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "baro_sim"
+version = "0.1.0"
+description = "Barometer noise / compensation engine (C++ core wrapped for Python)"
