@@ -7,10 +7,7 @@
 
 #include "M24256E.h"
 
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_def.h"
-#include "stm32f4xx_hal_gpio.h"
-#include "stm32f4xx_hal_i2c.h"
+#include "main.h"
 #include "string.h"
 
 #define DEV_SELECT_MEM          0b1010

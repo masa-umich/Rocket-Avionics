@@ -12,9 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "stm32f446xx.h"
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_i2c.h"
+#include "main.h"
 
 #define EEPROM_MEM_MAX_ADDR     0x7FFF
 #define EEPROM_ID_PAGE_MAX_ADDR 0x3F
