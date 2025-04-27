@@ -8,6 +8,7 @@
 #include "M24256E.h"
 
 #include "main.h"
+#include "stdbool.h"
 #include "string.h"
 
 #define DEV_SELECT_MEM          0b1010
@@ -76,6 +77,46 @@ static eeprom_status_t eeprom_polling_write(eeprom_t* eeprom,
     if (ret != HAL_OK) return EEPROM_TX_ERROR;
 }
 
+/**
+ * Perform a single write to the EEPROM.
+ *
+ * This function returns EEPROM_TX_ERROR if the write fails for any reason.
+ *
+ * @param eeprom      Struct used to store EEPROM I2C handle and pins.
+ * @param dev_address The I2C address to use when writing.
+ * @param data        The data to write to the EEPROM.
+ * @param size        The number of bytes to write.
+ * @param timeout     The HAL_I2C_Master_Transmit timeout (see HAL
+ *                    documentation for more information).
+ * @return            An eeprom_status_t indicating whether or not the write
+ *                    was successful.
+ */
+static eeprom_status_t eeprom_single_write(eeprom_t* eeprom,
+                                           uint16_t dev_address,
+                                           uint8_t* data, uint16_t size,
+                                           uint32_t timeout) {
+    HAL_StatusTypeDef ret = HAL_I2C_Master_Transmit(
+        eeprom->hi2c, dev_address, data, size, timeout);
+    if (ret != HAL_OK) {
+        return EEPROM_TX_ERROR;
+    }
+
+    return EEPROM_OK;
+}
+
+/**
+ * Return EEPROM_OK if eeprom->cda matches the EEPROM's CDA register.
+ *
+ * @param eeprom Struct used to store EEPROM I2C handle and pins.
+ * @return       An eeprom_status_t indicating whether or not eeprom->cda
+ *               matches the EEPROM's CDA register.
+ */
+static eeprom_status_t eeprom_check_cda(eeprom_t* eeprom) {
+    uint8_t buf[2] = {B1ADDR_CDA, B2ADDR_CDA};
+    return eeprom_single_write(eeprom, I2C_ADDR_CDA(eeprom->cda), buf, 2,
+                               HAL_MAX_DELAY);
+}
+
 eeprom_status_t eeprom_init(eeprom_t* eeprom, I2C_HandleTypeDef* hi2c,
                             GPIO_TypeDef* wc_port, uint16_t wc_pin) {
     eeprom->hi2c = hi2c;
@@ -85,10 +126,9 @@ eeprom_status_t eeprom_init(eeprom_t* eeprom, I2C_HandleTypeDef* hi2c,
     eeprom_disable_writes(eeprom);
 
     eeprom_status_t ret;
-    uint8_t dest;
     for (uint8_t i = 0b000; i <= 0b111; i++) {
         eeprom->cda = i;
-        ret = eeprom_read_cda(eeprom, &dest);
+        ret = eeprom_check_cda(eeprom);
         if (ret == EEPROM_OK) return EEPROM_OK;
     }
 
@@ -142,7 +182,7 @@ eeprom_status_t eeprom_write_cda(eeprom_t* eeprom, uint8_t data) {
     uint8_t buf[3];
     buf[0] = B1ADDR_CDA;
     buf[1] = B2ADDR_CDA;
-    buf[2] = data;
+    buf[2] = data << 1;
 
     eeprom_enable_writes(eeprom);
 
