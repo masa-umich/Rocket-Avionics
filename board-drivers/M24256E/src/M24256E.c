@@ -196,26 +196,70 @@ eeprom_status_t eeprom_lock_id_page(eeprom_t* eeprom) {
     return ret;
 }
 
+eeprom_status_t eeprom_read_mem(eeprom_t* eeprom, uint16_t addr,
+                                uint8_t* dest, uint16_t num_bytes) {
+    // Check addr and num_bytes separately first to prevent overflow.
+    if (addr > EEPROM_MEM_MAX_ADDR || num_bytes > EEPROM_MEM_MAX_ADDR ||
+        addr + num_bytes > EEPROM_MEM_MAX_ADDR) {
+        return EEPROM_INVALID_ARG;
+    }
+
+    // Initiate read
+    eeprom_status_t tx_ret =
+        eeprom_polling_write(eeprom, I2C_ADDR_MEM(eeprom->cda),
+                             (uint8_t*)&addr, sizeof(addr), HAL_MAX_DELAY);
+    if (tx_ret != EEPROM_OK) return tx_ret;
+
+    // Perform read
+    HAL_StatusTypeDef rx_ret =
+        HAL_I2C_Master_Receive(eeprom->hi2c, I2C_ADDR_MEM(eeprom->cda),
+                               dest, num_bytes, HAL_MAX_DELAY);
+    if (rx_ret != HAL_OK) return EEPROM_RX_ERROR;
+
+    return EEPROM_OK;
+}
+
 eeprom_status_t eeprom_read_cda(eeprom_t* eeprom, uint8_t* dest) {
-    HAL_StatusTypeDef ret;
     uint8_t buf[2];
 
     // Initiate read
     buf[0] = B1ADDR_CDA;
     buf[1] = B2ADDR_CDA;
-    ret = HAL_I2C_Master_Transmit(eeprom->hi2c, I2C_ADDR_CDA(eeprom->cda),
-                                  buf, 2, HAL_MAX_DELAY);
-    if (ret != HAL_OK) {
-        return EEPROM_TX_ERROR;
-    }
+    eeprom_status_t tx_ret = eeprom_polling_write(
+        eeprom, I2C_ADDR_CDA(eeprom->cda), buf, 2, HAL_MAX_DELAY);
+    if (tx_ret != EEPROM_OK) return EEPROM_TX_ERROR;
 
     // Perform read
-    ret = HAL_I2C_Master_Receive(eeprom->hi2c, I2C_ADDR_CDA(eeprom->cda),
-                                 buf, 1, HAL_MAX_DELAY);
-    if (ret != HAL_OK) {
-        return EEPROM_RX_ERROR;
-    }
+    HAL_StatusTypeDef rx_ret = HAL_I2C_Master_Receive(
+        eeprom->hi2c, I2C_ADDR_CDA(eeprom->cda), buf, 1, HAL_MAX_DELAY);
+    if (rx_ret != HAL_OK) return EEPROM_RX_ERROR;
 
     *dest = buf[0];
+    return EEPROM_OK;
+}
+
+eeprom_status_t eeprom_read_id_page(eeprom_t* eeprom, uint8_t addr,
+                                    uint8_t* dest, uint8_t num_bytes) {
+    // Check addr and num_bytes separately first to prevent overflow.
+    if (addr > EEPROM_ID_PAGE_MAX_ADDR ||
+        num_bytes > EEPROM_ID_PAGE_MAX_ADDR ||
+        addr + num_bytes > EEPROM_ID_PAGE_MAX_ADDR) {
+    }
+
+    // Initiate read
+    uint8_t buf[2];
+    buf[0] = B1ADDR_ID_PAGE;
+    buf[1] = addr;
+    eeprom_status_t tx_ret =
+        eeprom_polling_write(eeprom, I2C_ADDR_ID_PAGE(eeprom->cda), buf,
+                             sizeof(buf), HAL_MAX_DELAY);
+    if (tx_ret != EEPROM_OK) return EEPROM_TX_ERROR;
+
+    // Perform read
+    HAL_StatusTypeDef rx_ret =
+        HAL_I2C_Master_Receive(eeprom->hi2c, I2C_ADDR_ID_PAGE(eeprom->cda),
+                               dest, num_bytes, HAL_MAX_DELAY);
+    if (rx_ret != HAL_OK) return EEPROM_RX_ERROR;
+
     return EEPROM_OK;
 }
