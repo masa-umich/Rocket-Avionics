@@ -208,6 +208,7 @@ eeprom_status_t eeprom_write_id_page(eeprom_t* eeprom, uint8_t addr,
     if (addr > EEPROM_ID_PAGE_MAX_ADDR ||
         num_bytes > EEPROM_ID_PAGE_MAX_ADDR ||
         addr + num_bytes - 1 > EEPROM_ID_PAGE_MAX_ADDR) {
+        return EEPROM_INVALID_ARG;
     }
 
     eeprom_enable_writes(eeprom);
@@ -229,7 +230,7 @@ eeprom_status_t eeprom_write_id_page(eeprom_t* eeprom, uint8_t addr,
 eeprom_status_t eeprom_lock_id_page(eeprom_t* eeprom) {
     eeprom_enable_writes(eeprom);
 
-    uint8_t buf[3];
+    uint8_t buf[3] = {B1ADDR_ID_PAGE_LOCK, B2ADDR_ID_PAGE_LOCK, 0b10};
     eeprom_status_t ret =
         eeprom_polling_write(eeprom, I2C_ADDR_ID_PAGE_LOCK(eeprom->cda),
                              buf, sizeof(buf), HAL_MAX_DELAY);
@@ -289,6 +290,7 @@ eeprom_status_t eeprom_read_id_page(eeprom_t* eeprom, uint8_t addr,
     if (addr > EEPROM_ID_PAGE_MAX_ADDR ||
         num_bytes > EEPROM_ID_PAGE_MAX_ADDR ||
         addr + num_bytes - 1 > EEPROM_ID_PAGE_MAX_ADDR) {
+        return EEPROM_INVALID_ARG;
     }
 
     // Initiate read
