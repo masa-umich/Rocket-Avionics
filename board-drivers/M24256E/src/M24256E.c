@@ -137,7 +137,7 @@ eeprom_status_t eeprom_write_mem(eeprom_t* eeprom, uint16_t addr,
                                  uint8_t* data, uint16_t num_bytes) {
     // Check addr and num_bytes separately first to prevent overflow.
     if (addr > EEPROM_MEM_MAX_ADDR || num_bytes > EEPROM_MEM_MAX_ADDR ||
-        addr + num_bytes > EEPROM_MEM_MAX_ADDR) {
+        addr + num_bytes - 1 > EEPROM_MEM_MAX_ADDR) {
         return EEPROM_INVALID_ARG;
     }
 
@@ -207,7 +207,7 @@ eeprom_status_t eeprom_write_id_page(eeprom_t* eeprom, uint8_t addr,
     // Check addr and num_bytes separately first to prevent overflow.
     if (addr > EEPROM_ID_PAGE_MAX_ADDR ||
         num_bytes > EEPROM_ID_PAGE_MAX_ADDR ||
-        addr + num_bytes > EEPROM_ID_PAGE_MAX_ADDR) {
+        addr + num_bytes - 1 > EEPROM_ID_PAGE_MAX_ADDR) {
     }
 
     eeprom_enable_writes(eeprom);
@@ -243,7 +243,7 @@ eeprom_status_t eeprom_read_mem(eeprom_t* eeprom, uint16_t addr,
                                 uint8_t* dest, uint16_t num_bytes) {
     // Check addr and num_bytes separately first to prevent overflow.
     if (addr > EEPROM_MEM_MAX_ADDR || num_bytes > EEPROM_MEM_MAX_ADDR ||
-        addr + num_bytes > EEPROM_MEM_MAX_ADDR) {
+        addr + num_bytes - 1 > EEPROM_MEM_MAX_ADDR) {
         return EEPROM_INVALID_ARG;
     }
 
@@ -288,7 +288,7 @@ eeprom_status_t eeprom_read_id_page(eeprom_t* eeprom, uint8_t addr,
     // Check addr and num_bytes separately first to prevent overflow.
     if (addr > EEPROM_ID_PAGE_MAX_ADDR ||
         num_bytes > EEPROM_ID_PAGE_MAX_ADDR ||
-        addr + num_bytes > EEPROM_ID_PAGE_MAX_ADDR) {
+        addr + num_bytes - 1 > EEPROM_ID_PAGE_MAX_ADDR) {
     }
 
     // Initiate read
