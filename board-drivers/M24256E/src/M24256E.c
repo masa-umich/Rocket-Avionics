@@ -62,11 +62,14 @@ static eeprom_status_t eeprom_polling_write(eeprom_t* eeprom,
                                             uint8_t* data, uint16_t size,
                                             uint32_t timeout) {
     HAL_StatusTypeDef ret;
+    uint32_t num_attempts = 0;
     do {
         ret = HAL_I2C_Master_Transmit(eeprom->hi2c, dev_address, data, size,
                                       timeout);
+        num_attempts++;
     } while (ret != HAL_OK &&
-             HAL_I2C_GetError(eeprom->hi2c) == HAL_I2C_ERROR_AF);
+             HAL_I2C_GetError(eeprom->hi2c) == HAL_I2C_ERROR_AF &&
+             num_attempts < EEPROM_MAX_WRITE_ATTEMPTS);
 
     // If the write failed for a reason that's not an acknowledgement
     // failure, then return an error.
