@@ -38,9 +38,7 @@ typedef struct {
     // The write control pin (active-low).
     gpio_pin_t wc;
 
-    // The contents of the CDA register. NOTE: This variable stores a
-    // left-shifted version of the actual CDA register so that the device
-    // address lock (DAL) bit is ignored.
+    // The contents of the CDA register.
     uint8_t cda;
 } eeprom_t;
 
@@ -92,8 +90,8 @@ eeprom_status_t eeprom_init(eeprom_t* eeprom, I2C_HandleTypeDef* hi2c,
  * completely written.
  *
  * If any of the data to be written extends past the last valid address
- * (i.e. if addr + num_bytes > EEPROM_MEM_MAX_ADDR), this function will NOT
- * write any data and return EEPROM_INVALID_ARG.
+ * (i.e. if addr + num_bytes - 1 > EEPROM_MEM_MAX_ADDR), this function will
+ * NOT write any data and return EEPROM_INVALID_ARG.
  *
  * Datasheet: pp. 13-14
  *
@@ -132,8 +130,9 @@ eeprom_status_t eeprom_write_cda(eeprom_t* eeprom, uint8_t data);
 /**
  * Write data from a buffer to the EEPROM's ID page.
  *
- * If the data to be written extends past the page boundary, this function
- * will NOT write any data and return EEPROM_INVALID_ARG.
+ * If the data to be written extends past the page boundary (i.e. if addr +
+ * num_bytes - 1 > EEPROM_ID_PAGE_MAX_ADDR), this function will NOT write
+ * any data and return EEPROM_INVALID_ARG.
  *
  * Datasheet: pg. 16
  *
@@ -165,7 +164,7 @@ eeprom_status_t eeprom_lock_id_page(eeprom_t* eeprom);
  * Read data from the EEPROM starting at addr into dest.
  *
  * If any of the data to be read is at an invalid address (i.e. if addr +
- * num_bytes > EEPROM_MEM_MAX_ADDR), then data will NOT be read and
+ * num_bytes - 1 > EEPROM_MEM_MAX_ADDR), then data will NOT be read and
  * EEPROM_INVALID_ARG will be returned.
  *
  * Datashet: pp. 21-22
@@ -202,7 +201,7 @@ eeprom_status_t eeprom_read_cda(eeprom_t* eeprom, uint8_t* dest);
  * Read data from the EEPROM ID page starting at addr into buf.
  *
  * If any of the data to be read is at an invalid address (i.e. if addr +
- * num_bytes > EEPROM_ID_PAGE_MAX_ADDR), then data will NOT be read and
+ * num_bytes - 1 > EEPROM_ID_PAGE_MAX_ADDR), then data will NOT be read and
  * EEPROM_INVALID_ARG will be returned.
  *
  * Datasheet: pg. 24
