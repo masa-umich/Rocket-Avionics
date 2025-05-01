@@ -152,10 +152,12 @@ eeprom_status_t eeprom_write_mem(eeprom_t* eeprom, uint16_t addr,
         buf[0] = (addr >> 8) & 0xFF;
         buf[1] = addr & 0xFF;
 
-        // Copy the data chunk to the buffer. After the first loop
-        // iteration, addr & PAGE_ADDR_MASK should be 0.
-        uint8_t num_data_bytes_to_write =
-            MIN(PAGE_SIZE, num_bytes) - (addr & PAGE_ADDR_MASK);
+        // Copy the data chunk to the buffer. If the write extends over a
+        // page boundary, we write one page at a time.
+        uint16_t page_index = addr % PAGE_SIZE;
+        uint16_t num_data_bytes_to_write =
+            MIN(num_bytes, PAGE_SIZE - page_index);
+
         memcpy(buf + sizeof(addr), data, num_data_bytes_to_write);
 
         eeprom_status_t ret = eeprom_polling_write(
