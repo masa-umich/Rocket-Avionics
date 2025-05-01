@@ -311,6 +311,8 @@ eeprom_status_t eeprom_read_id_page(eeprom_t* eeprom, uint8_t addr,
     return EEPROM_OK;
 }
 
+// WARNING: This function is currently not working because it will set dest
+// to true whether or not the ID page is actually locked.
 eeprom_status_t eeprom_is_id_page_locked(eeprom_t* eeprom, bool* dest) {
     uint8_t buf[3] = {B1ADDR_ID_PAGE_LOCK, B2ADDR_ID_PAGE_LOCK, 0};
 

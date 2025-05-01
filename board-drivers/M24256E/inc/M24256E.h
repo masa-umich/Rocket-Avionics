@@ -228,6 +228,9 @@ eeprom_status_t eeprom_read_id_page(eeprom_t* eeprom, uint8_t addr,
 /**
  * Set dest to true if the EEPROM ID page is locked.
  *
+ * WARNING: This function is currently not working because it will set dest
+ * to true whether or not the ID page is actually locked.
+ *
  * Datasheet: pg. 25
  *
  * @param eeprom Struct used to store EEPROM I2C handle and pins.
