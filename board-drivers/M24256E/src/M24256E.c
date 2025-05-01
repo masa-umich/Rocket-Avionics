@@ -28,9 +28,6 @@
 #define B2ADDR_ID_PAGE_LOCK 0
 #define B2ADDR_CDA          0
 
-#define PAGE_SIZE      64
-#define PAGE_ADDR_MASK 0b111111
-
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 static inline void eeprom_enable_writes(eeprom_t* eeprom) {
@@ -143,7 +140,7 @@ eeprom_status_t eeprom_write_mem(eeprom_t* eeprom, uint16_t addr,
 
     eeprom_enable_writes(eeprom);
 
-    uint8_t buf[sizeof(addr) + PAGE_SIZE];
+    uint8_t buf[sizeof(addr) + EEPROM_PAGE_SIZE];
 
     while (num_bytes > 0) {
         // Copy the address to the buffer. We rely on bit shifting instead
@@ -154,9 +151,9 @@ eeprom_status_t eeprom_write_mem(eeprom_t* eeprom, uint16_t addr,
 
         // Copy the data chunk to the buffer. If the write extends over a
         // page boundary, we write one page at a time.
-        uint16_t page_index = addr % PAGE_SIZE;
+        uint16_t page_index = addr % EEPROM_PAGE_SIZE;
         uint16_t num_data_bytes_to_write =
-            MIN(num_bytes, PAGE_SIZE - page_index);
+            MIN(num_bytes, EEPROM_PAGE_SIZE - page_index);
 
         memcpy(buf + sizeof(addr), data, num_data_bytes_to_write);
 
@@ -212,7 +209,7 @@ eeprom_status_t eeprom_write_id_page(eeprom_t* eeprom, uint8_t addr,
 
     eeprom_enable_writes(eeprom);
 
-    uint8_t buf[1 + sizeof(addr) + PAGE_SIZE];
+    uint8_t buf[1 + sizeof(addr) + EEPROM_PAGE_SIZE];
     buf[0] = B1ADDR_ID_PAGE;
     buf[1] = addr;
     memcpy(buf + 1 + sizeof(addr), data, num_bytes);

@@ -16,6 +16,13 @@
 
 #define EEPROM_MEM_MAX_ADDR     0x7FFF
 #define EEPROM_ID_PAGE_MAX_ADDR 0x3F
+#define EEPROM_MEM_NUM_PAGES    512
+#define EEPROM_PAGE_SIZE        64
+
+// When a polling write is performed (see Datasheet pg. 19), this macro
+// defines the number of times that the driver functions will re-attempt to
+// write the data given.
+#define EEPROM_MAX_WRITE_ATTEMPTS 1000
 
 /**
  * gpio_pin_t stores a combination of an STM32 port and pin number for
