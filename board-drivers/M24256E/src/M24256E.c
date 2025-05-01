@@ -16,11 +16,10 @@
 #define DEV_SELECT_ID_PAGE_LOCK 0b1011
 #define DEV_SELECT_CDA          0b1011
 
-#define I2C_ADDR_MEM(cda)     ((DEV_SELECT_MEM << 4) | (cda << 1))
-#define I2C_ADDR_ID_PAGE(cda) ((DEV_SELECT_ID_PAGE << 4) | (cda << 1))
-#define I2C_ADDR_ID_PAGE_LOCK(cda) \
-    ((DEV_SELECT_ID_PAGE_LOCK << 4) | (cda << 1))
-#define I2C_ADDR_CDA(cda) ((DEV_SELECT_CDA << 4) | (cda << 1))
+#define I2C_ADDR_MEM(cda)          ((DEV_SELECT_MEM << 4) | cda)
+#define I2C_ADDR_ID_PAGE(cda)      ((DEV_SELECT_ID_PAGE << 4) | cda)
+#define I2C_ADDR_ID_PAGE_LOCK(cda) ((DEV_SELECT_ID_PAGE_LOCK << 4) | cda)
+#define I2C_ADDR_CDA(cda)          ((DEV_SELECT_CDA << 4) | cda)
 
 #define B1ADDR_ID_PAGE      0b0 << 2
 #define B1ADDR_ID_PAGE_LOCK 0b1 << 2
@@ -122,12 +121,11 @@ eeprom_status_t eeprom_init(eeprom_t* eeprom, I2C_HandleTypeDef* hi2c,
     eeprom->hi2c = hi2c;
     eeprom->wc.port = wc_port;
     eeprom->wc.pin = wc_pin;
-    eeprom->cda = 0b000;
     eeprom_disable_writes(eeprom);
 
     eeprom_status_t ret;
     for (uint8_t i = 0b000; i <= 0b111; i++) {
-        eeprom->cda = i;
+        eeprom->cda = i << 1;
         ret = eeprom_check_cda(eeprom);
         if (ret == EEPROM_OK) return EEPROM_OK;
     }
@@ -195,7 +193,7 @@ eeprom_status_t eeprom_write_cda(eeprom_t* eeprom, uint8_t data) {
 
     eeprom_disable_writes(eeprom);
 
-    eeprom->cda = data;
+    eeprom->cda = data << 1;
     return EEPROM_OK;
 }
 
