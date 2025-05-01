@@ -310,3 +310,26 @@ eeprom_status_t eeprom_read_id_page(eeprom_t* eeprom, uint8_t addr,
 
     return EEPROM_OK;
 }
+
+eeprom_status_t eeprom_is_id_page_locked(eeprom_t* eeprom, bool* dest) {
+    uint8_t buf[3] = {B1ADDR_ID_PAGE_LOCK, B2ADDR_ID_PAGE_LOCK, 0};
+
+    eeprom_status_t ret;
+    for (int i = 0; i < EEPROM_MAX_WRITE_ATTEMPTS; i++) {
+        ret =
+            eeprom_single_write(eeprom, I2C_ADDR_ID_PAGE_LOCK(eeprom->cda),
+                                buf, sizeof(buf), HAL_MAX_DELAY);
+        // Reset the device internal logic (see Datasheet pg. 25)
+        eeprom_single_write(eeprom, I2C_ADDR_ID_PAGE_LOCK(eeprom->cda),
+                            NULL, 0, HAL_MAX_DELAY);
+
+        if (ret == EEPROM_OK) {
+            *dest = false;
+            return EEPROM_OK;
+        }
+    }
+
+    // All write attempts responded with a NACK, so ID page must be locked.
+    *dest = true;
+    return EEPROM_OK;
+}
