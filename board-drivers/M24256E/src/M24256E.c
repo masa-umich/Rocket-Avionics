@@ -146,8 +146,11 @@ eeprom_status_t eeprom_write_mem(eeprom_t* eeprom, uint16_t addr,
     uint8_t buf[sizeof(addr) + PAGE_SIZE];
 
     while (num_bytes > 0) {
-        // Copy the address to the buffer
-        memcpy(buf, &addr, sizeof(addr));
+        // Copy the address to the buffer. We rely on bit shifting instead
+        // of memcpy so that this code is portable across systems with
+        // different endiannesses.
+        buf[0] = (addr >> 8) & 0xFF;
+        buf[1] = addr & 0xFF;
 
         // Copy the data chunk to the buffer. After the first loop
         // iteration, addr & PAGE_ADDR_MASK should be 0.
@@ -242,10 +245,12 @@ eeprom_status_t eeprom_read_mem(eeprom_t* eeprom, uint16_t addr,
         return EEPROM_INVALID_ARG;
     }
 
-    // Initiate read
-    eeprom_status_t tx_ret =
-        eeprom_polling_write(eeprom, I2C_ADDR_MEM(eeprom->cda),
-                             (uint8_t*)&addr, sizeof(addr), HAL_MAX_DELAY);
+    // Initiate read, converting address to big-endian.
+    uint8_t buf[sizeof(addr)];
+    buf[0] = (addr >> 8) & 0xFF;
+    buf[1] = addr & 0xFF;
+    eeprom_status_t tx_ret = eeprom_polling_write(
+        eeprom, I2C_ADDR_MEM(eeprom->cda), buf, sizeof(buf), HAL_MAX_DELAY);
     if (tx_ret != EEPROM_OK) return tx_ret;
 
     // Perform read
