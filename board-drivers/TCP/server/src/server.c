@@ -26,17 +26,17 @@ int server_init(void) {
     // task configuration
     const osThreadAttr_t listenerTask_attributes = {
       .name = "listenerTask",
-      .stack_size = 512 * 4,
+      .stack_size = 512 * 16, // I just increased this until it worked, it may be able to be reduced
       .priority = (osPriority_t) osPriorityNormal,
     };
     const osThreadAttr_t readerTask_attributes = {
       .name = "readerTask",
-      .stack_size = 512 * 4,
+      .stack_size = 512 * 6,
       .priority = (osPriority_t) osPriorityNormal,
     };
     const osThreadAttr_t writerTask_attributes = {
       .name = "writerTask",
-      .stack_size = 512 * 4,
+      .stack_size = 512 * 6,
       .priority = (osPriority_t) osPriorityNormal,
     };
 
@@ -57,12 +57,13 @@ int server_init(void) {
 	txMsgBuffer = list_create(MAX_MSG_LEN + 2*sizeof(int), msgFreeCallback);
 
     // make mutex for active connections
+    // Note: this doesn't need to be a ts-queue it's just a list of 
+    // which connections are active where order does not matter
     memset(connections, -1, MAX_CONN_NUM * sizeof(int)); // fill non-active connections with -1
 	conn_mu = malloc(sizeof(sys_mutex_t));
-	err_t err = sys_mutex_new(conn_mu);
-    
+
     // check if the mutex got created successfully
-    if (err != ERR_OK) {
+    if (sys_mutex_new(conn_mu) != ERR_OK) {
         return 1;
     } else {
         return 0;
@@ -71,22 +72,24 @@ int server_init(void) {
 
 // Listen for incoming connections and add them to the connections list
 void server_listener_thread(void *arg) {
+    LWIP_UNUSED_ARG(arg);
 
-    int listen_sockfd = socket(AF_INET, SOCK_STREAM, 6); // Create new socket for listening. 6 is the protocol # for tcp
+    // Create new socket for listening. 6 is the protocol # for tcp
+    int listen_sockfd = socket(AF_INET, SOCK_STREAM, 6);
     if (listen_sockfd == -1) {
-        return -1;
+        Error_Handler(); // TODO: add error handling
     }
 
     // Bind socket to port
     struct sockaddr_in server_socket;
-    server_socket.sin_family = AF_INET;
-    server_socket.sin_port = htons(SERVER_PORT);
-    server_socket.sin_addr.s_addr = (in_addr_t) ipaddr.addr;
+    server_socket.sin_family = AF_INET; // IPv4
+    server_socket.sin_port = htons(SERVER_PORT); // grab server port
+    server_socket.sin_addr.s_addr = (in_addr_t) ipaddr.addr; // get IP from extern
 
-    if (bind(listen_sockfd, (struct sockaddr *)&server_socket, sizeof(server_socket)) < 0) {
+    if (bind(listen_sockfd, (struct sockaddr *) &server_socket, sizeof(server_socket)) != 0) {
         printf("Error binding socket\n");
         vTaskDelete(NULL);
-        return 1;
+        Error_Handler(); // TODO: add error handling
     }
 
     // Listen for incoming connections (blocks until a connection is made)
@@ -94,40 +97,116 @@ void server_listener_thread(void *arg) {
         printf("Error listening on socket\n");
         close(listen_sockfd);
         vTaskDelete(NULL);
-        return 1;
+        Error_Handler(); // TODO: add error handling
     }
 
     for (;;) {
         // we have a connection!
         struct sockaddr_in connection_socket;
+        socklen_t addr_len = sizeof(connection_socket);
 
-        int connection_fd = accept(listen_sockfd, (struct sockaddr *)&connection_socket, &sizeof(connection_socket));
+        int connection_fd = accept(listen_sockfd, (struct sockaddr* ) &connection_socket, &addr_len);
     
         // add the new connection to the active connections list
         sys_mutex_lock(conn_mu);
 	    for (int i = 0; i < MAX_CONN_NUM; ++i) {
 	    	if (connections[i] == -1) { // -1 is an empty space in the list
 	    		connections[i] = connection_fd;
-
-	    		sys_mutex_unlock(conn_mu);
-	    		return;
+                break;
 	    	}
 	    }
 	    sys_mutex_unlock(conn_mu);
     }
-
 }
 
 // Continually reads from the RX Message Buffer and processes new messages
 // Also removes them from the buffer after processing
 void server_reader_thread(void *arg) {
+    LWIP_UNUSED_ARG(arg);
 
+    // In order to capture incoming message we need an fd_set
+    // which contains the active connections and whether or not they have incoming messages
+    // but is represented as a bitmask instead of actual file descriptors
+    // this is so that the `select()` function can efficiently check for incoming messages
+    fd_set rx_fd_set;
+    struct timeval timeout; // timeout for select()
+    timeout.tv_sec = 1; // 1 second timeout
+    timeout.tv_usec = 0;
+
+    for (;;) {
+        // capture incoming messages
+
+        // update our fd_set with actual active connections
+        // (we do this each loop in case we add or remove connections)
+        update_fd_set(&rx_fd_set); 
+
+        // check for incoming messages
+        // select is a blocking function that will return when there is an incoming message
+        if (select(MAX_CONN_NUM+1, &rx_fd_set, NULL, NULL, &timeout) != -1) {
+            // we have incoming messages
+
+            // lock the connections mutex
+            sys_mutex_lock(conn_mu);
+
+            // go through our connections to see which one this maps to
+            for (int i = 0; i < MAX_CONN_NUM; i++) {
+                if (connections[i] == -1) { // only consider active connections
+                    continue;
+                }
+
+                int connection_fd = connections[i];
+
+                if (FD_ISSET(connection_fd, &rx_fd_set)) {
+                    // make space for the packet
+				    char* buf = malloc(MAX_MSG_LEN);
+
+                    // read the message
+				    int packet_len = recv(connection_fd, buf, MAX_MSG_LEN, 0);
+
+				    // package it in a struct
+				    Raw_message msg = {connection_fd, buf, packet_len};
+
+				    // add the message to the RX Message Buffer to be parsed
+                    list_push(rxMsgBuffer, (void*)(&msg));
+                }
+            }
+
+            // unlock the connections mutex
+            sys_mutex_unlock(conn_mu);
+        } else {
+        	Error_Handler(); // TODO: error handling
+        }
+    }
+
+    // TODO: add error handling and/or freeing memory
 }
 
 // Continually checks for new messages in the TX Message Buffer and sends them to the client
 // Also removes them from the buffer after sending
 void server_writer_thread(void *arg) {
+	LWIP_UNUSED_ARG(arg);
 
+	char buf[MAX_MSG_LEN];
+
+	for (;;) {
+		Raw_message msg = {-1, buf, MAX_MSG_LEN};
+
+        // blocks until a message is available in the TX Message Buffer
+		list_pop(txMsgBuffer, (void*)(&msg));
+
+        if (msg.connection_fd == -1) {
+            // messages with -1 connfd are not valid
+            continue;
+        }
+
+		if (send(msg.connection_fd, msg.buffer, msg.packet_len, 0) == -1) { // opts = 0
+            Error_Handler(); // TODO: add error handling
+		}
+
+		free(msg.buffer);
+	}
+
+	vTaskDelete(NULL);
 }
 
 // Callback function to free message data
@@ -136,7 +215,37 @@ void msgFreeCallback(void * data) {
 	free(data);
 }
 
+int server_read(Raw_message* msg) {
+    // Pop a message from the RX Message Buffer
+    // This will block until a message is available
+    list_pop(rxMsgBuffer, (void*)msg);
+
+    // Return the length of the message
+    return msg->packet_len;
+}
+
 // Helper function to add a message to the TX Message Buffer
-int sever_send(/* args that make sense once I write more code */) {
-    return 1;
+int server_send(Raw_message* msg) {
+    // Push a message to the TX Message Buffer
+    // This will block until there is space in the buffer
+    list_push(txMsgBuffer, (void*)msg);
+
+    return 0; // success
+}
+
+// compares the connections list to the fd_set and sets the fd_set to the active connections
+int update_fd_set(fd_set *rfds) {
+    FD_ZERO(rfds);
+
+	sys_mutex_lock(conn_mu);
+
+	for (int i = 0; i < MAX_CONN_NUM; ++i) {
+		if (connections[i] != -1) {
+			FD_SET(connections[i], rfds);
+		}
+        // TODO: add error handling
+    }
+
+	sys_mutex_unlock(conn_mu);
+    return 0;
 }
