@@ -5,9 +5,35 @@ import random
 # Note: close the serial monitor in Arduino IDE before running this script.
 # Otherwise, the port will be busy and you will get an error.
 
+# MS5611 Command Definitions (from datasheet and STM32 C code)
+# Convert D1 (pressure) commands
+MS5611_CMD_CONVERT_D1_BASE = 0x40
+MS5611_CMD_CONVERT_D1_OSR_256  = 0x40
+MS5611_CMD_CONVERT_D1_OSR_512  = 0x42
+MS5611_CMD_CONVERT_D1_OSR_1024 = 0x44
+MS5611_CMD_CONVERT_D1_OSR_2048 = 0x46
+MS5611_CMD_CONVERT_D1_OSR_4096 = 0x48
+D1_COMMANDS = [
+    MS5611_CMD_CONVERT_D1_OSR_256, MS5611_CMD_CONVERT_D1_OSR_512,
+    MS5611_CMD_CONVERT_D1_OSR_1024, MS5611_CMD_CONVERT_D1_OSR_2048,
+    MS5611_CMD_CONVERT_D1_OSR_4096
+]
+
+# Convert D2 (temperature) commands
+MS5611_CMD_CONVERT_D2_BASE = 0x50
+MS5611_CMD_CONVERT_D2_OSR_256  = 0x50
+MS5611_CMD_CONVERT_D2_OSR_512  = 0x52
+MS5611_CMD_CONVERT_D2_OSR_1024 = 0x54
+MS5611_CMD_CONVERT_D2_OSR_2048 = 0x56
+MS5611_CMD_CONVERT_D2_OSR_4096 = 0x58
+D2_COMMANDS = [
+    MS5611_CMD_CONVERT_D2_OSR_256, MS5611_CMD_CONVERT_D2_OSR_512,
+    MS5611_CMD_CONVERT_D2_OSR_1024, MS5611_CMD_CONVERT_D2_OSR_2048,
+    MS5611_CMD_CONVERT_D2_OSR_4096
+]
+
 global ADC_result, PROM_values
-ADC_result = 0 # Placeholder for ADC result
-PROM_values = [ 40127, 36924, 23317, 23282, 33464, 28312 ]
+ADC_result = 9085466 # Placeholder for ADC result
 
 def get_ports():
     boards = []
@@ -17,45 +43,20 @@ def get_ports():
             boards.append(p.device)
     return boards
 
-def cmd_reset():
-    print("Reset")
-    return None # No response needed
-
 def cmd_d1_convert(osr):
     print("D1 Convert with OSR:", osr)
     # TODO: Replace with actual conversion logic
     ADC_result = random.randint(0, 0xFFFFFF)
-    return None # No response, just internal operation
+    return ADC_result # No response, just internal operation
 
 def cmd_d2_convert(osr):
     print("D2 Convert with OSR:", osr)
     # TODO: Replace with actual conversion logic
     ADC_result = random.randint(0, 0xFFFFFF)
-    return None # No response, just internal operation
-
-def cmd_adc_read():
-    print("ADC Read")
-    rx_buffer = bytes([0xFE,                  # this byte doesn't make sense to be here, but it's what the real chip does
-                  (ADC_result >> 16) & 0xFF,  # High byte
-                  (ADC_result >> 8) & 0xFF,   # Middle byte
-                   ADC_result & 0xFF])        # Low byte
-    return rx_buffer
-
-def cmd_prom_read(addr):
-    print("PROM Read from address:", addr)
-    rx_buffer = bytes([0xFE,
-                  (PROM_values[addr] >> 8) & 0xFF,  # High byte
-                  PROM_values[addr] & 0xFF])         # Low byte
-    return rx_buffer
+    return ADC_result # No response, just internal operation
 
 def parse_data(data):
-    # take in the SPI command byte and compare it to all possible valid SPI commands
-    if (data & 0xF0) == 0xA0: # All possible PROM read commands
-        # Interpret bits 0, 1, and 2 of the command byte as the address
-        return cmd_prom_read(((0x0E & (data & 0x0F)) >> 1))
     match data: # All other unique commands
-        case 0x1E:
-            return cmd_reset()
         case 0x40:
             return cmd_d1_convert(256)
         case 0x42:
@@ -76,8 +77,6 @@ def parse_data(data):
             return cmd_d2_convert(2048)
         case 0x48:
             return cmd_d2_convert(4096)
-        case 0x00:
-            return cmd_adc_read()
         case _:
             print("INVALID_COMMAND")
             return None
@@ -99,11 +98,15 @@ def main():
                 continue
             data = int.from_bytes(data, 'big') # Convert to integer
             print("Received: " + hex(data))
-            response = parse_data(data)
-            if response == None:
-                continue
-            print("Responding with: " + response.hex())
-            board.write(response)
+            # response = parse_data(data)
+            # if response == None:
+            #     continue
+            # print("Responding with: " + hex(response))
+            response = bytes([0x8A, 0x9F, 0x1A])
+            print("Responding with:", response.hex())
+            message_sent = board.write(response)
+            board.flush()
+            print("Sent response of length:", message_sent)
         except KeyboardInterrupt:
             print("Exiting...")
             board.close()

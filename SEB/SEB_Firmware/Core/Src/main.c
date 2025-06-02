@@ -64,32 +64,13 @@ static void MX_SPI2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#define BUFFER_SIZE 16 // Max buffer size for SPI packet, in bytes
-uint8_t UART_rxBuffer[BUFFER_SIZE] = {0}; // Buffer to hold received UART data
-uint8_t UART_txBuffer[1] = {0}; // Buffer to hold transmitted UART data
-uint8_t SPI_rxBuffer[1] = {0}; // Buffer to hold received SPI data
-uint8_t SPI_txBuffer[BUFFER_SIZE] = {0}; // Buffer to hold transmitted SPI data
-volatile uint16_t received_size = 0;  // Track actual received bytes
 
-void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-	// Respect the CS pin
-	if (HAL_GPIO_ReadPin(SPI2_CS_GPIO_Port, SPI2_CS_Pin) == GPIO_PIN_RESET) {
-		memcpy(UART_txBuffer, SPI_rxBuffer, 1); // Copy the received SPI rx buffer over to the UART tx buffer
-		HAL_UART_Transmit_IT(&huart2, UART_txBuffer, 1); // Send the data over UART
-		// Assume that there's a computer connected to UART
-		// and it will send us what we should send over SPI
-		HAL_UARTEx_ReceiveToIdle_IT(&huart2, UART_rxBuffer, BUFFER_SIZE); // Receive anything sent over UART
-	}
-}
+// Globals
+#define BUFFER_SIZE 4 // Max buffer size for SPI packet, in bytes
+uint8_t SPI_rxBuffer[BUFFER_SIZE] = {0};
+uint8_t SPI_txBuffer[BUFFER_SIZE] = {0};
 
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
-  received_size = Size; // SPI responses can vary in length, this lets us know how many bytes we received and need to transmit
 
-  memcpy(SPI_txBuffer, UART_rxBuffer, received_size); // Copy the received UART rx buffer over to the SPI tx buffer
-
-  HAL_SPI_Transmit_IT(&hspi2, SPI_txBuffer, received_size);
-
-}
 /* USER CODE END 0 */
 
 /**
@@ -127,13 +108,14 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 
+  emulation_loop(&hspi2, &huart2); // Start the emulation loop for MS5611 sensor
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-	HAL_SPI_Receive_IT(&hspi2, SPI_rxBuffer, 1); // kickstart the SPI relaying, only receive one byte at a time
-    HAL_UARTEx_ReceiveToIdle_IT(&huart2, UART_rxBuffer, BUFFER_SIZE);
+	__WFI();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -301,7 +283,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.NSS = SPI_NSS_HARD_INPUT;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -371,12 +353,6 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MCU_LED_GPIO_Port, MCU_LED_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : SPI2_CS_Pin */
-  GPIO_InitStruct.Pin = SPI2_CS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SPI2_CS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MCU_LED_Pin */
   GPIO_InitStruct.Pin = MCU_LED_Pin;
