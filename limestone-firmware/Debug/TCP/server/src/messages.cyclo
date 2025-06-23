@@ -1,0 +1,12 @@
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:18:17:parse_uint64_be	2
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:27:17:parse_uint32_be	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:33:13:pack_uint64_be	2
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:41:13:pack_uint32_be	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:56:5:serialize_telemetry	4
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:80:5:serialize_valve_command	2
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:93:5:serialize_valve_state	2
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:107:5:serialize_message	6
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:132:5:deserialize_telemetry	9
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:173:5:deserialize_valve_command	2
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:186:5:deserialize_valve_state	2
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/messages.c:200:5:deserialize_message	6

@@ -1,0 +1,10 @@
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:11:7:IMU_tempConvert	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:20:7:IMU_accelConvert	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:29:7:IMU_gyroConvert	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:38:19:IMU_read	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:51:19:IMU_write	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:63:5:IMU_init	2
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:127:5:IMU_getAccel	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:142:5:IMU_getAngRate	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:155:5:IMU_getTemp	1
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:166:5:IMU_send	1

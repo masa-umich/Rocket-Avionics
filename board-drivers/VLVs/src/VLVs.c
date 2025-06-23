@@ -47,6 +47,6 @@ void VLV_Den(Valve vlv) {
 	HAL_GPIO_WritePin(vlv.VLV_EN_GPIO_Port, vlv.VLV_EN_GPIO_Pin, GPIO_PIN_RESET);
 }
 
-bool isOpenLoad(Valve vlv) {
+uint8_t isOpenLoad(Valve vlv) {
     return HAL_GPIO_ReadPin(vlv.VLV_OLD_GPIO_Port, vlv.VLV_OLD_GPIO_Pin);
 }

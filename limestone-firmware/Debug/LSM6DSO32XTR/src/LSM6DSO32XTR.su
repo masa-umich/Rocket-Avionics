@@ -1,0 +1,10 @@
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:11:7:IMU_tempConvert	24	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:20:7:IMU_accelConvert	24	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:29:7:IMU_gyroConvert	24	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:38:19:IMU_read	40	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:51:19:IMU_write	40	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:63:5:IMU_init	32	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:127:5:IMU_getAccel	24	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:142:5:IMU_getAngRate	24	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:155:5:IMU_getTemp	24	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/src/LSM6DSO32XTR.c:166:5:IMU_send	24	static

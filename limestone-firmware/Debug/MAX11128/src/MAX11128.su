@@ -1,0 +1,8 @@
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/src/MAX11128.c:64:6:init_adc	24	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/src/MAX11128.c:112:6:read_adc	56	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/src/MAX11128.c:230:6:set_read_adc_range	32	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/src/MAX11128.c:275:6:configure_read_adc_all	24	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/src/MAX11128.c:287:20:write_adc_reg	32	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/src/MAX11128.c:293:20:package_cmd	16	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/src/MAX11128.c:298:20:set_adc	16	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/src/MAX11128.c:302:6:cycle_cnvst	16	static,ignoring_inline_asm

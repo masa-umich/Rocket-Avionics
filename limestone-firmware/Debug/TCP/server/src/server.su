@@ -1,0 +1,8 @@
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/server.c:24:5:server_init	128	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/server.c:74:6:server_listener_thread	64	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/server.c:124:6:server_reader_thread	80	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/server.c:186:6:server_writer_thread	328	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/server.c:214:6:msgFreeCallback	16	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/server.c:218:5:server_read	16	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/server.c:228:5:server_send	16	static
+C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/TCP/server/src/server.c:237:5:update_fd_set	32	static

@@ -57,6 +57,6 @@ void VLV_Den(Valve vlv);
 
 // Uses the open-load detection feature that is assumed to be built into the board
 // Returns true if the valve is being energized, false if it is currently de-energized
-bool isOpenLoad(Valve vlv)
+uint8_t isOpenLoad(Valve vlv);
 
 #endif
