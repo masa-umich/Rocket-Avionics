@@ -95,6 +95,8 @@
 #define DEFAULT_ACCEPTMBOX_SIZE 6
 /*----- Value in opt.h for RECV_BUFSIZE_DEFAULT: INT_MAX -----*/
 #define RECV_BUFSIZE_DEFAULT 2000000000
+/*----- Default Value for LWIP_SNTP: 0 ---*/
+#define LWIP_SNTP 1
 /*----- Value in opt.h for LWIP_STATS: 1 -----*/
 #define LWIP_STATS 0
 /*----- Value in opt.h for CHECKSUM_GEN_IP: 1 -----*/
@@ -115,7 +117,13 @@
 #define CHECKSUM_CHECK_ICMP6 0
 /*-----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
-
+#define IP_SOF_BROADCAST      1
+#define IP_SOF_BROADCAST_RECV 1
+/*#define LWIP_DEBUG
+#define SNTP_DEBUG    LWIP_DBG_ON
+#define UDP_DEBUG     LWIP_DBG_ON
+#define ICMP_DEBUG 	  LWIP_DBG_ON
+#define LWIP_DBG_MIN_LEVEL LWIP_DBG_LEVEL_ALL*/
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

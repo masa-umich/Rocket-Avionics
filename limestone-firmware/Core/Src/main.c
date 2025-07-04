@@ -28,6 +28,8 @@
 #include "MAX11128.h"
 #include "LSM6DSO32XTR.h"
 #include "VLVs.h"
+#include "sntp.h"
+#include "time.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,9 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-uint64_t getTimestamp() {
-	return HAL_GetTick();
-}
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -94,7 +94,61 @@ void StartDefaultTask(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint64_t getTimestamp() {
+	return HAL_GetTick();
+}
 
+// Callback for LWIP SNTP
+void set_system_time(uint32_t sec, uint32_t us) {
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
+	struct tm *tm_time;
+
+	time_t epoch = sec;
+	tm_time = gmtime(&epoch);
+
+	sTime.Hours = tm_time->tm_hour;
+	sTime.Minutes = tm_time->tm_min;
+	sTime.Seconds = tm_time->tm_sec;
+	sTime.SubSeconds = 6249 - ((us / 1000000.0) * 6250);
+
+	sDate.Year = tm_time->tm_year - 100;
+	sDate.Month = tm_time->tm_mon + 1;
+	sDate.Date = tm_time->tm_mday;
+	sDate.WeekDay = (tm_time->tm_wday == 0) ? 7 : tm_time->tm_wday;
+
+	taskENTER_CRITICAL();
+	HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+	taskEXIT_CRITICAL();
+}
+
+/**
+ * Get Unix timestamp in nanoseconds
+ */
+uint64_t get_rtc_time() {
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
+
+	taskENTER_CRITICAL();
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	taskEXIT_CRITICAL();
+
+	struct tm time;
+	time.tm_year = sDate.Year + 100;
+	time.tm_mon  = sDate.Month - 1;
+	time.tm_mday = sDate.Date;
+	time.tm_hour = sTime.Hours;
+	time.tm_min  = sTime.Minutes;
+	time.tm_sec  = sTime.Seconds;
+	time.tm_isdst = 0;
+
+	time_t sec = mktime(&time);
+	uint32_t us = ((6249 - sTime.SubSeconds) / 6250.0) * 1e6;
+	return (sec * 1e9) + (us * 1e3);
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -219,9 +273,8 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 3;
@@ -364,6 +417,9 @@ static void MX_RTC_Init(void)
 
   /* USER CODE END RTC_Init 0 */
 
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
+
   /* USER CODE BEGIN RTC_Init 1 */
 
   /* USER CODE END RTC_Init 1 */
@@ -373,12 +429,37 @@ static void MX_RTC_Init(void)
   hrtc.Instance = RTC;
   hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
   hrtc.Init.AsynchPrediv = 127;
-  hrtc.Init.SynchPrediv = 255;
+  hrtc.Init.SynchPrediv = 6249;
   hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
   hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
   hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
   hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
   if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN Check_RTC_BKUP */
+
+  /* USER CODE END Check_RTC_BKUP */
+
+  /** Initialize RTC and set the Time and Date
+  */
+  sTime.Hours = 0;
+  sTime.Minutes = 0;
+  sTime.Seconds = 0;
+  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+  sDate.Month = RTC_MONTH_JANUARY;
+  sDate.Date = 1;
+  sDate.Year = 0;
+
+  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
   {
     Error_Handler();
   }
@@ -698,30 +779,46 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOG_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, GPS_NRST_Pin|LED_GREEN_Pin|LED_BLUE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, GPS_NRST_Pin|ADC_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, RF_DIO3_Pin|RF_DIO2_Pin|RF_DIO1_Pin|RF_NSRT_Pin
-                          |VLV1_EN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, RF_DIO3_Pin|RF_DIO2_Pin|RF_DIO1_Pin|VLV1_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, RADIO_CS_Pin|PDB_DIO1_Pin|PDB_DIO2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(RADIO_CS_GPIO_Port, RADIO_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, BAR2_CS_Pin|BAR1_CS_Pin|VLV2_EN_Pin|BUFF_CLR_Pin
-                          |BUFF_CLK_Pin|VLV_CTRL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(RF_NSRT_GPIO_Port, RF_NSRT_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, ETH_NRST_Pin|BUZZ_Pin|LED_RED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, BAR2_CS_Pin|BAR1_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, TC1_CS_Pin|TC2_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(ETH_NRST_GPIO_Port, ETH_NRST_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, VLV3_EN_Pin|FLASH_CS_Pin|EEPROM_WC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOF, PDB_DIO1_Pin|PDB_DIO2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : GPS_NRST_Pin LED_GREEN_Pin LED_BLUE_Pin */
-  GPIO_InitStruct.Pin = GPS_NRST_Pin|LED_GREEN_Pin|LED_BLUE_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, TC1_CS_Pin|TC2_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOG, VLV3_EN_Pin|EEPROM_WC_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, VLV2_EN_Pin|BUFF_CLR_Pin|BUFF_CLK_Pin|VLV_CTRL_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(FLASH_CS_GPIO_Port, FLASH_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, BUZZ_Pin|LED_RED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, LED_GREEN_Pin|LED_BLUE_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : GPS_NRST_Pin ADC_CS_Pin LED_GREEN_Pin LED_BLUE_Pin */
+  GPIO_InitStruct.Pin = GPS_NRST_Pin|ADC_CS_Pin|LED_GREEN_Pin|LED_BLUE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -850,6 +947,15 @@ void StartDefaultTask(void *argument)
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
 
+  // Setup NTP listener
+  sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
+  sntp_init();
+
+
+  for(;;) {
+	  uint64_t ns = get_rtc_time();
+	  osDelay(250);
+  }
   /*HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 0);
   	osDelay(2000);
   	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 1);

@@ -90,7 +90,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
  C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/inc/MAX11128.h \
  C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/inc/LSM6DSO32XTR.h \
- C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/VLVs/inc/VLVs.h
+ C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/VLVs/inc/VLVs.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/sntp.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/sntp_opts.h \
+ ../Middlewares/Third_Party/LwIP/src/include/lwip/prot/iana.h
 ../Core/Inc/main.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h:
 ../Core/Inc/stm32h7xx_hal_conf.h:
@@ -184,3 +187,6 @@ C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/ADS1120/inc/ADS1120.h:
 C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/MAX11128/inc/MAX11128.h:
 C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/LSM6DSO32XTR/inc/LSM6DSO32XTR.h:
 C:/Users/felix/Desktop/MASA/Rocket-Avionics/board-drivers/VLVs/inc/VLVs.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/apps/sntp.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/apps/sntp_opts.h:
+../Middlewares/Third_Party/LwIP/src/include/lwip/prot/iana.h:

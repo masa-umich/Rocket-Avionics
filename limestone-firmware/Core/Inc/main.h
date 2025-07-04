@@ -46,14 +46,14 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+#define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void set_system_time(uint32_t sec, uint32_t us);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
