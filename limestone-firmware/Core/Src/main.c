@@ -952,10 +952,10 @@ void StartDefaultTask(void *argument)
   sntp_init();
 
 
-  for(;;) {
+  /*for(;;) {
 	  uint64_t ns = get_rtc_time();
 	  osDelay(250);
-  }
+  }*/
   /*HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 0);
   	osDelay(2000);
   	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 1);
@@ -1037,7 +1037,7 @@ void StartDefaultTask(void *argument)
   	VLV2.VLV_EN_GPIO_Port = VLV2_EN_GPIO_Port;
   	VLV2.VLV_EN_GPIO_Pin = VLV2_EN_Pin;
 
-  	VLV_Set_Voltage(reg, 0b00001011);
+  	VLV_Set_Conf(reg, 1, VLV_24V, 0, VLV_12V, 0, VLV_12V);
   	/*for(;;) {
   		uint16_t adc_values[16] = {0};
   		read_adc(&hspi4, &adc_pins, adc_values);
@@ -1092,8 +1092,8 @@ void StartDefaultTask(void *argument)
   		read_adc(&hspi4, &adc_pins, adc_values);
   		uint16_t raw_valve1 = adc_values[1];
   		float valve_current = (((raw_valve1 / 4095.0) * 3.3) * (5.0/3.0)) / (50 * 0.02);
-  		VLV_Toggle(VLV1);
-  		VLV_Toggle(VLV2);
+  		//VLV_Toggle(VLV1);
+  		//VLV_Toggle(VLV2);
   		HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
   		HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
   		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);

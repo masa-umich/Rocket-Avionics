@@ -25,25 +25,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  10 .ARM.attributes 0000002e  00000000  00000000  000200f8  2**0
                   CONTENTS, READONLY
- 11 .debug_info   00040a62  00000000  00000000  00020126  2**0
+ 11 .debug_info   00040a7d  00000000  00000000  00020126  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 12 .debug_abbrev 00008a06  00000000  00000000  00060b88  2**0
+ 12 .debug_abbrev 00008a06  00000000  00000000  00060ba3  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_aranges 00002d88  00000000  00000000  00069590  2**3
+ 13 .debug_aranges 00002d88  00000000  00000000  000695b0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_rnglists 0000240f  00000000  00000000  0006c318  2**0
+ 14 .debug_rnglists 0000240f  00000000  00000000  0006c338  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_macro  000141eb  00000000  00000000  0006e727  2**0
+ 15 .debug_macro  000141eb  00000000  00000000  0006e747  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_line   0004674a  00000000  00000000  00082912  2**0
+ 16 .debug_line   0004674a  00000000  00000000  00082932  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_str    001831ab  00000000  00000000  000c905c  2**0
+ 17 .debug_str    001831cc  00000000  00000000  000c907c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .comment      00000043  00000000  00000000  0024c207  2**0
+ 18 .comment      00000043  00000000  00000000  0024c248  2**0
                   CONTENTS, READONLY
- 19 .debug_frame  0000cfe8  00000000  00000000  0024c24c  2**2
+ 19 .debug_frame  0000cfe8  00000000  00000000  0024c28c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_line_str 0000006d  00000000  00000000  00259234  2**0
+ 20 .debug_line_str 0000006d  00000000  00000000  00259274  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -830,11 +830,11 @@ Disassembly of section .text:
 	...
 
 08000b68 <set_system_time>:
-/* USER CODE BEGIN 0 */
 uint64_t getTimestamp() {
 	return HAL_GetTick();
 }
 
+// Callback for LWIP SNTP
 void set_system_time(uint32_t sec, uint32_t us) {
  8000b68:	b580      	push	{r7, lr}
  8000b6a:	b08c      	sub	sp, #48	@ 0x30
@@ -3046,12 +3046,14 @@ void StartDefaultTask(void *argument)
  80018a4:	f008 f874 	bl	8009990 <MX_LWIP_Init>
   /* USER CODE BEGIN 5 */
 
+  // Setup NTP listener
   sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
  80018a8:	2001      	movs	r0, #1
  80018aa:	f00d f8c1 	bl	800ea30 <sntp_setoperatingmode>
-
   sntp_init();
  80018ae:	f00d f857 	bl	800e960 <sntp_init>
+
+
   for(;;) {
 	  uint64_t ns = get_rtc_time();
  80018b2:	f7ff f9cd 	bl	8000c50 <get_rtc_time>

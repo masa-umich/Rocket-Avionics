@@ -47,6 +47,7 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
+#define FLIGHT_COMPUTER
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
