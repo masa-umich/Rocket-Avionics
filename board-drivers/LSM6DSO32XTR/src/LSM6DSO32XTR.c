@@ -40,8 +40,8 @@ HAL_StatusTypeDef IMU_read(IMU* IMU, uint8_t reg_addr, uint8_t* rx_buffer, uint8
 
 	taskENTER_CRITICAL();
 
-	HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR, &reg_addr, 1, IMU->I2C_TIMEOUT);
-	status = HAL_I2C_Master_Receive(IMU->hi2c, IMU_I2C_ADDR, (uint8_t *)rx_buffer, num_bytes, IMU->I2C_TIMEOUT);
+	HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1) | 1, &reg_addr, 1, IMU->I2C_TIMEOUT);
+	status = HAL_I2C_Master_Receive(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1) | 1, (uint8_t *)rx_buffer, num_bytes, IMU->I2C_TIMEOUT);
 
 	taskEXIT_CRITICAL();
 	return status;
@@ -53,7 +53,7 @@ HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t* tx_buffer, uint8_t num_bytes) {
 
 	taskENTER_CRITICAL();
 
-	status = HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR, (uint8_t *)tx_buffer, num_bytes + 1, IMU->I2C_TIMEOUT);
+	status = HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1) | 0, (uint8_t *)tx_buffer, num_bytes + 1, IMU->I2C_TIMEOUT);
 
 	taskEXIT_CRITICAL();
 	return status;

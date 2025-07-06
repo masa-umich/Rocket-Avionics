@@ -100,7 +100,7 @@ void VLV_Den(Valve vlv) {
 	HAL_GPIO_WritePin(vlv.VLV_EN_GPIO_Port, vlv.VLV_EN_GPIO_Pin, GPIO_PIN_RESET);
 }
 
-VLV_OpenLoad isOpenLoad(Valve vlv) {
+VLV_OpenLoad VLV_isOpenLoad(Valve vlv) {
 	if(HAL_GPIO_ReadPin(vlv.VLV_EN_GPIO_Port, vlv.VLV_EN_GPIO_Pin) == GPIO_PIN_SET) return VLV_Energized; // Open load circuitry always reads low if the channel is energized
     return HAL_GPIO_ReadPin(vlv.VLV_OLD_GPIO_Port, vlv.VLV_OLD_GPIO_Pin);
 }

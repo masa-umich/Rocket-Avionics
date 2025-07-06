@@ -986,12 +986,27 @@ void StartDefaultTask(void *argument)
   	IMU1.G_x_offset = 0;
   	IMU1.G_y_offset = 0;
   	IMU1.G_z_offset = 0;
+  	IMU1.SA0 = 0;
+
+  	IMU IMU2;
+  	IMU2.hi2c = &hi2c5;
+  	IMU2.I2C_TIMEOUT = 9999;
+  	IMU2.XL_x_offset = 0;
+  	IMU2.XL_y_offset = 0;
+  	IMU2.XL_z_offset = 0;
+  	IMU2.G_x_offset = 0;
+  	IMU2.G_y_offset = 0;
+  	IMU2.G_z_offset = 0;
+  	IMU2.SA0 = 1;
 
   	IMU_init(&IMU1);
+  	IMU_init(&IMU2);
 
   	for(;;) {
-  		Accel XL_readings = {0};
-  		IMU_getAccel(&IMU1, &XL_readings);
+  		Accel XL_readings1 = {0};
+  		Accel XL_readings2 = {0};
+  		IMU_getAccel(&IMU1, &XL_readings1);
+  		IMU_getAccel(&IMU2, &XL_readings2);
 
   		osDelay(1000);
   	}*/
@@ -1033,11 +1048,13 @@ void StartDefaultTask(void *argument)
   	Valve VLV1 = {0};
   	VLV1.VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
   	VLV1.VLV_EN_GPIO_Pin = VLV1_EN_Pin;
+  	VLV1.VLV_OLD_GPIO_Port = VLV1_OLD_GPIO_Port;
+  	VLV1.VLV_OLD_GPIO_Pin = VLV1_OLD_Pin;
   	Valve VLV2 = {0};
   	VLV2.VLV_EN_GPIO_Port = VLV2_EN_GPIO_Port;
   	VLV2.VLV_EN_GPIO_Pin = VLV2_EN_Pin;
 
-  	VLV_Set_Conf(reg, 1, VLV_24V, 0, VLV_12V, 0, VLV_12V);
+  	VLV_Set_Conf(reg, 1, VLV_24V, 1, VLV_12V, 0, VLV_12V);
   	/*for(;;) {
   		uint16_t adc_values[16] = {0};
   		read_adc(&hspi4, &adc_pins, adc_values);
@@ -1092,14 +1109,14 @@ void StartDefaultTask(void *argument)
   		read_adc(&hspi4, &adc_pins, adc_values);
   		uint16_t raw_valve1 = adc_values[1];
   		float valve_current = (((raw_valve1 / 4095.0) * 3.3) * (5.0/3.0)) / (50 * 0.02);
-  		//VLV_Toggle(VLV1);
+  		VLV_Toggle(VLV1);
   		//VLV_Toggle(VLV2);
   		HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
   		HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
   		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
 
   		osDelay(20);
-  		GPIO_PinState open_state = HAL_GPIO_ReadPin(VLV1_OLD_GPIO_Port, VLV1_OLD_Pin);
+  		VLV_OpenLoad open_state = VLV_isOpenLoad(VLV1);
 
   		osDelay(1500);
   	}

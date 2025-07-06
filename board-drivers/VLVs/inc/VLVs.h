@@ -51,7 +51,7 @@ void VLV_Toggle(Valve vlv);
 // Open-load detection only means something if the channel is in use (the channel is enabled) and not energized.
 // If the channel is not enabled, this will always return VLV_NoLoad
 // It is recommended to use current sensing to determine whether there is a valve connected when the channel is energized
-VLV_OpenLoad isOpenLoad(Valve vlv);
+VLV_OpenLoad VLV_isOpenLoad(Valve vlv);
 
 
 

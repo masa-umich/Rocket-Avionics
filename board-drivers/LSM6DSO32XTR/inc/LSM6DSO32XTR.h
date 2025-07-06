@@ -18,7 +18,7 @@
 #endif
 
 // Begin register map
-#define IMU_I2C_ADDR					(uint8_t)(0x6A << 1) //Device Address when SDO is on ground
+#define IMU_I2C_ADDR_BASE				(uint8_t)(0x35 << 2) //Device Address base
 #define IMU_FUNC_CFG_ACCESS             (uint8_t)0x01 //R/W - Function configuration access register address
 #define IMU_PIN_CTRL                    (uint8_t)0x02 //R/W - Pin control register address
 #define IMU_FIFO_CTRL1                  (uint8_t)0x07 //R/W - FIFO control register 1 address
@@ -141,6 +141,7 @@ typedef struct {
     //I2C stuff
 	I2C_HandleTypeDef* hi2c;
     uint16_t I2C_TIMEOUT;
+    uint8_t SA0; // Changes I2C address
 
     //Offset values
     float XL_x_offset;

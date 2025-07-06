@@ -46,8 +46,45 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 #define FLIGHT_COMPUTER
+
+#define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
+
+#define SHUNT_RES_20M		(uint16_t)20
+#define SHUNT_RES_2M		(uint16_t)2
+#define VALVE_SHUNT_RES		SHUNT_RES_20M
+#define POWER_SHUNT_3V3_5V	SHUNT_RES_20M
+#define POWER_SHUNT_12V_24V SHUNT_RES_2M
+
+#define POWER_24V_RES_A		(uint32_t)100000
+#define POWER_24V_RES_B		(uint32_t)14300
+#define POWER_12V_RES_A		(uint32_t)100000
+#define POWER_12V_RES_B		(uint32_t)33200
+#define POWER_5V_RES_A		(uint32_t)10000
+#define POWER_5V_RES_B		(uint32_t)15000
+#define POWER_3V3_RES_A		(uint32_t)1000
+#define POWER_3V3_RES_B		(uint32_t)10000
+
+#define ADC_3V3_BUS			(size_t)0
+#define ADC_VLV1_CURRENT	(size_t)1
+#define ADC_VLV2_CURRENT	(size_t)2
+#define ADC_VLV3_CURRENT	(size_t)3
+#define ADC_PT1				(size_t)4
+#define ADC_PT2				(size_t)5
+#define ADC_PT3				(size_t)6
+#define ADC_PT4				(size_t)7
+#define ADC_PT5				(size_t)8
+#define ADC_24V_CURRENT		(size_t)9
+#define ADC_12V_CURRENT		(size_t)10
+#define ADC_5V_CURRENT		(size_t)11
+#define ADC_3V3_CURRENT		(size_t)12
+#define ADC_5V_BUS			(size_t)13
+#define ADC_12V_BUS			(size_t)14
+#define ADC_24V_BUS			(size_t)15
+
+#define DIVIDER_VALVE		(uint8_t)1
+#define DIVIDER_12V_24V		(uint8_t)0
+#define DIVIDER_3V3_5V		(uint8_t)1
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
