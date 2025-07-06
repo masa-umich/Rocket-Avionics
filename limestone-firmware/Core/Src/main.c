@@ -30,6 +30,8 @@
 #include "VLVs.h"
 #include "sntp.h"
 #include "time.h"
+#include "api.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,7 +72,7 @@ const osThreadAttr_t defaultTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
-
+SemaphoreHandle_t RTC_mutex; // For safe concurrent access of the RTC
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,8 +102,12 @@ uint64_t getTimestamp() {
 
 // Callback for LWIP SNTP
 void set_system_time(uint32_t sec, uint32_t us) {
-	RTC_TimeTypeDef sTime;
-	RTC_DateTypeDef sDate;
+	//HAL_PWR_EnableBkUpAccess(); // This should be enabled since we're using HSE divided as the RTC source - now done in main()
+	//uint64_t ns_time = get_rtc_time(); // debug
+	//float diff = (((sec * 1e9) + (us * 1e3)) - ns_time) / 1000000000.0; // debug
+
+	RTC_TimeTypeDef sTime = {0};
+	RTC_DateTypeDef sDate = {0};
 	struct tm *tm_time;
 
 	time_t epoch = sec;
@@ -110,30 +116,60 @@ void set_system_time(uint32_t sec, uint32_t us) {
 	sTime.Hours = tm_time->tm_hour;
 	sTime.Minutes = tm_time->tm_min;
 	sTime.Seconds = tm_time->tm_sec;
-	sTime.SubSeconds = 6249 - ((us / 1000000.0) * 6250);
+	sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+	//sTime.SubSeconds = 6249 - ((us / 1000000.0) * 6250);
 
 	sDate.Year = tm_time->tm_year - 100;
 	sDate.Month = tm_time->tm_mon + 1;
 	sDate.Date = tm_time->tm_mday;
 	sDate.WeekDay = (tm_time->tm_wday == 0) ? 7 : tm_time->tm_wday;
 
-	taskENTER_CRITICAL();
-	HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-	HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-	taskEXIT_CRITICAL();
+	if(xSemaphoreTake(RTC_mutex, 2) == pdPASS) {
+		uint32_t subsecond_shift = 6249 - ((us / 1000000.0) * 6250);
+		//uint32_t subsecond_shift = 6249ULL - ((((uint64_t) us) * ((uint64_t) 6250)) / 1000000ULL); // This works too but I think above is more memory efficient
+		taskENTER_CRITICAL();
+		HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+		HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+		taskEXIT_CRITICAL();
+
+		HAL_RTCEx_SetSynchroShift(&hrtc, RTC_SHIFTADD1S_SET, subsecond_shift); // Shift sub-seconds register to do fine grain time sync
+
+		//while ((hrtc.Instance->ISR & RTC_ISR_SHPF) != 0) {}
+		//osDelay(1000);
+		/*RTC_TimeTypeDef sTime1;
+		RTC_DateTypeDef sDate1;
+
+		HAL_RTC_GetTime(&hrtc, &sTime1, RTC_FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc, &sDate1, RTC_FORMAT_BIN);*/
+
+		// Wait for shadow register to sync
+		__HAL_RTC_WRITEPROTECTION_DISABLE(&hrtc);
+		HAL_RTC_WaitForSynchro(&hrtc);
+		__HAL_RTC_WRITEPROTECTION_ENABLE(&hrtc);;
+
+		xSemaphoreGive(RTC_mutex);
+	}
 }
+
 
 /**
  * Get Unix timestamp in nanoseconds
+ * Returns 0 if RTC could not be accessed
  */
 uint64_t get_rtc_time() {
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
-	taskENTER_CRITICAL();
-	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-	taskEXIT_CRITICAL();
+	if(xSemaphoreTake(RTC_mutex, 2) == pdPASS) {
+		HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+
+		xSemaphoreGive(RTC_mutex);
+	}
+	else {
+		return 0;
+	}
 
 	struct tm time;
 	time.tm_year = sDate.Year + 100;
@@ -145,9 +181,8 @@ uint64_t get_rtc_time() {
 	time.tm_isdst = 0;
 
 	time_t sec = mktime(&time);
-	uint32_t us = ((6249 - sTime.SubSeconds) / 6250.0) * 1e6;
+	int32_t us = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) / 6250.0) * 1e6;
 	return (sec * 1e9) + (us * 1e3);
-
 }
 /* USER CODE END 0 */
 
@@ -186,7 +221,13 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  // RTC init code - enable backup domain access because we're using HSE / 60 as RTC clock source
+  HAL_PWR_EnableBkUpAccess();
+  // Force reset RTC registers in case something got corrupted
+  __HAL_RCC_BACKUPRESET_FORCE();
+  __HAL_RCC_BACKUPRESET_RELEASE();
+  // Create RTC mutex
+  RTC_mutex = xSemaphoreCreateMutex();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -946,11 +987,43 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
-
+  int64_t us = ((6249 - 12498) / 6250.0) * 1e6;
+  int32_t sec = 1000;
+  int64_t res = (sec * 1e9) + (us * 1e3);
   // Setup NTP listener
   sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
   sntp_init();
 
+  struct netconn *sendudp = netconn_new(NETCONN_UDP);
+  ip_addr_t debug_addr;
+  IP4_ADDR(&debug_addr, 192, 168, 0, 5);
+
+  for(;;) {
+	  struct netbuf *outbuf = netbuf_new();
+	  void *pkt_buf = netbuf_alloc(outbuf, 9);
+	  uint64_t cur_time = get_rtc_time();
+	  //uint64_t cur_time = 0;
+	  uint8_t outarr[8];
+
+	  for (int i = 0; i < 8; i++) {
+		  outarr[i] = (uint8_t)((cur_time >> (8 * (7 - i))) & 0xFF);
+	  }
+
+	  //netbuf_ref(outbuf, &cur_time, 8);
+	  memcpy(pkt_buf, outarr, 8);
+	  if (RTC->ISR & RTC_ISR_RSF) {
+	      // Shadow registers are synchronized and up-to-date
+		  *(((uint8_t *)pkt_buf) + 8) = 0x45;
+	  } else {
+	      // Shadow registers are not yet synchronized
+		  *(((uint8_t *)pkt_buf) + 8) = 0x67;
+	  }
+
+	  err_t send_err = netconn_sendto(sendudp, outbuf, &debug_addr, 1234);
+
+	  osDelay(20);
+	  netbuf_delete(outbuf);
+  }
 
   /*for(;;) {
 	  uint64_t ns = get_rtc_time();
