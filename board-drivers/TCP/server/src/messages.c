@@ -59,19 +59,20 @@ int serialize_telemetry(const TelemetryMessage *message, uint8_t *buffer,
 		return -1; // Too many telemetry channels
 	}
 
-	int num_bytes = 1 + 1 + 8 + 4 * message->num_channels;
+	int num_bytes = 1 + 1 + 1 + 8 + 4 * message->num_channels;
 	if (buffer_size < num_bytes) {
 		return -1; // Buffer size too small
 	}
 
 	// First byte already set by serialize_message()
-	buffer[1] = (uint8_t)message->board_id;
-	pack_uint64_be(&buffer[2], message->timestamp);
+	buffer[0] = (uint8_t) (num_bytes - 1);
+	buffer[2] = (uint8_t)message->board_id;
+	pack_uint64_be(&buffer[3], message->timestamp);
 
 	for (uint32_t i = 0; i < message->num_channels; i++) {
 		FloatConverter converter;
 		converter.f = message->telemetry_data[i];
-		pack_uint32_be(&buffer[10 + 4 * i], converter.i);
+		pack_uint32_be(&buffer[11 + 4 * i], converter.i);
 	}
 
 	return num_bytes;
@@ -84,8 +85,9 @@ int serialize_valve_command(const ValveCommandMessage *message, uint8_t *buffer,
 		return -1;
 	}
 
-	buffer[1] = message->valve_id;
-	buffer[2] = message->valve_state;
+	buffer[0] = (uint8_t) (num_bytes - 1);
+	buffer[2] = message->valve_id;
+	buffer[3] = message->valve_state;
 
 	return num_bytes;
 }
@@ -97,19 +99,20 @@ int serialize_valve_state(const ValveStateMessage *message, uint8_t *buffer,
 		return -1;
 	}
 
-	buffer[1] = message->valve_id;
-	buffer[2] = message->valve_state;
-	pack_uint64_be(&buffer[3], message->timestamp);
+	buffer[0] = (uint8_t) (num_bytes - 1);
+	buffer[2] = message->valve_id;
+	buffer[3] = message->valve_state;
+	pack_uint64_be(&buffer[4], message->timestamp);
 
 	return num_bytes;
 }
 
 int serialize_message(const Message *message, uint8_t *buffer,
 					  uint32_t buffer_size) {
-	if (buffer_size < 1)
+	if (buffer_size < 2)
 		return -1;
 
-	buffer[0] = (uint8_t)message->type;
+	buffer[1] = (uint8_t)message->type;
 	switch (message->type) {
 		case MSG_TELEMETRY:
 			return serialize_telemetry(&message->data.telemetry, buffer,
@@ -132,14 +135,14 @@ int serialize_message(const Message *message, uint8_t *buffer,
 int deserialize_telemetry(const uint8_t *buffer, uint32_t buffer_size,
 						  TelemetryMessage *message) {
 	// Check if enough data for board_id (1), and timestamp (8)
-	int num_bytes = 1 + 1 + 8;
+	int num_bytes = 1 + 1 + 1 + 8;
 	if (buffer_size < num_bytes) {
 		return 0;
 	}
 
-	BoardId board_id = (BoardId)buffer[1];
+	BoardId board_id = (BoardId)buffer[2];
 	message->board_id = board_id;
-	message->timestamp = parse_uint64_be(&buffer[2]);
+	message->timestamp = parse_uint64_be(&buffer[3]);
 
 	uint32_t num_channels;
 	if (board_id == BOARD_FC) {
@@ -156,14 +159,14 @@ int deserialize_telemetry(const uint8_t *buffer, uint32_t buffer_size,
 	message->num_channels = num_channels;
 
 	// Check if enough data for telemetry
-	num_bytes = 1 + 1 + 8 + 4 * num_channels;
+	num_bytes = 1 + 1 + 1 + 8 + 4 * num_channels;
 	if (buffer_size < num_bytes) {
 		return 0;
 	}
 
 	for (uint32_t i = 0; i < message->num_channels; i++) {
 		FloatConverter converter;
-		converter.i = parse_uint32_be(&buffer[10 + 4 * i]);
+		converter.i = parse_uint32_be(&buffer[11 + 4 * i]);
 		message->telemetry_data[i] = converter.f;
 	}
 
@@ -177,8 +180,8 @@ int deserialize_valve_command(const uint8_t *buffer, uint32_t buffer_size,
 		return 0;
 	}
 
-	msg->valve_id = buffer[1];
-	msg->valve_state = buffer[2];
+	msg->valve_id = buffer[2];
+	msg->valve_state = buffer[3];
 
 	return num_bytes;
 }
@@ -190,19 +193,19 @@ int deserialize_valve_state(const uint8_t *buffer, uint32_t buffer_size,
 		return 0;
 	}
 
-	msg->valve_id = buffer[1];
-	msg->valve_state = buffer[2];
-	msg->timestamp = parse_uint64_be(&buffer[3]);
+	msg->valve_id = buffer[2];
+	msg->valve_state = buffer[3];
+	msg->timestamp = parse_uint64_be(&buffer[4]);
 
 	return num_bytes;
 }
 
 int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 						Message *msg) {
-	if (buffer_size < 1)
+	if (buffer_size < 2)
 		return 0;
 
-	msg->type = (MessageType)buffer[0];
+	msg->type = (MessageType)buffer[1];
 	switch (msg->type) {
 		case MSG_TELEMETRY:
 			return deserialize_telemetry(buffer, buffer_size,

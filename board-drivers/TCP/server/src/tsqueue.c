@@ -13,12 +13,12 @@
  *
  */
 
-void list_push(List *list, void* data) {
-	list_add(list, data); // push to front
+int list_push(List *list, void* data, TickType_t wait) {
+	return list_add(list, data, wait); // push to front
 }
 
-void list_pop(List *list, void* data) {
-	list_remove(list, data); // pop from end
+int list_pop(List *list, void* data, TickType_t wait) {
+	return list_remove(list, data, wait); // pop from end
 }
 
 void free_node_data(CallbackFree free_callback, void *data) {
@@ -64,11 +64,13 @@ void list_destroy(List *list){
 }
 
 
-void list_add(List *list, void *data) { // push to front
+int list_add(List *list, void *data, TickType_t wait) { // push to front
 
 	assert(list != NULL);
 
-	xSemaphoreTake(list->remainingSpace, portMAX_DELAY); // Only add to queue if there is space
+	if(xSemaphoreTake(list->remainingSpace, wait) == pdFAIL) { // Only add to queue if there is space
+		return 1;
+	}
 
 	xSemaphoreTake(list->mutex, portMAX_DELAY); // Lock mutex
 
@@ -85,13 +87,17 @@ void list_add(List *list, void *data) { // push to front
 	xSemaphoreGive(list->mutex); // Unlock mutex
 
 	xSemaphoreGive(list->msgs); // Notify waiting consumers
+	return 0;
 }
 
-void list_remove(List *list, void* data) {
+// Return 0 if normal, 1 if an early return was triggered
+int list_remove(List *list, void* data, TickType_t wait) {
 
 	assert(list != NULL);
 
-	xSemaphoreTake(list->msgs, portMAX_DELAY); // Remove message when at least one exists
+	if(xSemaphoreTake(list->msgs, wait) == pdFAIL)  { // Remove message when at least one exists
+		return 1;
+	}
 
 	xSemaphoreTake(list->mutex, portMAX_DELAY); // Lock mutex
 
@@ -121,4 +127,6 @@ void list_remove(List *list, void* data) {
 	xSemaphoreGive(list->mutex); // Unlock mutex
 
 	xSemaphoreGive(list->remainingSpace); // Notify waiting producers
+
+	return 0;
 }

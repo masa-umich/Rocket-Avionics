@@ -46,16 +46,16 @@ typedef struct {
 // Wrapper functions
 
 // Allocates new node at end of list and copies data
-void list_push(List *list, void* data);
+int list_push(List *list, void* data, TickType_t wait);
 
 // Copies data into buf from node at front of list and frees the node with the CallbackFree
-void list_pop(List *list, void* data);
+int list_pop(List *list, void* data, TickType_t wait);
 
 
 List* list_create(int dataSize, CallbackFree free_callback);
 void list_destroy(List *list);
-void list_add(List *list, void *data);
-void list_remove(List *list, void* data);
+int list_add(List *list, void *data, TickType_t wait);
+int list_remove(List *list, void* data, TickType_t wait);
 
 
 #endif /* INC_TSQUEUE_H_ */

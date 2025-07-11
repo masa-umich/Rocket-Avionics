@@ -28,7 +28,7 @@ typedef enum {
 } BoardId;
 
 #define MAX_TELEMETRY_CHANNELS 52
-#define NUM_FC_CHANNELS 47
+#define NUM_FC_CHANNELS 39
 #define NUM_BAY_CHANNELS 52
 #define NUM_FR_CHANNELS 14
 typedef struct {
@@ -55,10 +55,10 @@ typedef struct {
 
 // Message Type + Board ID + Timestamp + Channels (float)
 #define MAX_TELEMETRY_MSG_SIZE (1 + 1 + 8 + (4 * MAX_TELEMETRY_CHANNELS))
-// Message Type + Valve ID + Valve State
-#define MAX_VALVE_COMMAND_MSG_SIZE (1 + 1 + 1)
-// Message Type + Valve ID + Valve State + Timestamp
-#define MAX_VALVE_STATE_MSG_SIZE (1 + 1 + 1 + 8)
+// Message Length + Message Type + Valve ID + Valve State
+#define MAX_VALVE_COMMAND_MSG_SIZE (1 + 1 + 1 + 1)
+// Message Length + Message Type + Valve ID + Valve State + Timestamp
+#define MAX_VALVE_STATE_MSG_SIZE (1 + 1 + 1 + 1 + 8)
 // Message Type
 #define MAX_HEARTBEAT_MSG_SIZE 1
 // Telemetry is the largest message in all cases
@@ -78,5 +78,4 @@ int serialize_message(const Message *message, uint8_t *buffer,
 					  uint32_t buffer_size);
 int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 						Message *msg);
-
 #endif

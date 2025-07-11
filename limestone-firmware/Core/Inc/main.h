@@ -31,7 +31,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+//#include "LSM6DSO32XTR.h"
+//#include "semphr.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -167,6 +168,11 @@ void set_system_time(uint32_t sec, uint32_t us);
 #define LED_BLUE_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
+
+typedef enum {
+	Valve_Deenergized = 0U,
+	Valve_Energized
+} Valve_State_t;
 
 /* USER CODE END Private defines */
 

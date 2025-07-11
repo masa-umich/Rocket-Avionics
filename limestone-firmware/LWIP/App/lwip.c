@@ -29,7 +29,8 @@
 #include <string.h>
 
 /* USER CODE BEGIN 0 */
-
+#include "sntp.h"
+#include "server.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -104,7 +105,7 @@ void MX_LWIP_Init(void)
   memset(&attributes, 0x0, sizeof(osThreadAttr_t));
   attributes.name = "EthLink";
   attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
-  attributes.priority = osPriorityBelowNormal;
+  attributes.priority = osPriorityNormal;
   osThreadNew(ethernet_link_thread, &gnetif, &attributes);
 /* USER CODE END H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
@@ -130,11 +131,15 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
+	  sntp_init();
+	  server_init();
 /* USER CODE END 5 */
   }
   else /* netif is down */
   {
 /* USER CODE BEGIN 6 */
+	  sntp_stop();
+	  shutdown_server();
 /* USER CODE END 6 */
   }
 }

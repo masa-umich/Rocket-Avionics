@@ -32,11 +32,55 @@
 #include "time.h"
 #include "api.h"
 #include "string.h"
+#include "server.h"
+#include "messages.h"
+//#include "lwip/netif.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef struct {
+	float pt1;
+	float pt2;
+	float pt3;
+	float pt4;
+	float pt5;
+	float tc1;
+	float tc2;
+	float tc3;
+	Accel imu1_A;
+	Accel imu2_A;
+	AngRate imu1_W;
+	AngRate imu2_W;
+	float gps_lat;
+	float gps_long;
+	float gps_alt;
+	float bar1;
+	float bar2;
+	float bus24v_voltage;
+	float bus24v_current;
+	float bus12v_voltage;
+	float bus12v_current;
+	float bus5v_voltage;
+	float bus5v_current;
+	float bus3v3_voltage;
+	float bus3v3_current;
+	float vlv1_current;
+	VLV_OpenLoad vlv1_old;
+	float vlv2_current;
+	VLV_OpenLoad vlv2_old;
+	float vlv3_current;
+	VLV_OpenLoad vlv3_old;
 
+	Valve_State_t vlv1_state;
+	Valve_State_t vlv2_state;
+	Valve_State_t vlv3_state;
+} Flight_Computer_State_t;
+
+typedef struct {
+	SemaphoreHandle_t fcState_access;
+	Flight_Computer_State_t fcState;
+} Rocket_State_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -64,15 +108,26 @@ SPI_HandleTypeDef hspi6;
 
 UART_HandleTypeDef huart10;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
+/* Definitions for startTask */
+osThreadId_t startTaskHandle;
+const osThreadAttr_t startTask_attributes = {
+  .name = "startTask",
   .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for setupTask */
+osThreadId_t setupTaskHandle;
+const osThreadAttr_t setupTask_attributes = {
+  .name = "setupTask",
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
 SemaphoreHandle_t RTC_mutex; // For safe concurrent access of the RTC
+
+Rocket_State_t Rocket_h; // Main rocket state handle
+
+extern struct netif gnetif;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,7 +143,8 @@ static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_SPI6_Init(void);
-void StartDefaultTask(void *argument);
+void StartAndMonitor(void *argument);
+void setupAndStart(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -184,6 +240,62 @@ uint64_t get_rtc_time() {
 	int32_t us = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) / 6250.0) * 1e6;
 	return (sec * 1e9) + (us * 1e3);
 }
+
+// Pack telemetry message
+// returns 0 if successful, 1 if the telemetry data could not be accessed
+// timeout_ticks: how many FreeRTOS ticks to wait before giving up
+int pack_fc_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t timeout_ticks) {
+	msg->board_id = BOARD_FC;
+	msg->num_channels = NUM_FC_CHANNELS;
+	msg->timestamp = timestamp;
+	if(xSemaphoreTake(Rocket_h.fcState_access, timeout_ticks) == pdPASS) {
+		msg->telemetry_data[0] = Rocket_h.fcState.vlv1_current;
+		msg->telemetry_data[1] = Rocket_h.fcState.vlv1_old;
+		msg->telemetry_data[2] = Rocket_h.fcState.vlv2_current;
+		msg->telemetry_data[3] = Rocket_h.fcState.vlv2_old;
+		msg->telemetry_data[4] = Rocket_h.fcState.vlv3_current;
+		msg->telemetry_data[5] = Rocket_h.fcState.vlv3_old;
+		msg->telemetry_data[6] = Rocket_h.fcState.pt1;
+		msg->telemetry_data[7] = Rocket_h.fcState.pt2;
+		msg->telemetry_data[8] = Rocket_h.fcState.pt3;
+		msg->telemetry_data[9] = Rocket_h.fcState.pt4;
+		msg->telemetry_data[10] = Rocket_h.fcState.pt5;
+		msg->telemetry_data[11] = Rocket_h.fcState.tc1;
+		msg->telemetry_data[12] = Rocket_h.fcState.tc2;
+		msg->telemetry_data[13] = Rocket_h.fcState.tc3;
+		msg->telemetry_data[14] = Rocket_h.fcState.imu1_A.XL_x;
+		msg->telemetry_data[15] = Rocket_h.fcState.imu1_A.XL_y;
+		msg->telemetry_data[16] = Rocket_h.fcState.imu1_A.XL_z;
+		msg->telemetry_data[17] = Rocket_h.fcState.imu1_W.G_y;
+		msg->telemetry_data[18] = Rocket_h.fcState.imu1_W.G_x;
+		msg->telemetry_data[19] = Rocket_h.fcState.imu1_W.G_z;
+		msg->telemetry_data[20] = Rocket_h.fcState.imu2_A.XL_x;
+		msg->telemetry_data[21] = Rocket_h.fcState.imu2_A.XL_y;
+		msg->telemetry_data[22] = Rocket_h.fcState.imu2_A.XL_z;
+		msg->telemetry_data[23] = Rocket_h.fcState.imu2_W.G_y;
+		msg->telemetry_data[24] = Rocket_h.fcState.imu2_W.G_x;
+		msg->telemetry_data[25] = Rocket_h.fcState.imu2_W.G_z;
+		msg->telemetry_data[26] = Rocket_h.fcState.gps_lat;
+		msg->telemetry_data[27] = Rocket_h.fcState.gps_long;
+		msg->telemetry_data[28] = Rocket_h.fcState.gps_alt;
+		msg->telemetry_data[29] = Rocket_h.fcState.bar1;
+		msg->telemetry_data[30] = Rocket_h.fcState.bar2;
+		msg->telemetry_data[31] = Rocket_h.fcState.bus24v_voltage;
+		msg->telemetry_data[32] = Rocket_h.fcState.bus24v_current;
+		msg->telemetry_data[33] = Rocket_h.fcState.bus12v_voltage;
+		msg->telemetry_data[34] = Rocket_h.fcState.bus12v_current;
+		msg->telemetry_data[35] = Rocket_h.fcState.bus5v_voltage;
+		msg->telemetry_data[36] = Rocket_h.fcState.bus5v_current;
+		msg->telemetry_data[37] = Rocket_h.fcState.bus3v3_voltage;
+		msg->telemetry_data[38] = Rocket_h.fcState.bus3v3_current;
+		xSemaphoreGive(Rocket_h.fcState_access);
+	}
+	else {
+		return 1;
+	}
+
+	return 0;
+}
 /* USER CODE END 0 */
 
 /**
@@ -226,8 +338,6 @@ int main(void)
   // Force reset RTC registers in case something got corrupted
   __HAL_RCC_BACKUPRESET_FORCE();
   __HAL_RCC_BACKUPRESET_RELEASE();
-  // Create RTC mutex
-  RTC_mutex = xSemaphoreCreateMutex();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -250,6 +360,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
+  // Create RTC mutex
+  RTC_mutex = xSemaphoreCreateMutex();
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -265,8 +377,11 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  /* creation of startTask */
+  startTaskHandle = osThreadNew(StartAndMonitor, NULL, &startTask_attributes);
+
+  /* creation of setupTask */
+  setupTaskHandle = osThreadNew(setupAndStart, NULL, &setupTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -975,174 +1090,67 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_StartAndMonitor */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the startTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+/* USER CODE END Header_StartAndMonitor */
+void StartAndMonitor(void *argument)
 {
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
-  int64_t us = ((6249 - 12498) / 6250.0) * 1e6;
-  int32_t sec = 1000;
-  int64_t res = (sec * 1e9) + (us * 1e3);
-  // Setup NTP listener
-  sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
-  sntp_init();
 
-  struct netconn *sendudp = netconn_new(NETCONN_UDP);
-  ip_addr_t debug_addr;
-  IP4_ADDR(&debug_addr, 192, 168, 0, 5);
+	// Setup NTP listener
+	sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
 
-  for(;;) {
-	  struct netbuf *outbuf = netbuf_new();
-	  void *pkt_buf = netbuf_alloc(outbuf, 9);
-	  uint64_t cur_time = get_rtc_time();
-	  //uint64_t cur_time = 0;
-	  uint8_t outarr[8];
+	// Setup TCP server
+	ip4_addr_t limewire;
+	ip4_addr_t noIP = {0};
+	IP4_ADDR(&limewire, 192, 168, 0, 5);
+	server_create(limewire, noIP, noIP, noIP, noIP);
 
-	  for (int i = 0; i < 8; i++) {
-		  outarr[i] = (uint8_t)((cur_time >> (8 * (7 - i))) & 0xFF);
-	  }
+	// Init rocket state struct
+	memset(&Rocket_h, 0, sizeof(Rocket_h)); // Reset contents
+	Rocket_h.fcState_access = xSemaphoreCreateMutex();
+	// TODO Init peripherals and start tasks
 
-	  //netbuf_ref(outbuf, &cur_time, 8);
-	  memcpy(pkt_buf, outarr, 8);
-	  if (RTC->ISR & RTC_ISR_RSF) {
-	      // Shadow registers are synchronized and up-to-date
-		  *(((uint8_t *)pkt_buf) + 8) = 0x45;
-	  } else {
-	      // Shadow registers are not yet synchronized
-		  *(((uint8_t *)pkt_buf) + 8) = 0x67;
-	  }
+	if(netif_is_link_up(&gnetif)) {
+		server_init();
+		sntp_init();
+	}
 
-	  err_t send_err = netconn_sendto(sendudp, outbuf, &debug_addr, 1234);
+	// DONE: Add TCP server support to disconnected clients
+	//			Test TCP keep-alive
+	//			If select returns -1, still go through connections since that probably means a connection was dropped
+	//			If recv returns 0, connection is closed so remove it from the list, MAKE SURE TO TAKE MUTEX BEFORE EDITING CONN LIST
+	//			If send returns -1, connection is closed, but select will handle it so don't handle it
 
-	  osDelay(20);
-	  netbuf_delete(outbuf);
-  }
+	// DONE: Figure out what happens when the board starts without being plugged in to ethernet - you must shutdown all active connections/servers and then start them as appropriate in ethernet_link_status_updated - for shutting down the tcp server, give a flag (semaphore) to the 3 tasks, each task will free it's own memory and close sockets and then delete itself, then free the TS lists
+	//			For the connection thread, close listener socket. Use a binary semaphore to signal to the threads to stop, then use a counting semaphore and 3 waits to wait until all 3 threads have shut down. Then close all connections and free the memory from the TS queues. No need to free mutex since the threads should all unlock it before exiting
+	//			On uplink, use a different init function that does all the same thing except creating the mutex
+	//			FIGURE OUT A WAY TO TELL IF THE SERVER WAS STARTED OR NOT. ethernet_link_status_updated SHOULD NOT DO ANYTHING IF THE SERVER HAS NOT BEEN STARTED IN THIS THREAD. ALSO DON'T START THE SERVER UNLESS IT HAS BEEN STOPPED AND VICE VERSA
+	//			FIGURE OUT WHAT HAPPENS IF THE PROGRAM IS STARTED UNLINKED. DOES ethernet_link_status_updated STILL TRIGGER WHEN THE LINK IS CREATED, IF SO, DELAY ANY NETWORK INIT (INCLUDING SNTP) UNTIL A LINK IS CREATED.
 
-  /*for(;;) {
-	  uint64_t ns = get_rtc_time();
-	  osDelay(250);
-  }*/
-  /*HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 0);
-  	osDelay(2000);
-  	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 1);
-  	gps_handler gps;
-  	gps.huart = &huart10;
-  	int status = init_gps(&gps);
-  	for(;;) {
-  		if(xSemaphoreTake(gps.semaphore, 2)) {
-  			char temp_rx[100];
-  			if(gps.active_rx_buffer == 1) {
-  				memcpy(temp_rx, gps.rx_buffer_2, 100);
-  			}
-  			else {
-  				memcpy(temp_rx, gps.rx_buffer_1, 100);
-  			}
-  			gps_data data;
-  			parse_gps_sentence(temp_rx, &data);
-  		}
-  		osDelay(100);
-  	}*/
+	// TODO: Do proper errno handling for tcp server, for example send(), select(), accept(), recv()
+	// TODO: Possibly add code to default timestamp if rtc isn't set
+	// DONE: globals for ip addresses for all boards and limewire, and create functions to get the fd based on which board/ip addr - something like get_fd(BoardId, board), also maybe function where you give the boardId, and it gets the fd and checks if the connection is open and the server is running DONT SEND OR TRY TO RECEIVE ANYTHING UNLESS THE SERVER IS UP
+	// TODO: Figure out EEPROM ordering and what goes in there
 
-  	/*IMU IMU1;
-  	IMU1.hi2c = &hi2c5;
-  	IMU1.I2C_TIMEOUT = 9999;
-  	IMU1.XL_x_offset = 0;
-  	IMU1.XL_y_offset = 0;
-  	IMU1.XL_z_offset = 0;
-  	IMU1.G_x_offset = 0;
-  	IMU1.G_y_offset = 0;
-  	IMU1.G_z_offset = 0;
-  	IMU1.SA0 = 0;
-
-  	IMU IMU2;
-  	IMU2.hi2c = &hi2c5;
-  	IMU2.I2C_TIMEOUT = 9999;
-  	IMU2.XL_x_offset = 0;
-  	IMU2.XL_y_offset = 0;
-  	IMU2.XL_z_offset = 0;
-  	IMU2.G_x_offset = 0;
-  	IMU2.G_y_offset = 0;
-  	IMU2.G_z_offset = 0;
-  	IMU2.SA0 = 1;
-
-  	IMU_init(&IMU1);
-  	IMU_init(&IMU2);
-
-  	for(;;) {
-  		Accel XL_readings1 = {0};
-  		Accel XL_readings2 = {0};
-  		IMU_getAccel(&IMU1, &XL_readings1);
-  		IMU_getAccel(&IMU2, &XL_readings2);
-
-  		osDelay(1000);
-  	}*/
-  	/*Shift_Reg reg = {0};
-  	reg.VLV_CTR_GPIO_Port = GPIOA;
-  	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
-  	reg.VLV_CLK_GPIO_Port = GPIOA;
-  	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
-  	reg.VLV_CLR_GPIO_Port = GPIOA;
-  	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
-
-  	Valve VLV1 = {0};
-  	VLV1.VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
-  	VLV1.VLV_EN_GPIO_Pin = VLV1_EN_Pin;
-
-  	VLV_Set_Voltage(reg, 0b00000010);
-  	for (;;) {
-  	    VLV_Toggle(VLV1);
-  	    HAL_GPIO_TogglePin(GPIOE, LED_BLUE_Pin);
-  	    osDelay(3000);
-  	}*/
-  	GPIO_MAX11128_Pinfo adc_pins;
-  	adc_pins.MAX11128_CS_PORT 		= ADC_CS_GPIO_Port;
-  	adc_pins.MAX11128_CS_ADDR 		= ADC_CS_Pin;
-  	adc_pins.HARDWARE_CONFIGURATION = NO_EOC_NOR_CNVST;
-  	adc_pins.NUM_CHANNELS = 16;
-
-
-  	init_adc(&hspi4, &adc_pins);
-  	//configure_read_adc_all(&adc_pins);
-  	Shift_Reg reg = {0};
-  	reg.VLV_CTR_GPIO_Port = GPIOA;
-  	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
-  	reg.VLV_CLK_GPIO_Port = GPIOA;
-  	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
-  	reg.VLV_CLR_GPIO_Port = GPIOA;
-  	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
-
-  	Valve VLV1 = {0};
-  	VLV1.VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
-  	VLV1.VLV_EN_GPIO_Pin = VLV1_EN_Pin;
-  	VLV1.VLV_OLD_GPIO_Port = VLV1_OLD_GPIO_Port;
-  	VLV1.VLV_OLD_GPIO_Pin = VLV1_OLD_Pin;
-  	Valve VLV2 = {0};
-  	VLV2.VLV_EN_GPIO_Port = VLV2_EN_GPIO_Port;
-  	VLV2.VLV_EN_GPIO_Pin = VLV2_EN_Pin;
-
-  	VLV_Set_Conf(reg, 1, VLV_24V, 1, VLV_12V, 0, VLV_12V);
-  	/*for(;;) {
-  		uint16_t adc_values[16] = {0};
-  		read_adc(&hspi4, &adc_pins, adc_values);
-  		uint16_t raw_valve1 = adc_values[1];
-  		float valve_current = (((raw_valve1 / 4095.0) * 3.3) * (5.0/3.0)) / (50 * 0.02);
-  	    VLV_Toggle(VLV1);
-  	    HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-  	    HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-  	    HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-
-  	    osDelay(20);
-  	    GPIO_PinState open_state = HAL_GPIO_ReadPin(VLV_OLD1_GPIO_Port, VLV_OLD1_Pin);
-
-  		osDelay(2000);
-  	}*/
+	/*
+	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs)
+	 *
+	 * fc telemetry comes from struct, sent on a 50hz loop
+	 * bb telemetry comes from tcp packets, relayed to limewire and stored for optional access in autosequences
+	 * fc valve states are sent after valve commands are sent AND possibly every now and then, in case something gets disconnected, then stored for optional access
+	 * bb valve states are relayed from tcp packets, and saved for optional access
+	 * all valve commands are processed when received. fc relays commands from limewire to bb
+	 *
+	 * telemetry task - read from peripherals and send telemetry msg
+	 * tcp process task - process incoming packets for relaying or valve stuff
+	 */
   	ADS_Main_t main_handle = {0};
   	ADS_TC_t multiTCs[3];
 
@@ -1151,69 +1159,290 @@ void StartDefaultTask(void *argument)
   	ADS_configTC(&multiTCs[2], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
   	ADS_init(&main_handle, multiTCs, 3);
 
-  	MS5611 bar2;
-  	bar2.hspi = &hspi6;
-  	bar2.SPI_TIMEOUT = 100;
-  	bar2.CS_GPIO_Port = BAR1_CS_GPIO_Port; // PA3
-  	bar2.CS_GPIO_Pin = BAR1_CS_Pin;
-  	bar2.pres_offset = 0;
-  	bar2.alt_offset = 0;
+  	IMU IMU1;
+  	IMU1.hi2c = &hi2c5;
+  	IMU1.I2C_TIMEOUT = 9999;
+  	IMU1.XL_x_offset = 0;
+  	IMU1.XL_y_offset = 0;
+  	IMU1.XL_z_offset = 0;
+  	IMU1.G_x_offset = 0;
+  	IMU1.G_y_offset = 0;
+  	IMU1.G_z_offset = 0;
+  	IMU1.SA0 = 1;
 
-  	MS5611_PROM_t prom;
-  	prom.constants.C1 = 0;
-  	prom.constants.C2 = 0;
-  	prom.constants.C3 = 0;
-  	prom.constants.C4 = 0;
-  	prom.constants.C5 = 0;
-  	prom.constants.C6 = 0;
-
-  	MS5611_Reset(&bar2);
-  	MS5611_readPROM(&bar2, &prom);
-
-  	float pres = 0.0;
-
-  	for(;;) {
+  	IMU_init(&IMU1);
+	//for(;;) {osDelay(1000);}
+	/* Infinite loop */
+	for(;;) {
   		ADS_Reading_t values[3];
   		int status = ADS_readAllwTimestamps(&main_handle, values);
+  		Accel XL_readings1 = {0};
+  		IMU_getAccel(&IMU1, &XL_readings1);
 
-  		MS5611_getPres(&bar2, &pres, &prom, OSR_256);
+  		if(xSemaphoreTake(Rocket_h.fcState_access, 1) == pdPASS) {
+  			Rocket_h.fcState.tc1 = values[0].temp_c;
+  			Rocket_h.fcState.tc2 = values[1].temp_c;
+  			Rocket_h.fcState.tc3 = values[2].temp_c;
+  			Rocket_h.fcState.imu1_A = XL_readings1;
+  			xSemaphoreGive(Rocket_h.fcState_access);
+  			if(is_server_running()) {
+  				int limewirefd = get_device_fd(LimeWire_d);
+  				if(limewirefd != -1) {
+  	  	  			TelemetryMessage telemsg;
+  	  	  			if(!pack_fc_telemetry_msg(&telemsg, get_rtc_time(), 1)) {
+  	  	  				Message genmsg = {MSG_TELEMETRY, telemsg};
+  	  	  				Raw_message msg = {0};
+  	  	  				int buflen = serialize_message(&genmsg, msg.buffer, MAX_MSG_LEN);
+  	  	  				if(buflen != -1) {
+  	  	  	  				msg.packet_len = buflen;
+  	  	  	  				msg.connection_fd = limewirefd;
+  	  	  	  				server_send(&msg, 10);
+  	  	  				}
+  	  	  			}
+  				}
+  			}
+  		}
 
-  		uint16_t adc_values[16] = {0};
-  		read_adc(&hspi4, &adc_pins, adc_values);
-  		uint16_t raw_valve1 = adc_values[1];
-  		float valve_current = (((raw_valve1 / 4095.0) * 3.3) * (5.0/3.0)) / (50 * 0.02);
-  		VLV_Toggle(VLV1);
-  		//VLV_Toggle(VLV2);
-  		HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-  		HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-  		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-
-  		osDelay(20);
-  		VLV_OpenLoad open_state = VLV_isOpenLoad(VLV1);
-
-  		osDelay(1500);
-  	}
-      /*MS5611 baro = {0};
-  	baro.hspi = &hspi6;
-  	baro.CS_GPIO_Pin = BAR2_CS_Pin;
-  	baro.CS_GPIO_Port = BAR2_CS_GPIO_Port;
-  	baro.SPI_TIMEOUT = 1000;
-  	baro.pres_offset = 0;
-  	baro.alt_offset = 0;
-
-  	MS5611_PROM_t prom = {0};
-  	float pres = 0;
-
-  	MS5611_Reset(&baro);
-  	MS5611_readPROM(&baro, &prom);
-  	MS5611_getPres(&baro, &pres, OSR_256);*/
-  	for (;;) {
-  		HAL_GPIO_WritePin(VLV1_EN_GPIO_Port, VLV1_EN_Pin, 1);
-  		osDelay(10);
-  		HAL_GPIO_WritePin(VLV1_EN_GPIO_Port, VLV1_EN_Pin, 0);
-  		osDelay(10);
-  	}
+	  // TODO Make sure things are still running and restart anything that stops
+	  osDelay(50);
+	}
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_setupAndStart */
+/**
+* @brief Function implementing the setupTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_setupAndStart */
+void setupAndStart(void *argument)
+{
+  /* USER CODE BEGIN setupAndStart */
+	// REMOVE THIS TASK
+	  for(;;) {
+		  osDelay(30000);
+	  }
+	  struct netconn *sendudp = netconn_new(NETCONN_UDP);
+	  ip_addr_t debug_addr;
+	  IP4_ADDR(&debug_addr, 192, 168, 0, 5);
+
+	  for(;;) {
+		  struct netbuf *outbuf = netbuf_new();
+		  void *pkt_buf = netbuf_alloc(outbuf, 9);
+		  uint64_t cur_time = get_rtc_time();
+		  //uint64_t cur_time = 0;
+		  uint8_t outarr[8];
+
+		  for (int i = 0; i < 8; i++) {
+			  outarr[i] = (uint8_t)((cur_time >> (8 * (7 - i))) & 0xFF);
+		  }
+
+		  //netbuf_ref(outbuf, &cur_time, 8);
+		  memcpy(pkt_buf, outarr, 8);
+		  if (RTC->ISR & RTC_ISR_RSF) {
+		      // Shadow registers are synchronized and up-to-date
+			  *(((uint8_t *)pkt_buf) + 8) = 0x45;
+		  } else {
+		      // Shadow registers are not yet synchronized
+			  *(((uint8_t *)pkt_buf) + 8) = 0x67;
+		  }
+
+		  err_t send_err = netconn_sendto(sendudp, outbuf, &debug_addr, 1234);
+
+		  osDelay(1000);
+		  netbuf_delete(outbuf);
+	  }
+
+	  /*for(;;) {
+		  uint64_t ns = get_rtc_time();
+		  osDelay(250);
+	  }*/
+	  /*HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 0);
+	  	osDelay(2000);
+	  	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 1);
+	  	gps_handler gps;
+	  	gps.huart = &huart10;
+	  	int status = init_gps(&gps);
+	  	for(;;) {
+	  		if(xSemaphoreTake(gps.semaphore, 2)) {
+	  			char temp_rx[100];
+	  			if(gps.active_rx_buffer == 1) {
+	  				memcpy(temp_rx, gps.rx_buffer_2, 100);
+	  			}
+	  			else {
+	  				memcpy(temp_rx, gps.rx_buffer_1, 100);
+	  			}
+	  			gps_data data;
+	  			parse_gps_sentence(temp_rx, &data);
+	  		}
+	  		osDelay(100);
+	  	}*/
+
+	  	/*IMU IMU1;
+	  	IMU1.hi2c = &hi2c5;
+	  	IMU1.I2C_TIMEOUT = 9999;
+	  	IMU1.XL_x_offset = 0;
+	  	IMU1.XL_y_offset = 0;
+	  	IMU1.XL_z_offset = 0;
+	  	IMU1.G_x_offset = 0;
+	  	IMU1.G_y_offset = 0;
+	  	IMU1.G_z_offset = 0;
+	  	IMU1.SA0 = 0;
+
+	  	IMU IMU2;
+	  	IMU2.hi2c = &hi2c5;
+	  	IMU2.I2C_TIMEOUT = 9999;
+	  	IMU2.XL_x_offset = 0;
+	  	IMU2.XL_y_offset = 0;
+	  	IMU2.XL_z_offset = 0;
+	  	IMU2.G_x_offset = 0;
+	  	IMU2.G_y_offset = 0;
+	  	IMU2.G_z_offset = 0;
+	  	IMU2.SA0 = 1;
+
+	  	IMU_init(&IMU1);
+	  	IMU_init(&IMU2);
+
+	  	for(;;) {
+	  		Accel XL_readings1 = {0};
+	  		Accel XL_readings2 = {0};
+	  		IMU_getAccel(&IMU1, &XL_readings1);
+	  		IMU_getAccel(&IMU2, &XL_readings2);
+
+	  		osDelay(1000);
+	  	}*/
+	  	/*Shift_Reg reg = {0};
+	  	reg.VLV_CTR_GPIO_Port = GPIOA;
+	  	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
+	  	reg.VLV_CLK_GPIO_Port = GPIOA;
+	  	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
+	  	reg.VLV_CLR_GPIO_Port = GPIOA;
+	  	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
+
+	  	Valve VLV1 = {0};
+	  	VLV1.VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
+	  	VLV1.VLV_EN_GPIO_Pin = VLV1_EN_Pin;
+
+	  	VLV_Set_Voltage(reg, 0b00000010);
+	  	for (;;) {
+	  	    VLV_Toggle(VLV1);
+	  	    HAL_GPIO_TogglePin(GPIOE, LED_BLUE_Pin);
+	  	    osDelay(3000);
+	  	}*/
+	  	GPIO_MAX11128_Pinfo adc_pins;
+	  	adc_pins.MAX11128_CS_PORT 		= ADC_CS_GPIO_Port;
+	  	adc_pins.MAX11128_CS_ADDR 		= ADC_CS_Pin;
+	  	adc_pins.HARDWARE_CONFIGURATION = NO_EOC_NOR_CNVST;
+	  	adc_pins.NUM_CHANNELS = 16;
+
+
+	  	init_adc(&hspi4, &adc_pins);
+	  	//configure_read_adc_all(&adc_pins);
+	  	Shift_Reg reg = {0};
+	  	reg.VLV_CTR_GPIO_Port = GPIOA;
+	  	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
+	  	reg.VLV_CLK_GPIO_Port = GPIOA;
+	  	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
+	  	reg.VLV_CLR_GPIO_Port = GPIOA;
+	  	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
+
+	  	Valve VLV1 = {0};
+	  	VLV1.VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
+	  	VLV1.VLV_EN_GPIO_Pin = VLV1_EN_Pin;
+	  	VLV1.VLV_OLD_GPIO_Port = VLV1_OLD_GPIO_Port;
+	  	VLV1.VLV_OLD_GPIO_Pin = VLV1_OLD_Pin;
+	  	Valve VLV2 = {0};
+	  	VLV2.VLV_EN_GPIO_Port = VLV2_EN_GPIO_Port;
+	  	VLV2.VLV_EN_GPIO_Pin = VLV2_EN_Pin;
+
+	  	VLV_Set_Conf(reg, 1, VLV_24V, 1, VLV_12V, 0, VLV_12V);
+	  	/*for(;;) {
+	  		uint16_t adc_values[16] = {0};
+	  		read_adc(&hspi4, &adc_pins, adc_values);
+	  		uint16_t raw_valve1 = adc_values[1];
+	  		float valve_current = (((raw_valve1 / 4095.0) * 3.3) * (5.0/3.0)) / (50 * 0.02);
+	  	    VLV_Toggle(VLV1);
+	  	    HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+	  	    HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+	  	    HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+
+	  	    osDelay(20);
+	  	    GPIO_PinState open_state = HAL_GPIO_ReadPin(VLV_OLD1_GPIO_Port, VLV_OLD1_Pin);
+
+	  		osDelay(2000);
+	  	}*/
+	  	ADS_Main_t main_handle = {0};
+	  	ADS_TC_t multiTCs[3];
+
+	  	ADS_configTC(&multiTCs[0], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
+	  	ADS_configTC(&multiTCs[1], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
+	  	ADS_configTC(&multiTCs[2], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
+	  	ADS_init(&main_handle, multiTCs, 3);
+
+	  	MS5611 bar2;
+	  	bar2.hspi = &hspi6;
+	  	bar2.SPI_TIMEOUT = 100;
+	  	bar2.CS_GPIO_Port = BAR1_CS_GPIO_Port; // PA3
+	  	bar2.CS_GPIO_Pin = BAR1_CS_Pin;
+	  	bar2.pres_offset = 0;
+	  	bar2.alt_offset = 0;
+
+	  	MS5611_PROM_t prom;
+	  	prom.constants.C1 = 0;
+	  	prom.constants.C2 = 0;
+	  	prom.constants.C3 = 0;
+	  	prom.constants.C4 = 0;
+	  	prom.constants.C5 = 0;
+	  	prom.constants.C6 = 0;
+
+	  	MS5611_Reset(&bar2);
+	  	MS5611_readPROM(&bar2, &prom);
+
+	  	float pres = 0.0;
+
+	  	for(;;) {
+	  		ADS_Reading_t values[3];
+	  		int status = ADS_readAllwTimestamps(&main_handle, values);
+
+	  		MS5611_getPres(&bar2, &pres, &prom, OSR_256);
+
+	  		uint16_t adc_values[16] = {0};
+	  		read_adc(&hspi4, &adc_pins, adc_values);
+	  		uint16_t raw_valve1 = adc_values[1];
+	  		float valve_current = (((raw_valve1 / 4095.0) * 3.3) * (5.0/3.0)) / (50 * 0.02);
+	  		VLV_Toggle(VLV1);
+	  		//VLV_Toggle(VLV2);
+	  		HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+	  		HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+	  		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+
+	  		osDelay(20);
+	  		VLV_OpenLoad open_state = VLV_isOpenLoad(VLV1);
+
+	  		osDelay(1500);
+	  	}
+	      /*MS5611 baro = {0};
+	  	baro.hspi = &hspi6;
+	  	baro.CS_GPIO_Pin = BAR2_CS_Pin;
+	  	baro.CS_GPIO_Port = BAR2_CS_GPIO_Port;
+	  	baro.SPI_TIMEOUT = 1000;
+	  	baro.pres_offset = 0;
+	  	baro.alt_offset = 0;
+
+	  	MS5611_PROM_t prom = {0};
+	  	float pres = 0;
+
+	  	MS5611_Reset(&baro);
+	  	MS5611_readPROM(&baro, &prom);
+	  	MS5611_getPres(&baro, &pres, OSR_256);*/
+	  	for (;;) {
+	  		HAL_GPIO_WritePin(VLV1_EN_GPIO_Port, VLV1_EN_Pin, 1);
+	  		osDelay(10);
+	  		HAL_GPIO_WritePin(VLV1_EN_GPIO_Port, VLV1_EN_Pin, 0);
+	  		osDelay(10);
+	  	}
+  /* USER CODE END setupAndStart */
 }
 
  /* MPU Configuration */
