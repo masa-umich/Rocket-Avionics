@@ -1171,7 +1171,6 @@ void StartAndMonitor(void *argument)
   	IMU1.SA0 = 1;
 
   	IMU_init(&IMU1);
-	//for(;;) {osDelay(1000);}
 	/* Infinite loop */
 	for(;;) {
   		ADS_Reading_t values[3];
@@ -1221,7 +1220,8 @@ void setupAndStart(void *argument)
   /* USER CODE BEGIN setupAndStart */
 	// REMOVE THIS TASK
 	  for(;;) {
-		  osDelay(30000);
+		  size_t freemem = xPortGetFreeHeapSize();
+		  osDelay(1000);
 	  }
 	  struct netconn *sendudp = netconn_new(NETCONN_UDP);
 	  ip_addr_t debug_addr;
@@ -1533,8 +1533,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
