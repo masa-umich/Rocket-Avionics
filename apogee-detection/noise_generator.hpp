@@ -76,6 +76,13 @@ public:
    void view_data();
 };
 
+class IMU
+{
+   double a_x; 
+   double a_y; 
+   double a_z; 
+};
+
 class Timer
 {
    std::chrono::time_point<std::chrono::system_clock> cur;
