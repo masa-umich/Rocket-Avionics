@@ -171,11 +171,12 @@ class Detector
             int count = 0;
             for(int i = 0; i < CAPACITY; ++i)
             {
-                if(slope[i] < -5)
+                //NEED TO PIN THIS NUMBER DOWN!!!
+                if(slope[i] < -0.045)
                     ++count;
             }
 
-            //if 80% of the readings in our slope buffer are less than -100 DETECT MECO
+            //if 80% of the readings in our slope buffer are less than -0 DETECT MECO
             if(count >= (CAPACITY * 0.8))
                 return true;
         }
@@ -216,7 +217,7 @@ void launch()
         bool MECO_flag = false;
 
         //read in data for IMUs to detect MECO
-        std::ifstream FS_1("a_x_data.txt");
+        std::ifstream FS_1("a_x_data_new.txt");
         std::vector<long double> a_x_data;
         string a_x;
 
@@ -241,8 +242,8 @@ void launch()
             //need to determine how much noise to inject to make this realistic
             //that can be found in the IMU datasheet. 
             //for now, just using the same noise as the barometers
-            double a_x_noisy_1 = current_a_x + gaussian_random(0, 1.5);
-            double a_x_noisy_2 = current_a_x + gaussian_random(0, 1.5);
+            double a_x_noisy_1 = (current_a_x + gaussian_random(0, 1.5)) / 9.8;
+            double a_x_noisy_2 = (current_a_x + gaussian_random(0, 1.5)) / 9.8;
 
             if (detect_IMU.size_1 < 5 && detect_IMU.size_2 < 5)
                 {
