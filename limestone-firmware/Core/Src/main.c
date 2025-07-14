@@ -37,6 +37,7 @@
 #include "M24256E.h"
 #include "utils.h"
 #include "tftp_server.h"
+#include "lmp_channels.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -81,8 +82,84 @@ typedef struct {
 } Flight_Computer_State_t;
 
 typedef struct {
+	float pt1;
+	float pt2;
+	float pt3;
+	float pt4;
+	float pt5;
+	float pt6;
+	float pt7;
+	float pt8;
+	float pt9;
+	float pt10;
+	float tc1;
+	float tc2;
+	float tc3;
+	float tc4;
+	float tc5;
+	float tc6;
+	Accel imu1_A;
+	Accel imu2_A;
+	AngRate imu1_W;
+	AngRate imu2_W;
+	float bar1;
+	float bar2;
+	float bus24v_voltage;
+	float bus24v_current;
+	float bus12v_voltage;
+	float bus12v_current;
+	float bus5v_voltage;
+	float bus5v_current;
+	float bus3v3_voltage;
+	float bus3v3_current;
+	float vlv1_current;
+	VLV_OpenLoad vlv1_old;
+	float vlv2_current;
+	VLV_OpenLoad vlv2_old;
+	float vlv3_current;
+	VLV_OpenLoad vlv3_old;
+	float vlv4_current;
+	VLV_OpenLoad vlv4_old;
+	float vlv5_current;
+	VLV_OpenLoad vlv5_old;
+	float vlv6_current;
+	VLV_OpenLoad vlv6_old;
+	float vlv7_current;
+	VLV_OpenLoad vlv7_old;
+
+	Valve_State_t vlv1_state;
+	Valve_State_t vlv2_state;
+	Valve_State_t vlv3_state;
+	Valve_State_t vlv4_state;
+	Valve_State_t vlv5_state;
+	Valve_State_t vlv6_state;
+	Valve_State_t vlv7_state;
+} Bay_Board_State_t;
+
+typedef struct {
+	Accel imu1_A;
+	Accel imu2_A;
+	AngRate imu1_W;
+	AngRate imu2_W;
+	float bar1;
+	float bar2;
+} Flight_Recorder_State_t;
+
+typedef struct {
 	SemaphoreHandle_t fcState_access;
 	Flight_Computer_State_t fcState;
+
+	SemaphoreHandle_t bb1State_access;
+	Bay_Board_State_t bb1State;
+
+	SemaphoreHandle_t bb2State_access;
+	Bay_Board_State_t bb2State;
+
+	SemaphoreHandle_t bb3State_access;
+	Bay_Board_State_t bb3State;
+
+	SemaphoreHandle_t frState_access;
+	Flight_Recorder_State_t frState;
 } Rocket_State_t;
 
 typedef struct {
@@ -280,49 +357,271 @@ uint64_t get_rtc_time() {
 // timeout_ticks: how many FreeRTOS ticks to wait before giving up
 int pack_fc_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t timeout_ticks) {
 	msg->board_id = BOARD_FC;
-	msg->num_channels = NUM_FC_CHANNELS;
+	msg->num_channels = FC_TELEMETRY_CHANNELS;
 	msg->timestamp = timestamp;
 	if(xSemaphoreTake(Rocket_h.fcState_access, timeout_ticks) == pdPASS) {
-		msg->telemetry_data[0] = Rocket_h.fcState.vlv1_current;
-		msg->telemetry_data[1] = Rocket_h.fcState.vlv1_old;
-		msg->telemetry_data[2] = Rocket_h.fcState.vlv2_current;
-		msg->telemetry_data[3] = Rocket_h.fcState.vlv2_old;
-		msg->telemetry_data[4] = Rocket_h.fcState.vlv3_current;
-		msg->telemetry_data[5] = Rocket_h.fcState.vlv3_old;
-		msg->telemetry_data[6] = Rocket_h.fcState.pt1;
-		msg->telemetry_data[7] = Rocket_h.fcState.pt2;
-		msg->telemetry_data[8] = Rocket_h.fcState.pt3;
-		msg->telemetry_data[9] = Rocket_h.fcState.pt4;
-		msg->telemetry_data[10] = Rocket_h.fcState.pt5;
-		msg->telemetry_data[11] = Rocket_h.fcState.tc1;
-		msg->telemetry_data[12] = Rocket_h.fcState.tc2;
-		msg->telemetry_data[13] = Rocket_h.fcState.tc3;
-		msg->telemetry_data[14] = Rocket_h.fcState.imu1_A.XL_x;
-		msg->telemetry_data[15] = Rocket_h.fcState.imu1_A.XL_y;
-		msg->telemetry_data[16] = Rocket_h.fcState.imu1_A.XL_z;
-		msg->telemetry_data[17] = Rocket_h.fcState.imu1_W.G_y;
-		msg->telemetry_data[18] = Rocket_h.fcState.imu1_W.G_x;
-		msg->telemetry_data[19] = Rocket_h.fcState.imu1_W.G_z;
-		msg->telemetry_data[20] = Rocket_h.fcState.imu2_A.XL_x;
-		msg->telemetry_data[21] = Rocket_h.fcState.imu2_A.XL_y;
-		msg->telemetry_data[22] = Rocket_h.fcState.imu2_A.XL_z;
-		msg->telemetry_data[23] = Rocket_h.fcState.imu2_W.G_y;
-		msg->telemetry_data[24] = Rocket_h.fcState.imu2_W.G_x;
-		msg->telemetry_data[25] = Rocket_h.fcState.imu2_W.G_z;
-		msg->telemetry_data[26] = Rocket_h.fcState.gps_lat;
-		msg->telemetry_data[27] = Rocket_h.fcState.gps_long;
-		msg->telemetry_data[28] = Rocket_h.fcState.gps_alt;
-		msg->telemetry_data[29] = Rocket_h.fcState.bar1;
-		msg->telemetry_data[30] = Rocket_h.fcState.bar2;
-		msg->telemetry_data[31] = Rocket_h.fcState.bus24v_voltage;
-		msg->telemetry_data[32] = Rocket_h.fcState.bus24v_current;
-		msg->telemetry_data[33] = Rocket_h.fcState.bus12v_voltage;
-		msg->telemetry_data[34] = Rocket_h.fcState.bus12v_current;
-		msg->telemetry_data[35] = Rocket_h.fcState.bus5v_voltage;
-		msg->telemetry_data[36] = Rocket_h.fcState.bus5v_current;
-		msg->telemetry_data[37] = Rocket_h.fcState.bus3v3_voltage;
-		msg->telemetry_data[38] = Rocket_h.fcState.bus3v3_current;
+		msg->telemetry_data[FC_VLV1_CURRENT_I] = Rocket_h.fcState.vlv1_current;
+		msg->telemetry_data[FC_VLV1_OLD_I] = Rocket_h.fcState.vlv1_old;
+		msg->telemetry_data[FC_VLV2_CURRENT_I] = Rocket_h.fcState.vlv2_current;
+		msg->telemetry_data[FC_VLV2_OLD_I] = Rocket_h.fcState.vlv2_old;
+		msg->telemetry_data[FC_VLV3_CURRENT_I] = Rocket_h.fcState.vlv3_current;
+		msg->telemetry_data[FC_VLV3_OLD_I] = Rocket_h.fcState.vlv3_old;
+		msg->telemetry_data[FC_PT_1_I] = Rocket_h.fcState.pt1;
+		msg->telemetry_data[FC_PT_2_I] = Rocket_h.fcState.pt2;
+		msg->telemetry_data[FC_PT_3_I] = Rocket_h.fcState.pt3;
+		msg->telemetry_data[FC_PT_4_I] = Rocket_h.fcState.pt4;
+		msg->telemetry_data[FC_PT_5_I] = Rocket_h.fcState.pt5;
+		msg->telemetry_data[FC_TC_1_I] = Rocket_h.fcState.tc1;
+		msg->telemetry_data[FC_TC_2_I] = Rocket_h.fcState.tc2;
+		msg->telemetry_data[FC_TC_3_I] = Rocket_h.fcState.tc3;
+		msg->telemetry_data[FC_IMU1_X_I] = Rocket_h.fcState.imu1_A.XL_x;
+		msg->telemetry_data[FC_IMU1_Y_I] = Rocket_h.fcState.imu1_A.XL_y;
+		msg->telemetry_data[FC_IMU1_Z_I] = Rocket_h.fcState.imu1_A.XL_z;
+		msg->telemetry_data[FC_IMU1_WP_I] = Rocket_h.fcState.imu1_W.G_y;
+		msg->telemetry_data[FC_IMU1_WR_I] = Rocket_h.fcState.imu1_W.G_x;
+		msg->telemetry_data[FC_IMU1_WY_I] = Rocket_h.fcState.imu1_W.G_z;
+		msg->telemetry_data[FC_IMU2_X_I] = Rocket_h.fcState.imu2_A.XL_x;
+		msg->telemetry_data[FC_IMU2_Y_I] = Rocket_h.fcState.imu2_A.XL_y;
+		msg->telemetry_data[FC_IMU2_Z_I] = Rocket_h.fcState.imu2_A.XL_z;
+		msg->telemetry_data[FC_IMU2_WP_I] = Rocket_h.fcState.imu2_W.G_y;
+		msg->telemetry_data[FC_IMU2_WR_I] = Rocket_h.fcState.imu2_W.G_x;
+		msg->telemetry_data[FC_IMU2_WY_I] = Rocket_h.fcState.imu2_W.G_z;
+		msg->telemetry_data[FC_GPS_LAT_I] = Rocket_h.fcState.gps_lat;
+		msg->telemetry_data[FC_GPS_LONG_I] = Rocket_h.fcState.gps_long;
+		msg->telemetry_data[FC_GPS_ALT_I] = Rocket_h.fcState.gps_alt;
+		msg->telemetry_data[FC_BAR_1_I] = Rocket_h.fcState.bar1;
+		msg->telemetry_data[FC_BAR_2_I] = Rocket_h.fcState.bar2;
+		msg->telemetry_data[FC_24V_VOLTAGE_I] = Rocket_h.fcState.bus24v_voltage;
+		msg->telemetry_data[FC_24V_CURRENT_I] = Rocket_h.fcState.bus24v_current;
+		msg->telemetry_data[FC_12V_VOLTAGE_I] = Rocket_h.fcState.bus12v_voltage;
+		msg->telemetry_data[FC_12V_CURRENT_I] = Rocket_h.fcState.bus12v_current;
+		msg->telemetry_data[FC_5V_VOLTAGE_I] = Rocket_h.fcState.bus5v_voltage;
+		msg->telemetry_data[FC_5V_CURRENT_I] = Rocket_h.fcState.bus5v_current;
+		msg->telemetry_data[FC_3V3_VOLTAGE_I] = Rocket_h.fcState.bus3v3_voltage;
+		msg->telemetry_data[FC_3V3_CURRENT_I] = Rocket_h.fcState.bus3v3_current;
 		xSemaphoreGive(Rocket_h.fcState_access);
+	}
+	else {
+		return 1;
+	}
+
+	return 0;
+}
+
+// Unpack bay board message
+// returns 0 if successful, 1 if the telemetry data could not be accessed or an invalid board id
+// timeout_ticks: how many FreeRTOS ticks to wait before giving up
+// bb: bay board number, 1 indexed (1, 2, 3)
+int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
+	switch(msg->board_id) {
+	    case BOARD_BAY_1:
+	    	if(xSemaphoreTake(Rocket_h.bb1State_access, timeout_ticks) == pdPASS) {
+	    		Rocket_h.bb1State.vlv1_current = msg->telemetry_data[BB1_VLV1_CURRENT_I];
+	    		Rocket_h.bb1State.vlv1_old = msg->telemetry_data[BB1_VLV1_OLD_I];
+	    		Rocket_h.bb1State.vlv2_current = msg->telemetry_data[BB1_VLV2_CURRENT_I];
+	    		Rocket_h.bb1State.vlv2_old = msg->telemetry_data[BB1_VLV2_OLD_I];
+	    		Rocket_h.bb1State.vlv3_current = msg->telemetry_data[BB1_VLV3_CURRENT_I];
+	    		Rocket_h.bb1State.vlv3_old = msg->telemetry_data[BB1_VLV3_OLD_I];
+	    		Rocket_h.bb1State.vlv4_current = msg->telemetry_data[BB1_VLV4_CURRENT_I];
+	    		Rocket_h.bb1State.vlv4_old = msg->telemetry_data[BB1_VLV4_OLD_I];
+	    		Rocket_h.bb1State.vlv5_current = msg->telemetry_data[BB1_VLV5_CURRENT_I];
+	    		Rocket_h.bb1State.vlv5_old = msg->telemetry_data[BB1_VLV5_OLD_I];
+	    		Rocket_h.bb1State.vlv6_current = msg->telemetry_data[BB1_VLV6_CURRENT_I];
+	    		Rocket_h.bb1State.vlv6_old = msg->telemetry_data[BB1_VLV6_OLD_I];
+	    		Rocket_h.bb1State.vlv7_current = msg->telemetry_data[BB1_VLV7_CURRENT_I];
+	    		Rocket_h.bb1State.vlv7_old = msg->telemetry_data[BB1_VLV7_OLD_I];
+	    		Rocket_h.bb1State.pt1 = msg->telemetry_data[BB1_PT_1_I];
+	    		Rocket_h.bb1State.pt2 = msg->telemetry_data[BB1_PT_2_I];
+	    		Rocket_h.bb1State.pt3 = msg->telemetry_data[BB1_PT_3_I];
+	    		Rocket_h.bb1State.pt4 = msg->telemetry_data[BB1_PT_4_I];
+	    		Rocket_h.bb1State.pt5 = msg->telemetry_data[BB1_PT_5_I];
+	    		Rocket_h.bb1State.pt6 = msg->telemetry_data[BB1_PT_6_I];
+	    		Rocket_h.bb1State.pt7 = msg->telemetry_data[BB1_PT_7_I];
+	    		Rocket_h.bb1State.pt8 = msg->telemetry_data[BB1_PT_8_I];
+	    		Rocket_h.bb1State.pt9 = msg->telemetry_data[BB1_PT_9_I];
+	    		Rocket_h.bb1State.pt10 = msg->telemetry_data[BB1_PT_10_I];
+	    		Rocket_h.bb1State.tc1 = msg->telemetry_data[BB1_TC_1_I];
+	    		Rocket_h.bb1State.tc2 = msg->telemetry_data[BB1_TC_2_I];
+	    		Rocket_h.bb1State.tc3 = msg->telemetry_data[BB1_TC_3_I];
+	    		Rocket_h.bb1State.tc4 = msg->telemetry_data[BB1_TC_4_I];
+	    		Rocket_h.bb1State.tc5 = msg->telemetry_data[BB1_TC_5_I];
+	    		Rocket_h.bb1State.tc6 = msg->telemetry_data[BB1_TC_6_I];
+	    		Rocket_h.bb1State.imu1_A.XL_x = msg->telemetry_data[BB1_IMU1_X_I];
+	    		Rocket_h.bb1State.imu1_A.XL_y = msg->telemetry_data[BB1_IMU1_Y_I];
+	    		Rocket_h.bb1State.imu1_A.XL_z = msg->telemetry_data[BB1_IMU1_Z_I];
+	    		Rocket_h.bb1State.imu1_W.G_y = msg->telemetry_data[BB1_IMU1_WP_I];
+	    		Rocket_h.bb1State.imu1_W.G_x = msg->telemetry_data[BB1_IMU1_WR_I];
+	    		Rocket_h.bb1State.imu1_W.G_z = msg->telemetry_data[BB1_IMU1_WY_I];
+	    		Rocket_h.bb1State.imu2_A.XL_x = msg->telemetry_data[BB1_IMU2_X_I];
+	    		Rocket_h.bb1State.imu2_A.XL_y = msg->telemetry_data[BB1_IMU2_Y_I];
+	    		Rocket_h.bb1State.imu2_A.XL_z = msg->telemetry_data[BB1_IMU2_Z_I];
+	    		Rocket_h.bb1State.imu2_W.G_y = msg->telemetry_data[BB1_IMU2_WP_I];
+	    		Rocket_h.bb1State.imu2_W.G_x = msg->telemetry_data[BB1_IMU2_WR_I];
+	    		Rocket_h.bb1State.imu2_W.G_z = msg->telemetry_data[BB1_IMU2_WY_I];
+	    		Rocket_h.bb1State.bar1 = msg->telemetry_data[BB1_BAR_1_I];
+	    		Rocket_h.bb1State.bar2 = msg->telemetry_data[BB1_BAR_2_I];
+	    		Rocket_h.bb1State.bus24v_voltage = msg->telemetry_data[BB1_24V_VOLTAGE_I];
+	    		Rocket_h.bb1State.bus24v_current = msg->telemetry_data[BB1_24V_CURRENT_I];
+	    		Rocket_h.bb1State.bus12v_voltage = msg->telemetry_data[BB1_12V_VOLTAGE_I];
+	    		Rocket_h.bb1State.bus12v_current = msg->telemetry_data[BB1_12V_CURRENT_I];
+	    		Rocket_h.bb1State.bus5v_voltage = msg->telemetry_data[BB1_5V_VOLTAGE_I];
+	    		Rocket_h.bb1State.bus5v_current = msg->telemetry_data[BB1_5V_CURRENT_I];
+	    		Rocket_h.bb1State.bus3v3_voltage = msg->telemetry_data[BB1_3V3_VOLTAGE_I];
+	    		Rocket_h.bb1State.bus3v3_current = msg->telemetry_data[BB1_3V3_CURRENT_I];
+	    		xSemaphoreGive(Rocket_h.bb1State_access);
+	    	}
+	    	else {
+	    		return 1;
+	    	}
+	        break;
+	    case BOARD_BAY_2:
+	    	if(xSemaphoreTake(Rocket_h.bb2State_access, timeout_ticks) == pdPASS) {
+	    		Rocket_h.bb2State.vlv1_current = msg->telemetry_data[BB2_VLV1_CURRENT_I];
+	    		Rocket_h.bb2State.vlv1_old = msg->telemetry_data[BB2_VLV1_OLD_I];
+	    		Rocket_h.bb2State.vlv2_current = msg->telemetry_data[BB2_VLV2_CURRENT_I];
+	    		Rocket_h.bb2State.vlv2_old = msg->telemetry_data[BB2_VLV2_OLD_I];
+	    		Rocket_h.bb2State.vlv3_current = msg->telemetry_data[BB2_VLV3_CURRENT_I];
+	    		Rocket_h.bb2State.vlv3_old = msg->telemetry_data[BB2_VLV3_OLD_I];
+	    		Rocket_h.bb2State.vlv4_current = msg->telemetry_data[BB2_VLV4_CURRENT_I];
+	    		Rocket_h.bb2State.vlv4_old = msg->telemetry_data[BB2_VLV4_OLD_I];
+	    		Rocket_h.bb2State.vlv5_current = msg->telemetry_data[BB2_VLV5_CURRENT_I];
+	    		Rocket_h.bb2State.vlv5_old = msg->telemetry_data[BB2_VLV5_OLD_I];
+	    		Rocket_h.bb2State.vlv6_current = msg->telemetry_data[BB2_VLV6_CURRENT_I];
+	    		Rocket_h.bb2State.vlv6_old = msg->telemetry_data[BB2_VLV6_OLD_I];
+	    		Rocket_h.bb2State.vlv7_current = msg->telemetry_data[BB2_VLV7_CURRENT_I];
+	    		Rocket_h.bb2State.vlv7_old = msg->telemetry_data[BB2_VLV7_OLD_I];
+	    		Rocket_h.bb2State.pt1 = msg->telemetry_data[BB2_PT_1_I];
+	    		Rocket_h.bb2State.pt2 = msg->telemetry_data[BB2_PT_2_I];
+	    		Rocket_h.bb2State.pt3 = msg->telemetry_data[BB2_PT_3_I];
+	    		Rocket_h.bb2State.pt4 = msg->telemetry_data[BB2_PT_4_I];
+	    		Rocket_h.bb2State.pt5 = msg->telemetry_data[BB2_PT_5_I];
+	    		Rocket_h.bb2State.pt6 = msg->telemetry_data[BB2_PT_6_I];
+	    		Rocket_h.bb2State.pt7 = msg->telemetry_data[BB2_PT_7_I];
+	    		Rocket_h.bb2State.pt8 = msg->telemetry_data[BB2_PT_8_I];
+	    		Rocket_h.bb2State.pt9 = msg->telemetry_data[BB2_PT_9_I];
+	    		Rocket_h.bb2State.pt10 = msg->telemetry_data[BB2_PT_10_I];
+	    		Rocket_h.bb2State.tc1 = msg->telemetry_data[BB2_TC_1_I];
+	    		Rocket_h.bb2State.tc2 = msg->telemetry_data[BB2_TC_2_I];
+	    		Rocket_h.bb2State.tc3 = msg->telemetry_data[BB2_TC_3_I];
+	    		Rocket_h.bb2State.tc4 = msg->telemetry_data[BB2_TC_4_I];
+	    		Rocket_h.bb2State.tc5 = msg->telemetry_data[BB2_TC_5_I];
+	    		Rocket_h.bb2State.tc6 = msg->telemetry_data[BB2_TC_6_I];
+	    		Rocket_h.bb2State.imu1_A.XL_x = msg->telemetry_data[BB2_IMU1_X_I];
+	    		Rocket_h.bb2State.imu1_A.XL_y = msg->telemetry_data[BB2_IMU1_Y_I];
+	    		Rocket_h.bb2State.imu1_A.XL_z = msg->telemetry_data[BB2_IMU1_Z_I];
+	    		Rocket_h.bb2State.imu1_W.G_y = msg->telemetry_data[BB2_IMU1_WP_I];
+	    		Rocket_h.bb2State.imu1_W.G_x = msg->telemetry_data[BB2_IMU1_WR_I];
+	    		Rocket_h.bb2State.imu1_W.G_z = msg->telemetry_data[BB2_IMU1_WY_I];
+	    		Rocket_h.bb2State.imu2_A.XL_x = msg->telemetry_data[BB2_IMU2_X_I];
+	    		Rocket_h.bb2State.imu2_A.XL_y = msg->telemetry_data[BB2_IMU2_Y_I];
+	    		Rocket_h.bb2State.imu2_A.XL_z = msg->telemetry_data[BB2_IMU2_Z_I];
+	    		Rocket_h.bb2State.imu2_W.G_y = msg->telemetry_data[BB2_IMU2_WP_I];
+	    		Rocket_h.bb2State.imu2_W.G_x = msg->telemetry_data[BB2_IMU2_WR_I];
+	    		Rocket_h.bb2State.imu2_W.G_z = msg->telemetry_data[BB2_IMU2_WY_I];
+	    		Rocket_h.bb2State.bar1 = msg->telemetry_data[BB2_BAR_1_I];
+	    		Rocket_h.bb2State.bar2 = msg->telemetry_data[BB2_BAR_2_I];
+	    		Rocket_h.bb2State.bus24v_voltage = msg->telemetry_data[BB2_24V_VOLTAGE_I];
+	    		Rocket_h.bb2State.bus24v_current = msg->telemetry_data[BB2_24V_CURRENT_I];
+	    		Rocket_h.bb2State.bus12v_voltage = msg->telemetry_data[BB2_12V_VOLTAGE_I];
+	    		Rocket_h.bb2State.bus12v_current = msg->telemetry_data[BB2_12V_CURRENT_I];
+	    		Rocket_h.bb2State.bus5v_voltage = msg->telemetry_data[BB2_5V_VOLTAGE_I];
+	    		Rocket_h.bb2State.bus5v_current = msg->telemetry_data[BB2_5V_CURRENT_I];
+	    		Rocket_h.bb2State.bus3v3_voltage = msg->telemetry_data[BB2_3V3_VOLTAGE_I];
+	    		Rocket_h.bb2State.bus3v3_current = msg->telemetry_data[BB2_3V3_CURRENT_I];
+	    		xSemaphoreGive(Rocket_h.bb2State_access);
+	    	}
+	    	else {
+	    		return 1;
+	    	}
+	        break;
+	    case BOARD_BAY_3:
+	    	if(xSemaphoreTake(Rocket_h.bb3State_access, timeout_ticks) == pdPASS) {
+	    		Rocket_h.bb3State.vlv1_current = msg->telemetry_data[BB3_VLV1_CURRENT_I];
+	    		Rocket_h.bb3State.vlv1_old = msg->telemetry_data[BB3_VLV1_OLD_I];
+	    		Rocket_h.bb3State.vlv2_current = msg->telemetry_data[BB3_VLV2_CURRENT_I];
+	    		Rocket_h.bb3State.vlv2_old = msg->telemetry_data[BB3_VLV2_OLD_I];
+	    		Rocket_h.bb3State.vlv3_current = msg->telemetry_data[BB3_VLV3_CURRENT_I];
+	    		Rocket_h.bb3State.vlv3_old = msg->telemetry_data[BB3_VLV3_OLD_I];
+	    		Rocket_h.bb3State.vlv4_current = msg->telemetry_data[BB3_VLV4_CURRENT_I];
+	    		Rocket_h.bb3State.vlv4_old = msg->telemetry_data[BB3_VLV4_OLD_I];
+	    		Rocket_h.bb3State.vlv5_current = msg->telemetry_data[BB3_VLV5_CURRENT_I];
+	    		Rocket_h.bb3State.vlv5_old = msg->telemetry_data[BB3_VLV5_OLD_I];
+	    		Rocket_h.bb3State.vlv6_current = msg->telemetry_data[BB3_VLV6_CURRENT_I];
+	    		Rocket_h.bb3State.vlv6_old = msg->telemetry_data[BB3_VLV6_OLD_I];
+	    		Rocket_h.bb3State.vlv7_current = msg->telemetry_data[BB3_VLV7_CURRENT_I];
+	    		Rocket_h.bb3State.vlv7_old = msg->telemetry_data[BB3_VLV7_OLD_I];
+	    		Rocket_h.bb3State.pt1 = msg->telemetry_data[BB3_PT_1_I];
+	    		Rocket_h.bb3State.pt2 = msg->telemetry_data[BB3_PT_2_I];
+	    		Rocket_h.bb3State.pt3 = msg->telemetry_data[BB3_PT_3_I];
+	    		Rocket_h.bb3State.pt4 = msg->telemetry_data[BB3_PT_4_I];
+	    		Rocket_h.bb3State.pt5 = msg->telemetry_data[BB3_PT_5_I];
+	    		Rocket_h.bb3State.pt6 = msg->telemetry_data[BB3_PT_6_I];
+	    		Rocket_h.bb3State.pt7 = msg->telemetry_data[BB3_PT_7_I];
+	    		Rocket_h.bb3State.pt8 = msg->telemetry_data[BB3_PT_8_I];
+	    		Rocket_h.bb3State.pt9 = msg->telemetry_data[BB3_PT_9_I];
+	    		Rocket_h.bb3State.pt10 = msg->telemetry_data[BB3_PT_10_I];
+	    		Rocket_h.bb3State.tc1 = msg->telemetry_data[BB3_TC_1_I];
+	    		Rocket_h.bb3State.tc2 = msg->telemetry_data[BB3_TC_2_I];
+	    		Rocket_h.bb3State.tc3 = msg->telemetry_data[BB3_TC_3_I];
+	    		Rocket_h.bb3State.tc4 = msg->telemetry_data[BB3_TC_4_I];
+	    		Rocket_h.bb3State.tc5 = msg->telemetry_data[BB3_TC_5_I];
+	    		Rocket_h.bb3State.tc6 = msg->telemetry_data[BB3_TC_6_I];
+	    		Rocket_h.bb3State.imu1_A.XL_x = msg->telemetry_data[BB3_IMU1_X_I];
+	    		Rocket_h.bb3State.imu1_A.XL_y = msg->telemetry_data[BB3_IMU1_Y_I];
+	    		Rocket_h.bb3State.imu1_A.XL_z = msg->telemetry_data[BB3_IMU1_Z_I];
+	    		Rocket_h.bb3State.imu1_W.G_y = msg->telemetry_data[BB3_IMU1_WP_I];
+	    		Rocket_h.bb3State.imu1_W.G_x = msg->telemetry_data[BB3_IMU1_WR_I];
+	    		Rocket_h.bb3State.imu1_W.G_z = msg->telemetry_data[BB3_IMU1_WY_I];
+	    		Rocket_h.bb3State.imu2_A.XL_x = msg->telemetry_data[BB3_IMU2_X_I];
+	    		Rocket_h.bb3State.imu2_A.XL_y = msg->telemetry_data[BB3_IMU2_Y_I];
+	    		Rocket_h.bb3State.imu2_A.XL_z = msg->telemetry_data[BB3_IMU2_Z_I];
+	    		Rocket_h.bb3State.imu2_W.G_y = msg->telemetry_data[BB3_IMU2_WP_I];
+	    		Rocket_h.bb3State.imu2_W.G_x = msg->telemetry_data[BB3_IMU2_WR_I];
+	    		Rocket_h.bb3State.imu2_W.G_z = msg->telemetry_data[BB3_IMU2_WY_I];
+	    		Rocket_h.bb3State.bar1 = msg->telemetry_data[BB3_BAR_1_I];
+	    		Rocket_h.bb3State.bar2 = msg->telemetry_data[BB3_BAR_2_I];
+	    		Rocket_h.bb3State.bus24v_voltage = msg->telemetry_data[BB3_24V_VOLTAGE_I];
+	    		Rocket_h.bb3State.bus24v_current = msg->telemetry_data[BB3_24V_CURRENT_I];
+	    		Rocket_h.bb3State.bus12v_voltage = msg->telemetry_data[BB3_12V_VOLTAGE_I];
+	    		Rocket_h.bb3State.bus12v_current = msg->telemetry_data[BB3_12V_CURRENT_I];
+	    		Rocket_h.bb3State.bus5v_voltage = msg->telemetry_data[BB3_5V_VOLTAGE_I];
+	    		Rocket_h.bb3State.bus5v_current = msg->telemetry_data[BB3_5V_CURRENT_I];
+	    		Rocket_h.bb3State.bus3v3_voltage = msg->telemetry_data[BB3_3V3_VOLTAGE_I];
+	    		Rocket_h.bb3State.bus3v3_current = msg->telemetry_data[BB3_3V3_CURRENT_I];
+	    		xSemaphoreGive(Rocket_h.bb3State_access);
+	    	}
+	    	else {
+	    		return 1;
+	    	}
+	        break;
+	    default:
+	    	return 1;
+	        break;
+	}
+
+	return 0;
+}
+
+// Unpack flight recorder telemetry message
+// returns 0 if successful, 1 if the telemetry data could not be accessed
+// timeout_ticks: how many FreeRTOS ticks to wait before giving up
+int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
+	if(xSemaphoreTake(Rocket_h.frState_access, timeout_ticks) == pdPASS) {
+		Rocket_h.frState.imu1_A.XL_x = msg->telemetry_data[FR_IMU1_X_I];
+		Rocket_h.frState.imu1_A.XL_y = msg->telemetry_data[FR_IMU1_Y_I];
+		Rocket_h.frState.imu1_A.XL_z = msg->telemetry_data[FR_IMU1_Z_I];
+		Rocket_h.frState.imu1_W.G_y = msg->telemetry_data[FR_IMU1_WP_I];
+		Rocket_h.frState.imu1_W.G_x = msg->telemetry_data[FR_IMU1_WR_I];
+		Rocket_h.frState.imu1_W.G_z = msg->telemetry_data[FR_IMU1_WY_I];
+		Rocket_h.frState.imu2_A.XL_x = msg->telemetry_data[FR_IMU2_X_I];
+		Rocket_h.frState.imu2_A.XL_y = msg->telemetry_data[FR_IMU2_Y_I];
+		Rocket_h.frState.imu2_A.XL_z = msg->telemetry_data[FR_IMU2_Z_I];
+		Rocket_h.frState.imu2_W.G_y = msg->telemetry_data[FR_IMU2_WP_I];
+		Rocket_h.frState.imu2_W.G_x = msg->telemetry_data[FR_IMU2_WR_I];
+		Rocket_h.frState.imu2_W.G_z = msg->telemetry_data[FR_IMU2_WY_I];
+		Rocket_h.frState.bar1 = msg->telemetry_data[FR_BAR_1_I];
+		Rocket_h.frState.bar2 = msg->telemetry_data[FR_BAR_2_I];
+		xSemaphoreGive(Rocket_h.frState_access);
 	}
 	else {
 		return 1;
@@ -1367,32 +1666,6 @@ void StartAndMonitor(void *argument)
 		tftp_init(&my_tftp_ctx);
 	}
 
-	// DONE: Add TCP server support to disconnected clients
-	//			Test TCP keep-alive
-	//			If select returns -1, still go through connections since that probably means a connection was dropped
-	//			If recv returns 0, connection is closed so remove it from the list, MAKE SURE TO TAKE MUTEX BEFORE EDITING CONN LIST
-	//			If send returns -1, connection is closed, but select will handle it so don't handle it
-
-	// DONE: Figure out what happens when the board starts without being plugged in to ethernet - you must shutdown all active connections/servers and then start them as appropriate in ethernet_link_status_updated - for shutting down the tcp server, give a flag (semaphore) to the 3 tasks, each task will free it's own memory and close sockets and then delete itself, then free the TS lists
-	//			For the connection thread, close listener socket. Use a binary semaphore to signal to the threads to stop, then use a counting semaphore and 3 waits to wait until all 3 threads have shut down. Then close all connections and free the memory from the TS queues. No need to free mutex since the threads should all unlock it before exiting
-	//			On uplink, use a different init function that does all the same thing except creating the mutex
-	//			FIGURE OUT A WAY TO TELL IF THE SERVER WAS STARTED OR NOT. ethernet_link_status_updated SHOULD NOT DO ANYTHING IF THE SERVER HAS NOT BEEN STARTED IN THIS THREAD. ALSO DON'T START THE SERVER UNLESS IT HAS BEEN STOPPED AND VICE VERSA
-	//			FIGURE OUT WHAT HAPPENS IF THE PROGRAM IS STARTED UNLINKED. DOES ethernet_link_status_updated STILL TRIGGER WHEN THE LINK IS CREATED, IF SO, DELAY ANY NETWORK INIT (INCLUDING SNTP) UNTIL A LINK IS CREATED.
-
-	// TODO: Do proper errno handling for tcp server, for example send(), select(), accept(), recv()
-	// TODO: Possibly add code to default timestamp if rtc isn't set
-	// DONE: globals for ip addresses for all boards and limewire, and create functions to get the fd based on which board/ip addr - something like get_fd(BoardId, board), also maybe function where you give the boardId, and it gets the fd and checks if the connection is open and the server is running DONT SEND OR TRY TO RECEIVE ANYTHING UNLESS THE SERVER IS UP
-	// DONE: Figure out EEPROM ordering and what goes in there. PT constants, IP addresses, TC gains, valve voltage and enabling, maybe more
-	// DONE: FTP server (add at least 2 tcp connects to the limit and tcp pcb mem limit) for EEPROM, when a client connects and tries to write to a file, say eeprom.bin, lock a mutex, write eeprom, and then reload config. If multiple clients try to write to the same thing (e.g. eeprom) ignore all attempts besides the first, DON'T WAIT FOR THE FIRST TO FINISH
-	// DONE: Add eeprom readme crc32 info so it can be recreated
-	// DONE: Figure out why the ADS1120 driver is giving 0 volt readings sometimes, especially very regularly on the cjc chip
-	// TODO: Use the limewire google colab notebook to generate a header file for channel order
-	// TODO: All TC config should use 600sps
-	// TODO: Add support for commands in LMP and messages.c, then add reset command to reset board. In reset command, close all connections and stop any important things, then reset
-	// TODO: AT THE END, add feedback (LED, buzzer) on startup and during normal operations to communicate status, also add while(1); loops on startup if any issues are encountered that the board CANNOT run without, anything that the board can run without should have defaults
-	// DONE: heartbeat is dead, figure out keep-alive parameters, talk with rohan and jack about it. Also log info about it readme
-	// TODO: Flash and udp message logging, look in design document about it. Figure out how much flash space I have to work with, it should not get deleted, if the space fills up, send a udp error message about it every time an error is attemped to be logged
-	// TODO: Log valve states to flash every second, look at design document for more info
 	/*
 	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs)
 	 *

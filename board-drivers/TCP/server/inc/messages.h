@@ -9,6 +9,7 @@
 #define MESSAGES_H
 
 #include <stdint.h>
+#include <lmp_channels.h>
 
 // Message types (values are corresponding header bytes)
 typedef enum {
@@ -27,10 +28,10 @@ typedef enum {
 	BOARD_FR = 0x04,	// Flight Recorder
 } BoardId;
 
-#define MAX_TELEMETRY_CHANNELS 52
-#define NUM_FC_CHANNELS 39
-#define NUM_BAY_CHANNELS 52
-#define NUM_FR_CHANNELS 14
+#define MAX_TELEMETRY_CHANNELS MAX_TELEM_CHANNELS
+#define NUM_FC_CHANNELS FC_TELEMETRY_CHANNELS
+#define NUM_BAY_CHANNELS BB1_TELEMETRY_CHANNELS
+#define NUM_FR_CHANNELS FR_TELEMETRY_CHANNELS
 typedef struct {
 	BoardId board_id;
 	uint64_t timestamp;

@@ -31,6 +31,7 @@
 /* USER CODE BEGIN 0 */
 #include "sntp.h"
 #include "server.h"
+#include "tftp_server.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
