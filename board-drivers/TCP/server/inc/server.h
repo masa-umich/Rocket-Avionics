@@ -19,7 +19,10 @@
 #include "main.h"
 #include "tsqueue.h"
 
-#define MAX_MSG_LEN 300
+#define MAX_MSG_LEN	300
+#define TCP_KEEP_ALIVE_IDLE	5
+#define TCP_KEEP_ALIVE_INTERVAL	3
+#define TCP_KEEP_ALIVE_COUNT 3
 
 typedef enum {
 	LimeWire_d = 0U,

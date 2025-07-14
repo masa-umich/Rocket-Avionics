@@ -162,12 +162,14 @@ void server_listener_thread(void *arg) {
         	continue;
         }
 
-        int idle = 10;
-        int intvl = 5;
+        int idle = TCP_KEEP_ALIVE_IDLE;
+        int intvl = TCP_KEEP_ALIVE_INTERVAL;
         int optval = 1;
+        int probecnt = TCP_KEEP_ALIVE_COUNT;
         setsockopt(connection_fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
         setsockopt(connection_fd, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
         setsockopt(connection_fd, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl));
+        setsockopt(connection_fd, IPPROTO_TCP, TCP_KEEPCNT, &probecnt, sizeof(probecnt));
 
         // add the new connection to the active connections list
         sys_mutex_lock(conn_mu);

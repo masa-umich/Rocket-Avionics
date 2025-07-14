@@ -17,6 +17,7 @@ RM := rm -rf
 -include Middlewares/Third_Party/LwIP/src/core/ipv6/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/core/ipv4/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/core/subdir.mk
+-include Middlewares/Third_Party/LwIP/src/apps/tftp/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/apps/sntp/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/apps/mqtt/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/api/subdir.mk
@@ -26,6 +27,7 @@ RM := rm -rf
 -include Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
 -include MS5611/src/subdir.mk
 -include MAX11128/src/subdir.mk
+-include M24256E/src/subdir.mk
 -include LWIP/Target/subdir.mk
 -include LWIP/App/subdir.mk
 -include LSM6DSO32XTR/src/subdir.mk

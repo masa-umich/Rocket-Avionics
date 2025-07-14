@@ -48,6 +48,7 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 #define FLIGHT_COMPUTER
+#define FC_EEPROM_LEN		(uint16_t)89
 
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 

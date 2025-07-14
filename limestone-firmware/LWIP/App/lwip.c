@@ -38,7 +38,7 @@ static void ethernet_link_status_updated(struct netif *netif);
 void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
-
+extern const struct tftp_context my_tftp_ctx;
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -133,6 +133,7 @@ static void ethernet_link_status_updated(struct netif *netif)
 /* USER CODE BEGIN 5 */
 	  sntp_init();
 	  server_init();
+	  tftp_init(&my_tftp_ctx);
 /* USER CODE END 5 */
   }
   else /* netif is down */
@@ -140,6 +141,7 @@ static void ethernet_link_status_updated(struct netif *netif)
 /* USER CODE BEGIN 6 */
 	  sntp_stop();
 	  shutdown_server();
+	  tftp_cleanup();
 /* USER CODE END 6 */
   }
 }

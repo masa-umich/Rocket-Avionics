@@ -2,7 +2,7 @@
 This is the firmware intended to act as a TCP server on the main flight computer. It is the single point of communication for everything onboard the rocket, as well as being the interface for Limewire.
 
 # Setup
-This code will only work if you have lwip, ethernet, and FreeRTOS setup correctly on your board, for how to do this on our Nucleo boards see [here](https://github.com/stm32-hotspot/STM32H7-LwIP-Examples/tree/main), or use the ethernet template elsewhere in this repo. Make sure that the FreeRTOS heap is set to more than **32kb** or else this will crash!
+This code will only work if you have lwip, ethernet, and FreeRTOS setup correctly on your board, for how to do this on our Nucleo boards see [here](https://github.com/stm32-hotspot/STM32H7-LwIP-Examples/tree/main), or use the ethernet template elsewhere in this repo. Make sure that the FreeRTOS heap is set to more than **32kb** or else this will crash! Also, the EthIf task does not get enough stack by default, you must go into the ethernetif.c file and change the INTERFACE_THREAD_STACK_SIZE definition at the top from 350 to anything above 380 (I would pick 500 to be safe).
 
 Configure the Ethernet adapter on your computer to have an IP address in the range of `192.168.50.x` where x is anything other than 10 and with the subnet mask of `255.255.255.0`. I'd recommend trying to ping the address `192.168.50.10` to confirm the connection as a debugging step.
 

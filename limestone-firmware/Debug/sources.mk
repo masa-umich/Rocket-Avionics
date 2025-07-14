@@ -30,6 +30,7 @@ Drivers/STM32H7xx_HAL_Driver/Src \
 LSM6DSO32XTR/src \
 LWIP/App \
 LWIP/Target \
+M24256E/src \
 MAX11128/src \
 MS5611/src \
 Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
@@ -39,6 +40,7 @@ Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang \
 Middlewares/Third_Party/LwIP/src/api \
 Middlewares/Third_Party/LwIP/src/apps/mqtt \
 Middlewares/Third_Party/LwIP/src/apps/sntp \
+Middlewares/Third_Party/LwIP/src/apps/tftp \
 Middlewares/Third_Party/LwIP/src/core \
 Middlewares/Third_Party/LwIP/src/core/ipv4 \
 Middlewares/Third_Party/LwIP/src/core/ipv6 \

@@ -34,6 +34,9 @@
 #include "string.h"
 #include "server.h"
 #include "messages.h"
+#include "M24256E.h"
+#include "utils.h"
+#include "tftp_server.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -81,6 +84,31 @@ typedef struct {
 	SemaphoreHandle_t fcState_access;
 	Flight_Computer_State_t fcState;
 } Rocket_State_t;
+
+typedef struct {
+	PT_t *pt1;
+	PT_t *pt2;
+	PT_t *pt3;
+	PT_t *pt4;
+	PT_t *pt5;
+
+	uint8_t tc1_gain;
+	uint8_t tc2_gain;
+	uint8_t tc3_gain;
+
+	VLV_Voltage vlv1_v;
+	uint8_t vlv1_en;
+	VLV_Voltage vlv2_v;
+	uint8_t vlv2_en;
+	VLV_Voltage vlv3_v;
+	uint8_t vlv3_en;
+
+	ip4_addr_t limewireIP;
+	ip4_addr_t bayboard1IP;
+	ip4_addr_t bayboard2IP;
+	ip4_addr_t bayboard3IP;
+	ip4_addr_t flightrecordIP;
+} EEPROM_conf_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -94,6 +122,8 @@ typedef struct {
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+
+CRC_HandleTypeDef hcrc;
 
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c5;
@@ -126,8 +156,11 @@ const osThreadAttr_t setupTask_attributes = {
 SemaphoreHandle_t RTC_mutex; // For safe concurrent access of the RTC
 
 Rocket_State_t Rocket_h; // Main rocket state handle
+eeprom_t eeprom_h = {0};
 
 extern struct netif gnetif;
+
+size_t eeprom_cursor = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -143,6 +176,7 @@ static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_SPI6_Init(void);
+static void MX_CRC_Init(void);
 void StartAndMonitor(void *argument);
 void setupAndStart(void *argument);
 
@@ -296,6 +330,170 @@ int pack_fc_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t tim
 
 	return 0;
 }
+
+// Load board configuration from a buffer. Returns 0 on success, -1 on an eeprom error or if a configuration value is outside its allowed range
+int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
+	uint8_t buffer[FC_EEPROM_LEN];
+	eeprom_status_t read_stat = eeprom_read_mem(eeprom, 0, buffer, FC_EEPROM_LEN);
+	if(read_stat != EEPROM_OK) {
+		return -1;
+	}
+	memcpy(&(conf->pt1->zero_V), buffer, 4);
+	memcpy(&(conf->pt1->pres_range), buffer + 4, 4);
+	memcpy(&(conf->pt1->max_V), buffer + 8, 4);
+	memcpy(&(conf->pt2->zero_V), buffer + 12, 4);
+	memcpy(&(conf->pt2->pres_range), buffer + 16, 4);
+	memcpy(&(conf->pt2->max_V), buffer + 20, 4);
+	memcpy(&(conf->pt3->zero_V), buffer + 24, 4);
+	memcpy(&(conf->pt3->pres_range), buffer + 28, 4);
+	memcpy(&(conf->pt3->max_V), buffer + 32, 4);
+	memcpy(&(conf->pt4->zero_V), buffer + 36, 4);
+	memcpy(&(conf->pt4->pres_range), buffer + 40, 4);
+	memcpy(&(conf->pt4->max_V), buffer + 44, 4);
+	memcpy(&(conf->pt5->zero_V), buffer + 48, 4);
+	memcpy(&(conf->pt5->pres_range), buffer + 52, 4);
+	memcpy(&(conf->pt5->max_V), buffer + 56, 4);
+
+	conf->tc1_gain = buffer[60] << 1;
+	conf->tc2_gain = buffer[61] << 1;
+	conf->tc3_gain = buffer[62] << 1;
+
+	conf->vlv1_v = buffer[63];
+	conf->vlv1_en = buffer[64];
+	conf->vlv2_v = buffer[65];
+	conf->vlv2_en = buffer[66];
+	conf->vlv3_v = buffer[67];
+	conf->vlv3_en = buffer[68];
+
+	IP4_ADDR(&(conf->limewireIP), buffer[69], buffer[70], buffer[71], buffer[72]);
+	IP4_ADDR(&(conf->bayboard1IP), buffer[73], buffer[74], buffer[75], buffer[76]);
+	IP4_ADDR(&(conf->bayboard2IP), buffer[77], buffer[78], buffer[79], buffer[80]);
+	IP4_ADDR(&(conf->bayboard3IP), buffer[81], buffer[82], buffer[83], buffer[84]);
+	IP4_ADDR(&(conf->flightrecordIP), buffer[85], buffer[86], buffer[87], buffer[88]);
+
+	if(conf->tc1_gain > 0x0E || conf->tc2_gain > 0x0E || conf->tc3_gain > 0x0E) {
+		return -1;
+	}
+
+	if(conf->vlv1_v > 0x01 || conf->vlv1_en > 0x01 || conf->vlv2_v > 0x01 || conf->vlv2_en > 0x01 || conf->vlv3_v > 0x01 || conf->vlv3_en > 0x01) {
+		return -1;
+	}
+	return 0;
+}
+
+void *ftp_open(const char *fname, const char *mode, u8_t write) {
+	if(strcmp(fname, "eeprom.bin") == 0) {
+		eeprom_cursor = 0;
+		return (void *) 1; // 1 refers to eeprom
+	}
+	else {
+		return (void *) 0;
+	}
+}
+
+void ftp_close(void *handle) {
+	uint32_t fd = (uint32_t) handle;
+	if(fd == 1) {
+		eeprom_cursor -= 4;
+		if(eeprom_cursor < FC_EEPROM_LEN) {
+			// TODO: Send too short error
+			return;
+		}
+		// CRC check
+		uint32_t sent_crc;
+		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor + FC_EEPROM_LEN, (uint8_t *) &sent_crc, 4);
+		if(read_stat != EEPROM_OK) {
+			// TODO: Send read error
+			return;
+		}
+		HAL_CRC_Calculate(&hcrc, NULL, 0);
+		uint32_t calc_crc;
+		int cursor = 0;
+		do {
+			int read_bytes = (eeprom_cursor - cursor < 64) ? eeprom_cursor - cursor : 64;
+			uint8_t buf[read_bytes];
+			read_stat = eeprom_read_mem(&eeprom_h, FC_EEPROM_LEN + cursor, buf, read_bytes);
+			if(read_stat != EEPROM_OK) {
+				// TODO: Send read error
+				return;
+			}
+			calc_crc = HAL_CRC_Accumulate(&hcrc, buf, read_bytes);
+			cursor += read_bytes;
+		} while(eeprom_cursor - cursor > 0);
+
+		calc_crc ^= 0xFFFFFFFF; // Invert bits to follow crc32 standard
+
+		if(sent_crc == calc_crc) {
+			// Matches, copy contents into active section of eeprom
+			cursor = 0;
+			do {
+				int read_bytes = (eeprom_cursor - cursor < 64) ? eeprom_cursor - cursor : 64;
+				uint8_t buf[read_bytes];
+				read_stat = eeprom_read_mem(&eeprom_h, FC_EEPROM_LEN + cursor, buf, read_bytes);
+				if(read_stat != EEPROM_OK) {
+					// TODO: Send copy read error
+					return;
+				}
+				eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, cursor, buf, read_bytes);
+				if(write_stat != EEPROM_OK) {
+					// TODO: Send copy write error
+					return;
+				}
+				cursor += read_bytes;
+			} while(eeprom_cursor - cursor > 0);
+		}
+		else {
+			// TODO: Mismatched CRC
+		}
+	}
+}
+
+int ftp_read(void *handle, void *buf, int bytes) {
+	uint32_t fd = (uint32_t) handle;
+	if(fd == 1) {
+		// Read from EEPROM
+		int bytes_to_read = (eeprom_cursor + bytes > FC_EEPROM_LEN) ? FC_EEPROM_LEN - eeprom_cursor : bytes;
+		if(bytes_to_read == 0) {
+			return 0;
+		}
+		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor, buf, bytes_to_read);
+		if(read_stat != EEPROM_OK) {
+			return -1;
+		}
+		eeprom_cursor += bytes_to_read;
+		return bytes_to_read;
+	}
+	else {
+		return -1;
+	}
+}
+
+int ftp_write(void *handle, struct pbuf *p) {
+	uint32_t fd = (uint32_t) handle;
+	if(fd == 1) {
+		// EEPROM
+		struct pbuf *currbuf = p;
+		do {
+			eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, eeprom_cursor + FC_EEPROM_LEN, currbuf->payload, currbuf->len);
+			if(write_stat != EEPROM_OK) {
+				return -1;
+			}
+			eeprom_cursor += currbuf->len;
+			currbuf = currbuf->next;
+		} while (currbuf != NULL);
+		return p->tot_len;
+	}
+	else {
+		return -1;
+	}
+}
+
+const struct tftp_context my_tftp_ctx = {
+    .open = ftp_open,
+    .close = ftp_close,
+    .read = ftp_read,
+    .write = ftp_write
+};
 /* USER CODE END 0 */
 
 /**
@@ -351,6 +549,7 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI2_Init();
   MX_SPI6_Init();
+  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -463,6 +662,37 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief CRC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_CRC_Init(void)
+{
+
+  /* USER CODE BEGIN CRC_Init 0 */
+
+  /* USER CODE END CRC_Init 0 */
+
+  /* USER CODE BEGIN CRC_Init 1 */
+
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
+  hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
+  hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_BYTE;
+  hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_ENABLE;
+  hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CRC_Init 2 */
+
+  /* USER CODE END CRC_Init 2 */
+
 }
 
 /**
@@ -959,13 +1189,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, TC1_CS_Pin|TC2_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, VLV3_EN_Pin|EEPROM_WC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(VLV3_EN_GPIO_Port, VLV3_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, VLV2_EN_Pin|BUFF_CLR_Pin|BUFF_CLK_Pin|VLV_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(FLASH_CS_GPIO_Port, FLASH_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOG, FLASH_CS_Pin|EEPROM_WC_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, BUZZ_Pin|LED_RED_Pin, GPIO_PIN_RESET);
@@ -1102,6 +1332,20 @@ void StartAndMonitor(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
+    // Load EEPROM config
+  	PT_t PT1_h = {0.5f, 5000.0f, 4.5f};
+  	PT_t PT2_h = {0.5f, 5000.0f, 4.5f};
+  	PT_t PT3_h = {0.5f, 5000.0f, 4.5f};
+  	PT_t PT4_h = {0.5f, 5000.0f, 4.5f};
+  	PT_t PT5_h = {0.5f, 5000.0f, 4.5f};
+  	EEPROM_conf_t loaded_config = {0};
+  	loaded_config.pt1 = &PT1_h;
+  	loaded_config.pt2 = &PT2_h;
+  	loaded_config.pt3 = &PT3_h;
+  	loaded_config.pt4 = &PT4_h;
+  	loaded_config.pt5 = &PT5_h;
+    eeprom_init(&eeprom_h, &hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin);
+    load_eeprom_config(&eeprom_h, &loaded_config);
 
 	// Setup NTP listener
 	sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
@@ -1120,6 +1364,7 @@ void StartAndMonitor(void *argument)
 	if(netif_is_link_up(&gnetif)) {
 		server_init();
 		sntp_init();
+		tftp_init(&my_tftp_ctx);
 	}
 
 	// DONE: Add TCP server support to disconnected clients
@@ -1137,8 +1382,17 @@ void StartAndMonitor(void *argument)
 	// TODO: Do proper errno handling for tcp server, for example send(), select(), accept(), recv()
 	// TODO: Possibly add code to default timestamp if rtc isn't set
 	// DONE: globals for ip addresses for all boards and limewire, and create functions to get the fd based on which board/ip addr - something like get_fd(BoardId, board), also maybe function where you give the boardId, and it gets the fd and checks if the connection is open and the server is running DONT SEND OR TRY TO RECEIVE ANYTHING UNLESS THE SERVER IS UP
-	// TODO: Figure out EEPROM ordering and what goes in there
-
+	// DONE: Figure out EEPROM ordering and what goes in there. PT constants, IP addresses, TC gains, valve voltage and enabling, maybe more
+	// DONE: FTP server (add at least 2 tcp connects to the limit and tcp pcb mem limit) for EEPROM, when a client connects and tries to write to a file, say eeprom.bin, lock a mutex, write eeprom, and then reload config. If multiple clients try to write to the same thing (e.g. eeprom) ignore all attempts besides the first, DON'T WAIT FOR THE FIRST TO FINISH
+	// DONE: Add eeprom readme crc32 info so it can be recreated
+	// DONE: Figure out why the ADS1120 driver is giving 0 volt readings sometimes, especially very regularly on the cjc chip
+	// TODO: Use the limewire google colab notebook to generate a header file for channel order
+	// TODO: All TC config should use 600sps
+	// TODO: Add support for commands in LMP and messages.c, then add reset command to reset board. In reset command, close all connections and stop any important things, then reset
+	// TODO: AT THE END, add feedback (LED, buzzer) on startup and during normal operations to communicate status, also add while(1); loops on startup if any issues are encountered that the board CANNOT run without, anything that the board can run without should have defaults
+	// DONE: heartbeat is dead, figure out keep-alive parameters, talk with rohan and jack about it. Also log info about it readme
+	// TODO: Flash and udp message logging, look in design document about it. Figure out how much flash space I have to work with, it should not get deleted, if the space fills up, send a udp error message about it every time an error is attemped to be logged
+	// TODO: Log valve states to flash every second, look at design document for more info
 	/*
 	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs)
 	 *
@@ -1154,9 +1408,9 @@ void StartAndMonitor(void *argument)
   	ADS_Main_t main_handle = {0};
   	ADS_TC_t multiTCs[3];
 
-  	ADS_configTC(&multiTCs[0], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
-  	ADS_configTC(&multiTCs[1], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
-  	ADS_configTC(&multiTCs[2], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
+  	ADS_configTC(&multiTCs[0], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_128, ADS_DATA_RATE_600);
+  	ADS_configTC(&multiTCs[1], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, ADS_PGA_GAIN_1, ADS_DATA_RATE_600);
+  	ADS_configTC(&multiTCs[2], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_128, ADS_DATA_RATE_600);
   	ADS_init(&main_handle, multiTCs, 3);
 
   	IMU IMU1;
@@ -1203,7 +1457,7 @@ void StartAndMonitor(void *argument)
   		}
 
 	  // TODO Make sure things are still running and restart anything that stops
-	  osDelay(50);
+	  osDelay(20);
 	}
   /* USER CODE END 5 */
 }
