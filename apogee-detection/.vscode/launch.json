@@ -33,7 +33,7 @@
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/AD.exe",
-        "args": [],
+        "args": ["./AD.exe", "<", "redirect.txt"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
         "environment": [],
