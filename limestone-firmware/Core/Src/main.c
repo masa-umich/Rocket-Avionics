@@ -38,6 +38,7 @@
 #include "utils.h"
 #include "tftp_server.h"
 #include "lmp_channels.h"
+#include "math.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -75,10 +76,6 @@ typedef struct {
 	VLV_OpenLoad vlv2_old;
 	float vlv3_current;
 	VLV_OpenLoad vlv3_old;
-
-	Valve_State_t vlv1_state;
-	Valve_State_t vlv2_state;
-	Valve_State_t vlv3_state;
 } Flight_Computer_State_t;
 
 typedef struct {
@@ -126,14 +123,6 @@ typedef struct {
 	VLV_OpenLoad vlv6_old;
 	float vlv7_current;
 	VLV_OpenLoad vlv7_old;
-
-	Valve_State_t vlv1_state;
-	Valve_State_t vlv2_state;
-	Valve_State_t vlv3_state;
-	Valve_State_t vlv4_state;
-	Valve_State_t vlv5_state;
-	Valve_State_t vlv6_state;
-	Valve_State_t vlv7_state;
 } Bay_Board_State_t;
 
 typedef struct {
@@ -147,16 +136,25 @@ typedef struct {
 
 typedef struct {
 	SemaphoreHandle_t fcState_access;
+	SemaphoreHandle_t fcValve_access;
 	Flight_Computer_State_t fcState;
+	Valve fcValves[3];
+	Valve_State_t fcValveStates[3];
 
 	SemaphoreHandle_t bb1State_access;
+	SemaphoreHandle_t bb1Valve_access;
 	Bay_Board_State_t bb1State;
+	Valve_State_t bb1ValveStates[7];
 
 	SemaphoreHandle_t bb2State_access;
+	SemaphoreHandle_t bb2Valve_access;
 	Bay_Board_State_t bb2State;
+	Valve_State_t bb2ValveStates[7];
 
 	SemaphoreHandle_t bb3State_access;
+	SemaphoreHandle_t bb3Valve_access;
 	Bay_Board_State_t bb3State;
+	Valve_State_t bb3ValveStates[7];
 
 	SemaphoreHandle_t frState_access;
 	Flight_Recorder_State_t frState;
@@ -181,11 +179,27 @@ typedef struct {
 	uint8_t vlv3_en;
 
 	ip4_addr_t limewireIP;
+	ip4_addr_t flightcomputerIP;
 	ip4_addr_t bayboard1IP;
 	ip4_addr_t bayboard2IP;
 	ip4_addr_t bayboard3IP;
 	ip4_addr_t flightrecordIP;
 } EEPROM_conf_t;
+
+typedef struct {
+	IMU imu1_h;
+	IMU imu2_h;
+
+  	GPIO_MAX11128_Pinfo adc_h;
+
+  	ADS_Main_t tc_main_h;
+  	ADS_TC_t TCs[3];
+
+  	MS5611 bar1_h;
+  	MS5611 bar2_h;
+  	MS5611_PROM_t prom1;
+  	MS5611_PROM_t prom2;
+} Sensors_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -222,13 +236,6 @@ const osThreadAttr_t startTask_attributes = {
   .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for setupTask */
-osThreadId_t setupTaskHandle;
-const osThreadAttr_t setupTask_attributes = {
-  .name = "setupTask",
-  .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
 /* USER CODE BEGIN PV */
 SemaphoreHandle_t RTC_mutex; // For safe concurrent access of the RTC
 
@@ -238,6 +245,24 @@ eeprom_t eeprom_h = {0};
 extern struct netif gnetif;
 
 size_t eeprom_cursor = 0;
+
+ip4_addr_t fc_addr;
+
+EEPROM_conf_t loaded_config = {0};
+PT_t PT1_h = {0.5f, 5000.0f, 4.5f}; // Default
+PT_t PT2_h = {0.5f, 5000.0f, 4.5f};
+PT_t PT3_h = {0.5f, 5000.0f, 4.5f};
+PT_t PT4_h = {0.5f, 5000.0f, 4.5f};
+PT_t PT5_h = {0.5f, 5000.0f, 4.5f};
+
+Sensors_t sensors_h = {0};
+
+osThreadId_t telemetryTaskHandle;
+const osThreadAttr_t telemetry_task_attr = {
+  .name = "telemetryTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -255,7 +280,6 @@ static void MX_SPI2_Init(void);
 static void MX_SPI6_Init(void);
 static void MX_CRC_Init(void);
 void StartAndMonitor(void *argument);
-void setupAndStart(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -630,6 +654,72 @@ int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	return 0;
 }
 
+// Gets the valve index from the LMP valve id
+// Be careful since the integer value of the Valve_Channel enum starts at 0
+// Returns -1 on an invalid id
+Valve_Channel get_valve(uint8_t valveId) {
+	return (valveId % 10) - 1;
+}
+
+// Gets the board from a LMP valve id
+// This will not check for an invalid id, call check_valve_id first
+BoardId get_valve_board(uint8_t valveId) {
+	return (BoardId) ((uint8_t)(valveId / 10));
+}
+
+// Generate the LMP valve id from the board and valve index
+uint8_t generate_valve_id(BoardId board, Valve_Channel valve) {
+	return (((uint8_t) board) * 10) + valve + 1;
+}
+
+// Check if a LMP valve id is valid. Returns 1 if the id is valid, 0 if it's not
+uint8_t check_valve_id(uint8_t valveId) {
+	if(valveId < 01 || valveId > 37) {
+		return 0;
+	}
+	if(get_valve_board(valveId) == BOARD_FC) {
+		if(get_valve(valveId) > 2) {
+			return 0;
+		}
+	}
+	else {
+		if(get_valve(valveId) == -1 || get_valve(valveId) > 6) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+// Set a valve to a state and update its corresponding valve state
+// Returns the state of the valve after setting it (this should be equal to desiredState, but in the case of an error, it will accurately reflect the current state of the valve)
+Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredState) {
+	uint8_t vlverror = 0;
+	 if(xSemaphoreTake(Rocket_h.fcValve_access, 2) == pdPASS) {
+		 if(desiredState == Valve_Energized) {
+			 VLV_En(Rocket_h.fcValves[valve]);
+			 Rocket_h.fcValveStates[valve] = Valve_Energized;
+		 }
+		 else if(desiredState == Valve_Deenergized) {
+			 VLV_Den(Rocket_h.fcValves[valve]);
+			 Rocket_h.fcValveStates[valve] = Valve_Deenergized;
+		 }
+		 else {
+			 // Error invalid state
+			 vlverror = 1;
+		 }
+		 xSemaphoreGive(Rocket_h.fcValve_access);
+	 }
+	 else {
+		 vlverror = 1;
+	 }
+	 if(!vlverror) {
+		 return desiredState;
+	 }
+	 else {
+		 return HAL_GPIO_ReadPin(Rocket_h.fcValves[valve].VLV_EN_GPIO_Port, Rocket_h.fcValves[valve].VLV_EN_GPIO_Pin);
+	 }
+}
+
 // Load board configuration from a buffer. Returns 0 on success, -1 on an eeprom error or if a configuration value is outside its allowed range
 int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
 	uint8_t buffer[FC_EEPROM_LEN];
@@ -665,10 +755,11 @@ int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
 	conf->vlv3_en = buffer[68];
 
 	IP4_ADDR(&(conf->limewireIP), buffer[69], buffer[70], buffer[71], buffer[72]);
-	IP4_ADDR(&(conf->bayboard1IP), buffer[73], buffer[74], buffer[75], buffer[76]);
-	IP4_ADDR(&(conf->bayboard2IP), buffer[77], buffer[78], buffer[79], buffer[80]);
-	IP4_ADDR(&(conf->bayboard3IP), buffer[81], buffer[82], buffer[83], buffer[84]);
-	IP4_ADDR(&(conf->flightrecordIP), buffer[85], buffer[86], buffer[87], buffer[88]);
+	IP4_ADDR(&(conf->flightcomputerIP), buffer[73], buffer[74], buffer[75], buffer[76]);
+	IP4_ADDR(&(conf->bayboard1IP), buffer[77], buffer[78], buffer[79], buffer[80]);
+	IP4_ADDR(&(conf->bayboard2IP), buffer[81], buffer[82], buffer[83], buffer[84]);
+	IP4_ADDR(&(conf->bayboard3IP), buffer[85], buffer[86], buffer[87], buffer[88]);
+	IP4_ADDR(&(conf->flightrecordIP), buffer[89], buffer[90], buffer[91], buffer[92]);
 
 	if(conf->tc1_gain > 0x0E || conf->tc2_gain > 0x0E || conf->tc3_gain > 0x0E) {
 		return -1;
@@ -850,7 +941,16 @@ int main(void)
   MX_SPI6_Init();
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
-
+  // Load EEPROM config
+  loaded_config.pt1 = &PT1_h;
+  loaded_config.pt2 = &PT2_h;
+  loaded_config.pt3 = &PT3_h;
+  loaded_config.pt4 = &PT4_h;
+  loaded_config.pt5 = &PT5_h;
+  eeprom_init(&eeprom_h, &hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin);
+  load_eeprom_config(&eeprom_h, &loaded_config);
+  fc_addr = loaded_config.flightcomputerIP;
+  // TODO: error handling here
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -877,9 +977,6 @@ int main(void)
   /* Create the thread(s) */
   /* creation of startTask */
   startTaskHandle = osThreadNew(StartAndMonitor, NULL, &startTask_attributes);
-
-  /* creation of setupTask */
-  setupTaskHandle = osThreadNew(setupAndStart, NULL, &setupTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1616,7 +1713,157 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void TelemetryTask(void *argument) {
+	//struct netconn *sendudp = netconn_new(NETCONN_UDP);
+	//ip_addr_t debug_addr;
+	//IP4_ADDR(&debug_addr, 192, 168, 0, 5);
+	for(;;) {
+		uint32_t startTime = HAL_GetTick();
 
+		// Read from sensors
+		uint16_t adc_values[16] = {0};
+		read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
+
+  		Accel XL_readings1 = {0};
+  		Accel XL_readings2 = {0};
+  		AngRate angRate_readings1 = {0};
+  		AngRate angRate_readings2 = {0};
+  		IMU_getAccel(&(sensors_h.imu1_h), &XL_readings1);
+  		IMU_getAccel(&(sensors_h.imu2_h), &XL_readings2);
+  		IMU_getAngRate(&(sensors_h.imu1_h), &angRate_readings1);
+  		IMU_getAngRate(&(sensors_h.imu2_h), &angRate_readings2);
+
+  	  	float pres1 = 0.0;
+  	  	float pres2 = 0.0;
+  	  	int bar1_stat = MS5611_getPres(&(sensors_h.bar1_h), &pres1, &(sensors_h.prom1), OSR_1024);
+  	  	int bar2_stat = MS5611_getPres(&(sensors_h.bar2_h), &pres2, &(sensors_h.prom2), OSR_1024);
+
+  	  	float TCvalues[3];
+  	  	int TC_stat = ADS_readAll(&(sensors_h.tc_main_h), TCvalues);
+
+  	  	VLV_OpenLoad vlv1_old = 0;
+  	  	VLV_OpenLoad vlv2_old = 0;
+  	  	VLV_OpenLoad vlv3_old = 0;
+  	  	uint8_t old_stat = 1;
+
+  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 2) == pdPASS) {
+  	  		vlv1_old = VLV_isOpenLoad(Rocket_h.fcValves[0]);
+  	  		vlv2_old = VLV_isOpenLoad(Rocket_h.fcValves[1]);
+  	  		vlv3_old = VLV_isOpenLoad(Rocket_h.fcValves[2]);
+  	  		old_stat = 0;
+  	  		xSemaphoreGive(Rocket_h.fcValve_access);
+  	  	}
+
+  	  	// Set global rocket state struct
+  		if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+  			if(!bar1_stat) {
+  				Rocket_h.fcState.bar1 = pres1;
+  			}
+  			else {
+  				// Bar1 error
+  			}
+  			if(!bar2_stat) {
+  				Rocket_h.fcState.bar2 = pres2;
+  			}
+  			else {
+  				// Bar2 error
+  			}
+  			Rocket_h.fcState.imu1_A = XL_readings1;
+  			Rocket_h.fcState.imu1_W = angRate_readings1;
+  			Rocket_h.fcState.imu2_A = XL_readings2;
+  			Rocket_h.fcState.imu2_W = angRate_readings2;
+
+  			Rocket_h.fcState.pt1 = PT_calc(PT1_h, adc_values[ADC_PT1_I]);
+  			Rocket_h.fcState.pt2 = PT_calc(PT2_h, adc_values[ADC_PT2_I]);
+  			Rocket_h.fcState.pt3 = PT_calc(PT3_h, adc_values[ADC_PT3_I]);
+  			Rocket_h.fcState.pt4 = PT_calc(PT4_h, adc_values[ADC_PT4_I]);
+  			Rocket_h.fcState.pt5 = PT_calc(PT5_h, adc_values[ADC_PT5_I]);
+
+  			Rocket_h.fcState.bus24v_voltage = bus_voltage_calc(adc_values[ADC_24V_BUS_I], POWER_24V_RES_A, POWER_24V_RES_B);
+  			Rocket_h.fcState.bus12v_voltage = bus_voltage_calc(adc_values[ADC_12V_BUS_I], POWER_12V_RES_A, POWER_12V_RES_B);
+  			Rocket_h.fcState.bus5v_voltage = bus_voltage_calc(adc_values[ADC_5V_BUS_I], POWER_5V_RES_A, POWER_5V_RES_B);
+  			Rocket_h.fcState.bus3v3_voltage = bus_voltage_calc(adc_values[ADC_3V3_BUS_I], POWER_3V3_RES_A, POWER_3V3_RES_B);
+
+  			Rocket_h.fcState.bus24v_current = current_sense_calc(adc_values[ADC_24V_CURRENT_I], POWER_SHUNT_12V_24V, DIVIDER_12V_24V);
+  			Rocket_h.fcState.bus12v_current = current_sense_calc(adc_values[ADC_12V_CURRENT_I], POWER_SHUNT_12V_24V, DIVIDER_12V_24V);
+  			Rocket_h.fcState.bus5v_current = current_sense_calc(adc_values[ADC_5V_CURRENT_I], POWER_SHUNT_3V3_5V, DIVIDER_3V3_5V);
+  			Rocket_h.fcState.bus3v3_current = current_sense_calc(adc_values[ADC_3V3_CURRENT_I], POWER_SHUNT_3V3_5V, DIVIDER_3V3_5V);
+
+  			Rocket_h.fcState.vlv1_current = current_sense_calc(adc_values[ADC_VLV1_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+  			Rocket_h.fcState.vlv2_current = current_sense_calc(adc_values[ADC_VLV2_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+  			Rocket_h.fcState.vlv3_current = current_sense_calc(adc_values[ADC_VLV3_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+
+  			if(!TC_stat) {
+  				if(!isnan(TCvalues[0])) {
+  					Rocket_h.fcState.tc1 = TCvalues[0];
+  				}
+  				else {
+  					// TC 1 error
+  				}
+  				if(!isnan(TCvalues[1])) {
+  					Rocket_h.fcState.tc2 = TCvalues[1];
+  				}
+  				else {
+  					// TC 2 error
+  				}
+  				if(!isnan(TCvalues[2])) {
+  					Rocket_h.fcState.tc3 = TCvalues[2];
+  				}
+  				else {
+  					// TC 3 error
+  				}
+  			}
+  			else {
+  				// TC error
+  			}
+
+  			if(!old_stat) {
+  				Rocket_h.fcState.vlv1_old = vlv1_old;
+  				Rocket_h.fcState.vlv2_old = vlv2_old;
+  				Rocket_h.fcState.vlv3_old = vlv3_old;
+  			}
+  			else {
+  				// OLD error
+  			}
+
+  			xSemaphoreGive(Rocket_h.fcState_access);
+  		}
+
+
+		uint32_t delta = HAL_GetTick() - startTime;
+		osDelay((1000 / TELEMETRY_HZ) > delta ? (1000 / TELEMETRY_HZ) - delta : 1);
+	}
+
+	// Reference code
+
+	/*struct netbuf *outbuf = netbuf_new();
+	void *pkt_buf = netbuf_alloc(outbuf, 3);
+
+	memcpy(pkt_buf, "hi", 3);
+	err_t send_err = netconn_sendto(sendudp, outbuf, &debug_addr, 1234);
+	netbuf_delete(outbuf);
+
+	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 0);
+	osDelay(2000);
+	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 1);
+	gps_handler gps;
+	gps.huart = &huart10;
+	int status = init_gps(&gps);
+	for(;;) {
+		if(xSemaphoreTake(gps.semaphore, 2)) {
+			char temp_rx[100];
+			if(gps.active_rx_buffer == 1) {
+				memcpy(temp_rx, gps.rx_buffer_2, 100);
+			}
+			else {
+				memcpy(temp_rx, gps.rx_buffer_1, 100);
+			}
+			gps_data data;
+			parse_gps_sentence(temp_rx, &data);
+		}
+		osDelay(100);
+	}*/
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartAndMonitor */
@@ -1631,43 +1878,131 @@ void StartAndMonitor(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
-    // Load EEPROM config
-  	PT_t PT1_h = {0.5f, 5000.0f, 4.5f};
-  	PT_t PT2_h = {0.5f, 5000.0f, 4.5f};
-  	PT_t PT3_h = {0.5f, 5000.0f, 4.5f};
-  	PT_t PT4_h = {0.5f, 5000.0f, 4.5f};
-  	PT_t PT5_h = {0.5f, 5000.0f, 4.5f};
-  	EEPROM_conf_t loaded_config = {0};
-  	loaded_config.pt1 = &PT1_h;
-  	loaded_config.pt2 = &PT2_h;
-  	loaded_config.pt3 = &PT3_h;
-  	loaded_config.pt4 = &PT4_h;
-  	loaded_config.pt5 = &PT5_h;
-    eeprom_init(&eeprom_h, &hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin);
-    load_eeprom_config(&eeprom_h, &loaded_config);
-
 	// Setup NTP listener
-	sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
+ 	sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
 
 	// Setup TCP server
-	ip4_addr_t limewire;
-	ip4_addr_t noIP = {0};
-	IP4_ADDR(&limewire, 192, 168, 0, 5);
-	server_create(limewire, noIP, noIP, noIP, noIP);
+	server_create(loaded_config.limewireIP, loaded_config.bayboard1IP, loaded_config.bayboard2IP, loaded_config.bayboard3IP, loaded_config.flightrecordIP);
 
 	// Init rocket state struct
 	memset(&Rocket_h, 0, sizeof(Rocket_h)); // Reset contents
 	Rocket_h.fcState_access = xSemaphoreCreateMutex();
-	// TODO Init peripherals and start tasks
+	Rocket_h.fcValve_access = xSemaphoreCreateMutex();
+	Rocket_h.bb1State_access = xSemaphoreCreateMutex();
+	Rocket_h.bb1Valve_access = xSemaphoreCreateMutex();
+	Rocket_h.bb2State_access = xSemaphoreCreateMutex();
+	Rocket_h.bb2Valve_access = xSemaphoreCreateMutex();
+	Rocket_h.bb3State_access = xSemaphoreCreateMutex();
+	Rocket_h.bb3Valve_access = xSemaphoreCreateMutex();
 
+	// Config SR
+  	Shift_Reg reg = {0};
+  	reg.VLV_CTR_GPIO_Port = VLV_CTRL_GPIO_Port;
+  	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
+  	reg.VLV_CLK_GPIO_Port = BUFF_CLK_GPIO_Port;
+  	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
+  	reg.VLV_CLR_GPIO_Port = BUFF_CLR_GPIO_Port;
+  	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
+
+  	VLV_Set_Conf(reg, loaded_config.vlv1_en, loaded_config.vlv1_v, loaded_config.vlv2_en, loaded_config.vlv2_v, loaded_config.vlv3_en, loaded_config.vlv3_v);
+
+  	// Load valve pins
+  	Rocket_h.fcValves[0].VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
+  	Rocket_h.fcValves[0].VLV_EN_GPIO_Pin = VLV1_EN_Pin;
+  	Rocket_h.fcValves[0].VLV_OLD_GPIO_Port = VLV1_OLD_GPIO_Port;
+  	Rocket_h.fcValves[0].VLV_OLD_GPIO_Pin = VLV1_OLD_Pin;
+
+  	Rocket_h.fcValves[1].VLV_EN_GPIO_Port = VLV2_EN_GPIO_Port;
+  	Rocket_h.fcValves[1].VLV_EN_GPIO_Pin = VLV2_EN_Pin;
+  	Rocket_h.fcValves[1].VLV_OLD_GPIO_Port = VLV2_OLD_GPIO_Port;
+  	Rocket_h.fcValves[1].VLV_OLD_GPIO_Pin = VLV2_OLD_Pin;
+
+  	Rocket_h.fcValves[2].VLV_EN_GPIO_Port = VLV3_EN_GPIO_Port;
+  	Rocket_h.fcValves[2].VLV_EN_GPIO_Pin = VLV3_EN_Pin;
+  	Rocket_h.fcValves[2].VLV_OLD_GPIO_Port = VLV3_OLD_GPIO_Port;
+  	Rocket_h.fcValves[2].VLV_OLD_GPIO_Pin = VLV3_OLD_Pin;
+
+	// Init sensors and peripherals
+  	// ADC
+  	sensors_h.adc_h.MAX11128_CS_PORT 		= ADC_CS_GPIO_Port;
+  	sensors_h.adc_h.MAX11128_CS_ADDR 		= ADC_CS_Pin;
+  	sensors_h.adc_h.HARDWARE_CONFIGURATION = NO_EOC_NOR_CNVST;
+  	sensors_h.adc_h.NUM_CHANNELS = 16;
+
+  	init_adc(&hspi4, &(sensors_h.adc_h));
+
+  	// TC ADCs
+  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0064, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, 0x0064, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, 0x0064, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
+
+  	ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, 3);
+
+  	// IMUs
+  	sensors_h.imu1_h.hi2c = &hi2c5;
+  	sensors_h.imu1_h.I2C_TIMEOUT = 100;
+  	sensors_h.imu1_h.XL_x_offset = 0;
+  	sensors_h.imu1_h.XL_y_offset = 0;
+  	sensors_h.imu1_h.XL_z_offset = 0;
+  	sensors_h.imu1_h.G_x_offset = 0;
+  	sensors_h.imu1_h.G_y_offset = 0;
+  	sensors_h.imu1_h.G_z_offset = 0;
+  	sensors_h.imu1_h.SA0 = 0;
+
+  	sensors_h.imu2_h.hi2c = &hi2c5;
+  	sensors_h.imu2_h.I2C_TIMEOUT = 100;
+  	sensors_h.imu2_h.XL_x_offset = 0;
+  	sensors_h.imu2_h.XL_y_offset = 0;
+  	sensors_h.imu2_h.XL_z_offset = 0;
+  	sensors_h.imu2_h.G_x_offset = 0;
+  	sensors_h.imu2_h.G_y_offset = 0;
+  	sensors_h.imu2_h.G_z_offset = 0;
+  	sensors_h.imu2_h.SA0 = 1;
+
+  	IMU_init(&(sensors_h.imu1_h));
+  	IMU_init(&(sensors_h.imu2_h));
+
+  	// Barometers
+  	sensors_h.bar1_h.hspi = &hspi6;
+  	sensors_h.bar1_h.SPI_TIMEOUT = 100;
+  	sensors_h.bar1_h.CS_GPIO_Port = BAR1_CS_GPIO_Port;
+  	sensors_h.bar1_h.CS_GPIO_Pin = BAR1_CS_Pin;
+  	sensors_h.bar1_h.pres_offset = 0;
+  	sensors_h.bar1_h.alt_offset = 0;
+
+  	sensors_h.bar2_h.hspi = &hspi6;
+  	sensors_h.bar2_h.SPI_TIMEOUT = 100;
+  	sensors_h.bar2_h.CS_GPIO_Port = BAR2_CS_GPIO_Port;
+  	sensors_h.bar2_h.CS_GPIO_Pin = BAR2_CS_Pin;
+  	sensors_h.bar2_h.pres_offset = 0;
+  	sensors_h.bar2_h.alt_offset = 0;
+
+  	MS5611_Reset(&(sensors_h.bar1_h));
+  	MS5611_readPROM(&(sensors_h.bar1_h), &(sensors_h.prom1));
+  	
+  	MS5611_Reset(&(sensors_h.bar2_h));
+  	MS5611_readPROM(&(sensors_h.bar2_h), &(sensors_h.prom2));
+  	
+	// Start tasks
+
+  	// Start telemetry task
+  	telemetryTaskHandle = osThreadNew(TelemetryTask, NULL, &telemetry_task_attr);
+
+  	// Start network modules only if the ethernet link is up
 	if(netif_is_link_up(&gnetif)) {
 		server_init();
 		sntp_init();
 		tftp_init(&my_tftp_ctx);
 	}
 
+	// TODO: Handle valve states and control handles in arrays BE CAREFUL OF INDEX
+	// TODO: Figure out how to handle limewire's control over valves once autosequences start, it's early to decide this but it could affect how valve control is implemented
+	// TODO: Next: telemetry task, then packet handler task
+	// TODO: Create function to send valve state message taking the valve channel and the state as parameters and interally use the below function
+	// TODO: Create function to message to a target device, take raw_message pointer and target device as parameters, return status. Check that server is running in the function
+
 	/*
-	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs)
+	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs) (WHEN THE FC CONNECTS TO LIMEWIRE SEND THE VALVE STATES FOR THE ENTIRE ROCKET)
 	 *
 	 * fc telemetry comes from struct, sent on a 50hz loop
 	 * bb telemetry comes from tcp packets, relayed to limewire and stored for optional access in autosequences
@@ -1678,38 +2013,10 @@ void StartAndMonitor(void *argument)
 	 * telemetry task - read from peripherals and send telemetry msg
 	 * tcp process task - process incoming packets for relaying or valve stuff
 	 */
-  	ADS_Main_t main_handle = {0};
-  	ADS_TC_t multiTCs[3];
 
-  	ADS_configTC(&multiTCs[0], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_128, ADS_DATA_RATE_600);
-  	ADS_configTC(&multiTCs[1], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, ADS_PGA_GAIN_1, ADS_DATA_RATE_600);
-  	ADS_configTC(&multiTCs[2], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_128, ADS_DATA_RATE_600);
-  	ADS_init(&main_handle, multiTCs, 3);
-
-  	IMU IMU1;
-  	IMU1.hi2c = &hi2c5;
-  	IMU1.I2C_TIMEOUT = 9999;
-  	IMU1.XL_x_offset = 0;
-  	IMU1.XL_y_offset = 0;
-  	IMU1.XL_z_offset = 0;
-  	IMU1.G_x_offset = 0;
-  	IMU1.G_y_offset = 0;
-  	IMU1.G_z_offset = 0;
-  	IMU1.SA0 = 1;
-
-  	IMU_init(&IMU1);
 	/* Infinite loop */
 	for(;;) {
-  		ADS_Reading_t values[3];
-  		int status = ADS_readAllwTimestamps(&main_handle, values);
-  		Accel XL_readings1 = {0};
-  		IMU_getAccel(&IMU1, &XL_readings1);
-
   		if(xSemaphoreTake(Rocket_h.fcState_access, 1) == pdPASS) {
-  			Rocket_h.fcState.tc1 = values[0].temp_c;
-  			Rocket_h.fcState.tc2 = values[1].temp_c;
-  			Rocket_h.fcState.tc3 = values[2].temp_c;
-  			Rocket_h.fcState.imu1_A = XL_readings1;
   			xSemaphoreGive(Rocket_h.fcState_access);
   			if(is_server_running()) {
   				int limewirefd = get_device_fd(LimeWire_d);
@@ -1733,243 +2040,6 @@ void StartAndMonitor(void *argument)
 	  osDelay(20);
 	}
   /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_setupAndStart */
-/**
-* @brief Function implementing the setupTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_setupAndStart */
-void setupAndStart(void *argument)
-{
-  /* USER CODE BEGIN setupAndStart */
-	// REMOVE THIS TASK
-	  for(;;) {
-		  size_t freemem = xPortGetFreeHeapSize();
-		  osDelay(1000);
-	  }
-	  struct netconn *sendudp = netconn_new(NETCONN_UDP);
-	  ip_addr_t debug_addr;
-	  IP4_ADDR(&debug_addr, 192, 168, 0, 5);
-
-	  for(;;) {
-		  struct netbuf *outbuf = netbuf_new();
-		  void *pkt_buf = netbuf_alloc(outbuf, 9);
-		  uint64_t cur_time = get_rtc_time();
-		  //uint64_t cur_time = 0;
-		  uint8_t outarr[8];
-
-		  for (int i = 0; i < 8; i++) {
-			  outarr[i] = (uint8_t)((cur_time >> (8 * (7 - i))) & 0xFF);
-		  }
-
-		  //netbuf_ref(outbuf, &cur_time, 8);
-		  memcpy(pkt_buf, outarr, 8);
-		  if (RTC->ISR & RTC_ISR_RSF) {
-		      // Shadow registers are synchronized and up-to-date
-			  *(((uint8_t *)pkt_buf) + 8) = 0x45;
-		  } else {
-		      // Shadow registers are not yet synchronized
-			  *(((uint8_t *)pkt_buf) + 8) = 0x67;
-		  }
-
-		  err_t send_err = netconn_sendto(sendudp, outbuf, &debug_addr, 1234);
-
-		  osDelay(1000);
-		  netbuf_delete(outbuf);
-	  }
-
-	  /*for(;;) {
-		  uint64_t ns = get_rtc_time();
-		  osDelay(250);
-	  }*/
-	  /*HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 0);
-	  	osDelay(2000);
-	  	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 1);
-	  	gps_handler gps;
-	  	gps.huart = &huart10;
-	  	int status = init_gps(&gps);
-	  	for(;;) {
-	  		if(xSemaphoreTake(gps.semaphore, 2)) {
-	  			char temp_rx[100];
-	  			if(gps.active_rx_buffer == 1) {
-	  				memcpy(temp_rx, gps.rx_buffer_2, 100);
-	  			}
-	  			else {
-	  				memcpy(temp_rx, gps.rx_buffer_1, 100);
-	  			}
-	  			gps_data data;
-	  			parse_gps_sentence(temp_rx, &data);
-	  		}
-	  		osDelay(100);
-	  	}*/
-
-	  	/*IMU IMU1;
-	  	IMU1.hi2c = &hi2c5;
-	  	IMU1.I2C_TIMEOUT = 9999;
-	  	IMU1.XL_x_offset = 0;
-	  	IMU1.XL_y_offset = 0;
-	  	IMU1.XL_z_offset = 0;
-	  	IMU1.G_x_offset = 0;
-	  	IMU1.G_y_offset = 0;
-	  	IMU1.G_z_offset = 0;
-	  	IMU1.SA0 = 0;
-
-	  	IMU IMU2;
-	  	IMU2.hi2c = &hi2c5;
-	  	IMU2.I2C_TIMEOUT = 9999;
-	  	IMU2.XL_x_offset = 0;
-	  	IMU2.XL_y_offset = 0;
-	  	IMU2.XL_z_offset = 0;
-	  	IMU2.G_x_offset = 0;
-	  	IMU2.G_y_offset = 0;
-	  	IMU2.G_z_offset = 0;
-	  	IMU2.SA0 = 1;
-
-	  	IMU_init(&IMU1);
-	  	IMU_init(&IMU2);
-
-	  	for(;;) {
-	  		Accel XL_readings1 = {0};
-	  		Accel XL_readings2 = {0};
-	  		IMU_getAccel(&IMU1, &XL_readings1);
-	  		IMU_getAccel(&IMU2, &XL_readings2);
-
-	  		osDelay(1000);
-	  	}*/
-	  	/*Shift_Reg reg = {0};
-	  	reg.VLV_CTR_GPIO_Port = GPIOA;
-	  	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
-	  	reg.VLV_CLK_GPIO_Port = GPIOA;
-	  	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
-	  	reg.VLV_CLR_GPIO_Port = GPIOA;
-	  	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
-
-	  	Valve VLV1 = {0};
-	  	VLV1.VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
-	  	VLV1.VLV_EN_GPIO_Pin = VLV1_EN_Pin;
-
-	  	VLV_Set_Voltage(reg, 0b00000010);
-	  	for (;;) {
-	  	    VLV_Toggle(VLV1);
-	  	    HAL_GPIO_TogglePin(GPIOE, LED_BLUE_Pin);
-	  	    osDelay(3000);
-	  	}*/
-	  	GPIO_MAX11128_Pinfo adc_pins;
-	  	adc_pins.MAX11128_CS_PORT 		= ADC_CS_GPIO_Port;
-	  	adc_pins.MAX11128_CS_ADDR 		= ADC_CS_Pin;
-	  	adc_pins.HARDWARE_CONFIGURATION = NO_EOC_NOR_CNVST;
-	  	adc_pins.NUM_CHANNELS = 16;
-
-
-	  	init_adc(&hspi4, &adc_pins);
-	  	//configure_read_adc_all(&adc_pins);
-	  	Shift_Reg reg = {0};
-	  	reg.VLV_CTR_GPIO_Port = GPIOA;
-	  	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
-	  	reg.VLV_CLK_GPIO_Port = GPIOA;
-	  	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
-	  	reg.VLV_CLR_GPIO_Port = GPIOA;
-	  	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
-
-	  	Valve VLV1 = {0};
-	  	VLV1.VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
-	  	VLV1.VLV_EN_GPIO_Pin = VLV1_EN_Pin;
-	  	VLV1.VLV_OLD_GPIO_Port = VLV1_OLD_GPIO_Port;
-	  	VLV1.VLV_OLD_GPIO_Pin = VLV1_OLD_Pin;
-	  	Valve VLV2 = {0};
-	  	VLV2.VLV_EN_GPIO_Port = VLV2_EN_GPIO_Port;
-	  	VLV2.VLV_EN_GPIO_Pin = VLV2_EN_Pin;
-
-	  	VLV_Set_Conf(reg, 1, VLV_24V, 1, VLV_12V, 0, VLV_12V);
-	  	/*for(;;) {
-	  		uint16_t adc_values[16] = {0};
-	  		read_adc(&hspi4, &adc_pins, adc_values);
-	  		uint16_t raw_valve1 = adc_values[1];
-	  		float valve_current = (((raw_valve1 / 4095.0) * 3.3) * (5.0/3.0)) / (50 * 0.02);
-	  	    VLV_Toggle(VLV1);
-	  	    HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-	  	    HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-	  	    HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-
-	  	    osDelay(20);
-	  	    GPIO_PinState open_state = HAL_GPIO_ReadPin(VLV_OLD1_GPIO_Port, VLV_OLD1_Pin);
-
-	  		osDelay(2000);
-	  	}*/
-	  	ADS_Main_t main_handle = {0};
-	  	ADS_TC_t multiTCs[3];
-
-	  	ADS_configTC(&multiTCs[0], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
-	  	ADS_configTC(&multiTCs[1], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
-	  	ADS_configTC(&multiTCs[2], &hspi2, GPIOB, GPIO_PIN_14, 0xffff, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, ADS_PGA_GAIN_1, ADS_DATA_RATE_20);
-	  	ADS_init(&main_handle, multiTCs, 3);
-
-	  	MS5611 bar2;
-	  	bar2.hspi = &hspi6;
-	  	bar2.SPI_TIMEOUT = 100;
-	  	bar2.CS_GPIO_Port = BAR1_CS_GPIO_Port; // PA3
-	  	bar2.CS_GPIO_Pin = BAR1_CS_Pin;
-	  	bar2.pres_offset = 0;
-	  	bar2.alt_offset = 0;
-
-	  	MS5611_PROM_t prom;
-	  	prom.constants.C1 = 0;
-	  	prom.constants.C2 = 0;
-	  	prom.constants.C3 = 0;
-	  	prom.constants.C4 = 0;
-	  	prom.constants.C5 = 0;
-	  	prom.constants.C6 = 0;
-
-	  	MS5611_Reset(&bar2);
-	  	MS5611_readPROM(&bar2, &prom);
-
-	  	float pres = 0.0;
-
-	  	for(;;) {
-	  		ADS_Reading_t values[3];
-	  		int status = ADS_readAllwTimestamps(&main_handle, values);
-
-	  		MS5611_getPres(&bar2, &pres, &prom, OSR_256);
-
-	  		uint16_t adc_values[16] = {0};
-	  		read_adc(&hspi4, &adc_pins, adc_values);
-	  		uint16_t raw_valve1 = adc_values[1];
-	  		float valve_current = (((raw_valve1 / 4095.0) * 3.3) * (5.0/3.0)) / (50 * 0.02);
-	  		VLV_Toggle(VLV1);
-	  		//VLV_Toggle(VLV2);
-	  		HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-	  		HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-	  		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-
-	  		osDelay(20);
-	  		VLV_OpenLoad open_state = VLV_isOpenLoad(VLV1);
-
-	  		osDelay(1500);
-	  	}
-	      /*MS5611 baro = {0};
-	  	baro.hspi = &hspi6;
-	  	baro.CS_GPIO_Pin = BAR2_CS_Pin;
-	  	baro.CS_GPIO_Port = BAR2_CS_GPIO_Port;
-	  	baro.SPI_TIMEOUT = 1000;
-	  	baro.pres_offset = 0;
-	  	baro.alt_offset = 0;
-
-	  	MS5611_PROM_t prom = {0};
-	  	float pres = 0;
-
-	  	MS5611_Reset(&baro);
-	  	MS5611_readPROM(&baro, &prom);
-	  	MS5611_getPres(&baro, &pres, OSR_256);*/
-	  	for (;;) {
-	  		HAL_GPIO_WritePin(VLV1_EN_GPIO_Port, VLV1_EN_Pin, 1);
-	  		osDelay(10);
-	  		HAL_GPIO_WritePin(VLV1_EN_GPIO_Port, VLV1_EN_Pin, 0);
-	  		osDelay(10);
-	  	}
-  /* USER CODE END setupAndStart */
 }
 
  /* MPU Configuration */

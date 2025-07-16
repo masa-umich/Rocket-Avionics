@@ -38,10 +38,11 @@ Major STM32 bug: the EthIf task does not get enough stack by default, you must g
 | 68      | Valve 3 Voltage | uint8_t |
 | 69      | Valve 3 Enable | uint8_t |
 | 70 - 73 | DAQ PC/Limewire IP | uint32_t |
-| 74 - 77 | Bay Board 1 IP | uint32_t |
-| 78 - 81 | Bay Board 2 IP | uint32_t |
-| 82 - 85 | Bay Board 3 IP | uint32_t |
-| 86 - 89 | Flight Recorder IP | uint32_t |
+| 74 - 77 | Flight Computer IP | uint32_t |
+| 78 - 81 | Bay Board 1 IP | uint32_t |
+| 82 - 85 | Bay Board 2 IP | uint32_t |
+| 86 - 89 | Bay Board 3 IP | uint32_t |
+| 90 - 93 | Flight Recorder IP | uint32_t |
 
 ### Notes
 The PT configuration floats are **little-endian**, but the IP addresses are **big-endian**.

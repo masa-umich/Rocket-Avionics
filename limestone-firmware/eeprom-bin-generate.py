@@ -1,3 +1,12 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "enum",
+#     "ipaddress",
+#     "struct",
+#     "zlib",
+# ]
+# ///
 from enum import Enum
 import ipaddress
 import struct
@@ -51,7 +60,8 @@ vlv2_enable = 0
 vlv3_voltage = ValveVoltage.Valve_24V
 vlv3_enable = 1
 
-limewire_IP = ipaddress.IPv4Address("192.168.0.10")
+limewire_IP = ipaddress.IPv4Address("192.168.0.5")
+flight_computer_IP = ipaddress.IPv4Address("192.168.0.10")
 bay_board_1_IP = ipaddress.IPv4Address("0.0.0.0")
 bay_board_2_IP = ipaddress.IPv4Address("0.0.0.0")
 bay_board_3_IP = ipaddress.IPv4Address("0.0.0.0")
@@ -66,7 +76,7 @@ raw_out += struct.pack('<B', tc1_gain.value) + struct.pack('<B', tc2_gain.value)
 raw_out += struct.pack('<B', vlv1_voltage.value) + struct.pack('<B', vlv1_enable)
 raw_out += struct.pack('<B', vlv2_voltage.value) + struct.pack('<B', vlv2_enable)
 raw_out += struct.pack('<B', vlv3_voltage.value) + struct.pack('<B', vlv3_enable)
-raw_out += limewire_IP.packed + bay_board_1_IP.packed + bay_board_2_IP.packed + bay_board_3_IP.packed + flight_recorder_IP.packed
+raw_out += limewire_IP.packed + flight_computer_IP.packed + bay_board_1_IP.packed + bay_board_2_IP.packed + bay_board_3_IP.packed + flight_recorder_IP.packed
 
 crc = zlib.crc32(raw_out)
 

@@ -48,7 +48,10 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 #define FLIGHT_COMPUTER
-#define FC_EEPROM_LEN		(uint16_t)89
+
+#define TELEMETRY_HZ		(uint32_t)50
+
+#define FC_EEPROM_LEN		(uint16_t)93
 
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 
@@ -67,22 +70,22 @@ extern "C" {
 #define POWER_3V3_RES_A		(uint32_t)1000
 #define POWER_3V3_RES_B		(uint32_t)10000
 
-#define ADC_3V3_BUS			(size_t)0
-#define ADC_VLV1_CURRENT	(size_t)1
-#define ADC_VLV2_CURRENT	(size_t)2
-#define ADC_VLV3_CURRENT	(size_t)3
-#define ADC_PT1				(size_t)4
-#define ADC_PT2				(size_t)5
-#define ADC_PT3				(size_t)6
-#define ADC_PT4				(size_t)7
-#define ADC_PT5				(size_t)8
-#define ADC_24V_CURRENT		(size_t)9
-#define ADC_12V_CURRENT		(size_t)10
-#define ADC_5V_CURRENT		(size_t)11
-#define ADC_3V3_CURRENT		(size_t)12
-#define ADC_5V_BUS			(size_t)13
-#define ADC_12V_BUS			(size_t)14
-#define ADC_24V_BUS			(size_t)15
+#define ADC_3V3_BUS_I		(size_t)0
+#define ADC_VLV1_CURRENT_I	(size_t)1
+#define ADC_VLV2_CURRENT_I	(size_t)2
+#define ADC_VLV3_CURRENT_I	(size_t)3
+#define ADC_PT1_I			(size_t)4
+#define ADC_PT2_I			(size_t)5
+#define ADC_PT3_I			(size_t)6
+#define ADC_PT4_I			(size_t)7
+#define ADC_PT5_I			(size_t)8
+#define ADC_24V_CURRENT_I	(size_t)9
+#define ADC_12V_CURRENT_I	(size_t)10
+#define ADC_5V_CURRENT_I	(size_t)11
+#define ADC_3V3_CURRENT_I	(size_t)12
+#define ADC_5V_BUS_I		(size_t)13
+#define ADC_12V_BUS_I		(size_t)14
+#define ADC_24V_BUS_I		(size_t)15
 
 #define DIVIDER_VALVE		(uint8_t)1
 #define DIVIDER_12V_24V		(uint8_t)0
@@ -169,11 +172,6 @@ void set_system_time(uint32_t sec, uint32_t us);
 #define LED_BLUE_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
-
-typedef enum {
-	Valve_Deenergized = 0U,
-	Valve_Energized
-} Valve_State_t;
 
 /* USER CODE END Private defines */
 

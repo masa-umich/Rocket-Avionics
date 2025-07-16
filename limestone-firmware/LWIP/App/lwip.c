@@ -40,6 +40,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
 extern const struct tftp_context my_tftp_ctx;
+extern ip4_addr_t fc_addr;
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -65,10 +66,10 @@ osThreadAttr_t attributes;
 void MX_LWIP_Init(void)
 {
   /* IP addresses initialization */
-  IP_ADDRESS[0] = 192;
-  IP_ADDRESS[1] = 168;
+  IP_ADDRESS[0] = 0;
+  IP_ADDRESS[1] = 0;
   IP_ADDRESS[2] = 0;
-  IP_ADDRESS[3] = 10;
+  IP_ADDRESS[3] = 0;
   NETMASK_ADDRESS[0] = 255;
   NETMASK_ADDRESS[1] = 255;
   NETMASK_ADDRESS[2] = 255;
@@ -79,6 +80,10 @@ void MX_LWIP_Init(void)
   GATEWAY_ADDRESS[3] = 0;
 
 /* USER CODE BEGIN IP_ADDRESSES */
+  IP_ADDRESS[0] = ip4_addr1(&fc_addr);
+  IP_ADDRESS[1] = ip4_addr2(&fc_addr);
+  IP_ADDRESS[2] = ip4_addr3(&fc_addr);
+  IP_ADDRESS[3] = ip4_addr4(&fc_addr);
 /* USER CODE END IP_ADDRESSES */
 
   /* Initialize the LwIP stack with RTOS */
