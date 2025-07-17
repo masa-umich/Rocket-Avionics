@@ -269,6 +269,13 @@ const osThreadAttr_t telemetry_task_attr = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+
+osThreadId_t packetTaskHandle;
+const osThreadAttr_t packet_task_attr = {
+  .name = "packetTask",
+  .stack_size = 384 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -679,19 +686,28 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait) {
 	if(devicefd == -1) {
 		return -3; // Device not connected
 	}
-	Raw_message rawmsg = {0};
-	int buflen = serialize_message(msg, rawmsg.buffer, MAX_MSG_LEN);
+	uint8_t tempbuffer[MAX_MSG_LEN];
+	int buflen = serialize_message(msg, tempbuffer, MAX_MSG_LEN);
 	if(buflen == -1) {
 		return -4; // Serialization error
 	}
+    uint8_t *buffer = malloc(buflen);
+    memcpy(buffer, tempbuffer, buflen);
+	Raw_message rawmsg = {0};
+	rawmsg.bufferptr = buffer;
 	rawmsg.packet_len = buflen;
 	rawmsg.connection_fd = devicefd;
-	return server_send(&rawmsg, wait);
+	int result = server_send(&rawmsg, wait);
+	if(result != 0) {
+		free(buffer);
+	}
+	return result;
 }
 
 // Send a message over TCP
 // wait is the number of ticks to wait for room in the txbuffer
 // returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer, -3 if the target device is not connected
+// IMPORTANT: you are responsible for freeing the buffer in msg if this function returns something other than 0
 int send_raw_msg_to_device(Target_Device device, Raw_message *msg, TickType_t wait) {
 	if(is_server_running() <= 0) {
 		return -1; // Server not running
@@ -1886,6 +1902,7 @@ void TelemetryTask(void *argument) {
   		}
 
   		Message telemsg = {0};
+  		telemsg.type = MSG_TELEMETRY;
   		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
   			if(send_msg_to_device(LimeWire_d, &telemsg, 5) != 0) {
   				// Server not up, target device not connected, or txbuffer is full
@@ -1937,8 +1954,9 @@ void ProcessPackets(void *argument) {
 		Raw_message msg = {0};
 		int read_stat = server_read(&msg, 1000);
 		if(read_stat == 0) {
+			// The way the msg.bufferptr memory is handled past this point is that any result that doesn't relay msg to a different destination should NOT continue early, any result that does relay msg should continue early
 			Message parsedmsg = {0};
-			if(deserialize_message(&(msg.buffer), MAX_MSG_LEN, &parsedmsg) > 0) {
+			if(deserialize_message(msg.bufferptr, msg.packet_len, &parsedmsg) > 0) {
 				switch(parsedmsg.type) {
 				    case MSG_TELEMETRY:
 				        // Save and relay to Limewire
@@ -1953,7 +1971,11 @@ void ProcessPackets(void *argument) {
 					    	}
 				    	}
 
-				    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) != 0) {
+				    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
+				    		// Continue to prevent freeing memory we're still using
+				    		continue;
+				    	}
+				    	else {
 				    	  	// Server not up, target device not connected, or txbuffer is full
 				    	}
 				        break;
@@ -1962,11 +1984,22 @@ void ProcessPackets(void *argument) {
 				    		if(get_valve_board(parsedmsg.data.valve_command.valve_id) == BOARD_FC) {
 				    			// Do valve command and send state message
 				    			Valve_State_t endState = set_and_update_valve(get_valve(parsedmsg.data.valve_command.valve_id), parsedmsg.data.valve_command.valve_state);
-
+				    			Message returnMsg = {0};
+				    			returnMsg.type = MSG_VALVE_STATE;
+				    			returnMsg.data.valve_state.valve_state = endState;
+				    			returnMsg.data.valve_state.valve_id = parsedmsg.data.valve_command.valve_id;
+				    			returnMsg.data.valve_state.timestamp = get_rtc_time();
+				      			if(send_msg_to_device(LimeWire_d, &returnMsg, 5) != 0) {
+				      				// Server not up, target device not connected, or txbuffer is full
+				      			}
 				    		}
 				    		else {
 				    			// Relay to Bay Boards
-				    			if(send_raw_msg_to_device(get_valve_board(parsedmsg.data.valve_command.valve_id), &msg, 5) != 0) {
+				    			if(send_raw_msg_to_device(get_valve_board(parsedmsg.data.valve_command.valve_id), &msg, 5) == 0) {
+						    		// Continue to prevent freeing memory we're still using
+						    		continue;
+				    			}
+				    			else {
 				    				// Server not up, target device not connected, or txbuffer is full
 				    			}
 				    		}
@@ -2002,7 +2035,11 @@ void ProcessPackets(void *argument) {
 					    	        break;
 					    	}
 
-					    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) != 0) {
+					    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
+					    		// Continue to prevent freeing memory we're still using
+					    		continue;
+					    	}
+					    	else {
 					    	  	// Server not up, target device not connected, or txbuffer is full
 					    	}
 				    	}
@@ -2017,6 +2054,7 @@ void ProcessPackets(void *argument) {
 			else {
 				// Unknown message type
 			}
+			free(msg.bufferptr);
 		}
 		else if(read_stat == -1) {
 			// Server down, delay to prevent taking CPU time from other tasks
@@ -2151,6 +2189,9 @@ void StartAndMonitor(void *argument)
   	// Start telemetry task
   	telemetryTaskHandle = osThreadNew(TelemetryTask, NULL, &telemetry_task_attr);
 
+  	// Start packet handler
+  	packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
+
   	// Start network modules only if the ethernet link is up
 	if(netif_is_link_up(&gnetif)) {
 		server_init();
@@ -2179,6 +2220,7 @@ void StartAndMonitor(void *argument)
 	for(;;) {
 
 	  // TODO Make sure things are still running and restart anything that stops
+		size_t freemem = xPortGetFreeHeapSize();
 	  osDelay(1000);
 	}
   /* USER CODE END 5 */
