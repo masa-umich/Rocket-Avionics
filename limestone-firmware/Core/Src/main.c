@@ -76,6 +76,8 @@ typedef struct {
 	VLV_OpenLoad vlv2_old;
 	float vlv3_current;
 	VLV_OpenLoad vlv3_old;
+
+	uint64_t timestamp; // Only used to monitor how "fresh" the data is
 } Flight_Computer_State_t;
 
 typedef struct {
@@ -123,6 +125,8 @@ typedef struct {
 	VLV_OpenLoad vlv6_old;
 	float vlv7_current;
 	VLV_OpenLoad vlv7_old;
+
+	uint64_t timestamp;
 } Bay_Board_State_t;
 
 typedef struct {
@@ -132,6 +136,8 @@ typedef struct {
 	AngRate imu2_W;
 	float bar1;
 	float bar2;
+
+	uint64_t timestamp;
 } Flight_Recorder_State_t;
 
 typedef struct {
@@ -260,7 +266,7 @@ Sensors_t sensors_h = {0};
 osThreadId_t telemetryTaskHandle;
 const osThreadAttr_t telemetry_task_attr = {
   .name = "telemetryTask",
-  .stack_size = 256 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE END PV */
@@ -316,7 +322,7 @@ void set_system_time(uint32_t sec, uint32_t us) {
 	sDate.Date = tm_time->tm_mday;
 	sDate.WeekDay = (tm_time->tm_wday == 0) ? 7 : tm_time->tm_wday;
 
-	if(xSemaphoreTake(RTC_mutex, 2) == pdPASS) {
+	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
 		uint32_t subsecond_shift = 6249 - ((us / 1000000.0) * 6250);
 		//uint32_t subsecond_shift = 6249ULL - ((((uint64_t) us) * ((uint64_t) 6250)) / 1000000ULL); // This works too but I think above is more memory efficient
 		taskENTER_CRITICAL();
@@ -346,13 +352,18 @@ void set_system_time(uint32_t sec, uint32_t us) {
 
 /**
  * Get Unix timestamp in nanoseconds
- * Returns 0 if RTC could not be accessed
+ * Returns 0 if the RTC could not be accessed or if the RTC has not been set yet
  */
 uint64_t get_rtc_time() {
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
-	if(xSemaphoreTake(RTC_mutex, 2) == pdPASS) {
+	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
+		if(__HAL_RTC_IS_CALENDAR_INITIALIZED(&hrtc) == 0) {
+			xSemaphoreGive(RTC_mutex);
+			// RTC not set yet
+			return 0;
+		}
 		HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
@@ -435,7 +446,6 @@ int pack_fc_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t tim
 // Unpack bay board message
 // returns 0 if successful, 1 if the telemetry data could not be accessed or an invalid board id
 // timeout_ticks: how many FreeRTOS ticks to wait before giving up
-// bb: bay board number, 1 indexed (1, 2, 3)
 int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	switch(msg->board_id) {
 	    case BOARD_BAY_1:
@@ -492,6 +502,7 @@ int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	    		Rocket_h.bb1State.bus5v_current = msg->telemetry_data[BB1_5V_CURRENT_I];
 	    		Rocket_h.bb1State.bus3v3_voltage = msg->telemetry_data[BB1_3V3_VOLTAGE_I];
 	    		Rocket_h.bb1State.bus3v3_current = msg->telemetry_data[BB1_3V3_CURRENT_I];
+	    		Rocket_h.bb1State.timestamp = msg->timestamp;
 	    		xSemaphoreGive(Rocket_h.bb1State_access);
 	    	}
 	    	else {
@@ -552,6 +563,7 @@ int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	    		Rocket_h.bb2State.bus5v_current = msg->telemetry_data[BB2_5V_CURRENT_I];
 	    		Rocket_h.bb2State.bus3v3_voltage = msg->telemetry_data[BB2_3V3_VOLTAGE_I];
 	    		Rocket_h.bb2State.bus3v3_current = msg->telemetry_data[BB2_3V3_CURRENT_I];
+	    		Rocket_h.bb2State.timestamp = msg->timestamp;
 	    		xSemaphoreGive(Rocket_h.bb2State_access);
 	    	}
 	    	else {
@@ -612,6 +624,7 @@ int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	    		Rocket_h.bb3State.bus5v_current = msg->telemetry_data[BB3_5V_CURRENT_I];
 	    		Rocket_h.bb3State.bus3v3_voltage = msg->telemetry_data[BB3_3V3_VOLTAGE_I];
 	    		Rocket_h.bb3State.bus3v3_current = msg->telemetry_data[BB3_3V3_CURRENT_I];
+	    		Rocket_h.bb3State.timestamp = msg->timestamp;
 	    		xSemaphoreGive(Rocket_h.bb3State_access);
 	    	}
 	    	else {
@@ -645,6 +658,7 @@ int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 		Rocket_h.frState.imu2_W.G_z = msg->telemetry_data[FR_IMU2_WY_I];
 		Rocket_h.frState.bar1 = msg->telemetry_data[FR_BAR_1_I];
 		Rocket_h.frState.bar2 = msg->telemetry_data[FR_BAR_2_I];
+		Rocket_h.frState.timestamp = msg->timestamp;
 		xSemaphoreGive(Rocket_h.frState_access);
 	}
 	else {
@@ -652,6 +666,41 @@ int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	}
 
 	return 0;
+}
+
+// Send a LMP message over TCP
+// wait is the number of ticks to wait for room in the txbuffer
+// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer, -3 if the target device is not connected, and -4 on a LMP serialization error
+int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait) {
+	if(is_server_running() <= 0) {
+		return -1; // Server not running
+	}
+	int devicefd = get_device_fd(device);
+	if(devicefd == -1) {
+		return -3; // Device not connected
+	}
+	Raw_message rawmsg = {0};
+	int buflen = serialize_message(msg, rawmsg.buffer, MAX_MSG_LEN);
+	if(buflen == -1) {
+		return -4; // Serialization error
+	}
+	rawmsg.packet_len = buflen;
+	rawmsg.connection_fd = devicefd;
+	return server_send(&rawmsg, wait);
+}
+
+// Send a message over TCP
+// wait is the number of ticks to wait for room in the txbuffer
+// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer, -3 if the target device is not connected
+int send_raw_msg_to_device(Target_Device device, Raw_message *msg, TickType_t wait) {
+	if(is_server_running() <= 0) {
+		return -1; // Server not running
+	}
+	int devicefd = get_device_fd(device);
+	if(devicefd == -1) {
+		return -3; // Device not connected
+	}
+	return server_send(msg, wait);
 }
 
 // Gets the valve index from the LMP valve id
@@ -694,7 +743,7 @@ uint8_t check_valve_id(uint8_t valveId) {
 // Returns the state of the valve after setting it (this should be equal to desiredState, but in the case of an error, it will accurately reflect the current state of the valve)
 Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredState) {
 	uint8_t vlverror = 0;
-	 if(xSemaphoreTake(Rocket_h.fcValve_access, 2) == pdPASS) {
+	 if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
 		 if(desiredState == Valve_Energized) {
 			 VLV_En(Rocket_h.fcValves[valve]);
 			 Rocket_h.fcValveStates[valve] = Valve_Energized;
@@ -1746,13 +1795,15 @@ void TelemetryTask(void *argument) {
   	  	VLV_OpenLoad vlv3_old = 0;
   	  	uint8_t old_stat = 1;
 
-  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 2) == pdPASS) {
+  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
   	  		vlv1_old = VLV_isOpenLoad(Rocket_h.fcValves[0]);
   	  		vlv2_old = VLV_isOpenLoad(Rocket_h.fcValves[1]);
   	  		vlv3_old = VLV_isOpenLoad(Rocket_h.fcValves[2]);
   	  		old_stat = 0;
   	  		xSemaphoreGive(Rocket_h.fcValve_access);
   	  	}
+
+  	  	uint64_t recordtime = get_rtc_time();
 
   	  	// Set global rocket state struct
   		if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
@@ -1826,9 +1877,25 @@ void TelemetryTask(void *argument) {
   				// OLD error
   			}
 
+  			Rocket_h.fcState.timestamp = recordtime;
+
   			xSemaphoreGive(Rocket_h.fcState_access);
   		}
+  		else {
+  			// No telemetry updated
+  		}
 
+  		Message telemsg = {0};
+  		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
+  			if(send_msg_to_device(LimeWire_d, &telemsg, 5) != 0) {
+  				// Server not up, target device not connected, or txbuffer is full
+  			}
+  		}
+  		else {
+  			// Telemetry access error
+  		}
+
+  		// Target TELEMETRY_HZ polling rate, but always delay for at least 1 tick, otherwise we risk not letting other tasks get CPU time
 
 		uint32_t delta = HAL_GetTick() - startTime;
 		osDelay((1000 / TELEMETRY_HZ) > delta ? (1000 / TELEMETRY_HZ) - delta : 1);
@@ -1863,6 +1930,102 @@ void TelemetryTask(void *argument) {
 		}
 		osDelay(100);
 	}*/
+}
+
+void ProcessPackets(void *argument) {
+	for(;;) {
+		Raw_message msg = {0};
+		int read_stat = server_read(&msg, 1000);
+		if(read_stat == 0) {
+			Message parsedmsg = {0};
+			if(deserialize_message(&(msg.buffer), MAX_MSG_LEN, &parsedmsg) > 0) {
+				switch(parsedmsg.type) {
+				    case MSG_TELEMETRY:
+				        // Save and relay to Limewire
+				    	if(parsedmsg.data.telemetry.board_id == BOARD_FR) {
+				    		if(unpack_fr_telemetry(&(parsedmsg.data.telemetry), 5)) {
+				    			// Failed to save data
+				    		}
+				    	}
+				    	else {
+					    	if(unpack_bb_telemetry(&(parsedmsg.data.telemetry), 5)) {
+					    		// Failed to save data
+					    	}
+				    	}
+
+				    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) != 0) {
+				    	  	// Server not up, target device not connected, or txbuffer is full
+				    	}
+				        break;
+				    case MSG_VALVE_COMMAND:
+				    	if(check_valve_id(parsedmsg.data.valve_command.valve_id)) {
+				    		if(get_valve_board(parsedmsg.data.valve_command.valve_id) == BOARD_FC) {
+				    			// Do valve command and send state message
+				    			Valve_State_t endState = set_and_update_valve(get_valve(parsedmsg.data.valve_command.valve_id), parsedmsg.data.valve_command.valve_state);
+
+				    		}
+				    		else {
+				    			// Relay to Bay Boards
+				    			if(send_raw_msg_to_device(get_valve_board(parsedmsg.data.valve_command.valve_id), &msg, 5) != 0) {
+				    				// Server not up, target device not connected, or txbuffer is full
+				    			}
+				    		}
+				    	}
+				    	else {
+				    		// Invalid valve id
+				    	}
+				        break;
+				    case MSG_VALVE_STATE:
+				        // Save and relay to Limewire
+				    	if(check_valve_id(parsedmsg.data.valve_state.valve_id)) {
+					    	switch(get_valve_board(parsedmsg.data.valve_state.valve_id)) {
+					    	    case BOARD_BAY_1:
+					    	  	  	if(xSemaphoreTake(Rocket_h.bb1Valve_access, 5) == pdPASS) {
+					    	  	  		Rocket_h.bb1ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
+					    	  	  		xSemaphoreGive(Rocket_h.bb1Valve_access);
+					    	  	  	}
+					    	        break;
+					    	    case BOARD_BAY_2:
+					    	  	  	if(xSemaphoreTake(Rocket_h.bb2Valve_access, 5) == pdPASS) {
+					    	  	  		Rocket_h.bb2ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
+					    	  	  		xSemaphoreGive(Rocket_h.bb2Valve_access);
+					    	  	  	}
+					    	        break;
+					    	    case BOARD_BAY_3:
+					    	  	  	if(xSemaphoreTake(Rocket_h.bb3Valve_access, 5) == pdPASS) {
+					    	  	  		Rocket_h.bb3ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
+					    	  	  		xSemaphoreGive(Rocket_h.bb3Valve_access);
+					    	  	  	}
+					    	        break;
+					    	    default:
+					    	        // The flight computer should not receive valve state messages for its own valves
+					    	        break;
+					    	}
+
+					    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) != 0) {
+					    	  	// Server not up, target device not connected, or txbuffer is full
+					    	}
+				    	}
+				    	else {
+				    		// Invalid valve id
+				    	}
+				        break;
+				    default:
+				        break;
+				}
+			}
+			else {
+				// Unknown message type
+			}
+		}
+		else if(read_stat == -1) {
+			// Server down, delay to prevent taking CPU time from other tasks
+			osDelay(100);
+		}
+		else {
+			// Timeout on waiting for messages
+		}
+	}
 }
 /* USER CODE END 4 */
 
@@ -1998,8 +2161,6 @@ void StartAndMonitor(void *argument)
 	// TODO: Handle valve states and control handles in arrays BE CAREFUL OF INDEX
 	// TODO: Figure out how to handle limewire's control over valves once autosequences start, it's early to decide this but it could affect how valve control is implemented
 	// TODO: Next: telemetry task, then packet handler task
-	// TODO: Create function to send valve state message taking the valve channel and the state as parameters and interally use the below function
-	// TODO: Create function to message to a target device, take raw_message pointer and target device as parameters, return status. Check that server is running in the function
 
 	/*
 	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs) (WHEN THE FC CONNECTS TO LIMEWIRE SEND THE VALVE STATES FOR THE ENTIRE ROCKET)
@@ -2016,28 +2177,9 @@ void StartAndMonitor(void *argument)
 
 	/* Infinite loop */
 	for(;;) {
-  		if(xSemaphoreTake(Rocket_h.fcState_access, 1) == pdPASS) {
-  			xSemaphoreGive(Rocket_h.fcState_access);
-  			if(is_server_running()) {
-  				int limewirefd = get_device_fd(LimeWire_d);
-  				if(limewirefd != -1) {
-  	  	  			TelemetryMessage telemsg;
-  	  	  			if(!pack_fc_telemetry_msg(&telemsg, get_rtc_time(), 1)) {
-  	  	  				Message genmsg = {MSG_TELEMETRY, telemsg};
-  	  	  				Raw_message msg = {0};
-  	  	  				int buflen = serialize_message(&genmsg, msg.buffer, MAX_MSG_LEN);
-  	  	  				if(buflen != -1) {
-  	  	  	  				msg.packet_len = buflen;
-  	  	  	  				msg.connection_fd = limewirefd;
-  	  	  	  				server_send(&msg, 10);
-  	  	  				}
-  	  	  			}
-  				}
-  			}
-  		}
 
 	  // TODO Make sure things are still running and restart anything that stops
-	  osDelay(20);
+	  osDelay(1000);
 	}
   /* USER CODE END 5 */
 }
