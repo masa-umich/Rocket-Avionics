@@ -53,6 +53,13 @@ extern "C" {
 
 #define FC_EEPROM_LEN		(uint16_t)93
 
+#define FLASH_TELEM_MARK	(uint8_t)0x1D
+#define FLASH_MSG_MARK		(uint8_t)0x1E
+
+#define ERROR_UDP_PORT		(uint16_t)1234
+
+#define ERROR_MSG_TYPES		(size_t)32 // Should be a multiple of 2
+
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 
 #define SHUNT_RES_20M		(uint16_t)20

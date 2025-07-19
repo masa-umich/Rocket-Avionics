@@ -419,6 +419,7 @@ void vTCTask(void *pvParameters) {
 				connected_chips[k].timer_start = HAL_GetTick();
 			}
 		}
+		vTaskDelay(2);
 	}
 }
 

@@ -32,6 +32,7 @@
 #include "sntp.h"
 #include "server.h"
 #include "tftp_server.h"
+#include "lwip/udp.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -41,6 +42,8 @@ void Error_Handler(void);
 /* USER CODE BEGIN 1 */
 extern const struct tftp_context my_tftp_ctx;
 extern ip4_addr_t fc_addr;
+extern struct netconn *errormsgudp;
+extern SemaphoreHandle_t errorudp_mutex;
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -140,6 +143,11 @@ static void ethernet_link_status_updated(struct netif *netif)
 	  sntp_init();
 	  server_init();
 	  tftp_init(&my_tftp_ctx);
+	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
+	  	  errormsgudp = netconn_new(NETCONN_UDP);
+          ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+	  	  xSemaphoreGive(errorudp_mutex);
+	  }
 /* USER CODE END 5 */
   }
   else /* netif is down */
@@ -148,6 +156,11 @@ static void ethernet_link_status_updated(struct netif *netif)
 	  sntp_stop();
 	  shutdown_server();
 	  tftp_cleanup();
+	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
+		  netconn_close(errormsgudp);
+		  netconn_delete(errormsgudp);
+		  xSemaphoreGive(errorudp_mutex);
+	  }
 /* USER CODE END 6 */
   }
 }

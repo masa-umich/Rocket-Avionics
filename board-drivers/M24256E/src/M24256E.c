@@ -74,6 +74,7 @@ static eeprom_status_t eeprom_polling_write(eeprom_t* eeprom,
     // If the write failed for a reason that's not an acknowledgement
     // failure, then return an error.
     if (ret != HAL_OK) return EEPROM_TX_ERROR;
+    return EEPROM_OK;
 }
 
 /**

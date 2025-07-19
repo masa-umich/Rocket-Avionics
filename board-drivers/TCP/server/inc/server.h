@@ -35,7 +35,7 @@ typedef enum {
 // Raw message structure, used for low-level communication
 typedef struct {
 	int connection_fd; // file descriptor for the connection
-	char buffer[MAX_MSG_LEN];
+	uint8_t *bufferptr;
 	int packet_len; // length of the packet
 } Raw_message;
 
@@ -54,10 +54,15 @@ void server_writer_thread(void *arg);
 void msgFreeCallback(void * data);
 
 // Function to read a message from the server
-// Returns -1 if server is not running or block = 0 and no message is available
+// Returns -1 if server is not running
+// Returns -2 if the read timed out and there's no message available
+// Returns 0 on success
 int server_read(Raw_message *msg, TickType_t block);
 
+// block is how many ticks (ms) to wait for space in the buffer
 // Returns -1 if server is not running
+// Returns -2 if the send timed out and there's no space in the txbuffer
+// Returns 0 on success
 int server_send(Raw_message* msg, TickType_t block);
 
 int update_fd_set(fd_set *rfds);

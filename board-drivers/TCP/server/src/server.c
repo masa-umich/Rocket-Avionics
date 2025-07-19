@@ -34,8 +34,8 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
     deviceMutex = xSemaphoreCreateMutex();
 
     // make thread-safe queues for incoming and outgoing messages
-    rxMsgBuffer = list_create(MAX_MSG_LEN + 2*sizeof(int), msgFreeCallback);
-	txMsgBuffer = list_create(MAX_MSG_LEN + 2*sizeof(int), msgFreeCallback);
+    rxMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
+	txMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
 
 	deviceIPs[LimeWire_d] = limewire;
 	deviceIPs[BayBoard1_d] = bb1;
@@ -58,7 +58,7 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
 // Spins off a listener, reader, and writer task/thread 
 // as well as initializes the message buffers and connection list
 int server_init(void) {
-	if(xSemaphoreTake(runningMutex, 1) == pdPASS) {
+	if(xSemaphoreTake(runningMutex, 5) == pdPASS) {
 		if(running) {
 			xSemaphoreGive(runningMutex);
 			return -1;
@@ -240,10 +240,10 @@ void server_reader_thread(void *arg) {
 
                 if (FD_ISSET(connection_fd, &rx_fd_set)) {
                     // make space for the packet
-                	Raw_message msg = {0};
+                	uint8_t tempbuffer[MAX_MSG_LEN];
 
                     // read the message
-				    int packet_len = recv(connection_fd, msg.buffer, MAX_MSG_LEN, 0);
+				    int packet_len = recv(connection_fd, tempbuffer, MAX_MSG_LEN, 0);
 
 				    if(packet_len <= 0) {
 				    	// Connection is closed
@@ -262,6 +262,10 @@ void server_reader_thread(void *arg) {
 				    	continue;
 				    }
 
+				    Raw_message msg = {0};
+				    uint8_t *buffer = malloc(packet_len);
+				    memcpy(buffer, tempbuffer, packet_len);
+				    msg.bufferptr = buffer;
 				    msg.connection_fd = connection_fd;
 				    msg.packet_len = packet_len;
 
@@ -302,15 +306,17 @@ void server_writer_thread(void *arg) {
 
         if (msg.connection_fd == -1) {
             // messages with -1 connfd are not valid
+        	free(msg.bufferptr);
             continue;
         }
 
-		if (send(msg.connection_fd, msg.buffer, msg.packet_len, 0) == -1) { // opts = 0
+		if (send(msg.connection_fd, msg.bufferptr, msg.packet_len, 0) == -1) { // opts = 0
 			// Do nothing since this most likely is due to a closed connection.
 			// Lost telemetry and valve state messages are ok since they will be sent as soon as the connection is reestablished
 			// Lost valve commands shouldn't be held to send later since that could be dangerous if a board is reconnected and instantly a valve opens/closes
             //Error_Handler(); // TODO: add error handling
 		}
+		free(msg.bufferptr);
 
 	}
 
@@ -329,7 +335,8 @@ int server_read(Raw_message* msg, TickType_t block) {
     // This will block until a message is available
 	if(is_server_running()) {
 		if(list_pop(rxMsgBuffer, (void*)msg, block)) {
-			return -1;
+			// No message available
+			return -2;
 		}
 
 		// Return the length of the message
@@ -346,7 +353,8 @@ int server_send(Raw_message* msg, TickType_t block) {
 		// Push a message to the TX Message Buffer
 		// This will block until there is space in the buffer
 		if(list_push(txMsgBuffer, (void*)msg, block)) {
-			return -1;
+			// Timed out
+			return -2;
 		}
 
 		return 0; // success
@@ -374,7 +382,7 @@ int update_fd_set(fd_set *rfds) {
 }
 
 int is_server_running() {
-	if(xSemaphoreTake(runningMutex, 1) == pdPASS) {
+	if(xSemaphoreTake(runningMutex, 2) == pdPASS) {
 		uint8_t stat = running;
 		xSemaphoreGive(runningMutex);
 		return stat;
@@ -385,20 +393,18 @@ int is_server_running() {
 }
 
 void drain_lists() {
-	uint8_t space;
-	do {
-		Raw_message msg = {0};
-		space = !list_pop(txMsgBuffer, (void*)(&msg), 0);
-	} while(space);
+	Raw_message msg = {0};
+	while(!list_pop(txMsgBuffer, (void*)(&msg), 0)) {
+		free(msg.bufferptr);
+	}
 
-	do {
-		Raw_message msg = {0};
-		space = !list_pop(rxMsgBuffer, (void*)(&msg), 0);
-	} while(space);
+	while(!list_pop(rxMsgBuffer, (void*)(&msg), 0)) {
+		free(msg.bufferptr);
+	}
 }
 
 int shutdown_server() {
-	if(xSemaphoreTake(runningMutex, 1) == pdPASS) {
+	if(xSemaphoreTake(runningMutex, 5) == pdPASS) {
 		if(!running) {
 			xSemaphoreGive(runningMutex);
 			return -1;

@@ -39,6 +39,9 @@
 #include "tftp_server.h"
 #include "lmp_channels.h"
 #include "math.h"
+#include "W25N04KV.h"
+#include "base64.h"
+#include "lwip/udp.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -276,6 +279,18 @@ const osThreadAttr_t packet_task_attr = {
   .stack_size = 384 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+
+W25N04KV_Flash flash_h = {0};
+SemaphoreHandle_t flash_mutex;
+uint8_t flashreadbuffer[2048 + 512];
+uint16_t validflashbytes = 0;
+uint8_t flashmsgtype = 0;
+
+SemaphoreHandle_t errormsg_mutex;
+uint8_t errormsgtimers[ERROR_MSG_TYPES / 2]; // Use 4 bits to store each timer
+
+struct netconn *errormsgudp = NULL;
+SemaphoreHandle_t errorudp_mutex;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -392,6 +407,44 @@ uint64_t get_rtc_time() {
 	time_t sec = mktime(&time);
 	int32_t us = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) / 6250.0) * 1e6;
 	return (sec * 1e9) + (us * 1e3);
+}
+
+// outbuf MUST have at least 24 bytes of space. It will not be null terminated
+void get_iso_time(char *outbuf) {
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
+
+	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
+		if(__HAL_RTC_IS_CALENDAR_INITIALIZED(&hrtc) == 0) {
+			xSemaphoreGive(RTC_mutex);
+			// RTC not set yet
+			memcpy(outbuf, "0000-00-00T00:00:00.000Z", 24);
+			return;
+		}
+		HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+
+		xSemaphoreGive(RTC_mutex);
+	}
+	else {
+		memcpy(outbuf, "0000-00-00T00:00:00.000Z", 24);
+		return;
+	}
+	snprintf(outbuf, 5, "%04u", 2000 + (uint16_t) sDate.Year);
+	outbuf[4] = '-';
+	snprintf(&outbuf[5], 3, "%02u", sDate.Month);
+	outbuf[7] = '-';
+	snprintf(&outbuf[8], 3, "%02u", sDate.Date);
+	outbuf[10] = 'T';
+	snprintf(&outbuf[11], 3, "%02u", sTime.Hours);
+	outbuf[13] = ':';
+	snprintf(&outbuf[14], 3, "%02u", sTime.Minutes);
+	outbuf[16] = ':';
+	snprintf(&outbuf[17], 3, "%02u", sTime.Seconds);
+	outbuf[19] = '.';
+	int16_t ms = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) * 1e3) / 6250;
+	snprintf(&outbuf[20], 4, "%03u", ms);
+	outbuf[23] = 'Z';
 }
 
 // Pack telemetry message
@@ -836,10 +889,115 @@ int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
 	return 0;
 }
 
+// Writes text to flash, msgtext does not have to be null terminated and msglen should not include the null character if it is included
+// type is the msg type, use the macros in main.h
+// returns 0 on success, 1 if there is not enough space or the flash could not be accessed
+uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
+	if(xSemaphoreTake(flash_mutex, 5) == pdPASS) {
+		if(fc_get_bytes_remaining(&flash_h) < msglen + 2) {
+			xSemaphoreGive(flash_mutex);
+			return 1;
+		}
+		uint8_t *writebuf = (uint8_t *) malloc(msglen + 2);
+		writebuf[0] = type;
+		memcpy(&writebuf[1], msgtext, msglen);
+		writebuf[msglen + 1] = '\n';
+		fc_write_to_flash(&flash_h, writebuf, msglen + 2);
+		free(writebuf);
+		xSemaphoreGive(flash_mutex);
+		return 0;
+	}
+	return 1;
+}
+
+// Returns 0 on success, 1 on error
+uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
+	if(xSemaphoreTake(flash_mutex, 5) == pdPASS) {
+		if(fc_get_bytes_remaining(&flash_h) < msglen) {
+			xSemaphoreGive(flash_mutex);
+			return 1;
+		}
+		fc_write_to_flash(&flash_h, writebuf, msglen);
+		xSemaphoreGive(flash_mutex);
+		return 0;
+	}
+	return 1;
+}
+
+uint8_t log_message(const char *msgtext, int msgtype) {
+	if(msgtype != -1) {
+		if(msgtype >= ERROR_MSG_TYPES) {
+			return 2;
+		}
+		if(xSemaphoreTake(errormsg_mutex, 2) == pdPASS) {
+			uint8_t val = (msgtype % 2) == 0 ? errormsgtimers[msgtype / 2] & 0x0F : errormsgtimers[msgtype / 2] >> 4;
+			if(val) {
+				xSemaphoreGive(errormsg_mutex);
+				return 1;
+			}
+			if(msgtype % 2) {
+				errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0x0F) | (15 << 4);
+			}
+			else {
+				errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0xF0) | 15;
+			}
+			xSemaphoreGive(errormsg_mutex);
+		}
+		else {
+			return 2;
+		}
+	}
+	size_t msglen = 1 + 24 + 1 + strlen(msgtext) + 1;
+	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
+	rawmsgbuf[0] = FLASH_MSG_MARK;
+	get_iso_time(&rawmsgbuf[1]);
+	rawmsgbuf[25] = ' ';
+	memcpy(&rawmsgbuf[26], msgtext, strlen(msgtext));
+	rawmsgbuf[msglen - 1] = '\n';
+	write_raw_to_flash(rawmsgbuf, msglen);
+	if(xSemaphoreTake(errorudp_mutex, 5) == pdPASS) {
+		if(errormsgudp) {
+			struct netbuf *outbuf = netbuf_new();
+			if(outbuf) {
+				void *pkt_buf = netbuf_alloc(outbuf, msglen - 2);
+				if(pkt_buf) {
+					memcpy(pkt_buf, &rawmsgbuf[1], msglen - 2);
+					err_t senderr = netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
+				}
+				netbuf_delete(outbuf);
+			}
+		}
+		xSemaphoreGive(errorudp_mutex);
+	}
+
+	free(rawmsgbuf); // No memory leaks here hehe
+	return 0;
+}
+
 void *ftp_open(const char *fname, const char *mode, u8_t write) {
 	if(strcmp(fname, "eeprom.bin") == 0) {
 		eeprom_cursor = 0;
 		return (void *) 1; // 1 refers to eeprom
+	}
+	else if(strcmp(fname, "messages.txt") == 0) {
+		if(!write) {
+			xSemaphoreTake(flash_mutex, portMAX_DELAY);
+			fc_finish_flash_write(&flash_h);
+			fc_reset_flash_read_pointer(&flash_h);
+			validflashbytes = 0;
+			flashmsgtype = 0;
+		}
+		return write ? (void *) 0 : (void *) FLASH_MSG_MARK; // FLASH_MSG_MARK refers to status/error messages. Only reading is valid
+	}
+	else if(strcmp(fname, "telemetry.bin") == 0) {
+		if(!write) {
+			xSemaphoreTake(flash_mutex, portMAX_DELAY);
+			fc_finish_flash_write(&flash_h);
+			fc_reset_flash_read_pointer(&flash_h);
+			validflashbytes = 0;
+			flashmsgtype = 0;
+		}
+		return write ? (void *) 0 : (void *) FLASH_TELEM_MARK; // FLASH_TELEM_MARK refers to telemetry and valve state LMP dump. Only reading is valid
 	}
 	else {
 		return (void *) 0;
@@ -901,6 +1059,9 @@ void ftp_close(void *handle) {
 			// TODO: Mismatched CRC
 		}
 	}
+	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK) {
+		xSemaphoreGive(flash_mutex);
+	}
 }
 
 int ftp_read(void *handle, void *buf, int bytes) {
@@ -917,6 +1078,76 @@ int ftp_read(void *handle, void *buf, int bytes) {
 		}
 		eeprom_cursor += bytes_to_read;
 		return bytes_to_read;
+	}
+	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK) {
+		uint8_t *flashbuf = (uint8_t *) malloc(2048);
+		if(!flashbuf) {
+			return -1;
+		}
+		while(bytes > validflashbytes) {
+			if(fc_flash_current_page(&flash_h) >= 4 * W25N01GV_NUM_PAGES) {
+				break;
+			}
+			uint16_t cursor = 0;
+			uint8_t empty = 1;
+			fc_read_next_2KB_from_flash(&flash_h, flashbuf);
+			if(flashbuf[0] != FLASH_MSG_MARK && flashbuf[0] != FLASH_TELEM_MARK) {
+				// Load or "discard" partial message, be careful if the entire 2048 bytes are part of the partial message
+				for(cursor = 0;cursor < 2048;cursor++) {
+					if(flashbuf[cursor] != 0xFF) {
+						empty = 0;
+					}
+					if(flashbuf[cursor] == '\n') {
+						break;
+					}
+				}
+				cursor += 1;
+				if(cursor > 2047) {
+					if(empty) {
+						break;
+					}
+					// Load entire or none, then continue
+					if(fd == flashmsgtype) {
+						memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
+						validflashbytes += 2048;
+					}
+					continue;
+				}
+				else {
+					if(fd == flashmsgtype) {
+						memcpy(&flashreadbuffer[validflashbytes], flashbuf, cursor);
+						validflashbytes += cursor;
+					}
+				}
+			}
+			int start = -1;
+			for(;cursor < 2048;cursor++) {
+				if(flashbuf[cursor] == FLASH_MSG_MARK || flashbuf[cursor] == FLASH_TELEM_MARK) {
+					flashmsgtype = flashbuf[cursor];
+					start = cursor + 1;
+				}
+				else if(flashbuf[cursor] == '\n') {
+					if(fd == flashmsgtype) {
+						memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (cursor - start) + 1);
+						validflashbytes += (cursor - start) + 1;
+					}
+					start = -1;
+				}
+			}
+			if(start != -1) {
+				if(fd == flashmsgtype) {
+					memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (2047 - start) + 1);
+					validflashbytes += (2047 - start) + 1;
+				}
+			}
+		}
+		// Load validflashbytes into buf, keep in mind it could be less than 512 or even 0
+		int readbytes = bytes > validflashbytes ? validflashbytes : bytes;
+		memcpy(buf, flashreadbuffer, readbytes);
+		memmove(&flashreadbuffer, &flashreadbuffer[readbytes], validflashbytes - readbytes);
+		validflashbytes -= readbytes;
+		free(flashbuf);
+		return readbytes;
 	}
 	else {
 		return -1;
@@ -1025,6 +1256,9 @@ int main(void)
   /* add mutexes, ... */
   // Create RTC mutex
   RTC_mutex = xSemaphoreCreateMutex();
+  flash_mutex = xSemaphoreCreateMutex();
+  errormsg_mutex = xSemaphoreCreateMutex();
+  errorudp_mutex = xSemaphoreCreateMutex();
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -1339,7 +1573,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -1782,9 +2016,13 @@ void TelemetryTask(void *argument) {
 	//struct netconn *sendudp = netconn_new(NETCONN_UDP);
 	//ip_addr_t debug_addr;
 	//IP4_ADDR(&debug_addr, 192, 168, 0, 5);
+	/*for(;;) {
+		log_message("This should only be logged every ~500ms", 0);
+		log_message("This should be logged every 20ms", -1);
+		osDelay(1000);
+	}*/
 	for(;;) {
 		uint32_t startTime = HAL_GetTick();
-
 		// Read from sensors
 		uint16_t adc_values[16] = {0};
 		read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
@@ -2184,6 +2422,10 @@ void StartAndMonitor(void *argument)
   	MS5611_Reset(&(sensors_h.bar2_h));
   	MS5611_readPROM(&(sensors_h.bar2_h), &(sensors_h.prom2));
   	
+  	// Init flash
+  	fc_init_flash(&flash_h, &hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
+  	memset(&errormsgtimers, 0, ERROR_MSG_TYPES / 2);
+  	//fc_erase_flash(&flash_h);
 	// Start tasks
 
   	// Start telemetry task
@@ -2197,6 +2439,11 @@ void StartAndMonitor(void *argument)
 		server_init();
 		sntp_init();
 		tftp_init(&my_tftp_ctx);
+		if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
+			errormsgudp = netconn_new(NETCONN_UDP);
+	        ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+			xSemaphoreGive(errorudp_mutex);
+		}
 	}
 
 	// TODO: Handle valve states and control handles in arrays BE CAREFUL OF INDEX
@@ -2215,13 +2462,30 @@ void StartAndMonitor(void *argument)
 	 * telemetry task - read from peripherals and send telemetry msg
 	 * tcp process task - process incoming packets for relaying or valve stuff
 	 */
+	//const char sample[] = "Please work, I don't want to do more work";
+	//write_ascii_to_flash(sample, sizeof(sample) - 1, FLASH_MSG_MARK);
 
 	/* Infinite loop */
 	for(;;) {
-
 	  // TODO Make sure things are still running and restart anything that stops
 		size_t freemem = xPortGetFreeHeapSize();
-	  osDelay(1000);
+		if(xSemaphoreTake(errormsg_mutex, 5) == pdPASS) {
+			for(int i = 0;i < ERROR_MSG_TYPES;i++) {
+				uint8_t val = (i % 2) == 0 ? errormsgtimers[i / 2] & 0x0F : errormsgtimers[i / 2] >> 4;
+				if(val) {
+					val--;
+					if(i % 2) {
+						errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0x0F) | (val << 4);
+					}
+					else {
+						errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0xF0) | val;
+					}
+				}
+			}
+			xSemaphoreGive(errormsg_mutex);
+		}
+
+	  osDelay(35);
 	}
   /* USER CODE END 5 */
 }

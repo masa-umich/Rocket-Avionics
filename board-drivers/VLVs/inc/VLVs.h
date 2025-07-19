@@ -23,9 +23,9 @@ typedef enum {
 } VLV_Voltage;
 
 typedef enum {
-	VLV_NoLoad = 0U, 	// No valve connected to the channel
-	VLV_Load, 		 	// Valve connected
-	VLV_Energized		// Valve channel is currently energized. This says nothing about whether or not a valve is connected
+	VLV_NoLoad = 0, 	// No valve connected to the channel
+	VLV_Load = 1, 		 	// Valve connected
+	VLV_Energized = -1		// Valve channel is currently energized. This says nothing about whether or not a valve is connected
 } VLV_OpenLoad;
 
 typedef struct {

@@ -27,6 +27,7 @@ Core/Src \
 Core/Startup \
 Drivers/BSP/Components/lan8742 \
 Drivers/STM32H7xx_HAL_Driver/Src \
+FLASH/src \
 LSM6DSO32XTR/src \
 LWIP/App \
 LWIP/Target \
