@@ -55,7 +55,7 @@ typedef struct {
 } HeartbeatMessage;
 
 // Message Type + Board ID + Timestamp + Channels (float)
-#define MAX_TELEMETRY_MSG_SIZE (1 + 1 + 8 + (4 * MAX_TELEMETRY_CHANNELS))
+#define MAX_TELEMETRY_MSG_SIZE (1 + 1 + 1 + 8 + (4 * MAX_TELEMETRY_CHANNELS))
 // Message Length + Message Type + Valve ID + Valve State
 #define MAX_VALVE_COMMAND_MSG_SIZE (1 + 1 + 1 + 1)
 // Message Length + Message Type + Valve ID + Valve State + Timestamp

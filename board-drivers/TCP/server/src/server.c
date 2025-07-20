@@ -460,5 +460,5 @@ int get_device_fd(Target_Device dev) {
     	xSemaphoreGive(deviceMutex);
     	return fd;
     }
-    return -1;
+    return -2;
 }

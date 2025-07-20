@@ -25,11 +25,6 @@ typedef struct {
 } PT_t;
 
 typedef enum {
-	Valve_Deenergized = 0U,
-	Valve_Energized
-} Valve_State_t;
-
-typedef enum {
 	Vlv1 = 0U,
 	Vlv2,
 	Vlv3,

@@ -28,6 +28,11 @@ typedef enum {
 	VLV_Energized = -1		// Valve channel is currently energized. This says nothing about whether or not a valve is connected
 } VLV_OpenLoad;
 
+typedef enum {
+	Valve_Deenergized = 0U,
+	Valve_Energized
+} Valve_State_t;
+
 typedef struct {
     // Valve Enable Pin
     GPIO_TypeDef * VLV_EN_GPIO_Port;
@@ -45,6 +50,8 @@ void VLV_Den(Valve vlv);
 
 // Sort of just a HAL_GPIO wrapper, toggles a valve to the opposite state
 void VLV_Toggle(Valve vlv);
+
+Valve_State_t VLV_State(Valve vlv);
 
 // Uses the open-load detection feature that is assumed to be built into the board
 // Returns VLV_NoLoad if no load is detected, VLV_Load if a valve is connected, and VLV_Energized if the channel is energized.

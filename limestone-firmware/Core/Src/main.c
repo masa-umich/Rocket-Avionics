@@ -209,6 +209,11 @@ typedef struct {
   	MS5611_PROM_t prom1;
   	MS5611_PROM_t prom2;
 } Sensors_t;
+
+typedef struct {
+	uint8_t *content;
+	size_t len;
+} errormsg_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -291,6 +296,8 @@ uint8_t errormsgtimers[ERROR_MSG_TYPES / 2]; // Use 4 bits to store each timer
 
 struct netconn *errormsgudp = NULL;
 SemaphoreHandle_t errorudp_mutex;
+
+List* errorMsgList;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -730,31 +737,38 @@ int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 
 // Send a LMP message over TCP
 // wait is the number of ticks to wait for room in the txbuffer
-// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer, -3 if the target device is not connected, and -4 on a LMP serialization error
-int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait) {
+// buffersize is the maximum size that it will take to serialize the LMP message, if this is 0, it will use the maximum possible message size to ensure proper serialization
+// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer or space to allocate a buffer, -3 if the target device is not connected, and -4 on a LMP serialization error
+int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size_t buffersize) {
+	if(buffersize == 0) {
+		buffersize = MAX_MSG_LEN;
+	}
 	if(is_server_running() <= 0) {
 		return -1; // Server not running
 	}
 	int devicefd = get_device_fd(device);
-	if(devicefd == -1) {
+	if(devicefd < 0) {
 		return -3; // Device not connected
 	}
-	uint8_t tempbuffer[MAX_MSG_LEN];
-	int buflen = serialize_message(msg, tempbuffer, MAX_MSG_LEN);
+	uint8_t tempbuffer[buffersize];
+	int buflen = serialize_message(msg, tempbuffer, buffersize);
 	if(buflen == -1) {
 		return -4; // Serialization error
 	}
     uint8_t *buffer = malloc(buflen);
-    memcpy(buffer, tempbuffer, buflen);
-	Raw_message rawmsg = {0};
-	rawmsg.bufferptr = buffer;
-	rawmsg.packet_len = buflen;
-	rawmsg.connection_fd = devicefd;
-	int result = server_send(&rawmsg, wait);
-	if(result != 0) {
-		free(buffer);
-	}
-	return result;
+    if(buffer) {
+        memcpy(buffer, tempbuffer, buflen);
+    	Raw_message rawmsg = {0};
+    	rawmsg.bufferptr = buffer;
+    	rawmsg.packet_len = buflen;
+    	rawmsg.connection_fd = devicefd;
+    	int result = server_send(&rawmsg, wait);
+    	if(result != 0) {
+    		free(buffer);
+    	}
+    	return result;
+    }
+    return -2;
 }
 
 // Send a message over TCP
@@ -766,7 +780,7 @@ int send_raw_msg_to_device(Target_Device device, Raw_message *msg, TickType_t wa
 		return -1; // Server not running
 	}
 	int devicefd = get_device_fd(device);
-	if(devicefd == -1) {
+	if(devicefd < 0) {
 		return -3; // Device not connected
 	}
 	return server_send(msg, wait);
@@ -910,12 +924,12 @@ uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
 	return 1;
 }
 
-// Returns 0 on success, 1 on error
+// Returns 0 on success, 1 on access error, 2 if the flash is full
 uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
 	if(xSemaphoreTake(flash_mutex, 5) == pdPASS) {
 		if(fc_get_bytes_remaining(&flash_h) < msglen) {
 			xSemaphoreGive(flash_mutex);
-			return 1;
+			return 2;
 		}
 		fc_write_to_flash(&flash_h, writebuf, msglen);
 		xSemaphoreGive(flash_mutex);
@@ -949,29 +963,34 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 	}
 	size_t msglen = 1 + 24 + 1 + strlen(msgtext) + 1;
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
-	rawmsgbuf[0] = FLASH_MSG_MARK;
-	get_iso_time(&rawmsgbuf[1]);
-	rawmsgbuf[25] = ' ';
-	memcpy(&rawmsgbuf[26], msgtext, strlen(msgtext));
-	rawmsgbuf[msglen - 1] = '\n';
-	write_raw_to_flash(rawmsgbuf, msglen);
-	if(xSemaphoreTake(errorudp_mutex, 5) == pdPASS) {
-		if(errormsgudp) {
-			struct netbuf *outbuf = netbuf_new();
-			if(outbuf) {
-				void *pkt_buf = netbuf_alloc(outbuf, msglen - 2);
-				if(pkt_buf) {
-					memcpy(pkt_buf, &rawmsgbuf[1], msglen - 2);
-					err_t senderr = netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
-				}
-				netbuf_delete(outbuf);
-			}
+	if(rawmsgbuf) {
+		rawmsgbuf[0] = FLASH_MSG_MARK;
+		get_iso_time(&rawmsgbuf[1]);
+		rawmsgbuf[25] = ' ';
+		memcpy(&rawmsgbuf[26], msgtext, strlen(msgtext));
+		rawmsgbuf[msglen - 1] = '\n';
+		errormsg_t fullmsg;
+		fullmsg.content = rawmsgbuf;
+		fullmsg.len = msglen;
+		if(list_push(errorMsgList, (void *)&fullmsg, 2)) {
+			// No space for more messages
+			free(rawmsgbuf);
+			return 3;
 		}
-		xSemaphoreGive(errorudp_mutex);
+		return 0;
 	}
+	return 3;
+}
 
-	free(rawmsgbuf); // No memory leaks here hehe
-	return 0;
+void log_lmp_packet(uint8_t *buf, size_t buflen) {
+	size_t outlen;
+	uint8_t *encoded = base64_encode(buf, buflen, &outlen, 1);
+	if(encoded) {
+		encoded[0] = FLASH_TELEM_MARK;
+		encoded[outlen] = '\n';
+		write_raw_to_flash(encoded, outlen + 1);
+		free(encoded);
+	}
 }
 
 void *ftp_open(const char *fname, const char *mode, u8_t write) {
@@ -1128,8 +1147,10 @@ int ftp_read(void *handle, void *buf, int bytes) {
 				}
 				else if(flashbuf[cursor] == '\n') {
 					if(fd == flashmsgtype) {
-						memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (cursor - start) + 1);
-						validflashbytes += (cursor - start) + 1;
+						if(start != -1) {
+							memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (cursor - start) + 1);
+							validflashbytes += (cursor - start) + 1;
+						}
 					}
 					start = -1;
 				}
@@ -1142,7 +1163,7 @@ int ftp_read(void *handle, void *buf, int bytes) {
 			}
 		}
 		// Load validflashbytes into buf, keep in mind it could be less than 512 or even 0
-		int readbytes = bytes > validflashbytes ? validflashbytes : bytes;
+		int readbytes = (bytes > validflashbytes) ? validflashbytes : bytes;
 		memcpy(buf, flashreadbuffer, readbytes);
 		memmove(&flashreadbuffer, &flashreadbuffer[readbytes], validflashbytes - readbytes);
 		validflashbytes -= readbytes;
@@ -2019,7 +2040,7 @@ void TelemetryTask(void *argument) {
 	/*for(;;) {
 		log_message("This should only be logged every ~500ms", 0);
 		log_message("This should be logged every 20ms", -1);
-		osDelay(1000);
+		osDelay(250);
 	}*/
 	for(;;) {
 		uint32_t startTime = HAL_GetTick();
@@ -2142,7 +2163,7 @@ void TelemetryTask(void *argument) {
   		Message telemsg = {0};
   		telemsg.type = MSG_TELEMETRY;
   		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
-  			if(send_msg_to_device(LimeWire_d, &telemsg, 5) != 0) {
+  			if(send_msg_to_device(LimeWire_d, &telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) != 0) {
   				// Server not up, target device not connected, or txbuffer is full
   			}
   		}
@@ -2227,7 +2248,7 @@ void ProcessPackets(void *argument) {
 				    			returnMsg.data.valve_state.valve_state = endState;
 				    			returnMsg.data.valve_state.valve_id = parsedmsg.data.valve_command.valve_id;
 				    			returnMsg.data.valve_state.timestamp = get_rtc_time();
-				      			if(send_msg_to_device(LimeWire_d, &returnMsg, 5) != 0) {
+				      			if(send_msg_to_device(LimeWire_d, &returnMsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5) != 0) {
 				      				// Server not up, target device not connected, or txbuffer is full
 				      			}
 				    		}
@@ -2361,6 +2382,11 @@ void StartAndMonitor(void *argument)
   	Rocket_h.fcValves[2].VLV_OLD_GPIO_Port = VLV3_OLD_GPIO_Port;
   	Rocket_h.fcValves[2].VLV_OLD_GPIO_Pin = VLV3_OLD_Pin;
 
+  	// These should always be 0 but in the case that code is added later than adds a default valve state I'm leaving this here
+  	Rocket_h.fcValveStates[0] = VLV_State(Rocket_h.fcValves[0]);
+  	Rocket_h.fcValveStates[1] = VLV_State(Rocket_h.fcValves[1]);
+  	Rocket_h.fcValveStates[2] = VLV_State(Rocket_h.fcValves[2]);
+
 	// Init sensors and peripherals
   	// ADC
   	sensors_h.adc_h.MAX11128_CS_PORT 		= ADC_CS_GPIO_Port;
@@ -2426,6 +2452,8 @@ void StartAndMonitor(void *argument)
   	fc_init_flash(&flash_h, &hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
   	memset(&errormsgtimers, 0, ERROR_MSG_TYPES / 2);
   	//fc_erase_flash(&flash_h);
+  	errorMsgList = list_create(sizeof(errormsg_t), msgFreeCallback);
+
 	// Start tasks
 
   	// Start telemetry task
@@ -2446,9 +2474,8 @@ void StartAndMonitor(void *argument)
 		}
 	}
 
-	// TODO: Handle valve states and control handles in arrays BE CAREFUL OF INDEX
-	// TODO: Figure out how to handle limewire's control over valves once autosequences start, it's early to decide this but it could affect how valve control is implemented
-	// TODO: Next: telemetry task, then packet handler task
+	// TODO: Figure out how to handle limewire's control over valves once autosequences start, it's early to decide this but it could affect how valve control is implemented - do this after bay board porting
+	// TODO: Next: Send udp message every 30 seconds when flash is full and convert flash error/status logging to a threaded design, but the actual logging in the loop below
 
 	/*
 	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs) (WHEN THE FC CONNECTS TO LIMEWIRE SEND THE VALVE STATES FOR THE ENTIRE ROCKET)
@@ -2465,27 +2492,194 @@ void StartAndMonitor(void *argument)
 	//const char sample[] = "Please work, I don't want to do more work";
 	//write_ascii_to_flash(sample, sizeof(sample) - 1, FLASH_MSG_MARK);
 
+	uint8_t telemcounter = 0;
+	uint8_t statecounter = 0;
+
+	uint8_t limewireconnected = 0;
+
+	uint32_t startTick = HAL_GetTick();
+	uint32_t lastflashfull = 0;
 	/* Infinite loop */
 	for(;;) {
-	  // TODO Make sure things are still running and restart anything that stops
-		size_t freemem = xPortGetFreeHeapSize();
-		if(xSemaphoreTake(errormsg_mutex, 5) == pdPASS) {
-			for(int i = 0;i < ERROR_MSG_TYPES;i++) {
-				uint8_t val = (i % 2) == 0 ? errormsgtimers[i / 2] & 0x0F : errormsgtimers[i / 2] >> 4;
-				if(val) {
-					val--;
-					if(i % 2) {
-						errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0x0F) | (val << 4);
+		errormsg_t logmsg;
+		if(!list_pop(errorMsgList, (void *)&logmsg, 5)) {
+			uint8_t flashstat = write_raw_to_flash(logmsg.content, logmsg.len);
+			if(flashstat == 2) {
+				// Flash is full, send UDP message every 5 seconds
+				if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
+					if(xSemaphoreTake(errorudp_mutex, 5) == pdPASS) {
+						if(errormsgudp) {
+							struct netbuf *outbuf = netbuf_new();
+							if(outbuf) {
+								char *pkt_buf = (char *) netbuf_alloc(outbuf, 24 + 1 + 29);
+								if(pkt_buf) {
+									get_iso_time(pkt_buf);
+									pkt_buf[24] = ' ';
+									memcpy(&pkt_buf[25], "Flight Computer flash is full", 29);
+									netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
+								}
+								netbuf_delete(outbuf);
+							}
+						}
+						xSemaphoreGive(errorudp_mutex);
 					}
-					else {
-						errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0xF0) | val;
-					}
+					lastflashfull = HAL_GetTick();
 				}
 			}
-			xSemaphoreGive(errormsg_mutex);
+			if(xSemaphoreTake(errorudp_mutex, 5) == pdPASS) {
+				if(errormsgudp) {
+					struct netbuf *outbuf = netbuf_new();
+					if(outbuf) {
+						void *pkt_buf = netbuf_alloc(outbuf, logmsg.len - 2);
+						if(pkt_buf) {
+							memcpy(pkt_buf, &(logmsg.content[1]), logmsg.len - 2);
+							netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
+						}
+						netbuf_delete(outbuf);
+					}
+				}
+				xSemaphoreGive(errorudp_mutex);
+			}
+
+			free(logmsg.content); // No memory leaks here hehe
+		}
+		if(HAL_GetTick() - startTick > 35) {
+			startTick = HAL_GetTick();
+			//size_t freemem = xPortGetFreeHeapSize();
+			if(xSemaphoreTake(errormsg_mutex, 5) == pdPASS) {
+				for(int i = 0;i < ERROR_MSG_TYPES;i++) {
+					uint8_t val = (i % 2) == 0 ? errormsgtimers[i / 2] & 0x0F : errormsgtimers[i / 2] >> 4;
+					if(val) {
+						val--;
+						if(i % 2) {
+							errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0x0F) | (val << 4);
+						}
+						else {
+							errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0xF0) | val;
+						}
+					}
+				}
+				xSemaphoreGive(errormsg_mutex);
+			}
+
+			int limefd = get_device_fd(LimeWire_d);
+			if(limefd > -2) {
+				if(limewireconnected == 0 && limefd > -1) {
+					uint64_t valvetime = get_rtc_time();
+			  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
+			  	  		Valve_State_t vstates[3];
+						for(int i = 0;i < 3;i++) {
+							vstates[i] = Rocket_h.fcValveStates[i];
+						}
+			  	  		xSemaphoreGive(Rocket_h.fcValve_access);
+						for(int i = 0;i < 3;i++) {
+							Message statemsg = {0};
+							statemsg.type = MSG_VALVE_STATE;
+							statemsg.data.valve_state.timestamp = valvetime;
+							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, i);
+							statemsg.data.valve_state.valve_state = vstates[i];
+							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+						}
+			  	  	}
+			  	  	if(xSemaphoreTake(Rocket_h.bb1Valve_access, 5) == pdPASS) {
+			  	  		Valve_State_t vstates[7];
+						for(int i = 0;i < 7;i++) {
+							vstates[i] = Rocket_h.bb1ValveStates[i];
+						}
+			  	  		xSemaphoreGive(Rocket_h.bb1Valve_access);
+						for(int i = 0;i < 7;i++) {
+							Message statemsg = {0};
+							statemsg.type = MSG_VALVE_STATE;
+							statemsg.data.valve_state.timestamp = valvetime;
+							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_1, i);
+							statemsg.data.valve_state.valve_state = vstates[i];
+							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+						}
+			  	  	}
+			  	  	if(xSemaphoreTake(Rocket_h.bb2Valve_access, 5) == pdPASS) {
+			  	  		Valve_State_t vstates[7];
+						for(int i = 0;i < 7;i++) {
+							vstates[i] = Rocket_h.bb2ValveStates[i];
+						}
+			  	  		xSemaphoreGive(Rocket_h.bb2Valve_access);
+						for(int i = 0;i < 7;i++) {
+							Message statemsg = {0};
+							statemsg.type = MSG_VALVE_STATE;
+							statemsg.data.valve_state.timestamp = valvetime;
+							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_2, i);
+							statemsg.data.valve_state.valve_state = vstates[i];
+							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+						}
+			  	  	}
+			  	  	if(xSemaphoreTake(Rocket_h.bb3Valve_access, 5) == pdPASS) {
+			  	  		Valve_State_t vstates[7];
+						for(int i = 0;i < 7;i++) {
+							vstates[i] = Rocket_h.bb3ValveStates[i];
+						}
+			  	  		xSemaphoreGive(Rocket_h.bb3Valve_access);
+						for(int i = 0;i < 7;i++) {
+							Message statemsg = {0};
+							statemsg.type = MSG_VALVE_STATE;
+							statemsg.data.valve_state.timestamp = valvetime;
+							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_3, i);
+							statemsg.data.valve_state.valve_state = vstates[i];
+							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+						}
+			  	  	}
+				}
+				if(limefd > -1) {
+					limewireconnected = 1;
+				}
+				else {
+					limewireconnected = 0;
+				}
+			}
+
+			if(telemcounter == 0) {
+		  		Message telemsg = {0};
+		  		telemsg.type = MSG_TELEMETRY;
+		  		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), get_rtc_time(), 5)) {
+		  			uint8_t tempbuffer[11 + (4 * FC_TELEMETRY_CHANNELS) + 5];
+		  			int buflen = serialize_message(&telemsg, tempbuffer, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5);
+		  			if(buflen != -1) {
+		  				log_lmp_packet(tempbuffer, buflen);
+		  			}
+		  		}
+				telemcounter = 6;
+			}
+			else {
+				telemcounter--;
+			}
+
+			if(statecounter == 0) {
+		  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
+		  	  		Valve_State_t vstates[3];
+					for(int i = 0;i < 3;i++) {
+						vstates[i] = Rocket_h.fcValveStates[i];
+					}
+		  	  		xSemaphoreGive(Rocket_h.fcValve_access);
+					uint64_t valvetime = get_rtc_time();
+					for(int i = 0;i < 3;i++) {
+						Message statemsg = {0};
+						statemsg.type = MSG_VALVE_STATE;
+						statemsg.data.valve_state.timestamp = valvetime;
+						statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, i);
+						statemsg.data.valve_state.valve_state = vstates[i];
+						uint8_t tempbuffer[MAX_VALVE_STATE_MSG_SIZE + 5];
+						int buflen = serialize_message(&statemsg, tempbuffer, MAX_VALVE_STATE_MSG_SIZE + 5);
+						if(buflen != -1) {
+							log_lmp_packet(tempbuffer, buflen);
+						}
+					}
+		  	  	}
+				statecounter = 13;
+			}
+			else {
+				statecounter--;
+			}
 		}
 
-	  osDelay(35);
+	  osDelay(7);
 	}
   /* USER CODE END 5 */
 }
