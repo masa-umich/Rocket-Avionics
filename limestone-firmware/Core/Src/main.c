@@ -937,6 +937,12 @@ uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
 	}
 	return 1;
 }
+/*
+ * Log message to flash. This is the function to use throughout the rest of the code.
+ * msgtext - Message text. This should include an error code if the message is an error
+ * msgtype - Type of message, used for error message throttling. Pass -1 if this is a status message or if you don't want it to be throttled, otherwise pass the "category" of the error message
+ * Returns 0 on success, 1 if a message of this type was sent too recently, 2 on general error, and 3 if there isn't enough memory available
+ */
 
 uint8_t log_message(const char *msgtext, int msgtype) {
 	if(msgtype != -1) {
@@ -961,13 +967,15 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 			return 2;
 		}
 	}
-	size_t msglen = 1 + 24 + 1 + strlen(msgtext) + 1;
+	// Flash entry type + timestamp + space + error code board number + message text + newline
+	size_t msglen = 1 + 24 + 1 + 1 + strlen(msgtext) + 1;
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time(&rawmsgbuf[1]);
 		rawmsgbuf[25] = ' ';
-		memcpy(&rawmsgbuf[26], msgtext, strlen(msgtext));
+		rawmsgbuf[26] = '1';
+		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;
 		fullmsg.content = rawmsgbuf;
@@ -1292,6 +1300,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  errorMsgList = list_create(sizeof(errormsg_t), msgFreeCallback);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -2452,7 +2461,6 @@ void StartAndMonitor(void *argument)
   	fc_init_flash(&flash_h, &hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
   	memset(&errormsgtimers, 0, ERROR_MSG_TYPES / 2);
   	//fc_erase_flash(&flash_h);
-  	errorMsgList = list_create(sizeof(errormsg_t), msgFreeCallback);
 
 	// Start tasks
 
@@ -2473,9 +2481,6 @@ void StartAndMonitor(void *argument)
 			xSemaphoreGive(errorudp_mutex);
 		}
 	}
-
-	// TODO: Figure out how to handle limewire's control over valves once autosequences start, it's early to decide this but it could affect how valve control is implemented - do this after bay board porting
-	// TODO: Next: Send udp message every 30 seconds when flash is full and convert flash error/status logging to a threaded design, but the actual logging in the loop below
 
 	/*
 	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs) (WHEN THE FC CONNECTS TO LIMEWIRE SEND THE VALVE STATES FOR THE ENTIRE ROCKET)

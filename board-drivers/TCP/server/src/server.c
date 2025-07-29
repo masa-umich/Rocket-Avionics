@@ -7,6 +7,7 @@
 
 #include "server.h"
 #include "semphr.h"
+#include "errno.h"
 
 extern ip4_addr_t ipaddr; // get our IP address from somewhere (defined in the IOC)
 #define SERVER_PORT 5000
@@ -98,6 +99,9 @@ int server_init(void) {
     	xSemaphoreGive(deviceMutex);
     }
 
+    // Reset shutdownStart semaphore to 0, in case one or more of the threads exited early
+    while(xSemaphoreTake(shutdownStart, 0) == pdTRUE) {}
+
     // start the tasks
     listenerTaskHandle = osThreadNew(server_listener_thread, NULL, &listenerTask_attributes);
     readerTaskHandle = osThreadNew(server_reader_thread, NULL, &readerTask_attributes);
@@ -118,8 +122,21 @@ void server_listener_thread(void *arg) {
 
     // Create new socket for listening. 6 is the protocol # for tcp
     int listen_sockfd = socket(AF_INET, SOCK_STREAM, 6);
-    if (listen_sockfd == -1) {
-        Error_Handler(); // TODO: add error handling
+    if(listen_sockfd == -1) {
+    	switch(errno) {
+    	    case ENOBUFS:
+    	        // TODO no memory - couldn't create netconn
+    	        break;
+    	    case ENFILE:
+    	        // TODO couldn't create socket, none available
+    	        break;
+    	    default:
+    	    	// TODO unknown error when creating socket, use errno in message
+    	        break;
+    	}
+        close(listen_sockfd);
+        xSemaphoreGive(shutdownDone);
+    	vTaskDelete(NULL);
     }
 
     struct timeval timeout;
@@ -133,18 +150,54 @@ void server_listener_thread(void *arg) {
     server_socket.sin_port = htons(SERVER_PORT); // grab server port
     server_socket.sin_addr.s_addr = (in_addr_t) ipaddr.addr; // get IP from extern
 
-    if (bind(listen_sockfd, (struct sockaddr *) &server_socket, sizeof(server_socket)) != 0) {
-        printf("Error binding socket\n");
-        vTaskDelete(NULL);
-        Error_Handler(); // TODO: add error handling
+    if(bind(listen_sockfd, (struct sockaddr *) &server_socket, sizeof(server_socket)) != 0) {
+    	switch(errno) {
+    	    case EBADF:
+    	        // TODO bad socket
+    	        break;
+    	    case EIO:
+    	        // TODO invalid pcb
+    	        break;
+    	    case EINVAL:
+    	        // TODO pcb not closed or NULL pcb
+    	        break;
+    	    case EADDRINUSE:
+    	        // TODO address already in use, there is already a socket listening on the port
+    	        break;
+    	    default:
+    	    	// TODO unknown error when binding socket, use errno in message
+    	        break;
+    	}
+        close(listen_sockfd);
+        xSemaphoreGive(shutdownDone);
+    	vTaskDelete(NULL);
     }
 
     // Listen for incoming connections (blocks until a connection is made)
-    if (listen(listen_sockfd, MAX_CONN_NUM) < 0) {
-        printf("Error listening on socket\n");
+    if(listen(listen_sockfd, MAX_CONN_NUM) < 0) {
+    	switch(errno) {
+    	    case EBADF:
+    	        // TODO bad socket
+    	        break;
+    	    case EIO:
+    	        // TODO NULL netconn
+    	        break;
+    	    case ENOTCONN:
+    	        // TODO NULL pcb or netconn already started and not in listening mode
+    	        break;
+    	    case EINVAL:
+    	        // TODO pcb not closed
+    	        break;
+    	    case ENOMEM:
+    	        // TODO out of memory when creating the pcb listener
+    	        break;
+    	    default:
+    	    	// TODO unknown error when setting socket to listening mode, use errno in message
+    	        break;
+    	}
         close(listen_sockfd);
-        vTaskDelete(NULL);
-        Error_Handler(); // TODO: add error handling
+        xSemaphoreGive(shutdownDone);
+    	vTaskDelete(NULL);
     }
 
     for (;;) {
@@ -159,6 +212,38 @@ void server_listener_thread(void *arg) {
         int connection_fd = accept(listen_sockfd, (struct sockaddr* ) &connection_socket, &addr_len);
         if(connection_fd < 0) {
         	// Socket timeout or close/error
+        	switch(errno) {
+        	    case EBADF:
+        	        // TODO bad socket
+        	        break;
+        	    case EIO:
+        	        // TODO listening netconn is NULL
+        	        break;
+        	    case ENFILE:
+        	        // TODO no socket available
+        	        break;
+        	    case ENOMEM:
+        	        // TODO listening netconn out of memory
+        	        break;
+        	    case ENOBUFS:
+        	        // TODO listening netconn buffer error (could be out of memory, could be other)
+        	        break;
+        	    case EINVAL:
+        	        // TODO listening socket closed, probably the server is shutting down
+        	        break;
+        	    case ECONNABORTED:
+        	        // TODO listening socket aborted internally, could be out of netconns or pcbs
+        	        break;
+        	    case EWOULDBLOCK:
+        	        // TODO timeout, DON'T LOG
+        	        break;
+        	    case ENOTCONN:
+        	        // TODO error getting connected socket info
+        	        break;
+        	    default:
+        	    	// TODO unknown error when accepting connection, use errno in message
+        	        break;
+        	}
         	continue;
         }
 
@@ -191,6 +276,7 @@ void server_listener_thread(void *arg) {
 	    	}
 	    }
     }
+    // TODO Log exiting listener thread
     close(listen_sockfd);
     xSemaphoreGive(shutdownDone);
 	vTaskDelete(NULL);
