@@ -153,19 +153,19 @@ void server_listener_thread(void *arg) {
     if(bind(listen_sockfd, (struct sockaddr *) &server_socket, sizeof(server_socket)) != 0) {
     	switch(errno) {
     	    case EBADF:
-    	        // TODO bad socket
+    	        // TODO bad socket, include the fact that the listener thread is stopping
     	        break;
     	    case EIO:
-    	        // TODO invalid pcb
+    	        // TODO invalid pcb, include the fact that the listener thread is stopping
     	        break;
     	    case EINVAL:
-    	        // TODO pcb not closed or NULL pcb
+    	        // TODO pcb not closed or NULL pcb, include the fact that the listener thread is stopping
     	        break;
     	    case EADDRINUSE:
-    	        // TODO address already in use, there is already a socket listening on the port
+    	        // TODO address already in use, there is already a socket listening on the port, include the fact that the listener thread is stopping
     	        break;
     	    default:
-    	    	// TODO unknown error when binding socket, use errno in message
+    	    	// TODO unknown error when binding socket, use errno in message, include the fact that the listener thread is stopping
     	        break;
     	}
         close(listen_sockfd);
@@ -177,22 +177,22 @@ void server_listener_thread(void *arg) {
     if(listen(listen_sockfd, MAX_CONN_NUM) < 0) {
     	switch(errno) {
     	    case EBADF:
-    	        // TODO bad socket
+    	        // TODO bad socket, include the fact that the listener thread is stopping
     	        break;
     	    case EIO:
-    	        // TODO NULL netconn
+    	        // TODO NULL netconn, include the fact that the listener thread is stopping
     	        break;
     	    case ENOTCONN:
-    	        // TODO NULL pcb or netconn already started and not in listening mode
+    	        // TODO NULL pcb or netconn already started and not in listening mode, include the fact that the listener thread is stopping
     	        break;
     	    case EINVAL:
-    	        // TODO pcb not closed
+    	        // TODO pcb not closed, include the fact that the listener thread is stopping
     	        break;
     	    case ENOMEM:
-    	        // TODO out of memory when creating the pcb listener
+    	        // TODO out of memory when creating the pcb listener, include the fact that the listener thread is stopping
     	        break;
     	    default:
-    	    	// TODO unknown error when setting socket to listening mode, use errno in message
+    	    	// TODO unknown error when setting socket to listening mode, use errno in message, include the fact that the listener thread is stopping
     	        break;
     	}
         close(listen_sockfd);
@@ -212,9 +212,11 @@ void server_listener_thread(void *arg) {
         int connection_fd = accept(listen_sockfd, (struct sockaddr* ) &connection_socket, &addr_len);
         if(connection_fd < 0) {
         	// Socket timeout or close/error
+        	// None of these error cases will close the thread, since even if they should, it's good to spam the message so the COP can address it quickly
+        	// This is different from the listener thread startup errors, since that happens once, and the COP should be paying attention during startup
         	switch(errno) {
         	    case EBADF:
-        	        // TODO bad socket
+        	        // TODO bad socket, probably the server shutting down
         	        break;
         	    case EIO:
         	        // TODO listening netconn is NULL
@@ -229,13 +231,10 @@ void server_listener_thread(void *arg) {
         	        // TODO listening netconn buffer error (could be out of memory, could be other)
         	        break;
         	    case EINVAL:
-        	        // TODO listening socket closed, probably the server is shutting down
+        	        // TODO listening socket closed, probably the server shutting down
         	        break;
         	    case ECONNABORTED:
         	        // TODO listening socket aborted internally, could be out of netconns or pcbs
-        	        break;
-        	    case EWOULDBLOCK:
-        	        // TODO timeout, DON'T LOG
         	        break;
         	    case ENOTCONN:
         	        // TODO error getting connected socket info
@@ -251,10 +250,14 @@ void server_listener_thread(void *arg) {
         int intvl = TCP_KEEP_ALIVE_INTERVAL;
         int optval = 1;
         int probecnt = TCP_KEEP_ALIVE_COUNT;
+        struct timeval conntimeout;
+        conntimeout.tv_sec = 0;
+        conntimeout.tv_usec = 100000;
         setsockopt(connection_fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
         setsockopt(connection_fd, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
         setsockopt(connection_fd, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl));
         setsockopt(connection_fd, IPPROTO_TCP, TCP_KEEPCNT, &probecnt, sizeof(probecnt));
+        setsockopt(connection_fd, SOL_SOCKET, SO_RCVTIMEO, &conntimeout, sizeof(conntimeout));
 
         // add the new connection to the active connections list
         sys_mutex_lock(conn_mu);
@@ -276,7 +279,7 @@ void server_listener_thread(void *arg) {
 	    	}
 	    }
     }
-    // TODO Log exiting listener thread
+    // TODO Log exiting listener thread due to a shutdown, could be error or status, should have a error number tho
     close(listen_sockfd);
     xSemaphoreGive(shutdownDone);
 	vTaskDelete(NULL);
@@ -293,8 +296,8 @@ void server_reader_thread(void *arg) {
     // this is so that the `select()` function can efficiently check for incoming messages
     fd_set rx_fd_set;
     struct timeval timeout; // timeout for select()
-    timeout.tv_sec = 0; // 1 second timeout
-    timeout.tv_usec = 100000;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000; // 100ms timeout
 
     for (;;) {
     	if(xSemaphoreTake(shutdownStart, 0) == pdPASS) {
@@ -310,7 +313,8 @@ void server_reader_thread(void *arg) {
 
         // check for incoming messages
         // select is a blocking function that will return when there is an incoming message
-        if (select(MAX_CONN_NUM+1, &rx_fd_set, NULL, NULL, &timeout) != -1) {
+        int nready = select(MAX_CONN_NUM+1, &rx_fd_set, NULL, NULL, &timeout);
+        if(nready > 0) {
             // we have incoming messages
 
             // lock the connections mutex
@@ -331,7 +335,7 @@ void server_reader_thread(void *arg) {
                     // read the message
 				    int packet_len = recv(connection_fd, tempbuffer, MAX_MSG_LEN, 0);
 
-				    if(packet_len <= 0) {
+				    if(packet_len == 0) {
 				    	// Connection is closed
 				    	close(connection_fd);
 				    	connections[i] = -1;
@@ -345,6 +349,46 @@ void server_reader_thread(void *arg) {
 					    	}
 			    	    	xSemaphoreGive(deviceMutex);
 			    	    }
+				    	continue;
+				    }
+				    else if(packet_len == -1) {
+				    	switch(errno) {
+				    	    case EBADF:
+				    	        // TODO invalid socket, closing and cleaning up fd
+				    	        break;
+				    	    case EWOULDBLOCK:
+				    	        // TODO receive timeout
+				    	        break;
+				    	    case ECONNRESET:
+				    	        // TODO connection reset by peer, closing and cleaning up fd
+				    	        break;
+				    	    case ENOTCONN:
+				    	        // TODO socket is not connected, closing and cleaning up fd
+				    	        break;
+				    	    case ENOMEM:
+				    	        // TODO out of memory when receiving data
+				    	        break;
+				    	    case ENOBUFS:
+				    	        // TODO out of buffer space
+				    	        break;
+				    	    default:
+				    	    	// TODO unknown error when receiving data, use errno in message
+				    	        break;
+				    	}
+				    	if(errno == EBADF || errno == ECONNRESET || errno == ENOTCONN) {
+					    	close(connection_fd);
+					    	connections[i] = -1;
+
+				    	    if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
+						    	for(int j = 0; j < 5;j++) {
+						    		if(connection_fd == devices[j]) {
+						    			devices[j] = -1;
+						    			break;
+						    		}
+						    	}
+				    	    	xSemaphoreGive(deviceMutex);
+				    	    }
+				    	}
 				    	continue;
 				    }
 
@@ -362,14 +406,28 @@ void server_reader_thread(void *arg) {
 
             // unlock the connections mutex
             sys_mutex_unlock(conn_mu);
-        } else {
-        	// Link down error, loop to shutdown
-        	//Error_Handler(); // TODO: error handling
+        }
+        else if(nready == -1) {
+        	switch(errno) {
+        	    case EBADF:
+        	        // TODO bad socket in fd list, this could be because the server is shutting down, scanning fd list and removing closed sockets
+        	    	remove_bad_fds();
+        	        break;
+        	    case ENOMEM:
+        	        // TODO out of memory creating semaphores to signal ready sockets
+        	        break;
+        	    case EBUSY:
+        	        // TODO too many threads waiting on one or more of the sockets
+        	        break;
+        	    default:
+        	    	// TODO unknown error when waiting for socket events
+        	        break;
+        	}
         }
     }
+    // TODO Log exiting receive thread due to a shutdown, could be error or status, should have a error number tho
     xSemaphoreGive(shutdownDone);
 	vTaskDelete(NULL);
-    // TODO: add error handling and/or freeing memory
 }
 
 // Continually checks for new messages in the TX Message Buffer and sends them to the client
@@ -396,16 +454,33 @@ void server_writer_thread(void *arg) {
             continue;
         }
 
-		if (send(msg.connection_fd, msg.bufferptr, msg.packet_len, 0) == -1) { // opts = 0
-			// Do nothing since this most likely is due to a closed connection.
-			// Lost telemetry and valve state messages are ok since they will be sent as soon as the connection is reestablished
-			// Lost valve commands shouldn't be held to send later since that could be dangerous if a board is reconnected and instantly a valve opens/closes
-            //Error_Handler(); // TODO: add error handling
+		if(send(msg.connection_fd, msg.bufferptr, msg.packet_len, 0) == -1) { // opts = 0
+			// TODO: In all of these cases, the message is getting lost
+	    	switch(errno) {
+	    	    case EBADF:
+	    	        // TODO invalid socket, letting receive task clean up the connection
+	    	        break;
+	    	    case EINPROGRESS:
+	    	        // TODO internal netconn is connecting, closing, or writing in a different place
+	    	        break;
+	    	    case ENOTCONN:
+	    	        // TODO invalid netconn pcb
+	    	        break;
+	    	    case EIO:
+	    	        // TODO NULL netconn, this should be caught in EBADF but in a rare case this might happen
+	    	        break;
+	    	    case EINVAL:
+	    	        // TODO internal overflow or NULL pointer
+	    	        break;
+	    	    default:
+	    	    	// TODO unknown error when sending data, use errno in message
+	    	        break;
+	    	}
 		}
 		free(msg.bufferptr);
 
 	}
-
+    // TODO Log exiting writer thread due to a shutdown, could be error or status, should have a error number tho
     xSemaphoreGive(shutdownDone);
 	vTaskDelete(NULL);
 }
@@ -460,7 +535,6 @@ int update_fd_set(fd_set *rfds) {
 		if (connections[i] != -1) {
 			FD_SET(connections[i], rfds);
 		}
-        // TODO: add error handling
     }
 
 	sys_mutex_unlock(conn_mu);
@@ -500,6 +574,11 @@ int shutdown_server() {
 			xSemaphoreGive(runningMutex);
 		}
 
+	    if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
+	    	memset(devices, -1, 5 * sizeof(int));
+	    	xSemaphoreGive(deviceMutex);
+	    }
+
 		for(int i = 0;i < 3;i++) {
 			xSemaphoreGive(shutdownStart);
 		}
@@ -525,11 +604,6 @@ int shutdown_server() {
 	    	}
 	    }
 
-	    if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
-	    	memset(devices, -1, 5 * sizeof(int));
-	    	xSemaphoreGive(deviceMutex);
-	    }
-
 	    // Get rid of stale messages
 	    drain_lists();
 
@@ -547,4 +621,33 @@ int get_device_fd(Target_Device dev) {
     	return fd;
     }
     return -2;
+}
+
+// Scans connections for bad sockets - sockets that have been closed without setting the corresponding fd to -1
+void remove_bad_fds() {
+	sys_mutex_lock(conn_mu);
+	for(int i = 0; i < MAX_CONN_NUM; ++i) {
+		if(connections[i] != -1) {
+			int type;
+			socklen_t len = sizeof(type);
+			if(getsockopt(connections[i], SOL_SOCKET, SO_TYPE, &type, &len) == -1) {
+			    if(errno == EBADF) {
+			        // TODO: bad fd in list, include fd number
+		    	    if(xSemaphoreTake(deviceMutex, 5) == pdPASS) {
+				    	for(int j = 0; j < 5;j++) {
+				    		if(connections[i] == devices[j]) {
+				    			devices[j] = -1;
+				    			break;
+				    		}
+				    	}
+		    	    	xSemaphoreGive(deviceMutex);
+		    	    }
+			    	connections[i] = -1;
+			    } else {
+			        // TODO: unknown socket error during fd list scan, include fd number and errno number
+			    }
+			}
+		}
+    }
+	sys_mutex_unlock(conn_mu);
 }

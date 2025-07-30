@@ -140,27 +140,28 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
-	  sntp_init();
-	  server_init();
-	  tftp_init(&my_tftp_ctx);
 	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
 	  	  errormsgudp = netconn_new(NETCONN_UDP);
           ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
 	  	  xSemaphoreGive(errorudp_mutex);
 	  }
+	  sntp_init();
+	  server_init();
+	  tftp_init(&my_tftp_ctx);
+
 /* USER CODE END 5 */
   }
   else /* netif is down */
   {
 /* USER CODE BEGIN 6 */
-	  sntp_stop();
-	  shutdown_server();
-	  tftp_cleanup();
 	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
 		  netconn_close(errormsgudp);
 		  netconn_delete(errormsgudp);
 		  xSemaphoreGive(errorudp_mutex);
 	  }
+	  sntp_stop();
+	  shutdown_server();
+	  tftp_cleanup();
 /* USER CODE END 6 */
   }
 }
