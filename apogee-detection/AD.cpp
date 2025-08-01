@@ -28,6 +28,15 @@ email pickos@umich.edu OR the current A&R team lead.
 
 using namespace std;
 
+struct Program_Info
+{
+    int answer;
+    int baro_size;
+    int imu_size;
+    int detection_method;
+    bool MECO_flag = false;
+};
+
 class Detector
 {
     public: 
@@ -87,7 +96,7 @@ class Detector
     //The premise of 'insert':
     //•Circular buffers -> necessary so we don't use up all the memory on the microcontroller. 
     //•Two barometers -> we want to take a moving / smoothed out average of the 2 readings. 
-    void insert(double baro1, double baro2)
+    void insert(double baro1, double baro2, Program_Info &info)
     {
         //this technique is called imputation! 
         //if we receive a bad reading, we don't want to corrupt the average.
@@ -115,9 +124,14 @@ class Detector
         avg_index = avg_index % CAPACITY;
         avg_size = std::min(avg_size + 1, CAPACITY);
 
+
+
         //Wait until the 'average' buffer is full to start computing the slopes
         if(avg_size >= CAPACITY)
         {
+            ////this 'if' block controls the detection of the steep drop in acceleration for IMUs (or just basic barometer handling)
+            //if negative acceleration MECO detection was selected this block should be skipped  
+
             //example using step size of 5
             //Compare the MOST RECENT average reading to the reading from 5 STEPS ago
             //Our whole windows is size 5 so this effectively gives an estimate of the 
@@ -131,16 +145,20 @@ class Detector
             //0 + 5 - 5 = 0 (oldest reading) average[0] = 2
             //(8 - 2) / 5 = 1.2 
             //So we can estimate that our average change was roughly 1.2 per step over this window.
-            slope[slope_i] = (average[(avg_index + CAPACITY - 1) % CAPACITY ] - 
-                average[(avg_index + CAPACITY - CAPACITY) % CAPACITY]) / CAPACITY;
+            if(info.detection_method == 2 || info.answer == 2 || info.MECO_flag == true)
+            {
+                slope[slope_i] = (average[(avg_index + CAPACITY - 1) % CAPACITY ] - 
+                    average[(avg_index + CAPACITY - CAPACITY) % CAPACITY]) / CAPACITY;
+            
 
-            std::cout << slope[slope_i] << "\n";
-            slope_size = std::min(slope_size + 1, CAPACITY);
-            slope_i = (slope_i + 1) % CAPACITY;
+
+                std::cout << slope[slope_i] << "\n";
+                slope_size = std::min(slope_size + 1, CAPACITY);
+                slope_i = (slope_i + 1) % CAPACITY;
+            }
         }
-    }
 
-    
+    }
 
     bool detect_apog()
     {
@@ -162,25 +180,50 @@ class Detector
         return false;
     }
 
-    bool detect_MECO()
+    bool detect_MECO(Program_Info &info)
     {
-        if (slope_size < CAPACITY)
-            return false;
-        else
+        //for steep drop detection
+        if (info.detection_method == 2)
         {
-            int count = 0;
-            for(int i = 0; i < CAPACITY; ++i)
+            if (slope_size < CAPACITY)
+                return false;
+            else
             {
-                //NEED TO PIN THIS NUMBER DOWN!!!
-                if(slope[i] < -0.045)
-                    ++count;
-            }
+                int count = 0;
+                for (int i = 0; i < CAPACITY; ++i)
+                {
+                    //this number works best for window size 5
+                    if (slope[i] < -0.2475)
+                        ++count;
+                }
 
-            //if 80% of the readings in our slope buffer are less than -0 DETECT MECO
-            if(count >= (CAPACITY * 0.8))
-                return true;
+                // if 80% of the readings in our slope buffer are less than -0 DETECT MECO
+                if (count >= (CAPACITY * 0.8))
+                    return true;
+            }
+            return false;
         }
-        return false; 
+
+        //for negative acceleration detection
+        else if(info.detection_method == 1)
+        {
+            if (avg_size < CAPACITY)
+                return false;
+            else
+            {
+                int count = 0;
+                for (int i = 0; i < CAPACITY; ++i)
+                {
+                    if (average[i] < 0)
+                        ++count;
+                }
+                if (count >= (CAPACITY * 0.8))
+                    return true;
+
+            } 
+            return false;
+        }
+        return false;
     }
     
 };
@@ -189,7 +232,7 @@ class Detector
 void launch()
 {
     Environment env;
-
+    Program_Info info;
     Barometer baro_1;
     Barometer baro_2;
 
@@ -197,24 +240,23 @@ void launch()
     // IMU imu_2;
 
     cout << "MECO & baro detection ... or just baro? 1 or 2 \n";
-    int answer;
-    cin >> answer;
+    cin >> info.answer;
 
     cout << "What window size for the barometers? (5 is a good default)\n";
-    int baro_size;
-    cin >> baro_size;
+    cin >> info.baro_size;
     //creating a detector for the barometers with a window of baro_size
-    Detector detect(baro_size);
+    Detector detect(info.baro_size);
 
-    if (answer == 1)
+    if (info.answer == 1)
     {
         cout << "What window size for the IMUs? (5 is a good default)\n";
-        int imu_size;
-        cin >> imu_size;
+        cin >> info.imu_size;
+
+        cout << "What detection method? Search for negative acceleration, or look for steep drop in acceleration? 1 or 2\n";
+        cin >> info.detection_method;
 
         //creating a detector for the IMU with a window of imu_size
-        Detector detect_IMU(imu_size);
-        bool MECO_flag = false;
+        Detector detect_IMU(info.imu_size);
 
         //read in data for IMUs to detect MECO
         std::ifstream FS_1("a_x_data_new.txt");
@@ -232,7 +274,7 @@ void launch()
 
         int i = 0;
         
-        while(MECO_flag == false && i < a_x_data.size())
+        while(info.MECO_flag == false && i < a_x_data.size())
         // while(MECO_flag == false)
         {
 
@@ -247,18 +289,20 @@ void launch()
 
             if (detect_IMU.size_1 < 5 && detect_IMU.size_2 < 5)
                 {
-                    detect_IMU.insert(a_x_noisy_1, a_x_noisy_2);
+                    detect_IMU.insert(a_x_noisy_1, a_x_noisy_2, info);
                 }
                 else
                 {
-                    detect_IMU.insert(a_x_noisy_1, a_x_noisy_2);
+                    detect_IMU.insert(a_x_noisy_1, a_x_noisy_2, info);
 
-                    cout << " index: " << i << "\n";
+                    cout << "Time: " << static_cast<double>(i) / 100 << " (s)\n";
 
-                    if (detect_IMU.detect_MECO() && MECO_flag == false)
+                    if (detect_IMU.detect_MECO(info) && info.MECO_flag == false)
                     {
-                        cout << "MECO Detected\n";
-                        MECO_flag = true;
+                        cout << "MECO Detected!\n";
+                        cout << "Wait to drop below Mach 1...\n";
+                        cout << "Beginning phase 2 with barometers\n";
+                        info.MECO_flag = true;
                     }
                 }
                 //just using this index variable to cycle through 
@@ -266,7 +310,7 @@ void launch()
                 ++i;
         }
 
-        if (MECO_flag == false)
+        if (info.MECO_flag == false)
             cout << "MECO not detected!\n";
 
         // int j = i + 1000;
@@ -297,10 +341,7 @@ void launch()
     {
         double current_height = heights[j];
 
-        //13647
-        // if (current_height > 13647)
         if (current_height > 18100)
-        // if (MECO_flag == true)
         {
             double P_true = env.compute_pressure(current_height);
             double T_true = env.compute_temp(current_height);
@@ -326,20 +367,24 @@ void launch()
             if (detect.size_1 < 5 && detect.size_2 < 5)
             {
                 // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
-                detect.insert(baro1_final_P / 100, baro2_final_P / 100);
+                detect.insert(baro1_final_P / 100, baro2_final_P / 100, info);
             }
             else
             {
                 // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
-                detect.insert(baro1_final_P / 100, baro2_final_P / 100);
+                detect.insert(baro1_final_P / 100, baro2_final_P / 100, info);
                 if (detect.detect_apog() && apogee_flag == false)
                 {
-                    cout << "Apogee Detected\n";
+                    cout << "Apogee Detected!\n";
+                    cout << "Beginning phase 3\n";
                     apogee_flag = true;
 
                 }
             }
         }
+
+        //enter phase three
+
 
         //using this index variable to cycle through the values in height_data.txt
         //Note 
