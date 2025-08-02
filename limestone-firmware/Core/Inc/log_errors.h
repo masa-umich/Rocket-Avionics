@@ -13,18 +13,78 @@
 #define INC_LOG_ERRORS_H_
 
 // General error messages (all boards could have this happen)
-#define ERR_EXAMPLE				"000 This is a general error message"
+#define ERR_EXAMPLE								"000 This is a general error message"
 
 // Flight Computer error messages
-#define FC_ERR_EXAMPLE			"000 This is an error message unique to the FC (e.g. TCP server error)"
+#define FC_ERR_TCP_SERV_SOCK_CREAT_NOBUF		"001 No buffer space - creating server listen socket. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_CREAT_NOSOCK		"002 No available sockets - creating server listen socket. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_CREAT_UNKNOWN		"003 Unknown errno - creating server listen socket. Exiting thread, errno "
+
+#define FC_ERR_TCP_SERV_SOCK_BIND_NSOCK			"004 NULL socket - binding server listen socket. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_BIND_BADPCB		"005 Bad PCB - binding server listen socket. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_BIND_USEDADDR		"006 Address already used - binding server listen socket. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_BIND_UNKNOWN		"007 Unknown errno - binding server listen socket. Exiting thread, errno "
+
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_NSOCK		"008 NULL socket - setting server listen socket to listening. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_NNETCONN	"009 NULL netconn - setting server listen socket to listening. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_NPCB		"010 NULL PCB - setting server listen socket to listening. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_BADPCB		"011 Bad PCB - setting server listen socket to listening. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_NOMEM		"012 No memory - setting server listen socket to listening. Exiting thread"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_UNKNOWN		"013 Unknown errno - setting server listen socket to listening. Exiting thread, errno "
+
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_NSOCK		"014 NULL socket - waiting/accepting TCP connection"
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_NNETCONN	"015 NULL netconn - waiting/accepting TCP connection"
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_NO_SOCK		"016 No socket available - waiting/accepting TCP connection"
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_NOMEM		"017 No memory - waiting/accepting TCP connection"
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_BUF_ERR		"018 Buffer error - waiting/accepting TCP connection"
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_LSOCK_CLSD	"019 Listening socket closed - waiting/accepting TCP connection"
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_LSOCK_ERR	"020 Listening socket error - waiting/accepting TCP connection"
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_ASOCK_ERR	"021 Accepted conn error - waiting/accepting TCP connection"
+#define FC_ERR_TCP_SERV_SOCK_ACCEPT_UNKNOWN		"022 Unknown errno - waiting/accepting TCP connection, errno "
+
+#define FC_ERR_TCP_SERV_LISTEN_THREAD_CLOSE		"023 TCP server listener thread closing"
+
+#define FC_ERR_TCP_SERV_RECV_WAIT_NSOCK			"024 NULL socket - TCP server waiting for data"
+#define FC_ERR_TCP_SERV_RECV_WAIT_NOMEM			"025 Out of memory - TCP server waiting for data"
+#define FC_ERR_TCP_SERV_RECV_WAIT_BUSY_SOCK		"026 Busy socket - TCP server waiting for data"
+#define FC_ERR_TCP_SERV_RECV_WAIT_UNKNOWN		"027 Unknown errno - TCP server waiting for data, errno "
+
+#define FC_ERR_TCP_SERV_RECV_READ_NSOCK			"028 NULL socket - TCP server reading from conn, fd "
+#define FC_ERR_TCP_SERV_RECV_READ_TIMEOUT		"029 Read timeout - TCP server reading from conn, fd "
+#define FC_ERR_TCP_SERV_RECV_READ_CONN_RST		"030 Reset by peer - TCP server reading from conn, fd "
+#define FC_ERR_TCP_SERV_RECV_READ_SOCK_NCONN	"031 Not connected - TCP server reading from conn, fd "
+#define FC_ERR_TCP_SERV_RECV_READ_NOMEM			"032 No memory - TCP server reading from conn, fd "
+#define FC_ERR_TCP_SERV_RECV_READ_NOBUF			"033 No buffer space - TCP server reading from conn, fd "
+#define FC_ERR_TCP_SERV_RECV_READ_UNKNOWN		"034 Unknown errno - TCP server reading from conn, fd/errno "
+
+#define FC_ERR_TCP_SERV_RECV_STORE_NOMEM		"035 Out of memory - TCP server storing packet, fd "
+#define FC_ERR_TCP_SERV_RECV_THREAD_CLOSE		"036 TCP server reader thread closing"
+
+#define FC_ERR_TCP_SERV_WRITE_SEND_NSOCK		"037 NULL socket - TCP server sending packet, fd "
+#define FC_ERR_TCP_SERV_WRITE_SEND_SOCK_BUSY	"038 Netconn busy - TCP server sending packet, fd "
+#define FC_ERR_TCP_SERV_WRITE_SEND_NPCB			"039 NULL PCB - TCP server sending packet, fd "
+#define FC_ERR_TCP_SERV_WRITE_SEND_NNETCONN		"040 NULL netconn - TCP server sending packet, fd "
+#define FC_ERR_TCP_SERV_WRITE_SEND_MEM_ERR		"041 Internal memory error - TCP server sending packet, fd "
+#define FC_ERR_TCP_SERV_WRITE_SEND_UNKNOWN		"042 Unknown errno - TCP server sending packet, fd/errno "
+
+#define FC_ERR_TCP_SERV_WRITE_THREAD_CLOSE		"043 TCP server writer thread closing"
+
+#define FC_ERR_TCP_SERV_FD_SCAN_NSOCK			"044 NULL socket - TCP server fd scanning, fd "
+#define FC_ERR_TCP_SERV_FD_SCAN_UNKNOWN			"045 Unknown errno - TCP server fd scanning, fd/errno "
 
 // General status messages
-#define STAT_EXAMPLE			"000 This is a general status message"
+#define STAT_EXAMPLE							"000 This is a general status message"
 
 // Flight Computer status messages
-#define FC_STAT_EXAMPLE			"000 This is a status message unique to the FC (e.g. radio thread started)"
+#define FC_STAT_EXAMPLE							"000 This is a status message unique to the FC (e.g. radio thread started)"
+#define FC_STAT_TCP_SERV_NEW_CONN				"501 TCP server accepting new connection, fd/addr "
+#define FC_STAT_TCP_CONN_CLOSED					"502 TCP connection closed gracefully, fd "
 
-// Error message types - used for throttling
-#define ERR_TYPE_EXAMPLE		0
+// Flight Computer error message types - used for throttling
+#define FC_ERR_TYPE_TCP_SERV_LISTEN				0
+#define FC_ERR_TYPE_TCP_SERV_RECV_SELECT		1
+#define FC_ERR_TYPE_TCP_SERV_RECV_READ			2
+#define FC_ERR_TYPE_TCP_SERV_WRITE				3
+#define FC_ERR_TYPE_TCP_FD_SCAN					4
 
 #endif /* INC_LOG_ERRORS_H_ */

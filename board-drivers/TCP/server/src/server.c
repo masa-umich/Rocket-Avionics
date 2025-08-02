@@ -8,6 +8,8 @@
 #include "server.h"
 #include "semphr.h"
 #include "errno.h"
+#include "stdio.h"
+#include "log_errors.h"
 
 extern ip4_addr_t ipaddr; // get our IP address from somewhere (defined in the IOC)
 #define SERVER_PORT 5000
@@ -17,7 +19,7 @@ List* rxMsgBuffer; // thread-safe queue for incoming messages
 List* txMsgBuffer; 
 
 int connections[MAX_CONN_NUM]; // List of active connections
-sys_mutex_t* conn_mu; // Mutex for the connections list
+sys_mutex_t conn_mu; // Mutex for the connections list
 
 SemaphoreHandle_t shutdownStart;
 SemaphoreHandle_t shutdownDone;
@@ -29,7 +31,13 @@ ip4_addr_t deviceIPs[5];
 
 // initialize semaphores/mutexes
 int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_t bb3, ip4_addr_t fr) {
-    shutdownStart = xSemaphoreCreateCounting(3, 0);
+	deviceIPs[LimeWire_d] = limewire;
+	deviceIPs[BayBoard1_d] = bb1;
+	deviceIPs[BayBoard2_d] = bb2;
+	deviceIPs[BayBoard3_d] = bb3;
+	deviceIPs[FlightRecorder_d] = fr;
+
+	shutdownStart = xSemaphoreCreateCounting(3, 0);
     shutdownDone = xSemaphoreCreateCounting(3, 0);
     runningMutex = xSemaphoreCreateMutex();
     deviceMutex = xSemaphoreCreateMutex();
@@ -37,17 +45,12 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
     // make thread-safe queues for incoming and outgoing messages
     rxMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
 	txMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
-
-	deviceIPs[LimeWire_d] = limewire;
-	deviceIPs[BayBoard1_d] = bb1;
-	deviceIPs[BayBoard2_d] = bb2;
-	deviceIPs[BayBoard3_d] = bb3;
-	deviceIPs[FlightRecorder_d] = fr;
-
-	conn_mu = malloc(sizeof(sys_mutex_t));
+	if(rxMsgBuffer == NULL || txMsgBuffer == NULL) {
+		return 1;
+	}
 
     // check if the mutex got created successfully
-    if (sys_mutex_new(conn_mu) != ERR_OK) {
+    if (sys_mutex_new(&conn_mu) != ERR_OK) {
         return 1;
     } else {
         return 0;
@@ -111,7 +114,7 @@ int server_init(void) {
     if ((listenerTaskHandle == NULL) ||
         (readerTaskHandle == NULL) ||
         (writerTaskHandle == NULL)) {
-        return 1;
+        return -2;
     }
     return 0;
 }
@@ -124,15 +127,23 @@ void server_listener_thread(void *arg) {
     int listen_sockfd = socket(AF_INET, SOCK_STREAM, 6);
     if(listen_sockfd == -1) {
     	switch(errno) {
-    	    case ENOBUFS:
-    	        // TODO no memory - couldn't create netconn
+    	    case ENOBUFS: {
+    	        // no memory - couldn't create netconn
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_CREAT_NOBUF, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    case ENFILE:
-    	        // TODO couldn't create socket, none available
+    	    }
+    	    case ENFILE: {
+    	        // couldn't create socket, none available
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_CREAT_NOSOCK, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    default:
-    	    	// TODO unknown error when creating socket, use errno in message
+    	    }
+    	    default: {
+    	    	// unknown error when creating socket, use errno in message
+    	    	char logmsg[sizeof(FC_ERR_TCP_SERV_SOCK_CREAT_UNKNOWN) + 3];
+    	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_SOCK_CREAT_UNKNOWN "%d", errno);
+    	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
+    	    }
     	}
         close(listen_sockfd);
         xSemaphoreGive(shutdownDone);
@@ -152,21 +163,28 @@ void server_listener_thread(void *arg) {
 
     if(bind(listen_sockfd, (struct sockaddr *) &server_socket, sizeof(server_socket)) != 0) {
     	switch(errno) {
-    	    case EBADF:
-    	        // TODO bad socket, include the fact that the listener thread is stopping
+    	    case EBADF: {
+    	        // bad socket, include the fact that the listener thread is stopping
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_BIND_NSOCK, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    case EIO:
-    	        // TODO invalid pcb, include the fact that the listener thread is stopping
+    	    }
+    	    case EINVAL: {
+    	        // pcb not closed or NULL pcb, include the fact that the listener thread is stopping
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_BIND_BADPCB, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    case EINVAL:
-    	        // TODO pcb not closed or NULL pcb, include the fact that the listener thread is stopping
+    	    }
+    	    case EADDRINUSE: {
+    	        // address already in use, there is already a socket listening on the port, include the fact that the listener thread is stopping
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_BIND_USEDADDR, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    case EADDRINUSE:
-    	        // TODO address already in use, there is already a socket listening on the port, include the fact that the listener thread is stopping
+    	    }
+    	    default: {
+    	    	// unknown error when binding socket, use errno in message, include the fact that the listener thread is stopping
+    	    	char logmsg[sizeof(FC_ERR_TCP_SERV_SOCK_BIND_UNKNOWN) + 3];
+    	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_SOCK_BIND_UNKNOWN "%d", errno);
+    	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    default:
-    	    	// TODO unknown error when binding socket, use errno in message, include the fact that the listener thread is stopping
-    	        break;
+    	    }
     	}
         close(listen_sockfd);
         xSemaphoreGive(shutdownDone);
@@ -176,24 +194,38 @@ void server_listener_thread(void *arg) {
     // Listen for incoming connections (blocks until a connection is made)
     if(listen(listen_sockfd, MAX_CONN_NUM) < 0) {
     	switch(errno) {
-    	    case EBADF:
-    	        // TODO bad socket, include the fact that the listener thread is stopping
+    	    case EBADF: {
+    	        // bad socket, include the fact that the listener thread is stopping
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_LISTEN_NSOCK, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    case EIO:
-    	        // TODO NULL netconn, include the fact that the listener thread is stopping
+    	    }
+    	    case EIO: {
+    	        // NULL netconn, include the fact that the listener thread is stopping
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_LISTEN_NNETCONN, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    case ENOTCONN:
-    	        // TODO NULL pcb or netconn already started and not in listening mode, include the fact that the listener thread is stopping
+    	    }
+    	    case ENOTCONN: {
+    	        // NULL pcb or netconn already started and not in listening mode, include the fact that the listener thread is stopping
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_LISTEN_NPCB, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    case EINVAL:
-    	        // TODO pcb not closed, include the fact that the listener thread is stopping
+    	    }
+    	    case EINVAL: {
+    	        // pcb not closed, include the fact that the listener thread is stopping
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_LISTEN_BADPCB, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    case ENOMEM:
-    	        // TODO out of memory when creating the pcb listener, include the fact that the listener thread is stopping
+    	    }
+    	    case ENOMEM: {
+    	        // out of memory when creating the pcb listener, include the fact that the listener thread is stopping
+    	    	log_message(FC_ERR_TCP_SERV_SOCK_LISTEN_NOMEM, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
-    	    default:
-    	    	// TODO unknown error when setting socket to listening mode, use errno in message, include the fact that the listener thread is stopping
+    	    }
+    	    default: {
+    	    	// unknown error when setting socket to listening mode, use errno in message, include the fact that the listener thread is stopping
+    	    	char logmsg[sizeof(FC_ERR_TCP_SERV_SOCK_LISTEN_UNKNOWN) + 3];
+    	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_SOCK_LISTEN_UNKNOWN "%d", errno);
+    	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_LISTEN);
     	        break;
+    	    }
     	}
         close(listen_sockfd);
         xSemaphoreGive(shutdownDone);
@@ -212,36 +244,61 @@ void server_listener_thread(void *arg) {
         int connection_fd = accept(listen_sockfd, (struct sockaddr* ) &connection_socket, &addr_len);
         if(connection_fd < 0) {
         	// Socket timeout or close/error
-        	// None of these error cases will close the thread, since even if they should, it's good to spam the message so the COP can address it quickly
+        	// None of these error cases will close the thread, since even though a couple should, it's good to spam the message so the COP can address it quickly
         	// This is different from the listener thread startup errors, since that happens once, and the COP should be paying attention during startup
+        	// In the future possibly add support to retry the startup steps if something fails
         	switch(errno) {
-        	    case EBADF:
-        	        // TODO bad socket, probably the server shutting down
+    	    	case EWOULDBLOCK: {
+    	    		// This is expected and SHOULD happen, so don't log
+    	    		break;
+    	    	}
+        	    case EBADF: {
+        	        // bad socket, probably the server shutting down
+        	    	log_message(FC_ERR_TCP_SERV_SOCK_ACCEPT_NSOCK, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
-        	    case EIO:
-        	        // TODO listening netconn is NULL
+        	    }
+        	    case EIO: {
+        	        // listening netconn is NULL
+        	    	log_message(FC_ERR_TCP_SERV_SOCK_ACCEPT_NNETCONN, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
-        	    case ENFILE:
-        	        // TODO no socket available
+        	    }
+        	    case ENFILE: {
+        	        // no socket available
+        	    	log_message(FC_ERR_TCP_SERV_SOCK_ACCEPT_NO_SOCK, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
-        	    case ENOMEM:
-        	        // TODO listening netconn out of memory
+        	    }
+        	    case ENOMEM: {
+        	        // listening netconn out of memory
+        	    	log_message(FC_ERR_TCP_SERV_SOCK_ACCEPT_NOMEM, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
-        	    case ENOBUFS:
-        	        // TODO listening netconn buffer error (could be out of memory, could be other)
+        	    }
+        	    case ENOBUFS: {
+        	        // listening netconn buffer error (could be out of memory, could be other)
+        	    	log_message(FC_ERR_TCP_SERV_SOCK_ACCEPT_BUF_ERR, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
-        	    case EINVAL:
-        	        // TODO listening socket closed, probably the server shutting down
+        	    }
+        	    case EINVAL: {
+        	        // listening socket closed, probably the server shutting down
+        	    	log_message(FC_ERR_TCP_SERV_SOCK_ACCEPT_LSOCK_CLSD, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
-        	    case ECONNABORTED:
-        	        // TODO listening socket aborted internally, could be out of netconns or pcbs
+        	    }
+        	    case ECONNABORTED: {
+        	        // listening socket aborted internally, could be out of netconns or pcbs
+        	    	log_message(FC_ERR_TCP_SERV_SOCK_ACCEPT_LSOCK_ERR, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
-        	    case ENOTCONN:
-        	        // TODO error getting connected socket info
+        	    }
+        	    case ENOTCONN: {
+        	        // error getting connected socket info
+        	    	log_message(FC_ERR_TCP_SERV_SOCK_ACCEPT_ASOCK_ERR, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
-        	    default:
-        	    	// TODO unknown error when accepting connection, use errno in message
+        	    }
+        	    default: {
+        	    	// unknown error when accepting connection, use errno in message
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_SOCK_ACCEPT_UNKNOWN) + 3];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_SOCK_ACCEPT_UNKNOWN "%d", errno);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_LISTEN);
         	        break;
+        	    }
         	}
         	continue;
         }
@@ -260,14 +317,14 @@ void server_listener_thread(void *arg) {
         setsockopt(connection_fd, SOL_SOCKET, SO_RCVTIMEO, &conntimeout, sizeof(conntimeout));
 
         // add the new connection to the active connections list
-        sys_mutex_lock(conn_mu);
+        sys_mutex_lock(&conn_mu);
 	    for (int i = 0; i < MAX_CONN_NUM; ++i) {
 	    	if (connections[i] == -1) { // -1 is an empty space in the list
 	    		connections[i] = connection_fd;
                 break;
 	    	}
 	    }
-	    sys_mutex_unlock(conn_mu);
+	    sys_mutex_unlock(&conn_mu);
 
 	    for(int i = 0; i < 5; i++) {
 	    	if(deviceIPs[i].addr == (u32_t) connection_socket.sin_addr.s_addr) {
@@ -278,8 +335,15 @@ void server_listener_thread(void *arg) {
 	    	    }
 	    	}
 	    }
+	    // log new connection, include given fd and ip address
+    	char logmsg[sizeof(FC_STAT_TCP_SERV_NEW_CONN) + 22];
+    	ip4_addr_t incomingaddr;
+    	inet_addr_to_ip4addr(&incomingaddr, &connection_socket.sin_addr);
+    	snprintf(logmsg, sizeof(logmsg), FC_STAT_TCP_SERV_NEW_CONN "%d/%u.%u.%u.%u", (int16_t) connection_fd, ip4_addr1(&incomingaddr), ip4_addr2(&incomingaddr), ip4_addr3(&incomingaddr), ip4_addr4(&incomingaddr));
+    	log_message(logmsg, -1);
     }
-    // TODO Log exiting listener thread due to a shutdown, could be error or status, should have a error number tho
+    // Log exiting listener thread due to a shutdown
+    log_message(FC_ERR_TCP_SERV_LISTEN_THREAD_CLOSE, -1);
     close(listen_sockfd);
     xSemaphoreGive(shutdownDone);
 	vTaskDelete(NULL);
@@ -318,7 +382,7 @@ void server_reader_thread(void *arg) {
             // we have incoming messages
 
             // lock the connections mutex
-            sys_mutex_lock(conn_mu);
+            sys_mutex_lock(&conn_mu);
 
             // go through our connections to see which one this maps to
             for (int i = 0; i < MAX_CONN_NUM; i++) {
@@ -349,31 +413,63 @@ void server_reader_thread(void *arg) {
 					    	}
 			    	    	xSemaphoreGive(deviceMutex);
 			    	    }
+			    	    // log connection closed, include fd
+	        	    	char logmsg[sizeof(FC_STAT_TCP_CONN_CLOSED) + 6];
+	        	    	snprintf(logmsg, sizeof(logmsg), FC_STAT_TCP_CONN_CLOSED "%d", (int16_t) connection_fd);
+	        	    	log_message(logmsg, -1);
 				    	continue;
 				    }
 				    else if(packet_len == -1) {
 				    	switch(errno) {
-				    	    case EBADF:
-				    	        // TODO invalid socket, closing and cleaning up fd
+				    	    case EBADF: {
+				    	        // invalid socket, closing and cleaning up fd
+			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_READ_NSOCK) + 6];
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_READ_NSOCK "%d", (int16_t) connection_fd);
+			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
 				    	        break;
-				    	    case EWOULDBLOCK:
-				    	        // TODO receive timeout
+				    	    }
+				    	    case EWOULDBLOCK: {
+				    	        // receive timeout, not very critical, just try again
+			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_READ_TIMEOUT) + 6];
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_READ_TIMEOUT "%d", (int16_t) connection_fd);
+			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
 				    	        break;
-				    	    case ECONNRESET:
-				    	        // TODO connection reset by peer, closing and cleaning up fd
+				    	    }
+				    	    case ECONNRESET: {
+				    	        // connection reset by peer, closing and cleaning up fd
+			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_READ_CONN_RST) + 6];
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_READ_CONN_RST "%d", (int16_t) connection_fd);
+			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
 				    	        break;
-				    	    case ENOTCONN:
-				    	        // TODO socket is not connected, closing and cleaning up fd
+				    	    }
+				    	    case ENOTCONN: {
+				    	        // socket is not connected, closing and cleaning up fd
+			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_READ_SOCK_NCONN) + 6];
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_READ_SOCK_NCONN "%d", (int16_t) connection_fd);
+			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
 				    	        break;
-				    	    case ENOMEM:
-				    	        // TODO out of memory when receiving data
+				    	    }
+				    	    case ENOMEM: {
+				    	        // out of memory when receiving data
+			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_READ_NOMEM) + 6];
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_READ_NOMEM "%d", (int16_t) connection_fd);
+			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
 				    	        break;
-				    	    case ENOBUFS:
-				    	        // TODO out of buffer space
+				    	    }
+				    	    case ENOBUFS: {
+				    	        // out of buffer space
+			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_READ_NOBUF) + 6];
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_READ_NOBUF "%d", (int16_t) connection_fd);
+			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
 				    	        break;
-				    	    default:
-				    	    	// TODO unknown error when receiving data, use errno in message
+				    	    }
+				    	    default: {
+				    	    	// unknown error when receiving data, use errno in message
+			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_READ_UNKNOWN) + 10];
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_READ_UNKNOWN "%d/%d", (int16_t) connection_fd, errno);
+			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
 				    	        break;
+				    	    }
 				    	}
 				    	if(errno == EBADF || errno == ECONNRESET || errno == ENOTCONN) {
 					    	close(connection_fd);
@@ -394,38 +490,60 @@ void server_reader_thread(void *arg) {
 
 				    Raw_message msg = {0};
 				    uint8_t *buffer = malloc(packet_len);
-				    memcpy(buffer, tempbuffer, packet_len);
-				    msg.bufferptr = buffer;
-				    msg.connection_fd = connection_fd;
-				    msg.packet_len = packet_len;
+				    if(buffer) {
+					    memcpy(buffer, tempbuffer, packet_len);
+					    msg.bufferptr = buffer;
+					    msg.connection_fd = connection_fd;
+					    msg.packet_len = packet_len;
 
-				    // add the message to the RX Message Buffer to be parsed
-                    list_push(rxMsgBuffer, (void*)(&msg), portMAX_DELAY);
+					    // add the message to the RX Message Buffer to be parsed
+	                    if(list_push(rxMsgBuffer, (void*)(&msg), portMAX_DELAY)) {
+	                    	// JUST in case
+	                    	free(buffer);
+	                    }
+				    }
+				    else {
+				    	// no memory creating receiving buffer
+	        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_STORE_NOMEM) + 6];
+	        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_STORE_NOMEM "%d", (int16_t) connection_fd);
+	        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
+				    }
                 }
             }
 
             // unlock the connections mutex
-            sys_mutex_unlock(conn_mu);
+            sys_mutex_unlock(&conn_mu);
         }
         else if(nready == -1) {
         	switch(errno) {
-        	    case EBADF:
-        	        // TODO bad socket in fd list, this could be because the server is shutting down, scanning fd list and removing closed sockets
+        	    case EBADF: {
+        	        // bad socket in fd list, this could be because the server is shutting down, scanning fd list and removing closed sockets
+		    	    log_message(FC_ERR_TCP_SERV_RECV_WAIT_NSOCK, FC_ERR_TYPE_TCP_SERV_RECV_SELECT);
         	    	remove_bad_fds();
         	        break;
-        	    case ENOMEM:
-        	        // TODO out of memory creating semaphores to signal ready sockets
+        	    }
+        	    case ENOMEM: {
+        	        // out of memory creating semaphores to signal ready sockets
+		    	    log_message(FC_ERR_TCP_SERV_RECV_WAIT_NOMEM, FC_ERR_TYPE_TCP_SERV_RECV_SELECT);
         	        break;
-        	    case EBUSY:
-        	        // TODO too many threads waiting on one or more of the sockets
+        	    }
+        	    case EBUSY: {
+        	        // too many threads waiting on one or more of the sockets
+		    	    log_message(FC_ERR_TCP_SERV_RECV_WAIT_BUSY_SOCK, FC_ERR_TYPE_TCP_SERV_RECV_SELECT);
         	        break;
-        	    default:
-        	    	// TODO unknown error when waiting for socket events
+        	    }
+        	    default: {
+        	    	// unknown error when waiting for socket events
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_WAIT_UNKNOWN) + 3];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_WAIT_UNKNOWN "%d", errno);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_SELECT);
         	        break;
+        	    }
         	}
         }
     }
-    // TODO Log exiting receive thread due to a shutdown, could be error or status, should have a error number tho
+    // Log exiting receive thread due to a shutdown
+    log_message(FC_ERR_TCP_SERV_RECV_THREAD_CLOSE, -1);
     xSemaphoreGive(shutdownDone);
 	vTaskDelete(NULL);
 }
@@ -444,7 +562,7 @@ void server_writer_thread(void *arg) {
 
         // blocks until a message is available in the TX Message Buffer
 		if(list_pop(txMsgBuffer, (void*)(&msg), 100)) {
-			// returned early
+			// returned early, no messages
 			continue;
 		}
 
@@ -455,32 +573,56 @@ void server_writer_thread(void *arg) {
         }
 
 		if(send(msg.connection_fd, msg.bufferptr, msg.packet_len, 0) == -1) { // opts = 0
-			// TODO: In all of these cases, the message is getting lost
 	    	switch(errno) {
-	    	    case EBADF:
-	    	        // TODO invalid socket, letting receive task clean up the connection
+	    	    case EBADF: {
+	    	        // invalid socket, letting receive task clean up the connection
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_WRITE_SEND_NSOCK) + 6];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_WRITE_SEND_NSOCK "%d", (int16_t) msg.connection_fd);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_WRITE);
 	    	        break;
-	    	    case EINPROGRESS:
-	    	        // TODO internal netconn is connecting, closing, or writing in a different place
+	    	    }
+	    	    case EINPROGRESS: {
+	    	        // internal netconn is connecting, closing, or writing in a different place
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_WRITE_SEND_SOCK_BUSY) + 6];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_WRITE_SEND_SOCK_BUSY "%d", (int16_t) msg.connection_fd);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_WRITE);
 	    	        break;
-	    	    case ENOTCONN:
-	    	        // TODO invalid netconn pcb
+	    	    }
+	    	    case ENOTCONN: {
+	    	        // invalid netconn pcb
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_WRITE_SEND_NPCB) + 6];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_WRITE_SEND_NPCB "%d", (int16_t) msg.connection_fd);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_WRITE);
 	    	        break;
-	    	    case EIO:
-	    	        // TODO NULL netconn, this should be caught in EBADF but in a rare case this might happen
+	    	    }
+	    	    case EIO: {
+	    	        // NULL netconn, this should be caught in EBADF but in a rare case this might happen
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_WRITE_SEND_NNETCONN) + 6];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_WRITE_SEND_NNETCONN "%d", (int16_t) msg.connection_fd);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_WRITE);
 	    	        break;
-	    	    case EINVAL:
-	    	        // TODO internal overflow or NULL pointer
+	    	    }
+	    	    case EINVAL: {
+	    	        // internal overflow or NULL pointer
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_WRITE_SEND_MEM_ERR) + 6];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_WRITE_SEND_MEM_ERR "%d", (int16_t) msg.connection_fd);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_WRITE);
 	    	        break;
-	    	    default:
-	    	    	// TODO unknown error when sending data, use errno in message
+	    	    }
+	    	    default: {
+	    	    	// unknown error when sending data, use errno in message
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_WRITE_SEND_UNKNOWN) + 10];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_WRITE_SEND_UNKNOWN "%d/%d", (int16_t) msg.connection_fd, errno);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_WRITE);
 	    	        break;
+	    	    }
 	    	}
 		}
 		free(msg.bufferptr);
 
 	}
-    // TODO Log exiting writer thread due to a shutdown, could be error or status, should have a error number tho
+    // Log exiting writer thread due to a shutdown
+	log_message(FC_ERR_TCP_SERV_WRITE_THREAD_CLOSE, -1);
     xSemaphoreGive(shutdownDone);
 	vTaskDelete(NULL);
 }
@@ -529,7 +671,7 @@ int server_send(Raw_message* msg, TickType_t block) {
 int update_fd_set(fd_set *rfds) {
     FD_ZERO(rfds);
 
-	sys_mutex_lock(conn_mu);
+	sys_mutex_lock(&conn_mu);
 
 	for (int i = 0; i < MAX_CONN_NUM; ++i) {
 		if (connections[i] != -1) {
@@ -537,7 +679,7 @@ int update_fd_set(fd_set *rfds) {
 		}
     }
 
-	sys_mutex_unlock(conn_mu);
+	sys_mutex_unlock(&conn_mu);
     return 0;
 }
 
@@ -583,16 +725,6 @@ int shutdown_server() {
 			xSemaphoreGive(shutdownStart);
 		}
 
-		// Force reader task out of select()
-		sys_mutex_lock(conn_mu);
-	    for (int i = 0; i < MAX_CONN_NUM; ++i) {
-	    	if(connections[i] != -1) {
-	    		close(connections[i]);
-	    		connections[i] = -1;
-	    	}
-	    }
-		sys_mutex_unlock(conn_mu);
-
 		for(int i = 0;i < 3;i++) {
 			xSemaphoreTake(shutdownDone, portMAX_DELAY);
 		}
@@ -624,15 +756,19 @@ int get_device_fd(Target_Device dev) {
 }
 
 // Scans connections for bad sockets - sockets that have been closed without setting the corresponding fd to -1
-void remove_bad_fds() {
-	sys_mutex_lock(conn_mu);
+void remove_bad_fds(void) {
+	sys_mutex_lock(&conn_mu);
 	for(int i = 0; i < MAX_CONN_NUM; ++i) {
 		if(connections[i] != -1) {
 			int type;
 			socklen_t len = sizeof(type);
 			if(getsockopt(connections[i], SOL_SOCKET, SO_TYPE, &type, &len) == -1) {
 			    if(errno == EBADF) {
-			        // TODO: bad fd in list, include fd number
+			        // bad fd in list, include fd number
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_FD_SCAN_NSOCK) + 6];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_FD_SCAN_NSOCK "%d", (int16_t) connections[i]);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_FD_SCAN);
+
 		    	    if(xSemaphoreTake(deviceMutex, 5) == pdPASS) {
 				    	for(int j = 0; j < 5;j++) {
 				    		if(connections[i] == devices[j]) {
@@ -644,10 +780,13 @@ void remove_bad_fds() {
 		    	    }
 			    	connections[i] = -1;
 			    } else {
-			        // TODO: unknown socket error during fd list scan, include fd number and errno number
+			        // unknown socket error during fd list scan, include fd number and errno number
+        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_FD_SCAN_UNKNOWN) + 10];
+        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_FD_SCAN_UNKNOWN "%d/%d", (int16_t) connections[i], errno);
+        	    	log_message(logmsg, FC_ERR_TYPE_TCP_FD_SCAN);
 			    }
 			}
 		}
     }
-	sys_mutex_unlock(conn_mu);
+	sys_mutex_unlock(&conn_mu);
 }

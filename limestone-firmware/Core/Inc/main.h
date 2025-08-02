@@ -104,6 +104,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void set_system_time(uint32_t sec, uint32_t us);
+
+uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
