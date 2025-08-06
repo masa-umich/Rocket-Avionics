@@ -6,6 +6,7 @@ For this to work you need to have noise_generator.hpp and noise_generator.cpp in
 Those files use a .txt that has the MASTRAN (MASA's in-house flight prediction software) 
 data for the altitude of the rocket. The current .txt file in this repo 'height_data.txt' is what 
 we used in 2025 and may be out-dated depending on when you access this.
+Post hot-fire we are using a_x_data_new.txt, which is the acceleration data from 
 If you're having trouble figuring out how to get up-to-date flight sim data out of MASTRAN 
 email pickos@umich.edu OR the current A&R team lead. 
 */
@@ -35,13 +36,25 @@ struct Program_Info
     int imu_size;
     int detection_method;
     bool MECO_flag = false;
+    bool apogee_flag = false;
+    bool drogue_flag = false;
+    bool main_flag = false;
+    bool flight_over = false;
+};
+
+struct Baro_Package
+{
+    Barometer baro_1;
+    Barometer baro_2;
+    std::pair<int, int> baro1_D1_D2;
+    std::pair<int, int> baro2_D1_D2;
 };
 
 class Detector
 {
     public: 
 
-    Detector(const int CAP_IN) : CAPACITY(CAP_IN)
+    Detector(const int CAP_IN, bool is_baro) : CAPACITY(CAP_IN), is_baro(is_baro)
     {
         readings_1 = new double[CAPACITY];
         readings_2 = new double[CAPACITY];
@@ -58,6 +71,7 @@ class Detector
     }
 
     const int CAPACITY;
+    bool is_baro;
     double*readings_1;
     double*readings_2;
     double*average;
@@ -104,7 +118,7 @@ class Detector
         //CURRENTLY IN THE BUFFER, and insert that number into the place where 
         //NAN would have been inserted. 
             
-        if(std::isnan(baro1) || !std::isfinite(baro1)){
+        if(std::isnan(baro1) || !std::isfinite(baro1) || (is_baro && (baro1 <= 0 || baro1 >= 2000))){
             baro1 = mean(size_1, readings_1);}
         readings_1[index_1] = baro1;
         index_1++;
@@ -112,7 +126,7 @@ class Detector
         size_1 = std::min(size_1 + 1, CAPACITY);
 
         //same as above!
-        if(std::isnan(baro2) || !std::isfinite(baro2)){
+        if(std::isnan(baro2) || !std::isfinite(baro2) || (is_baro && (baro2 <= 0 || baro2 >= 2000))){
             baro2 = mean(size_2, readings_2);}
         readings_2[index_2] = baro2;
         index_2++;
@@ -157,32 +171,83 @@ class Detector
                 slope_i = (slope_i + 1) % CAPACITY;
             }
         }
-
     }
 
-    bool detect_apog()
+    bool is_buffer_average_less_than_this_value(double search_value)
     {
-        if (slope_size < CAPACITY)
+        if (avg_size < CAPACITY)
             return false;
         else
-        { 
+        {
             int count = 0;
-            for(int i = 0; i < CAPACITY; ++i)
+            for (int i = 0; i < CAPACITY; ++i)
             {
-                if(slope[i] > 0)
+                if (average[i] < search_value)
                     ++count;
             }
-
-            //if 80% of the readings in our slope buffer are positive DETECT APOGEE
-            if(count >= (CAPACITY * 0.8))
+            if (count >= (CAPACITY * 0.8))
                 return true;
         }
+        return false;
+    }
+
+    bool is_buffer_average_greater_than_this_value(double search_value)
+    {
+        if (avg_size < CAPACITY)
+            return false;
+        else
+        {
+            int count = 0;
+            for (int i = 0; i < CAPACITY; ++i)
+            {
+                if (average[i] > search_value)
+                    ++count;
+            }
+            if (count >= (CAPACITY * 0.8))
+                return true;
+        }
+        return false;
+    }
+
+    bool detect_apog(Program_Info &info)
+    {
+        if(info.apogee_flag == false)
+        {
+            if (slope_size < CAPACITY)
+                return false;
+            else
+            { 
+                int count = 0;
+                for(int i = 0; i < CAPACITY; ++i)
+                {
+                    if(slope[i] > 0)
+                        ++count;
+                }
+
+                //if 80% of the readings in our slope buffer are positive DETECT APOGEE
+                if(count >= (CAPACITY * 0.8))
+                    return true;
+            }
+        }
+        else if (info.apogee_flag == true && info.drogue_flag == false)
+        {
+            return is_buffer_average_greater_than_this_value(825); //approximate pressure in hPa at 1500 m
+        }
+
+        else if(info.apogee_flag == true && info.drogue_flag == true && info.main_flag == false)
+        {
+            return is_buffer_average_greater_than_this_value(975); //aproximate pressure in hPa at 300 m 
+        }
+
         return false;
     }
 
     bool detect_MECO(Program_Info &info)
     {
         //for steep drop detection
+        //WARNING! MAGIC NUMBER USED HERE. Works for window size 5 on OUR CURRENT SIMULATED DATA 
+        //Very possibly safer to simply search for 'negative acceleration' in real flight, as that  
+        //should work across many different flight scenarios! 
         if (info.detection_method == 2)
         {
             if (slope_size < CAPACITY)
@@ -207,34 +272,102 @@ class Detector
         //for negative acceleration detection
         else if(info.detection_method == 1)
         {
-            if (avg_size < CAPACITY)
-                return false;
-            else
-            {
-                int count = 0;
-                for (int i = 0; i < CAPACITY; ++i)
-                {
-                    if (average[i] < 0)
-                        ++count;
-                }
-                if (count >= (CAPACITY * 0.8))
-                    return true;
+            // if (avg_size < CAPACITY)
+            //     return false;
+            // else
+            // {
+            //     int count = 0;
+            //     for (int i = 0; i < CAPACITY; ++i)
+            //     {
+            //         if (average[i] < 0)
+            //             ++count;
+            //     }
+            //     if (count >= (CAPACITY * 0.8))
+            //         return true;
 
-            } 
-            return false;
+            // } 
+            // return false;
+
+            return is_buffer_average_less_than_this_value(0);
         }
+
+
         return false;
     }
     
 };
+
+void read_detect_decide(int j, double current_height, Baro_Package &baro_package, Program_Info &info, Detector &detect, Environment &env)
+{
+        if (current_height > 21200 || info.apogee_flag == true)
+        {
+            double P_true = env.compute_pressure(current_height);
+            double T_true = env.compute_temp(current_height);
+
+            // inject noise
+            double P_noisy_1 = P_true + gaussian_random(0, 1.5);
+            double T_noisy_1 = T_true + gaussian_random(0, 8);
+
+            double P_noisy_2 = P_true + gaussian_random(0, 1.5);
+            double T_noisy_2 = T_true + gaussian_random(0, 8);
+
+            baro_package.baro1_D1_D2 = baro_package.baro_1.guess_and_check(P_noisy_1, T_noisy_1);
+            baro_package.baro2_D1_D2 = baro_package.baro_2.guess_and_check(P_noisy_2, T_noisy_2);
+
+            auto [baro1_final_P, baro1_final_TEMP] = 
+                baro_package.baro_1.forward_calculation(baro_package.baro1_D1_D2.first, baro_package.baro1_D1_D2.second);
+
+            auto [baro2_final_P, baro2_final_TEMP] = 
+                baro_package.baro_2.forward_calculation(baro_package.baro2_D1_D2.first, baro_package.baro2_D1_D2.second);
+
+            cout << setw(10) << left << current_height;
+            cout << setw(10) << baro1_final_P / 100 << setw(10) << baro2_final_P / 100;
+
+            cout << setw(10) << right << static_cast<double>(j) / 100 << "\n";
+
+            if (detect.size_1 < 5 && detect.size_2 < 5)
+            {
+                // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
+                detect.insert(baro1_final_P / 100, baro2_final_P / 100, info);
+            }
+            else
+            {
+                // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
+                detect.insert(baro1_final_P / 100, baro2_final_P / 100, info);
+
+                if (detect.detect_apog(info))
+                {
+                    if (info.apogee_flag == false)
+                    {
+                        cout << "Apogee Detected!\n";
+                        cout << "Beginning phase 3\n";
+                        info.apogee_flag = true;
+                    }
+
+                    else if(info.apogee_flag == true && info.drogue_flag == false)
+                    {
+                        cout << "1500 meters, deploy drogue!\n";
+                        info.drogue_flag = true;
+                    }
+
+                    else if(info.apogee_flag == true && info.drogue_flag == true && info.main_flag == false)
+                    {
+                        cout << "300 meters, deploy main!\n";
+                        info.main_flag = true;
+                    }
+                }
+            }
+        }
+}
 
 
 void launch()
 {
     Environment env;
     Program_Info info;
-    Barometer baro_1;
-    Barometer baro_2;
+    // Barometer baro_1;
+    // Barometer baro_2;
+    Baro_Package baro_package;
 
     // IMU imu_1;
     // IMU imu_2;
@@ -245,7 +378,7 @@ void launch()
     cout << "What window size for the barometers? (5 is a good default)\n";
     cin >> info.baro_size;
     //creating a detector for the barometers with a window of baro_size
-    Detector detect(info.baro_size);
+    Detector detect(info.baro_size, true);
 
     if (info.answer == 1)
     {
@@ -256,7 +389,7 @@ void launch()
         cin >> info.detection_method;
 
         //creating a detector for the IMU with a window of imu_size
-        Detector detect_IMU(info.imu_size);
+        Detector detect_IMU(info.imu_size, false);
 
         //read in data for IMUs to detect MECO
         std::ifstream FS_1("a_x_data_new.txt");
@@ -317,16 +450,13 @@ void launch()
         // while(j < heights.size())
         // while(j < heights.size() && apogee_flag == false)
 
-    }
+    }    
 
-    bool apogee_flag = false;
-    
-
-    std::pair<int, int> baro1_D1_D2;
-    std::pair<int, int> baro2_D1_D2;
+    // std::pair<int, int> baro1_D1_D2;
+    // std::pair<int, int> baro2_D1_D2;
 
     //read in altidude data for barometers to detect apogee after MECO
-    std::ifstream FS_2("height_data.txt");
+    std::ifstream FS_2("height_data_new.txt");
     std::vector<long double> heights;
     string height;
 
@@ -337,56 +467,13 @@ void launch()
 
     
     int j = 0;
-    while(apogee_flag == false)
+    while(info.apogee_flag == false)
     {
         double current_height = heights[j];
 
-        if (current_height > 18100)
-        {
-            double P_true = env.compute_pressure(current_height);
-            double T_true = env.compute_temp(current_height);
+        read_detect_decide(j, current_height, baro_package, info, detect, env);
 
-            // inject noise
-            double P_noisy_1 = P_true + gaussian_random(0, 1.5);
-            double T_noisy_1 = T_true + gaussian_random(0, 8);
-
-            double P_noisy_2 = P_true + gaussian_random(0, 1.5);
-            double T_noisy_2 = T_true + gaussian_random(0, 8);
-
-            baro1_D1_D2 = baro_1.guess_and_check(P_noisy_1, T_noisy_1);
-            baro2_D1_D2 = baro_2.guess_and_check(P_noisy_2, T_noisy_2);
-
-            auto [baro1_final_P, baro1_final_TEMP] = baro_1.forward_calculation(baro1_D1_D2.first, baro1_D1_D2.second);
-            auto [baro2_final_P, baro2_final_TEMP] = baro_2.forward_calculation(baro2_D1_D2.first, baro2_D1_D2.second);
-
-            cout << setw(10) << left << current_height;
-            cout << setw(10) << baro1_final_P / 100 << setw(10) << baro2_final_P / 100;
-
-            cout << setw(10) << right << static_cast<double>(j) / 100 << "\n";
-
-            if (detect.size_1 < 5 && detect.size_2 < 5)
-            {
-                // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
-                detect.insert(baro1_final_P / 100, baro2_final_P / 100, info);
-            }
-            else
-            {
-                // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
-                detect.insert(baro1_final_P / 100, baro2_final_P / 100, info);
-                if (detect.detect_apog() && apogee_flag == false)
-                {
-                    cout << "Apogee Detected!\n";
-                    cout << "Beginning phase 3\n";
-                    apogee_flag = true;
-
-                }
-            }
-        }
-
-        //enter phase three
-
-
-        //using this index variable to cycle through the values in height_data.txt
+        //using this index variable 'j' to cycle through the values in height_data.txt
         //Note 
         //MASTRAN data for some reason skips to sampling every 0.05 seconds instead of 0.01 seconds 
         //almost immediately after apogee. 
@@ -399,6 +486,31 @@ void launch()
         else
             j += 1;
     }
+
+    while(info.drogue_flag == false)
+    {
+        double current_height = heights[j];
+
+        read_detect_decide(j, current_height, baro_package, info, detect, env);
+
+        j += 5;
+    }
+
+    while(info.main_flag == false)
+    {
+        double current_height = heights[j];
+
+        read_detect_decide(j, current_height, baro_package, info, detect, env);
+
+        j+= 5;
+    }
+
+    for(; j < heights.size(); j += 5)
+    {
+        cout << heights[j] << "\n";
+    }
+    
+    cout << "Flight is over!\n";
 }
 
 int main()
