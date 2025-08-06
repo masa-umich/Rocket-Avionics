@@ -15,8 +15,8 @@ extern ip4_addr_t ipaddr; // get our IP address from somewhere (defined in the I
 #define SERVER_PORT 5000
 #define MAX_CONN_NUM 8
 
-List* rxMsgBuffer; // thread-safe queue for incoming messages
-List* txMsgBuffer; 
+List* rxMsgBuffer = NULL; // thread-safe queue for incoming messages
+List* txMsgBuffer = NULL;
 
 int connections[MAX_CONN_NUM]; // List of active connections
 sys_mutex_t conn_mu; // Mutex for the connections list
@@ -42,19 +42,21 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
     runningMutex = xSemaphoreCreateMutex();
     deviceMutex = xSemaphoreCreateMutex();
 
+    // check if the mutex got created successfully
+    if(sys_mutex_new(&conn_mu) != ERR_OK) {
+        return 1;
+    }
+
     // make thread-safe queues for incoming and outgoing messages
     rxMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
-	txMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
-	if(rxMsgBuffer == NULL || txMsgBuffer == NULL) {
-		return 1;
-	}
-
-    // check if the mutex got created successfully
-    if (sys_mutex_new(&conn_mu) != ERR_OK) {
-        return 1;
-    } else {
-        return 0;
+    if(!rxMsgBuffer) {
+    	return 1;
     }
+	txMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
+    if(!txMsgBuffer) {
+    	return 1;
+    }
+    return 0;
 }
 
 
@@ -62,6 +64,10 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
 // Spins off a listener, reader, and writer task/thread 
 // as well as initializes the message buffers and connection list
 int server_init(void) {
+	if(!txMsgBuffer) {
+		return -3;
+	}
+
 	if(xSemaphoreTake(runningMutex, 5) == pdPASS) {
 		if(running) {
 			xSemaphoreGive(runningMutex);
@@ -75,6 +81,7 @@ int server_init(void) {
 	else {
 		return -1;
 	}
+
     osThreadId_t readerTaskHandle, writerTaskHandle, listenerTaskHandle;
     // task configuration
     const osThreadAttr_t listenerTask_attributes = {

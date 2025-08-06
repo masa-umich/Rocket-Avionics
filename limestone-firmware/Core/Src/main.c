@@ -852,7 +852,7 @@ Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredSta
 	 }
 }
 
-// Load board configuration from a buffer. Returns 0 on success, -1 on an eeprom error or if a configuration value is outside its allowed range
+// Load board configuration from a buffer. Returns 0 on success, -1 on an eeprom error, -2 on invalid tc gains, and -3 on invalid valve configuration values
 int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
 	uint8_t buffer[FC_EEPROM_LEN];
 	eeprom_status_t read_stat = eeprom_read_mem(eeprom, 0, buffer, FC_EEPROM_LEN);
@@ -894,13 +894,49 @@ int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
 	IP4_ADDR(&(conf->flightrecordIP), buffer[89], buffer[90], buffer[91], buffer[92]);
 
 	if(conf->tc1_gain > 0x0E || conf->tc2_gain > 0x0E || conf->tc3_gain > 0x0E) {
-		return -1;
+		return -2;
 	}
 
 	if(conf->vlv1_v > 0x01 || conf->vlv1_en > 0x01 || conf->vlv2_v > 0x01 || conf->vlv2_en > 0x01 || conf->vlv3_v > 0x01 || conf->vlv3_en > 0x01) {
-		return -1;
+		return -3;
 	}
 	return 0;
+}
+
+void load_eeprom_defaults(EEPROM_conf_t *conf) {
+	conf->pt1->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt1->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt1->max_V = FC_EEPROM_PT_MAX_DEFAULT;
+	conf->pt2->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt2->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt2->max_V = FC_EEPROM_PT_MAX_DEFAULT;
+	conf->pt3->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt3->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt3->max_V = FC_EEPROM_PT_MAX_DEFAULT;
+	conf->pt4->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt4->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt4->max_V = FC_EEPROM_PT_MAX_DEFAULT;
+	conf->pt5->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt5->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt5->max_V = FC_EEPROM_PT_MAX_DEFAULT;
+
+	conf->tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+	conf->tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+	conf->tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+
+	conf->vlv1_v = FC_EEPROM_VLV_VOL_DEFAULT;
+	conf->vlv1_en = FC_EEPROM_VLV_EN_DEFAULT;
+	conf->vlv2_v = FC_EEPROM_VLV_VOL_DEFAULT;
+	conf->vlv2_en = FC_EEPROM_VLV_EN_DEFAULT;
+	conf->vlv3_v = FC_EEPROM_VLV_VOL_DEFAULT;
+	conf->vlv3_en = FC_EEPROM_VLV_EN_DEFAULT;
+
+	IP4_ADDR(&(conf->limewireIP), FC_EEPROM_LIMEWIREIP_DEFAULT_1, FC_EEPROM_LIMEWIREIP_DEFAULT_2, FC_EEPROM_LIMEWIREIP_DEFAULT_3, FC_EEPROM_LIMEWIREIP_DEFAULT_4);
+	IP4_ADDR(&(conf->flightcomputerIP), FC_EEPROM_FCIP_DEFAULT_1, FC_EEPROM_FCIP_DEFAULT_2, FC_EEPROM_FCIP_DEFAULT_3, FC_EEPROM_FCIP_DEFAULT_4);
+	IP4_ADDR(&(conf->bayboard1IP), FC_EEPROM_BB1IP_DEFAULT_1, FC_EEPROM_BB1IP_DEFAULT_2, FC_EEPROM_BB1IP_DEFAULT_3, FC_EEPROM_BB1IP_DEFAULT_4);
+	IP4_ADDR(&(conf->bayboard2IP), FC_EEPROM_BB2IP_DEFAULT_1, FC_EEPROM_BB2IP_DEFAULT_2, FC_EEPROM_BB2IP_DEFAULT_3, FC_EEPROM_BB2IP_DEFAULT_4);
+	IP4_ADDR(&(conf->bayboard3IP), FC_EEPROM_BB3IP_DEFAULT_1, FC_EEPROM_BB3IP_DEFAULT_2, FC_EEPROM_BB3IP_DEFAULT_3, FC_EEPROM_BB3IP_DEFAULT_4);
+	IP4_ADDR(&(conf->flightrecordIP), FC_EEPROM_FRIP_DEFAULT_1, FC_EEPROM_FRIP_DEFAULT_2, FC_EEPROM_FRIP_DEFAULT_3, FC_EEPROM_FRIP_DEFAULT_4);
 }
 
 // Writes text to flash, msgtext does not have to be null terminated and msglen should not include the null character if it is included
@@ -937,13 +973,13 @@ uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
 	}
 	return 1;
 }
+
 /*
  * Log message to flash. This is the function to use throughout the rest of the code.
  * msgtext - Message text. This should include an error code if the message is an error
  * msgtype - Type of message, used for error message throttling. Pass -1 if this is a status message or if you don't want it to be throttled, otherwise pass the "category" of the error message
  * Returns 0 on success, 1 if a message of this type was sent too recently, 2 on general error, and 3 if there isn't enough memory available
  */
-
 uint8_t log_message(const char *msgtext, int msgtype) {
 	if(msgtype != -1) {
 		if(msgtype >= ERROR_MSG_TYPES) {
@@ -980,7 +1016,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		errormsg_t fullmsg;
 		fullmsg.content = rawmsgbuf;
 		fullmsg.len = msglen;
-		if(list_push(errorMsgList, (void *)&fullmsg, 2)) {
+		if(list_push(errorMsgList, (void *)&fullmsg, 1)) {
 			// No space for more messages
 			free(rawmsgbuf);
 			return 3;
@@ -990,15 +1026,38 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 	return 3;
 }
 
-void log_lmp_packet(uint8_t *buf, size_t buflen) {
+void send_flash_full() {
+	if(xSemaphoreTake(errorudp_mutex, 5) == pdPASS) {
+		if(errormsgudp) {
+			struct netbuf *outbuf = netbuf_new();
+			if(outbuf) {
+				char *pkt_buf = (char *) netbuf_alloc(outbuf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
+				if(pkt_buf) {
+					get_iso_time(pkt_buf);
+					pkt_buf[24] = ' ';
+					pkt_buf[25] = '1';
+					memcpy(&pkt_buf[26], ERR_FLASH_FULL, sizeof(ERR_FLASH_FULL) - 1);
+					netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
+				}
+				netbuf_delete(outbuf);
+			}
+		}
+		xSemaphoreGive(errorudp_mutex);
+	}
+}
+
+// 0 success, 1 semaphore timeout, 2 flash full, 3 memory error
+int log_lmp_packet(uint8_t *buf, size_t buflen) {
 	size_t outlen;
 	uint8_t *encoded = base64_encode(buf, buflen, &outlen, 1);
 	if(encoded) {
 		encoded[0] = FLASH_TELEM_MARK;
 		encoded[outlen] = '\n';
-		write_raw_to_flash(encoded, outlen + 1);
+		uint8_t stat = write_raw_to_flash(encoded, outlen + 1);
 		free(encoded);
+		return stat;
 	}
+	return 3;
 }
 
 void *ftp_open(const char *fname, const char *mode, u8_t write) {
@@ -1266,16 +1325,6 @@ int main(void)
   MX_SPI6_Init();
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
-  // Load EEPROM config
-  loaded_config.pt1 = &PT1_h;
-  loaded_config.pt2 = &PT2_h;
-  loaded_config.pt3 = &PT3_h;
-  loaded_config.pt4 = &PT4_h;
-  loaded_config.pt5 = &PT5_h;
-  eeprom_init(&eeprom_h, &hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin);
-  load_eeprom_config(&eeprom_h, &loaded_config);
-  fc_addr = loaded_config.flightcomputerIP;
-  // TODO: error handling here
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -1301,6 +1350,54 @@ int main(void)
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   errorMsgList = list_create(sizeof(errormsg_t), msgFreeCallback);
+  // Load EEPROM config
+  loaded_config.pt1 = &PT1_h;
+  loaded_config.pt2 = &PT2_h;
+  loaded_config.pt3 = &PT3_h;
+  loaded_config.pt4 = &PT4_h;
+  loaded_config.pt5 = &PT5_h;
+  if(eeprom_init(&eeprom_h, &hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin) == EEPROM_OK) {
+	  switch(load_eeprom_config(&eeprom_h, &loaded_config)) {
+	  	  case -1: {
+	  		  // TODO eeprom load error, defaults loaded
+	  		  load_eeprom_defaults(&loaded_config);
+	  		  break;
+	  	  }
+	  	  case -2: {
+	  		  // TODO eeprom tc gain value error
+	  		  loaded_config.tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+	  		  loaded_config.tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+	  		  loaded_config.tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+	  		  break;
+	  	  }
+	  	  case -3: {
+	  		  // TODO eeprom valve conf error
+	  		  loaded_config.vlv1_en = FC_EEPROM_VLV_EN_DEFAULT;
+	  		  loaded_config.vlv1_v = FC_EEPROM_VLV_VOL_DEFAULT;
+	  		  loaded_config.vlv2_en = FC_EEPROM_VLV_EN_DEFAULT;
+	  		  loaded_config.vlv2_v = FC_EEPROM_VLV_VOL_DEFAULT;
+	  		  loaded_config.vlv3_en = FC_EEPROM_VLV_EN_DEFAULT;
+	  		  loaded_config.vlv3_v = FC_EEPROM_VLV_VOL_DEFAULT;
+	  		  break;
+	  	  }
+	  	  default: {
+	  		  // TODO eeprom conf loaded
+
+	  		  break;
+	  	  }
+	  }
+  }
+  else {
+	  // TODO eeprom init error, defaults loaded
+	  load_eeprom_defaults(&loaded_config);
+  }
+  fc_addr = loaded_config.flightcomputerIP;
+
+  // Init flash
+  fc_init_flash(&flash_h, &hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
+  memset(&errormsgtimers, 0, ERROR_MSG_TYPES / 2);
+  //fc_erase_flash(&flash_h);
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -2347,8 +2444,6 @@ void StartAndMonitor(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
-	// Setup NTP listener
- 	sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
 
 	// Setup TCP server
 	server_create(loaded_config.limewireIP, loaded_config.bayboard1IP, loaded_config.bayboard2IP, loaded_config.bayboard3IP, loaded_config.flightrecordIP);
@@ -2406,15 +2501,15 @@ void StartAndMonitor(void *argument)
   	init_adc(&hspi4, &(sensors_h.adc_h));
 
   	// TC ADCs
-  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0064, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, 0x0064, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, 0x0064, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
 
   	ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, 3);
 
   	// IMUs
   	sensors_h.imu1_h.hi2c = &hi2c5;
-  	sensors_h.imu1_h.I2C_TIMEOUT = 100;
+  	sensors_h.imu1_h.I2C_TIMEOUT = 5;
   	sensors_h.imu1_h.XL_x_offset = 0;
   	sensors_h.imu1_h.XL_y_offset = 0;
   	sensors_h.imu1_h.XL_z_offset = 0;
@@ -2424,7 +2519,7 @@ void StartAndMonitor(void *argument)
   	sensors_h.imu1_h.SA0 = 0;
 
   	sensors_h.imu2_h.hi2c = &hi2c5;
-  	sensors_h.imu2_h.I2C_TIMEOUT = 100;
+  	sensors_h.imu2_h.I2C_TIMEOUT = 5;
   	sensors_h.imu2_h.XL_x_offset = 0;
   	sensors_h.imu2_h.XL_y_offset = 0;
   	sensors_h.imu2_h.XL_z_offset = 0;
@@ -2438,14 +2533,14 @@ void StartAndMonitor(void *argument)
 
   	// Barometers
   	sensors_h.bar1_h.hspi = &hspi6;
-  	sensors_h.bar1_h.SPI_TIMEOUT = 100;
+  	sensors_h.bar1_h.SPI_TIMEOUT = 5;
   	sensors_h.bar1_h.CS_GPIO_Port = BAR1_CS_GPIO_Port;
   	sensors_h.bar1_h.CS_GPIO_Pin = BAR1_CS_Pin;
   	sensors_h.bar1_h.pres_offset = 0;
   	sensors_h.bar1_h.alt_offset = 0;
 
   	sensors_h.bar2_h.hspi = &hspi6;
-  	sensors_h.bar2_h.SPI_TIMEOUT = 100;
+  	sensors_h.bar2_h.SPI_TIMEOUT = 5;
   	sensors_h.bar2_h.CS_GPIO_Port = BAR2_CS_GPIO_Port;
   	sensors_h.bar2_h.CS_GPIO_Pin = BAR2_CS_Pin;
   	sensors_h.bar2_h.pres_offset = 0;
@@ -2456,11 +2551,6 @@ void StartAndMonitor(void *argument)
   	
   	MS5611_Reset(&(sensors_h.bar2_h));
   	MS5611_readPROM(&(sensors_h.bar2_h), &(sensors_h.prom2));
-  	
-  	// Init flash
-  	fc_init_flash(&flash_h, &hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
-  	memset(&errormsgtimers, 0, ERROR_MSG_TYPES / 2);
-  	//fc_erase_flash(&flash_h);
 
 	// Start tasks
 
@@ -2470,18 +2560,18 @@ void StartAndMonitor(void *argument)
   	// Start packet handler
   	packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
 
-  	// Start network modules only if the ethernet link is up
+  	// Start TCP server only if the ethernet link is up
 	if(netif_is_link_up(&gnetif)) {
 		server_init();
-		sntp_init();
-		tftp_init(&my_tftp_ctx);
-		if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-			errormsgudp = netconn_new(NETCONN_UDP);
-	        ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
-			xSemaphoreGive(errorudp_mutex);
-		}
 	}
+	// TODO log startup done
 
+	// Move networking startup to MX_LWIP_INIT(), so that we aren't calling the ntp and tftp stuff from multiple running threads
+	// Log errors and status updates along the entire startup even before flash and UDP logging are up
+	// Send one UDP message as soon as the UDP netconn comes online if it does come online successfully, not a log message, something like "Flight Computer logging online at IP: "
+	// Then, startup error handling and logging, figure out networking startup handling, then sensor init handling, think about what happens if flash isn't initialized, make sure it doesn't cause critical code to be delayed
+	// Then, error handling and logging in telemetry and packet processing tasks
+	// Then, hard fault handling and logging
 	/*
 	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs) (WHEN THE FC CONNECTS TO LIMEWIRE SEND THE VALVE STATES FOR THE ENTIRE ROCKET)
 	 *
@@ -2512,22 +2602,7 @@ void StartAndMonitor(void *argument)
 			if(flashstat == 2) {
 				// Flash is full, send UDP message every 5 seconds
 				if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
-					if(xSemaphoreTake(errorudp_mutex, 5) == pdPASS) {
-						if(errormsgudp) {
-							struct netbuf *outbuf = netbuf_new();
-							if(outbuf) {
-								char *pkt_buf = (char *) netbuf_alloc(outbuf, 24 + 1 + 29);
-								if(pkt_buf) {
-									get_iso_time(pkt_buf);
-									pkt_buf[24] = ' ';
-									memcpy(&pkt_buf[25], "Flight Computer flash is full", 29);
-									netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
-								}
-								netbuf_delete(outbuf);
-							}
-						}
-						xSemaphoreGive(errorudp_mutex);
-					}
+					send_flash_full();
 					lastflashfull = HAL_GetTick();
 				}
 			}
@@ -2647,7 +2722,12 @@ void StartAndMonitor(void *argument)
 		  			uint8_t tempbuffer[11 + (4 * FC_TELEMETRY_CHANNELS) + 5];
 		  			int buflen = serialize_message(&telemsg, tempbuffer, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5);
 		  			if(buflen != -1) {
-		  				log_lmp_packet(tempbuffer, buflen);
+		  				if(log_lmp_packet(tempbuffer, buflen) == 2) {
+		  					if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
+		  						send_flash_full();
+		  						lastflashfull = HAL_GetTick();
+		  					}
+		  				}
 		  			}
 		  		}
 				telemcounter = 6;
@@ -2673,7 +2753,12 @@ void StartAndMonitor(void *argument)
 						uint8_t tempbuffer[MAX_VALVE_STATE_MSG_SIZE + 5];
 						int buflen = serialize_message(&statemsg, tempbuffer, MAX_VALVE_STATE_MSG_SIZE + 5);
 						if(buflen != -1) {
-							log_lmp_packet(tempbuffer, buflen);
+							if(log_lmp_packet(tempbuffer, buflen) == 2) {
+								if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
+									send_flash_full();
+									lastflashfull = HAL_GetTick();
+								}
+							}
 						}
 					}
 		  	  	}

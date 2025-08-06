@@ -111,6 +111,25 @@ void MX_LWIP_Init(void)
 
   /* Create the Ethernet link handler thread */
 /* USER CODE BEGIN H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
+
+  	// Putting this here to avoid calling sntp and tftp functions in different running threads
+    // Also has the advantage of trying to start the UDP message logging early on
+
+	// Setup NTP listener
+	sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
+
+	if(netif_is_link_up(&gnetif)) {
+		sntp_init();
+		tftp_init(&my_tftp_ctx);
+		if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
+			if(!errormsgudp) {
+				errormsgudp = netconn_new(NETCONN_UDP);
+				ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+			}
+			xSemaphoreGive(errorudp_mutex);
+		}
+	}
+
   memset(&attributes, 0x0, sizeof(osThreadAttr_t));
   attributes.name = "EthLink";
   attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
@@ -137,12 +156,15 @@ void MX_LWIP_Init(void)
   */
 static void ethernet_link_status_updated(struct netif *netif)
 {
+	// TODO error logging here
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
 	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-	  	  errormsgudp = netconn_new(NETCONN_UDP);
-          ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+		  if(!errormsgudp) {
+		  	  errormsgudp = netconn_new(NETCONN_UDP);
+	          ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+		  }
 	  	  xSemaphoreGive(errorudp_mutex);
 	  }
 	  sntp_init();
@@ -157,6 +179,7 @@ static void ethernet_link_status_updated(struct netif *netif)
 	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
 		  netconn_close(errormsgudp);
 		  netconn_delete(errormsgudp);
+		  errormsgudp = NULL;
 		  xSemaphoreGive(errorudp_mutex);
 	  }
 	  sntp_stop();

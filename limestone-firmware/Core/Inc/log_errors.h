@@ -14,6 +14,7 @@
 
 // General error messages (all boards could have this happen)
 #define ERR_EXAMPLE								"000 This is a general error message"
+#define ERR_FLASH_FULL							"201 Flash full"
 
 // Flight Computer error messages
 #define FC_ERR_TCP_SERV_SOCK_CREAT_NOBUF		"001 No buffer space - creating server listen socket. Exiting thread"
