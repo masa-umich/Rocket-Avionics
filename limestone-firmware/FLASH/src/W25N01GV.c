@@ -32,7 +32,7 @@
 #define W25N01GV_CS_INACTIVE                      (uint8_t)  GPIO_PIN_SET
 
 // Arbitrary timeout value
-#define W25N01GV_SPI_TIMEOUT                      (uint8_t)  0x05
+#define W25N01GV_SPI_TIMEOUT                      (uint8_t)  0x02
 
 // 1024 blocks with 64 pages each = 65536 pages
 #define W25N01GV_PAGES_PER_BLOCK                  (uint16_t) 64

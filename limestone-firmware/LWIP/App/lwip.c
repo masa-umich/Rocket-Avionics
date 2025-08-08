@@ -33,6 +33,7 @@
 #include "server.h"
 #include "tftp_server.h"
 #include "lwip/udp.h"
+#include "log_errors.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -44,6 +45,8 @@ extern const struct tftp_context my_tftp_ctx;
 extern ip4_addr_t fc_addr;
 extern struct netconn *errormsgudp;
 extern SemaphoreHandle_t errorudp_mutex;
+extern void send_udp_online(ip4_addr_t * ip);
+extern uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -122,12 +125,25 @@ void MX_LWIP_Init(void)
 		sntp_init();
 		tftp_init(&my_tftp_ctx);
 		if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-			if(!errormsgudp) {
-				errormsgudp = netconn_new(NETCONN_UDP);
+			errormsgudp = netconn_new(NETCONN_UDP);
+			if(errormsgudp) {
 				ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+				send_udp_online(&ipaddr);
+			}
+			else {
+				// failed to create netconn
+				log_message(ERR_UDP_INIT_NNETCONN, -1);
 			}
 			xSemaphoreGive(errorudp_mutex);
 		}
+		else {
+			// failed to take mutex
+			log_message(ERR_UDP_INIT_MUTEX, -1);
+		}
+	}
+	else {
+		// ethernet link down
+		log_message(ERR_LINK_INIT_DOWN, -1);
 	}
 
   memset(&attributes, 0x0, sizeof(osThreadAttr_t));
@@ -156,14 +172,15 @@ void MX_LWIP_Init(void)
   */
 static void ethernet_link_status_updated(struct netif *netif)
 {
-	// TODO error logging here
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
 	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
 		  if(!errormsgudp) {
 		  	  errormsgudp = netconn_new(NETCONN_UDP);
-	          ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+		  	  if(errormsgudp) {
+		  		  ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+		  	  }
 		  }
 	  	  xSemaphoreGive(errorudp_mutex);
 	  }

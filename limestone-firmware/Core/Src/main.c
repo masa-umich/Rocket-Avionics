@@ -42,6 +42,8 @@
 #include "W25N04KV.h"
 #include "base64.h"
 #include "lwip/udp.h"
+#include "timers.h"
+#include "log_errors.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -214,6 +216,11 @@ typedef struct {
 	uint8_t *content;
 	size_t len;
 } errormsg_t;
+
+typedef struct {
+	TimerHandle_t buzzTimer;
+	TimerHandle_t ledTimer;
+} inittimers_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -237,6 +244,7 @@ RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
+SPI_HandleTypeDef hspi3;
 SPI_HandleTypeDef hspi4;
 SPI_HandleTypeDef hspi5;
 SPI_HandleTypeDef hspi6;
@@ -314,6 +322,7 @@ static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_SPI6_Init(void);
 static void MX_CRC_Init(void);
+static void MX_SPI3_Init(void);
 void StartAndMonitor(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -324,6 +333,20 @@ void StartAndMonitor(void *argument);
 /* USER CODE BEGIN 0 */
 uint64_t getTimestamp() {
 	return HAL_GetTick();
+}
+
+void toggleBuzzer(TimerHandle_t xTimer) {
+	HAL_GPIO_TogglePin(BUZZ_GPIO_Port, BUZZ_Pin);
+}
+
+void toggleLEDPins(TimerHandle_t xTimer) {
+	HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+	HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+	HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+}
+
+void buzzerOff(TimerHandle_t xTimer) {
+	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 0);
 }
 
 // Callback for LWIP SNTP
@@ -437,6 +460,9 @@ void get_iso_time(char *outbuf) {
 		memcpy(outbuf, "0000-00-00T00:00:00.000Z", 24);
 		return;
 	}
+	int16_t ms = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) * 1e3) / 6250;
+	// I wrote this before I discovered snprintf could do this in one line lol
+	// This section will throw a lot of compiler warnings, but it's okay
 	snprintf(outbuf, 5, "%04u", 2000 + (uint16_t) sDate.Year);
 	outbuf[4] = '-';
 	snprintf(&outbuf[5], 3, "%02u", sDate.Month);
@@ -449,7 +475,6 @@ void get_iso_time(char *outbuf) {
 	outbuf[16] = ':';
 	snprintf(&outbuf[17], 3, "%02u", sTime.Seconds);
 	outbuf[19] = '.';
-	int16_t ms = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) * 1e3) / 6250;
 	snprintf(&outbuf[20], 4, "%03u", ms);
 	outbuf[23] = 'Z';
 }
@@ -1008,7 +1033,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time(&rawmsgbuf[1]);
+		get_iso_time((char *) &rawmsgbuf[1]);
 		rawmsgbuf[25] = ' ';
 		rawmsgbuf[26] = '1';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
@@ -1058,6 +1083,22 @@ int log_lmp_packet(uint8_t *buf, size_t buflen) {
 		return stat;
 	}
 	return 3;
+}
+
+void send_udp_online(ip4_addr_t * ip) {
+	size_t msglen = 24 + 1 + 1 + sizeof(STAT_NETWORK_LOG_ONLINE) + 15;
+	struct netbuf *outbuf = netbuf_new();
+	if(outbuf) {
+		uint8_t *pkt_buf = (uint8_t *) netbuf_alloc(outbuf, msglen);
+		if(pkt_buf) {
+			get_iso_time((char *) pkt_buf);
+			pkt_buf[24] = ' ';
+			pkt_buf[25] = '1';
+			snprintf((char *) &pkt_buf[26], sizeof(STAT_NETWORK_LOG_ONLINE) + 15, STAT_NETWORK_LOG_ONLINE "%u.%u.%u.%u", ip4_addr1(ip), ip4_addr2(ip), ip4_addr3(ip), ip4_addr4(ip));
+			netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
+		}
+		netbuf_delete(outbuf);
+	}
 }
 
 void *ftp_open(const char *fname, const char *mode, u8_t write) {
@@ -1116,7 +1157,7 @@ void ftp_close(void *handle) {
 				// TODO: Send read error
 				return;
 			}
-			calc_crc = HAL_CRC_Accumulate(&hcrc, buf, read_bytes);
+			calc_crc = HAL_CRC_Accumulate(&hcrc, (uint32_t *) buf, read_bytes);
 			cursor += read_bytes;
 		} while(eeprom_cursor - cursor > 0);
 
@@ -1324,6 +1365,7 @@ int main(void)
   MX_SPI2_Init();
   MX_SPI6_Init();
   MX_CRC_Init();
+  MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
@@ -1350,6 +1392,12 @@ int main(void)
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   errorMsgList = list_create(sizeof(errormsg_t), msgFreeCallback);
+
+  // This next section is considered the "critical" portion of initialization. This portion has no access to logging and therefore needs to communicate status other ways. The section ends on the return of the MX_LWIP_Init function
+  // The end of this section is marked by a UDP message and/or the on-board LED becoming solid and/or a short buzzer beep
+
+  inittimers_t timers = {0};
+
   // Load EEPROM config
   loaded_config.pt1 = &PT1_h;
   loaded_config.pt2 = &PT2_h;
@@ -1357,52 +1405,77 @@ int main(void)
   loaded_config.pt4 = &PT4_h;
   loaded_config.pt5 = &PT5_h;
   if(eeprom_init(&eeprom_h, &hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin) == EEPROM_OK) {
+#ifdef EEPROM_OVERRIDE
+	  load_eeprom_defaults(&loaded_config);
+	  log_message(FC_STAT_EEPROM_DEFAULT_LOADED, -1);
+#else
 	  switch(load_eeprom_config(&eeprom_h, &loaded_config)) {
 	  	  case -1: {
-	  		  // TODO eeprom load error, defaults loaded
+	  		  // eeprom load error, defaults loaded
+	  		  log_message(FC_ERR_EEPROM_LOAD_COMM_ERR, -1);
 	  		  load_eeprom_defaults(&loaded_config);
+	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
 	  		  break;
 	  	  }
 	  	  case -2: {
-	  		  // TODO eeprom tc gain value error
+	  		  // eeprom tc gain value error
+	  		  log_message(FC_ERR_EEPROM_LOAD_TC_ERR, -1);
 	  		  loaded_config.tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
 	  		  loaded_config.tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
 	  		  loaded_config.tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
 	  		  break;
 	  	  }
 	  	  case -3: {
-	  		  // TODO eeprom valve conf error
+	  		  // eeprom valve conf error
+	  		  log_message(FC_ERR_EEPROM_LOAD_VLV_ERR, -1);
 	  		  loaded_config.vlv1_en = FC_EEPROM_VLV_EN_DEFAULT;
 	  		  loaded_config.vlv1_v = FC_EEPROM_VLV_VOL_DEFAULT;
 	  		  loaded_config.vlv2_en = FC_EEPROM_VLV_EN_DEFAULT;
 	  		  loaded_config.vlv2_v = FC_EEPROM_VLV_VOL_DEFAULT;
 	  		  loaded_config.vlv3_en = FC_EEPROM_VLV_EN_DEFAULT;
 	  		  loaded_config.vlv3_v = FC_EEPROM_VLV_VOL_DEFAULT;
+	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
 	  		  break;
 	  	  }
 	  	  default: {
-	  		  // TODO eeprom conf loaded
-
+	  		  // eeprom conf loaded
+	  		  log_message(FC_STAT_EEPROM_LOADED, -1);
 	  		  break;
 	  	  }
 	  }
+#endif
   }
   else {
-	  // TODO eeprom init error, defaults loaded
+	  // eeprom init error, defaults loaded
+	  log_message(FC_ERR_EEPROM_INIT, -1);
 	  load_eeprom_defaults(&loaded_config);
+	  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
   }
   fc_addr = loaded_config.flightcomputerIP;
 
   // Init flash
   fc_init_flash(&flash_h, &hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
+  if(!fc_ping_flash(&flash_h)) {
+	  // flash not connected
+	  log_message(ERR_FLASH_INIT, -1);
+	  timers.ledTimer = xTimerCreate("led", 500, pdTRUE, NULL, toggleLEDPins);
+  }
   memset(&errormsgtimers, 0, ERROR_MSG_TYPES / 2);
   //fc_erase_flash(&flash_h);
+
+  if(timers.buzzTimer) {
+	  xTimerStart(timers.buzzTimer, 0);
+  }
+  if(timers.ledTimer) {
+	  xTimerStart(timers.ledTimer, 0);
+  }
 
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* creation of startTask */
-  startTaskHandle = osThreadNew(StartAndMonitor, NULL, &startTask_attributes);
+  startTaskHandle = osThreadNew(StartAndMonitor, (void *) &timers, &startTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1774,6 +1847,54 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+  * @brief SPI3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI3_Init(void)
+{
+
+  /* USER CODE BEGIN SPI3_Init 0 */
+
+  /* USER CODE END SPI3_Init 0 */
+
+  /* USER CODE BEGIN SPI3_Init 1 */
+
+  /* USER CODE END SPI3_Init 1 */
+  /* SPI3 parameter configuration*/
+  hspi3.Instance = SPI3;
+  hspi3.Init.Mode = SPI_MODE_MASTER;
+  hspi3.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi3.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi3.Init.NSS = SPI_NSS_SOFT;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi3.Init.CRCPolynomial = 0x0;
+  hspi3.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi3.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
+  hspi3.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
+  hspi3.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi3.Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi3.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
+  hspi3.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
+  hspi3.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+  hspi3.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+  hspi3.Init.IOSwap = SPI_IO_SWAP_DISABLE;
+  if (HAL_SPI_Init(&hspi3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI3_Init 2 */
+
+  /* USER CODE END SPI3_Init 2 */
+
+}
+
+/**
   * @brief SPI4 Initialization Function
   * @param None
   * @retval None
@@ -2074,14 +2195,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF7_SPI3;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
   /*Configure GPIO pin : VLV2_OLD_Pin */
   GPIO_InitStruct.Pin = VLV2_OLD_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -2109,27 +2222,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PC10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_10;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF6_SPI3;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
   /*Configure GPIO pins : IMU1_INT1_Pin IMU1_INT2_Pin IMU2_INT1_Pin IMU2_INT2_Pin */
   GPIO_InitStruct.Pin = IMU1_INT1_Pin|IMU1_INT2_Pin|IMU2_INT1_Pin|IMU2_INT2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF6_SPI3;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*AnalogSwitch Config */
   HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PC2, SYSCFG_SWITCH_PC2_CLOSE);
@@ -2140,14 +2237,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void TelemetryTask(void *argument) {
-	//struct netconn *sendudp = netconn_new(NETCONN_UDP);
-	//ip_addr_t debug_addr;
-	//IP4_ADDR(&debug_addr, 192, 168, 0, 5);
-	/*for(;;) {
-		log_message("This should only be logged every ~500ms", 0);
-		log_message("This should be logged every 20ms", -1);
-		osDelay(250);
-	}*/
+	// TODO started telemetry thread
 	for(;;) {
 		uint32_t startTime = HAL_GetTick();
 		// Read from sensors
@@ -2315,6 +2405,7 @@ void TelemetryTask(void *argument) {
 }
 
 void ProcessPackets(void *argument) {
+	// TODO Started processing thread
 	for(;;) {
 		Raw_message msg = {0};
 		int read_stat = server_read(&msg, 1000);
@@ -2445,8 +2536,46 @@ void StartAndMonitor(void *argument)
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
 
+  	// Signal end of critical section
+    inittimers_t * timers = (inittimers_t *) argument;
+
+	if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
+		if(errormsgudp) {
+			// No UDP error
+		    if(!timers->ledTimer) {
+		    	// No flash error, led constant on indicates end of critical section
+		    	HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, 1);
+		    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, 1);
+		    	HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, 1);
+		    }
+		}
+		else {
+			// UDP error
+		    if(timers->ledTimer) {
+		    	// Flash error, change delay since UDP error is more critical to address
+		    	xTimerChangePeriod(timers->ledTimer, 250, 0);
+		    }
+		    else {
+		    	// No flash error, start led flashing
+		    	timers->ledTimer = xTimerCreate("led", 250, pdTRUE, NULL, toggleLEDPins);
+		    	xTimerStart(timers->ledTimer, 0);
+		    }
+		}
+		xSemaphoreGive(errorudp_mutex);
+	}
+
+    if(!timers->buzzTimer) {
+    	// No eeprom error, short buzz indicates the end of the critical section
+    	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
+    	timers->buzzTimer = xTimerCreate("sbuzz", 1000, pdFALSE, NULL, buzzerOff);
+    	xTimerStart(timers->buzzTimer, 0);
+    }
+
 	// Setup TCP server
-	server_create(loaded_config.limewireIP, loaded_config.bayboard1IP, loaded_config.bayboard2IP, loaded_config.bayboard3IP, loaded_config.flightrecordIP);
+	if(server_create(loaded_config.limewireIP, loaded_config.bayboard1IP, loaded_config.bayboard2IP, loaded_config.bayboard3IP, loaded_config.flightrecordIP)) {
+		// memory error creating TCP server, TCP server will not start
+		log_message(FC_ERR_CREAT_TCP_MEM_ERR, -1);
+	}
 
 	// Init rocket state struct
 	memset(&Rocket_h, 0, sizeof(Rocket_h)); // Reset contents
@@ -2493,8 +2622,8 @@ void StartAndMonitor(void *argument)
 
 	// Init sensors and peripherals
   	// ADC
-  	sensors_h.adc_h.MAX11128_CS_PORT 		= ADC_CS_GPIO_Port;
-  	sensors_h.adc_h.MAX11128_CS_ADDR 		= ADC_CS_Pin;
+  	sensors_h.adc_h.MAX11128_CS_PORT = ADC_CS_GPIO_Port;
+  	sensors_h.adc_h.MAX11128_CS_ADDR = ADC_CS_Pin;
   	sensors_h.adc_h.HARDWARE_CONFIGURATION = NO_EOC_NOR_CNVST;
   	sensors_h.adc_h.NUM_CHANNELS = 16;
 
@@ -2505,7 +2634,10 @@ void StartAndMonitor(void *argument)
   	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
   	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
 
-  	ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, 3);
+  	if(ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, 3)) {
+  		// ADS thread start error
+  		log_message(ERR_ADS_INIT_THREAD_ERR, -1);
+  	}
 
   	// IMUs
   	sensors_h.imu1_h.hi2c = &hi2c5;
@@ -2528,8 +2660,14 @@ void StartAndMonitor(void *argument)
   	sensors_h.imu2_h.G_z_offset = 0;
   	sensors_h.imu2_h.SA0 = 1;
 
-  	IMU_init(&(sensors_h.imu1_h));
-  	IMU_init(&(sensors_h.imu2_h));
+  	if(IMU_init(&(sensors_h.imu1_h)) == -1) {
+  		// IMU 1 init error
+  		log_message(ERR_IMU_INIT "1", -1);
+  	}
+  	if(IMU_init(&(sensors_h.imu2_h)) == -1) {
+  		// IMU 2 init error
+  		log_message(ERR_IMU_INIT "2", -1);
+  	}
 
   	// Barometers
   	sensors_h.bar1_h.hspi = &hspi6;
@@ -2546,10 +2684,16 @@ void StartAndMonitor(void *argument)
   	sensors_h.bar2_h.pres_offset = 0;
   	sensors_h.bar2_h.alt_offset = 0;
 
-  	MS5611_Reset(&(sensors_h.bar1_h));
+  	if(MS5611_Reset(&(sensors_h.bar1_h))) {
+  		// Bar 1 init error
+  		log_message(ERR_BAR_INIT "1", -1);
+  	}
   	MS5611_readPROM(&(sensors_h.bar1_h), &(sensors_h.prom1));
   	
-  	MS5611_Reset(&(sensors_h.bar2_h));
+  	if(MS5611_Reset(&(sensors_h.bar2_h))) {
+  		// Bar 2 init error
+  		log_message(ERR_BAR_INIT "2", -1);
+  	}
   	MS5611_readPROM(&(sensors_h.bar2_h), &(sensors_h.prom2));
 
 	// Start tasks
@@ -2562,14 +2706,31 @@ void StartAndMonitor(void *argument)
 
   	// Start TCP server only if the ethernet link is up
 	if(netif_is_link_up(&gnetif)) {
-		server_init();
+		switch(server_init()) {
+			case 0: {
+				// TCP server started
+				log_message(FC_STAT_TCP_SERV_RUNNING, -1);
+				break;
+			}
+			case -1: {
+				break;
+			}
+			case -2: {
+				// one of the threads failed to start
+				log_message(FC_ERR_INIT_TCP_THREAD_ERR, -1);
+				break;
+			}
+			case -3: {
+				break;
+			}
+			default: {
+				break;
+			}
+		}
 	}
-	// TODO log startup done
+	// log startup done
+	log_message(STAT_STARTUP_DONE, -1);
 
-	// Move networking startup to MX_LWIP_INIT(), so that we aren't calling the ntp and tftp stuff from multiple running threads
-	// Log errors and status updates along the entire startup even before flash and UDP logging are up
-	// Send one UDP message as soon as the UDP netconn comes online if it does come online successfully, not a log message, something like "Flight Computer logging online at IP: "
-	// Then, startup error handling and logging, figure out networking startup handling, then sensor init handling, think about what happens if flash isn't initialized, make sure it doesn't cause critical code to be delayed
 	// Then, error handling and logging in telemetry and packet processing tasks
 	// Then, hard fault handling and logging
 	/*

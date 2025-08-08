@@ -13,8 +13,15 @@
 #define INC_LOG_ERRORS_H_
 
 // General error messages (all boards could have this happen)
-#define ERR_EXAMPLE								"000 This is a general error message"
+// To keep track of messages, I'm starting these at 200. This is not required, but it's easier to keep track of in this file
 #define ERR_FLASH_FULL							"201 Flash full"
+#define ERR_FLASH_INIT							"202 EEPROM init failed"
+#define ERR_LINK_INIT_DOWN						"203 Ethernet link down"
+#define ERR_UDP_INIT_MUTEX						"204 Failed to take UDP mutex during init"
+#define ERR_UDP_INIT_NNETCONN					"205 NULL netconn during UDP logging init"
+#define ERR_ADS_INIT_THREAD_ERR					"206 ADS thread did not start"
+#define ERR_IMU_INIT							"207 IMU init failed, IMU "
+#define ERR_BAR_INIT							"208 BAR init failed, BAR "
 
 // Flight Computer error messages
 #define FC_ERR_TCP_SERV_SOCK_CREAT_NOBUF		"001 No buffer space - creating server listen socket. Exiting thread"
@@ -73,13 +80,26 @@
 #define FC_ERR_TCP_SERV_FD_SCAN_NSOCK			"044 NULL socket - TCP server fd scanning, fd "
 #define FC_ERR_TCP_SERV_FD_SCAN_UNKNOWN			"045 Unknown errno - TCP server fd scanning, fd/errno "
 
+#define FC_ERR_EEPROM_INIT						"046 EEPROM init failed, loading defaults"
+#define FC_ERR_EEPROM_LOAD_COMM_ERR				"047 EEPROM config loading failed, loading defaults"
+#define FC_ERR_EEPROM_LOAD_TC_ERR				"048 EEPROM config invalid TC gains, loading default gains"
+#define FC_ERR_EEPROM_LOAD_VLV_ERR				"049 EEPROM config invalid valve config, loading default settings"
+
+#define FC_ERR_CREAT_TCP_MEM_ERR				"050 Memory error creating TCP server"
+#define FC_ERR_INIT_TCP_THREAD_ERR				"051 TCP server thread not started during code init"
+
 // General status messages
 #define STAT_EXAMPLE							"000 This is a general status message"
+#define STAT_NETWORK_LOG_ONLINE					"701 UDP logging online, IP "
+#define STAT_STARTUP_DONE						"702 Program initialization complete"
 
 // Flight Computer status messages
 #define FC_STAT_EXAMPLE							"000 This is a status message unique to the FC (e.g. radio thread started)"
 #define FC_STAT_TCP_SERV_NEW_CONN				"501 TCP server accepting new connection, fd/addr "
 #define FC_STAT_TCP_CONN_CLOSED					"502 TCP connection closed gracefully, fd "
+#define FC_STAT_EEPROM_LOADED					"503 EEPROM config loaded successfully"
+#define FC_STAT_EEPROM_DEFAULT_LOADED			"504 EEPROM defaults loaded, overridden by macro"
+#define FC_STAT_TCP_SERV_RUNNING				"505 TCP server initialized and running"
 
 // Flight Computer error message types - used for throttling
 #define FC_ERR_TYPE_TCP_SERV_LISTEN				0
