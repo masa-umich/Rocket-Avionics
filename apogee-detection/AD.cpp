@@ -26,6 +26,7 @@ email pickos@umich.edu OR the current A&R team lead.
 #include <iomanip>
 
 #include "noise_generator.hpp"
+#include "speed_LUT.hpp"
 
 using namespace std;
 
@@ -42,7 +43,7 @@ struct Program_Info
     bool flight_over = false;
 };
 
-struct Baro_Package
+struct Device_Package
 {
     Barometer baro_1;
     Barometer baro_2;
@@ -78,23 +79,19 @@ class Detector
     double*slope;
 
     //buffer for readings from barometer 2 
-    //double readings_1[CAPACITY];
     int index_1 = 0;
     int size_1 = 0;
 
     //buffer for readings from barometer 2
-    // double readings_2[CAPACITY];
     int index_2 = 0;
     int size_2 = 0;
 
     //buffer for the average of the two barometers
-    // double average[5];
     int avg_index = 0;
     int avg_size = 0;
 
     //buffer for the 'slope' or how the average of the barometer readings 
     //changes over time
-    // double slope[5];
     int slope_i = 0;
     int slope_size = 0;
 
@@ -272,22 +269,6 @@ class Detector
         //for negative acceleration detection
         else if(info.detection_method == 1)
         {
-            // if (avg_size < CAPACITY)
-            //     return false;
-            // else
-            // {
-            //     int count = 0;
-            //     for (int i = 0; i < CAPACITY; ++i)
-            //     {
-            //         if (average[i] < 0)
-            //             ++count;
-            //     }
-            //     if (count >= (CAPACITY * 0.8))
-            //         return true;
-
-            // } 
-            // return false;
-
             return is_buffer_average_less_than_this_value(0);
         }
 
@@ -297,9 +278,9 @@ class Detector
     
 };
 
-void read_detect_decide(int j, double current_height, Baro_Package &baro_package, Program_Info &info, Detector &detect, Environment &env)
+void read_detect_decide(int j, double current_height, Device_Package &device_package, Program_Info &info, Detector &detect, Environment &env)
 {
-        if (current_height > 21200 || info.apogee_flag == true)
+        if (current_height > 17000 || info.apogee_flag == true)
         {
             double P_true = env.compute_pressure(current_height);
             double T_true = env.compute_temp(current_height);
@@ -311,14 +292,14 @@ void read_detect_decide(int j, double current_height, Baro_Package &baro_package
             double P_noisy_2 = P_true + gaussian_random(0, 1.5);
             double T_noisy_2 = T_true + gaussian_random(0, 8);
 
-            baro_package.baro1_D1_D2 = baro_package.baro_1.guess_and_check(P_noisy_1, T_noisy_1);
-            baro_package.baro2_D1_D2 = baro_package.baro_2.guess_and_check(P_noisy_2, T_noisy_2);
+            device_package.baro1_D1_D2 = device_package.baro_1.guess_and_check(P_noisy_1, T_noisy_1);
+            device_package.baro2_D1_D2 = device_package.baro_2.guess_and_check(P_noisy_2, T_noisy_2);
 
             auto [baro1_final_P, baro1_final_TEMP] = 
-                baro_package.baro_1.forward_calculation(baro_package.baro1_D1_D2.first, baro_package.baro1_D1_D2.second);
+                device_package.baro_1.forward_calculation(device_package.baro1_D1_D2.first, device_package.baro1_D1_D2.second);
 
             auto [baro2_final_P, baro2_final_TEMP] = 
-                baro_package.baro_2.forward_calculation(baro_package.baro2_D1_D2.first, baro_package.baro2_D1_D2.second);
+                device_package.baro_2.forward_calculation(device_package.baro2_D1_D2.first, device_package.baro2_D1_D2.second);
 
             cout << setw(10) << left << current_height;
             cout << setw(10) << baro1_final_P / 100 << setw(10) << baro2_final_P / 100;
@@ -327,12 +308,10 @@ void read_detect_decide(int j, double current_height, Baro_Package &baro_package
 
             if (detect.size_1 < 5 && detect.size_2 < 5)
             {
-                // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
                 detect.insert(baro1_final_P / 100, baro2_final_P / 100, info);
             }
             else
             {
-                // detect.insert(std::round((baro1_final_P / 100) * 1000) / 1000 , std::round((baro2_final_P / 100) * 1000) / 1000);
                 detect.insert(baro1_final_P / 100, baro2_final_P / 100, info);
 
                 if (detect.detect_apog(info))
@@ -365,12 +344,9 @@ void launch()
 {
     Environment env;
     Program_Info info;
-    // Barometer baro_1;
-    // Barometer baro_2;
-    Baro_Package baro_package;
+    Device_Package device_package;
 
-    // IMU imu_1;
-    // IMU imu_2;
+    int MECO_time = 0;
 
     cout << "MECO & baro detection ... or just baro? 1 or 2 \n";
     cin >> info.answer;
@@ -408,7 +384,6 @@ void launch()
         int i = 0;
         
         while(info.MECO_flag == false && i < a_x_data.size())
-        // while(MECO_flag == false)
         {
 
             double current_a_x = a_x_data[i];
@@ -436,6 +411,7 @@ void launch()
                         cout << "Wait to drop below Mach 1...\n";
                         cout << "Beginning phase 2 with barometers\n";
                         info.MECO_flag = true;
+                        MECO_time = i;
                     }
                 }
                 //just using this index variable to cycle through 
@@ -446,14 +422,8 @@ void launch()
         if (info.MECO_flag == false)
             cout << "MECO not detected!\n";
 
-        // int j = i + 1000;
-        // while(j < heights.size())
-        // while(j < heights.size() && apogee_flag == false)
-
     }    
 
-    // std::pair<int, int> baro1_D1_D2;
-    // std::pair<int, int> baro2_D1_D2;
 
     //read in altidude data for barometers to detect apogee after MECO
     std::ifstream FS_2("height_data_new.txt");
@@ -465,13 +435,17 @@ void launch()
 
     FS_2.close();
 
+    //calculate the wait time before phase 2
+    cout << "MECO detected at approximately: " << heights[MECO_time] << " meters\n";
+    cout << "Estimated speed at this altitude is: " 
+
     
     int j = 0;
     while(info.apogee_flag == false)
     {
         double current_height = heights[j];
 
-        read_detect_decide(j, current_height, baro_package, info, detect, env);
+        read_detect_decide(j, current_height, device_package, info, detect, env);
 
         //using this index variable 'j' to cycle through the values in height_data.txt
         //Note 
@@ -491,7 +465,7 @@ void launch()
     {
         double current_height = heights[j];
 
-        read_detect_decide(j, current_height, baro_package, info, detect, env);
+        read_detect_decide(j, current_height, device_package, info, detect, env);
 
         j += 5;
     }
@@ -500,7 +474,7 @@ void launch()
     {
         double current_height = heights[j];
 
-        read_detect_decide(j, current_height, baro_package, info, detect, env);
+        read_detect_decide(j, current_height, device_package, info, detect, env);
 
         j+= 5;
     }
