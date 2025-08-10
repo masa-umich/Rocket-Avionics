@@ -181,12 +181,43 @@ static void ethernet_link_status_updated(struct netif *netif)
 		  	  if(errormsgudp) {
 		  		  ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
 		  	  }
+		  	  else {
+				  log_message(ERR_UDP_REINIT, -1);
+		  	  }
+		  }
+		  else {
+			  log_message(ERR_UDP_REINIT, -1);
 		  }
 	  	  xSemaphoreGive(errorudp_mutex);
 	  }
+	  else {
+		  log_message(ERR_UDP_REINIT, -1);
+	  }
 	  sntp_init();
-	  server_init();
+      switch(server_init()) {
+      	  case 0: {
+      	  	  // TCP server started
+      	  	  log_message(FC_STAT_TCP_SERV_REINIT, -1);
+      	  	  break;
+      	  }
+      	  case -1: {
+      	  	  break;
+      	  }
+      	  case -2: {
+      	  	  // one of the threads failed to start
+      	  	  log_message(FC_ERR_REINIT_TCP_THREAD_ERR, -1);
+      	  	  break;
+      	  }
+      	  case -3: {
+      	  	  break;
+      	  }
+      	  default: {
+      	  	  break;
+      	  }
+      }
 	  tftp_init(&my_tftp_ctx);
+	  // link up
+	  log_message(STAT_LINK_UP, -1);
 
 /* USER CODE END 5 */
   }
@@ -202,6 +233,8 @@ static void ethernet_link_status_updated(struct netif *netif)
 	  sntp_stop();
 	  shutdown_server();
 	  tftp_cleanup();
+	  // link down
+	  log_message(STAT_LINK_DOWN, -1);
 /* USER CODE END 6 */
   }
 }

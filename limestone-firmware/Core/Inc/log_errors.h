@@ -22,6 +22,23 @@
 #define ERR_ADS_INIT_THREAD_ERR					"206 ADS thread did not start"
 #define ERR_IMU_INIT							"207 IMU init failed, IMU "
 #define ERR_BAR_INIT							"208 BAR init failed, BAR "
+#define ERR_IMU_READ							"209 IMU read failed, IMU "
+#define ERR_BAR_READ							"210 BAR read failed, BAR "
+#define ERR_ADS_READ							"211 ADS read failed"
+#define ERR_TELEM_NOT_UPDATED					"212 Telemetry not updated"
+#define ERR_TELEM_MEM_ERR						"213 Memory error sending telemetry"
+#define ERR_TELEM_OVERTIME						"214 Telemetry loop ran overtime"
+#define ERR_SAVE_INCOMING_TELEM					"215 Could not save incoming telemetry"
+#define ERR_PROCESS_VLV_CMD_BADID				"216 Invalid valve id - valve command"
+#define ERR_PROCESS_VLV_STATE_BADID				"217 Invalid valve id - valve state"
+#define ERR_UNKNOWN_LMP_PACKET					"218 Unknown LMP message type"
+#define ERR_TFTP_EERPOM_TOO_SHORT				"219 Written EEPROM data too short"
+#define ERR_TFTP_EEPROM_READ_ERR				"220 EEPROM read error"
+#define ERR_TFTP_EEPROM_WRITE_ERR				"221 EEPROM write error"
+#define ERR_TFTP_EEPROM_BAD_CRC					"222 Invalid CRC during EEPROM write"
+#define ERR_UDP_REINIT							"223 Error trying to reinit UDP logging"
+#define ERR_RTC_NOT_SET							"224 Error trying to set the RTC"
+
 
 // Flight Computer error messages
 #define FC_ERR_TCP_SERV_SOCK_CREAT_NOBUF		"001 No buffer space - creating server listen socket. Exiting thread"
@@ -88,10 +105,20 @@
 #define FC_ERR_CREAT_TCP_MEM_ERR				"050 Memory error creating TCP server"
 #define FC_ERR_INIT_TCP_THREAD_ERR				"051 TCP server thread not started during code init"
 
+#define FC_ERR_SING_ADC_INIT					"052 ADC init failed"
+#define FC_ERR_SING_ADC_READ					"053 ADC read failed"
+
+#define FC_ERR_REINIT_TCP_THREAD_ERR			"054 TCP server thread not started during reinit"
+
 // General status messages
 #define STAT_EXAMPLE							"000 This is a general status message"
 #define STAT_NETWORK_LOG_ONLINE					"701 UDP logging online, IP "
 #define STAT_STARTUP_DONE						"702 Program initialization complete"
+#define STAT_TELEM_TASK_STARTED					"703 Telemetry task started"
+#define STAT_PACKET_TASK_STARTED				"704 Packet processing task started"
+#define STAT_EEPROM_CONFIG_CHANGED				"705 New EEPROM config saved"
+#define STAT_LINK_UP							"706 Ethernet link back online"
+#define STAT_LINK_DOWN							"707 Ethernet link down"
 
 // Flight Computer status messages
 #define FC_STAT_EXAMPLE							"000 This is a status message unique to the FC (e.g. radio thread started)"
@@ -100,6 +127,7 @@
 #define FC_STAT_EEPROM_LOADED					"503 EEPROM config loaded successfully"
 #define FC_STAT_EEPROM_DEFAULT_LOADED			"504 EEPROM defaults loaded, overridden by macro"
 #define FC_STAT_TCP_SERV_RUNNING				"505 TCP server initialized and running"
+#define FC_STAT_TCP_SERV_REINIT					"506 TCP server reinitialized after link down"
 
 // Flight Computer error message types - used for throttling
 #define FC_ERR_TYPE_TCP_SERV_LISTEN				0
@@ -107,5 +135,21 @@
 #define FC_ERR_TYPE_TCP_SERV_RECV_READ			2
 #define FC_ERR_TYPE_TCP_SERV_WRITE				3
 #define FC_ERR_TYPE_TCP_FD_SCAN					4
+#define FC_ERR_TYPE_TELEM_NUPDATED				5
+#define FC_ERR_TYPE_TELEM_MEM_ERR				6
+#define FC_ERR_TYPE_TELEM_OVERTIME				7
+#define FC_ERR_TYPE_INCOMING_TELEM				8
+#define FC_ERR_TYPE_BAD_VLVID					9
+#define FC_ERR_TYPE_UNKNOWN_LMP					10
+#define FC_ERR_TYPE_TFTP_EEPROM_READ			11
+#define FC_ERR_TYPE_TFTP_EEPROM_WRITE			12
+
+// Flight Computer peripheral error message types
+#define FC_ERR_PERI_TYPE_ADC					0
+#define FC_ERR_PERI_TYPE_IMU1					1
+#define FC_ERR_PERI_TYPE_IMU2					2
+#define FC_ERR_PERI_TYPE_BAR1					3
+#define FC_ERR_PERI_TYPE_BAR2					4
+#define FC_ERR_PERI_TYPE_ADS					5
 
 #endif /* INC_LOG_ERRORS_H_ */

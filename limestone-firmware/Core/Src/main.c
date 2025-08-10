@@ -302,6 +302,9 @@ uint8_t flashmsgtype = 0;
 SemaphoreHandle_t errormsg_mutex;
 uint8_t errormsgtimers[ERROR_MSG_TYPES / 2]; // Use 4 bits to store each timer
 
+SemaphoreHandle_t perierrormsg_mutex;
+uint8_t perierrormsgtimers[PERI_ERROR_MSG_TYPES];
+
 struct netconn *errormsgudp = NULL;
 SemaphoreHandle_t errorudp_mutex;
 
@@ -398,6 +401,10 @@ void set_system_time(uint32_t sec, uint32_t us) {
 		__HAL_RTC_WRITEPROTECTION_ENABLE(&hrtc);;
 
 		xSemaphoreGive(RTC_mutex);
+	}
+	else {
+		// time not set
+		log_message(ERR_RTC_NOT_SET, -1);
 	}
 }
 
@@ -968,7 +975,7 @@ void load_eeprom_defaults(EEPROM_conf_t *conf) {
 // type is the msg type, use the macros in main.h
 // returns 0 on success, 1 if there is not enough space or the flash could not be accessed
 uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
-	if(xSemaphoreTake(flash_mutex, 5) == pdPASS) {
+	if(xSemaphoreTake(flash_mutex, 1) == pdPASS) {
 		if(fc_get_bytes_remaining(&flash_h) < msglen + 2) {
 			xSemaphoreGive(flash_mutex);
 			return 1;
@@ -987,7 +994,7 @@ uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
 
 // Returns 0 on success, 1 on access error, 2 if the flash is full
 uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
-	if(xSemaphoreTake(flash_mutex, 5) == pdPASS) {
+	if(xSemaphoreTake(flash_mutex, 1) == pdPASS) {
 		if(fc_get_bytes_remaining(&flash_h) < msglen) {
 			xSemaphoreGive(flash_mutex);
 			return 2;
@@ -1023,6 +1030,49 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 				errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0xF0) | 15;
 			}
 			xSemaphoreGive(errormsg_mutex);
+		}
+		else {
+			return 2;
+		}
+	}
+	// Flash entry type + timestamp + space + error code board number + message text + newline
+	size_t msglen = 1 + 24 + 1 + 1 + strlen(msgtext) + 1;
+	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
+	if(rawmsgbuf) {
+		rawmsgbuf[0] = FLASH_MSG_MARK;
+		get_iso_time((char *) &rawmsgbuf[1]);
+		rawmsgbuf[25] = ' ';
+		rawmsgbuf[26] = '1';
+		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
+		rawmsgbuf[msglen - 1] = '\n';
+		errormsg_t fullmsg;
+		fullmsg.content = rawmsgbuf;
+		fullmsg.len = msglen;
+		if(list_push(errorMsgList, (void *)&fullmsg, 1)) {
+			// No space for more messages
+			free(rawmsgbuf);
+			return 3;
+		}
+		return 0;
+	}
+	return 3;
+}
+
+// Same as log_message but intended for use with peripheral device errors
+// Only difference is the message type timers last a lot longer ~ 5 seconds
+// This is intended to reduce message spam in the case that we intentionally run boards with disconnected peripherals
+uint8_t log_peri_message(const char *msgtext, int msgtype) {
+	if(msgtype != -1) {
+		if(msgtype >= PERI_ERROR_MSG_TYPES) {
+			return 2;
+		}
+		if(xSemaphoreTake(perierrormsg_mutex, 2) == pdPASS) {
+			if(perierrormsgtimers[msgtype]) {
+				xSemaphoreGive(perierrormsg_mutex);
+				return 1;
+			}
+			perierrormsgtimers[msgtype] = 140; // 140 * 35 = ~5000ms
+			xSemaphoreGive(perierrormsg_mutex);
 		}
 		else {
 			return 2;
@@ -1136,17 +1186,19 @@ void ftp_close(void *handle) {
 	if(fd == 1) {
 		eeprom_cursor -= 4;
 		if(eeprom_cursor < FC_EEPROM_LEN) {
-			// TODO: Send too short error
+			// too short
+			log_message(ERR_TFTP_EERPOM_TOO_SHORT, -1);
 			return;
 		}
 		// CRC check
 		uint32_t sent_crc;
 		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor + FC_EEPROM_LEN, (uint8_t *) &sent_crc, 4);
 		if(read_stat != EEPROM_OK) {
-			// TODO: Send read error
+			// read error
+			log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
 			return;
 		}
-		HAL_CRC_Calculate(&hcrc, NULL, 0);
+		HAL_CRC_Calculate(&hcrc, NULL, 0); // reset calculation
 		uint32_t calc_crc;
 		int cursor = 0;
 		do {
@@ -1154,7 +1206,8 @@ void ftp_close(void *handle) {
 			uint8_t buf[read_bytes];
 			read_stat = eeprom_read_mem(&eeprom_h, FC_EEPROM_LEN + cursor, buf, read_bytes);
 			if(read_stat != EEPROM_OK) {
-				// TODO: Send read error
+				// read error
+				log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
 				return;
 			}
 			calc_crc = HAL_CRC_Accumulate(&hcrc, (uint32_t *) buf, read_bytes);
@@ -1171,19 +1224,24 @@ void ftp_close(void *handle) {
 				uint8_t buf[read_bytes];
 				read_stat = eeprom_read_mem(&eeprom_h, FC_EEPROM_LEN + cursor, buf, read_bytes);
 				if(read_stat != EEPROM_OK) {
-					// TODO: Send copy read error
+					// copy read error
+					log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
 					return;
 				}
 				eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, cursor, buf, read_bytes);
 				if(write_stat != EEPROM_OK) {
-					// TODO: Send copy write error
+					// copy write error
+					log_message(ERR_TFTP_EEPROM_WRITE_ERR, FC_ERR_TYPE_TFTP_EEPROM_WRITE);
 					return;
 				}
 				cursor += read_bytes;
 			} while(eeprom_cursor - cursor > 0);
+			// eeprom successfully updated! restart board for new config to take effect
+			log_message(STAT_EEPROM_CONFIG_CHANGED, -1);
 		}
 		else {
-			// TODO: Mismatched CRC
+			// Mismatched CRC
+			log_message(ERR_TFTP_EEPROM_BAD_CRC, -1);
 		}
 	}
 	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK) {
@@ -1201,6 +1259,8 @@ int ftp_read(void *handle, void *buf, int bytes) {
 		}
 		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor, buf, bytes_to_read);
 		if(read_stat != EEPROM_OK) {
+			// eeprom read error
+			log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
 			return -1;
 		}
 		eeprom_cursor += bytes_to_read;
@@ -1291,6 +1351,8 @@ int ftp_write(void *handle, struct pbuf *p) {
 		do {
 			eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, eeprom_cursor + FC_EEPROM_LEN, currbuf->payload, currbuf->len);
 			if(write_stat != EEPROM_OK) {
+				// eeprom write error
+				log_message(ERR_TFTP_EEPROM_WRITE_ERR, FC_ERR_TYPE_TFTP_EEPROM_WRITE);
 				return -1;
 			}
 			eeprom_cursor += currbuf->len;
@@ -1378,7 +1440,11 @@ int main(void)
   RTC_mutex = xSemaphoreCreateMutex();
   flash_mutex = xSemaphoreCreateMutex();
   errormsg_mutex = xSemaphoreCreateMutex();
+  perierrormsg_mutex = xSemaphoreCreateMutex();
   errorudp_mutex = xSemaphoreCreateMutex();
+
+  memset(errormsgtimers, 0, ERROR_MSG_TYPES / 2);
+  memset(perierrormsgtimers, 0, PERI_ERROR_MSG_TYPES);
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -2237,29 +2303,54 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void TelemetryTask(void *argument) {
-	// TODO started telemetry thread
+	// started telemetry thread
+	log_message(STAT_TELEM_TASK_STARTED, -1);
 	for(;;) {
 		uint32_t startTime = HAL_GetTick();
 		// Read from sensors
 		uint16_t adc_values[16] = {0};
 		read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
+		if(adc_values[ADC_3V3_BUS_I] == 0) {
+			// ADC read error
+			log_peri_message(FC_ERR_SING_ADC_READ, FC_ERR_PERI_TYPE_ADC);
+		}
 
   		Accel XL_readings1 = {0};
   		Accel XL_readings2 = {0};
   		AngRate angRate_readings1 = {0};
   		AngRate angRate_readings2 = {0};
-  		IMU_getAccel(&(sensors_h.imu1_h), &XL_readings1);
-  		IMU_getAccel(&(sensors_h.imu2_h), &XL_readings2);
+  		int imu1_stat = IMU_getAccel(&(sensors_h.imu1_h), &XL_readings1);
+  		if(imu1_stat == -1) {
+  			// IMU 1 read error
+			log_peri_message(ERR_IMU_READ "1", FC_ERR_PERI_TYPE_IMU1);
+  		}
+  		int imu2_stat = IMU_getAccel(&(sensors_h.imu2_h), &XL_readings2);
+  		if(imu2_stat == -1) {
+  			// IMU 2 read error
+			log_peri_message(ERR_IMU_READ "2", FC_ERR_PERI_TYPE_IMU2);
+  		}
   		IMU_getAngRate(&(sensors_h.imu1_h), &angRate_readings1);
   		IMU_getAngRate(&(sensors_h.imu2_h), &angRate_readings2);
 
   	  	float pres1 = 0.0;
   	  	float pres2 = 0.0;
   	  	int bar1_stat = MS5611_getPres(&(sensors_h.bar1_h), &pres1, &(sensors_h.prom1), OSR_1024);
+  	  	if(bar1_stat) {
+  	  		// BAR 1 read error
+			log_peri_message(ERR_BAR_READ "1", FC_ERR_PERI_TYPE_BAR1);
+  	  	}
   	  	int bar2_stat = MS5611_getPres(&(sensors_h.bar2_h), &pres2, &(sensors_h.prom2), OSR_1024);
+  	  	if(bar2_stat) {
+  	  		// BAR 2 read error
+			log_peri_message(ERR_BAR_READ "2", FC_ERR_PERI_TYPE_BAR2);
+  	  	}
 
   	  	float TCvalues[3];
   	  	int TC_stat = ADS_readAll(&(sensors_h.tc_main_h), TCvalues);
+  	  	if(TC_stat || isnan(TCvalues[0]) || isnan(TCvalues[1]) || isnan(TCvalues[2])) {
+  	  		// ADS read error
+			log_peri_message(ERR_ADS_READ, FC_ERR_PERI_TYPE_ADS);
+  	  	}
 
   	  	VLV_OpenLoad vlv1_old = 0;
   	  	VLV_OpenLoad vlv2_old = 0;
@@ -2281,15 +2372,11 @@ void TelemetryTask(void *argument) {
   			if(!bar1_stat) {
   				Rocket_h.fcState.bar1 = pres1;
   			}
-  			else {
-  				// Bar1 error
-  			}
+
   			if(!bar2_stat) {
   				Rocket_h.fcState.bar2 = pres2;
   			}
-  			else {
-  				// Bar2 error
-  			}
+
   			Rocket_h.fcState.imu1_A = XL_readings1;
   			Rocket_h.fcState.imu1_W = angRate_readings1;
   			Rocket_h.fcState.imu2_A = XL_readings2;
@@ -2319,33 +2406,18 @@ void TelemetryTask(void *argument) {
   				if(!isnan(TCvalues[0])) {
   					Rocket_h.fcState.tc1 = TCvalues[0];
   				}
-  				else {
-  					// TC 1 error
-  				}
   				if(!isnan(TCvalues[1])) {
   					Rocket_h.fcState.tc2 = TCvalues[1];
-  				}
-  				else {
-  					// TC 2 error
   				}
   				if(!isnan(TCvalues[2])) {
   					Rocket_h.fcState.tc3 = TCvalues[2];
   				}
-  				else {
-  					// TC 3 error
-  				}
-  			}
-  			else {
-  				// TC error
   			}
 
   			if(!old_stat) {
   				Rocket_h.fcState.vlv1_old = vlv1_old;
   				Rocket_h.fcState.vlv2_old = vlv2_old;
   				Rocket_h.fcState.vlv3_old = vlv3_old;
-  			}
-  			else {
-  				// OLD error
   			}
 
   			Rocket_h.fcState.timestamp = recordtime;
@@ -2354,22 +2426,25 @@ void TelemetryTask(void *argument) {
   		}
   		else {
   			// No telemetry updated
+  			log_message(ERR_TELEM_NOT_UPDATED, FC_ERR_TYPE_TELEM_NUPDATED);
   		}
 
   		Message telemsg = {0};
   		telemsg.type = MSG_TELEMETRY;
   		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
-  			if(send_msg_to_device(LimeWire_d, &telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) != 0) {
-  				// Server not up, target device not connected, or txbuffer is full
+  			if(send_msg_to_device(LimeWire_d, &telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) == -2) {
+  				// txbuffer full or memory error
+  	  			log_message(ERR_TELEM_MEM_ERR, FC_ERR_TYPE_TELEM_MEM_ERR);
   			}
   		}
-  		else {
-  			// Telemetry access error
-  		}
 
-  		// Target TELEMETRY_HZ polling rate, but always delay for at least 1 tick, otherwise we risk not letting other tasks get CPU time
+  		// Target TELEMETRY_HZ polling rate, but always delay for at least 1 tick, otherwise we risk not letting other tasks get CPU time. Actually I'm not sure this is true, but a 1ms delay is fine regardless
 
 		uint32_t delta = HAL_GetTick() - startTime;
+		if(delta > (1000 / TELEMETRY_HZ) * 2) {
+			// telemetry collection overtime by more than 2x
+  			log_message(ERR_TELEM_OVERTIME, FC_ERR_TYPE_TELEM_OVERTIME);
+		}
 		osDelay((1000 / TELEMETRY_HZ) > delta ? (1000 / TELEMETRY_HZ) - delta : 1);
 	}
 
@@ -2405,7 +2480,8 @@ void TelemetryTask(void *argument) {
 }
 
 void ProcessPackets(void *argument) {
-	// TODO Started processing thread
+	// Started processing thread
+	log_message(STAT_PACKET_TASK_STARTED, -1);
 	for(;;) {
 		Raw_message msg = {0};
 		int read_stat = server_read(&msg, 1000);
@@ -2414,16 +2490,18 @@ void ProcessPackets(void *argument) {
 			Message parsedmsg = {0};
 			if(deserialize_message(msg.bufferptr, msg.packet_len, &parsedmsg) > 0) {
 				switch(parsedmsg.type) {
-				    case MSG_TELEMETRY:
+				    case MSG_TELEMETRY: {
 				        // Save and relay to Limewire
 				    	if(parsedmsg.data.telemetry.board_id == BOARD_FR) {
 				    		if(unpack_fr_telemetry(&(parsedmsg.data.telemetry), 5)) {
 				    			// Failed to save data
+				    			log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
 				    		}
 				    	}
 				    	else {
 					    	if(unpack_bb_telemetry(&(parsedmsg.data.telemetry), 5)) {
 					    		// Failed to save data
+					    		log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
 					    	}
 				    	}
 
@@ -2435,7 +2513,8 @@ void ProcessPackets(void *argument) {
 				    	  	// Server not up, target device not connected, or txbuffer is full
 				    	}
 				        break;
-				    case MSG_VALVE_COMMAND:
+				    }
+				    case MSG_VALVE_COMMAND: {
 				    	if(check_valve_id(parsedmsg.data.valve_command.valve_id)) {
 				    		if(get_valve_board(parsedmsg.data.valve_command.valve_id) == BOARD_FC) {
 				    			// Do valve command and send state message
@@ -2462,33 +2541,39 @@ void ProcessPackets(void *argument) {
 				    	}
 				    	else {
 				    		// Invalid valve id
+				    		log_message(ERR_PROCESS_VLV_CMD_BADID, FC_ERR_TYPE_BAD_VLVID);
 				    	}
 				        break;
-				    case MSG_VALVE_STATE:
+				    }
+				    case MSG_VALVE_STATE: {
 				        // Save and relay to Limewire
 				    	if(check_valve_id(parsedmsg.data.valve_state.valve_id)) {
 					    	switch(get_valve_board(parsedmsg.data.valve_state.valve_id)) {
-					    	    case BOARD_BAY_1:
+					    	    case BOARD_BAY_1: {
 					    	  	  	if(xSemaphoreTake(Rocket_h.bb1Valve_access, 5) == pdPASS) {
 					    	  	  		Rocket_h.bb1ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
 					    	  	  		xSemaphoreGive(Rocket_h.bb1Valve_access);
 					    	  	  	}
 					    	        break;
-					    	    case BOARD_BAY_2:
+					    	    }
+					    	    case BOARD_BAY_2: {
 					    	  	  	if(xSemaphoreTake(Rocket_h.bb2Valve_access, 5) == pdPASS) {
 					    	  	  		Rocket_h.bb2ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
 					    	  	  		xSemaphoreGive(Rocket_h.bb2Valve_access);
 					    	  	  	}
 					    	        break;
-					    	    case BOARD_BAY_3:
+					    	    }
+					    	    case BOARD_BAY_3: {
 					    	  	  	if(xSemaphoreTake(Rocket_h.bb3Valve_access, 5) == pdPASS) {
 					    	  	  		Rocket_h.bb3ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
 					    	  	  		xSemaphoreGive(Rocket_h.bb3Valve_access);
 					    	  	  	}
 					    	        break;
-					    	    default:
+					    	    }
+					    	    default: {
 					    	        // The flight computer should not receive valve state messages for its own valves
 					    	        break;
+					    	    }
 					    	}
 
 					    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
@@ -2501,14 +2586,18 @@ void ProcessPackets(void *argument) {
 				    	}
 				    	else {
 				    		// Invalid valve id
+				    		log_message(ERR_PROCESS_VLV_STATE_BADID, FC_ERR_TYPE_BAD_VLVID);
 				    	}
 				        break;
-				    default:
+				    }
+				    default: {
 				        break;
+				    }
 				}
 			}
 			else {
 				// Unknown message type
+				log_message(ERR_UNKNOWN_LMP_PACKET, FC_ERR_TYPE_UNKNOWN_LMP);
 			}
 			free(msg.bufferptr);
 		}
@@ -2628,6 +2717,12 @@ void StartAndMonitor(void *argument)
   	sensors_h.adc_h.NUM_CHANNELS = 16;
 
   	init_adc(&hspi4, &(sensors_h.adc_h));
+  	// Check to make sure the chip is connected
+	uint16_t adc_values[16] = {0};
+	read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
+	if(adc_values[ADC_3V3_BUS_I] == 0) { // 3v3 bus voltage should always be greater than 0
+		log_message(FC_ERR_SING_ADC_INIT, -1);
+	}
 
   	// TC ADCs
   	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
@@ -2731,7 +2826,7 @@ void StartAndMonitor(void *argument)
 	// log startup done
 	log_message(STAT_STARTUP_DONE, -1);
 
-	// Then, error handling and logging in telemetry and packet processing tasks
+	// Then, error handling and logging in telemetry and packet processing tasks, tftp, lwip link up and down
 	// Then, hard fault handling and logging
 	/*
 	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs) (WHEN THE FC CONNECTS TO LIMEWIRE SEND THE VALVE STATES FOR THE ENTIRE ROCKET)
@@ -2801,6 +2896,15 @@ void StartAndMonitor(void *argument)
 					}
 				}
 				xSemaphoreGive(errormsg_mutex);
+			}
+
+			if(xSemaphoreTake(perierrormsg_mutex, 5) == pdPASS) {
+				for(int i = 0;i < PERI_ERROR_MSG_TYPES;i++) {
+					if(perierrormsgtimers[i]) {
+						perierrormsgtimers[i]--;
+					}
+				}
+				xSemaphoreGive(perierrormsg_mutex);
 			}
 
 			int limefd = get_device_fd(LimeWire_d);

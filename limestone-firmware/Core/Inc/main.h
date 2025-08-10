@@ -97,6 +97,7 @@ extern "C" {
 #define ERROR_UDP_PORT		(uint16_t)1234
 
 #define ERROR_MSG_TYPES		(size_t)32 // Should be a multiple of 2
+#define PERI_ERROR_MSG_TYPES	(size_t)8
 
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 
