@@ -119,6 +119,8 @@
 #define STAT_EEPROM_CONFIG_CHANGED				"705 New EEPROM config saved"
 #define STAT_LINK_UP							"706 Ethernet link back online"
 #define STAT_LINK_DOWN							"707 Ethernet link down"
+#define STAT_AVAILABLE_FLASH					"708 Used flash space: "
+#define STAT_CLEAR_FLASH						"709 Flash cleared"
 
 // Flight Computer status messages
 #define FC_STAT_EXAMPLE							"000 This is a status message unique to the FC (e.g. radio thread started)"

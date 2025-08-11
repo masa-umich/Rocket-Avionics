@@ -293,8 +293,16 @@ const osThreadAttr_t packet_task_attr = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
+osThreadId_t flashClearTaskHandle;
+const osThreadAttr_t flash_clear_task_attr = {
+  .name = "flashCTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
 W25N04KV_Flash flash_h = {0};
 SemaphoreHandle_t flash_mutex;
+SemaphoreHandle_t flash_clear_mutex;
 uint8_t flashreadbuffer[2048 + 512];
 uint16_t validflashbytes = 0;
 uint8_t flashmsgtype = 0;
@@ -350,6 +358,42 @@ void toggleLEDPins(TimerHandle_t xTimer) {
 
 void buzzerOff(TimerHandle_t xTimer) {
 	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 0);
+}
+
+void reset_board() {
+	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
+		fc_finish_flash_write(&flash_h);
+	}
+
+	NVIC_SystemReset(); // This should never return
+}
+
+void log_flash_storage() {
+	if(xSemaphoreTake(flash_mutex, 5) == pdPASS) {
+		uint32_t used = 536870912UL - fc_get_bytes_remaining(&flash_h);
+		xSemaphoreGive(flash_mutex);
+
+		uint8_t percent = (used / 536870912.0f) * 100;
+		if(used < 1024) {
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 22];
+	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", used, percent);
+	    	log_message(logmsg, -1);
+		}
+		else if(used < 1048576UL) {
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 36];
+	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", used, used >> 10, percent);
+	    	log_message(logmsg, -1);
+		}
+		else {
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 31];
+	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu16 "MB/512MB %u%%", used, (uint16_t) (used >> 20), percent);
+	    	log_message(logmsg, -1);
+		}
+	}
+}
+
+void clear_flash() {
+	xSemaphoreGive(flash_clear_mutex); // signal to task to clear flash. This needs to be async since it takes almost 5 seconds to clear the flash
 }
 
 // Callback for LWIP SNTP
@@ -1019,7 +1063,20 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		}
 		if(xSemaphoreTake(errormsg_mutex, 2) == pdPASS) {
 			uint8_t val = (msgtype % 2) == 0 ? errormsgtimers[msgtype / 2] & 0x0F : errormsgtimers[msgtype / 2] >> 4;
-			if(val) {
+			if(val < ERROR_THROTTLE_MAX) {
+				val++;
+				if(msgtype % 2) {
+					errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0x0F) | (val << 4);
+				}
+				else {
+					errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0xF0) | val;
+				}
+			}
+			else {
+				xSemaphoreGive(errormsg_mutex);
+				return 1;
+			}
+			/*if(val) {
 				xSemaphoreGive(errormsg_mutex);
 				return 1;
 			}
@@ -1028,7 +1085,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 			}
 			else {
 				errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0xF0) | 15;
-			}
+			}*/
 			xSemaphoreGive(errormsg_mutex);
 		}
 		else {
@@ -1071,7 +1128,7 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 				xSemaphoreGive(perierrormsg_mutex);
 				return 1;
 			}
-			perierrormsgtimers[msgtype] = 140; // 140 * 35 = ~5000ms
+			perierrormsgtimers[msgtype] = 20; // 20 * 250 = ~5000ms
 			xSemaphoreGive(perierrormsg_mutex);
 		}
 		else {
@@ -1439,9 +1496,12 @@ int main(void)
   // Create RTC mutex
   RTC_mutex = xSemaphoreCreateMutex();
   flash_mutex = xSemaphoreCreateMutex();
+  flash_clear_mutex = xSemaphoreCreateMutex();
   errormsg_mutex = xSemaphoreCreateMutex();
   perierrormsg_mutex = xSemaphoreCreateMutex();
   errorudp_mutex = xSemaphoreCreateMutex();
+
+  xSemaphoreTake(flash_clear_mutex, 0); // Make sure the mutex is taken
 
   memset(errormsgtimers, 0, ERROR_MSG_TYPES / 2);
   memset(perierrormsgtimers, 0, PERI_ERROR_MSG_TYPES);
@@ -1545,6 +1605,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  flashClearTaskHandle = osThreadNew(FlashClearTask, NULL, &flash_clear_task_attr);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -2590,6 +2651,39 @@ void ProcessPackets(void *argument) {
 				    	}
 				        break;
 				    }
+				    case MSG_DEVICE_COMMAND: {
+				    	if(parsedmsg.data.device_command.board_id == BOARD_FC) {
+				    		// Process device command
+				    		switch(parsedmsg.data.device_command.cmd_id) {
+				    			case DEVICE_CMD_RESET: {
+				    				reset_board();
+				    				break;
+				    			}
+				    			case DEVICE_CMD_CLEAR_FLASH: {
+				    				clear_flash();
+				    				break;
+				    			}
+				    			case DEVICE_CMD_QUERY_FLASH: {
+				    				log_flash_storage();
+				    				break;
+				    			}
+				    			default: {
+				    				break;
+				    			}
+				    		}
+				    	}
+				    	else {
+			    			// Relay to other boards
+			    			if(send_raw_msg_to_device(parsedmsg.data.device_command.board_id, &msg, 5) == 0) {
+					    		// Continue to prevent freeing memory we're still using
+					    		continue;
+			    			}
+			    			else {
+			    				// Server not up, target device not connected, or txbuffer is full
+			    			}
+				    	}
+				    	break;
+				    }
 				    default: {
 				        break;
 				    }
@@ -2609,6 +2703,19 @@ void ProcessPackets(void *argument) {
 			// Timeout on waiting for messages
 		}
 	}
+}
+
+void FlashClearTask(void *argument) {
+    for(;;) {
+        if(xSemaphoreTake(flash_clear_mutex, portMAX_DELAY) == pdPASS) {
+        	if(xSemaphoreTake(flash_mutex, 100) == pdPASS) {
+        		fc_finish_flash_write(&flash_h); // Flush write buffer
+            	fc_erase_flash(&flash_h); // Clear
+        		xSemaphoreGive(flash_mutex);
+        		log_message(STAT_CLEAR_FLASH, -1);
+        	}
+        }
+    }
 }
 /* USER CODE END 4 */
 
@@ -2879,7 +2986,7 @@ void StartAndMonitor(void *argument)
 
 			free(logmsg.content); // No memory leaks here hehe
 		}
-		if(HAL_GetTick() - startTick > 35) {
+		if(HAL_GetTick() - startTick > 250) {
 			startTick = HAL_GetTick();
 			//size_t freemem = xPortGetFreeHeapSize();
 			if(xSemaphoreTake(errormsg_mutex, 5) == pdPASS) {
@@ -2995,7 +3102,7 @@ void StartAndMonitor(void *argument)
 		  				}
 		  			}
 		  		}
-				telemcounter = 6;
+				telemcounter = 0; // 4hz
 			}
 			else {
 				telemcounter--;
@@ -3027,14 +3134,14 @@ void StartAndMonitor(void *argument)
 						}
 					}
 		  	  	}
-				statecounter = 13;
+				statecounter = 1; // 2hz
 			}
 			else {
 				statecounter--;
 			}
 		}
 
-	  osDelay(7);
+	  osDelay(5);
 	}
   /* USER CODE END 5 */
 }

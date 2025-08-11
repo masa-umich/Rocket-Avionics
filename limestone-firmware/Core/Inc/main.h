@@ -99,6 +99,8 @@ extern "C" {
 #define ERROR_MSG_TYPES		(size_t)32 // Should be a multiple of 2
 #define PERI_ERROR_MSG_TYPES	(size_t)8
 
+#define ERROR_THROTTLE_MAX		10 // Not more than 15
+
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 
 #define SHUNT_RES_20M		(uint16_t)20

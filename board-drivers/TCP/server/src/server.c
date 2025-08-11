@@ -754,6 +754,9 @@ int shutdown_server() {
 }
 
 int get_device_fd(Target_Device dev) {
+	if(dev >= NUM_TARGET_DEVICES) {
+		return -2;
+	}
     if(xSemaphoreTake(deviceMutex, portMAX_DELAY) == pdPASS) {
     	int fd = devices[dev];
     	xSemaphoreGive(deviceMutex);

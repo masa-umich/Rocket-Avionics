@@ -32,6 +32,8 @@ typedef enum {
 	FlightRecorder_d
 } Target_Device;
 
+#define NUM_TARGET_DEVICES 5
+
 // Raw message structure, used for low-level communication
 typedef struct {
 	int connection_fd; // file descriptor for the connection
