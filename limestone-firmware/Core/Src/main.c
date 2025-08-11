@@ -337,7 +337,7 @@ static void MX_SPI3_Init(void);
 void StartAndMonitor(void *argument);
 
 /* USER CODE BEGIN PFP */
-
+void FlashClearTask(void *argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
