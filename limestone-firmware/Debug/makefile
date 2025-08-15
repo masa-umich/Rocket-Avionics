@@ -11,6 +11,7 @@ RM := rm -rf
 -include sources.mk
 -include VLVs/src/subdir.mk
 -include TCP/server/src/subdir.mk
+-include TCP/LMP/src/subdir.mk
 -include Middlewares/Third_Party/LwIP/system/OS/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/netif/ppp/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/netif/subdir.mk

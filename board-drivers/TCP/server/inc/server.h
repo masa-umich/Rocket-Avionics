@@ -23,6 +23,7 @@
 #define TCP_KEEP_ALIVE_IDLE	5
 #define TCP_KEEP_ALIVE_INTERVAL	3
 #define TCP_KEEP_ALIVE_COUNT 3
+#define TCP_RETRY_DELAY_MS 100
 
 typedef enum {
 	LimeWire_d = 0U,
@@ -67,7 +68,7 @@ int server_read(Raw_message *msg, TickType_t block);
 // Returns 0 on success
 int server_send(Raw_message* msg, TickType_t block);
 
-int update_fd_set(fd_set *rfds);
+int update_fd_set(fd_set *rfds, fd_set *efds);
 
 // Is server running. Returns 1 if server is running, 0 if server is stopped, -1 on error
 int is_server_running();

@@ -97,6 +97,16 @@
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/LwIP/src/include/compat/posix/sys"/>
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/LwIP/src/include/compat/stdc"/>
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/LwIP/system/arch"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/ADS1120/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/FLASH/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LSM6DSO32XTR/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/M24256E/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/MAX11128/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/MS5611/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/system-errors}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/TCP/client/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/VLVs/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/TCP/LMP/inc}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.297978599" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -123,10 +133,19 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LWIP"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="TCP/LMP/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="TCP/client/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="FLASH/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="LSM6DSO32XTR/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="M24256E/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="ADS1120/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="MS5611/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="MAX11128/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="VLVs/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LWIP"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

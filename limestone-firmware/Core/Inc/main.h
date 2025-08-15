@@ -49,6 +49,8 @@ extern "C" {
 /* USER CODE BEGIN EM */
 #define FLIGHT_COMPUTER
 
+#define TCP_PORT			5000
+
 #define TELEMETRY_HZ		(uint32_t)50
 
 #define FC_EEPROM_LEN		(uint16_t)93

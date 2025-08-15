@@ -1948,7 +1948,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -2546,7 +2546,7 @@ void ProcessPackets(void *argument) {
 	for(;;) {
 		Raw_message msg = {0};
 		int read_stat = server_read(&msg, 1000);
-		if(read_stat == 0) {
+		if(read_stat >= 0) {
 			// The way the msg.bufferptr memory is handled past this point is that any result that doesn't relay msg to a different destination should NOT continue early, any result that does relay msg should continue early
 			Message parsedmsg = {0};
 			if(deserialize_message(msg.bufferptr, msg.packet_len, &parsedmsg) > 0) {

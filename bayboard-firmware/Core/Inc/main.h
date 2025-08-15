@@ -49,6 +49,8 @@ extern "C" {
 /* USER CODE BEGIN EM */
 #define FLIGHT_COMPUTER
 
+#define TCP_PORT			5000
+
 #define TELEMETRY_HZ		(uint32_t)50
 
 #define FC_EEPROM_LEN		(uint16_t)93
@@ -150,56 +152,52 @@ uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define GPS_NRST_Pin GPIO_PIN_4
-#define GPS_NRST_GPIO_Port GPIOE
-#define RF_DIO3_Pin GPIO_PIN_13
-#define RF_DIO3_GPIO_Port GPIOC
-#define RF_DIO2_Pin GPIO_PIN_14
-#define RF_DIO2_GPIO_Port GPIOC
-#define RF_DIO1_Pin GPIO_PIN_15
-#define RF_DIO1_GPIO_Port GPIOC
-#define RADIO_CS_Pin GPIO_PIN_6
-#define RADIO_CS_GPIO_Port GPIOF
-#define RF_BUSY_Pin GPIO_PIN_10
-#define RF_BUSY_GPIO_Port GPIOF
-#define RF_MODE_SW_Pin GPIO_PIN_0
-#define RF_MODE_SW_GPIO_Port GPIOC
-#define RF_NSRT_Pin GPIO_PIN_2
-#define RF_NSRT_GPIO_Port GPIOC
+#define ADC1_CS_Pin GPIO_PIN_4
+#define ADC1_CS_GPIO_Port GPIOE
+#define ENCODER_CS_Pin GPIO_PIN_6
+#define ENCODER_CS_GPIO_Port GPIOF
 #define BAR2_CS_Pin GPIO_PIN_3
 #define BAR2_CS_GPIO_Port GPIOA
 #define BAR1_CS_Pin GPIO_PIN_4
 #define BAR1_CS_GPIO_Port GPIOA
 #define ETH_NRST_Pin GPIO_PIN_0
 #define ETH_NRST_GPIO_Port GPIOB
-#define PDB_DIO1_Pin GPIO_PIN_14
-#define PDB_DIO1_GPIO_Port GPIOF
-#define PDB_DIO2_Pin GPIO_PIN_15
-#define PDB_DIO2_GPIO_Port GPIOF
-#define ADC_CS_Pin GPIO_PIN_11
-#define ADC_CS_GPIO_Port GPIOE
+#define ADC2_CS_Pin GPIO_PIN_11
+#define ADC2_CS_GPIO_Port GPIOE
+#define VLV5_OLD_Pin GPIO_PIN_12
+#define VLV5_OLD_GPIO_Port GPIOD
+#define VLV4_OLD_Pin GPIO_PIN_13
+#define VLV4_OLD_GPIO_Port GPIOD
+#define VLV3_OLD_Pin GPIO_PIN_14
+#define VLV3_OLD_GPIO_Port GPIOD
 #define VLV2_OLD_Pin GPIO_PIN_15
-#define VLV2_OLD_GPIO_Port GPIOE
-#define TC1_CS_Pin GPIO_PIN_9
-#define TC1_CS_GPIO_Port GPIOD
-#define TC2_CS_Pin GPIO_PIN_10
-#define TC2_CS_GPIO_Port GPIOD
-#define VLV3_EN_Pin GPIO_PIN_8
-#define VLV3_EN_GPIO_Port GPIOG
-#define VLV1_EN_Pin GPIO_PIN_6
+#define VLV2_OLD_GPIO_Port GPIOD
+#define VLV1_OLD_Pin GPIO_PIN_6
+#define VLV1_OLD_GPIO_Port GPIOG
+#define VLV5_EN_Pin GPIO_PIN_7
+#define VLV5_EN_GPIO_Port GPIOG
+#define VLV4_EN_Pin GPIO_PIN_8
+#define VLV4_EN_GPIO_Port GPIOG
+#define VLV3_EN_Pin GPIO_PIN_6
+#define VLV3_EN_GPIO_Port GPIOC
+#define VLV2_EN_Pin GPIO_PIN_7
+#define VLV2_EN_GPIO_Port GPIOC
+#define VLV1_EN_Pin GPIO_PIN_8
 #define VLV1_EN_GPIO_Port GPIOC
-#define VLV3_OLD_Pin GPIO_PIN_7
-#define VLV3_OLD_GPIO_Port GPIOC
-#define VLV1_OLD_Pin GPIO_PIN_8
-#define VLV1_OLD_GPIO_Port GPIOC
-#define VLV2_EN_Pin GPIO_PIN_8
-#define VLV2_EN_GPIO_Port GPIOA
-#define BUFF_CLR_Pin GPIO_PIN_9
-#define BUFF_CLR_GPIO_Port GPIOA
 #define BUFF_CLK_Pin GPIO_PIN_10
 #define BUFF_CLK_GPIO_Port GPIOA
+#define TC1_CS_Pin GPIO_PIN_11
+#define TC1_CS_GPIO_Port GPIOA
 #define VLV_CTRL_Pin GPIO_PIN_15
 #define VLV_CTRL_GPIO_Port GPIOA
+#define BUZZ_Pin GPIO_PIN_10
+#define BUZZ_GPIO_Port GPIOC
+#define LED_BLUE_Pin GPIO_PIN_11
+#define LED_BLUE_GPIO_Port GPIOC
+#define LED_GREEN_Pin GPIO_PIN_12
+#define LED_GREEN_GPIO_Port GPIOC
+#define LED_RED_Pin GPIO_PIN_0
+#define LED_RED_GPIO_Port GPIOD
 #define IMU1_INT1_Pin GPIO_PIN_1
 #define IMU1_INT1_GPIO_Port GPIOD
 #define IMU1_INT2_Pin GPIO_PIN_2
@@ -210,16 +208,16 @@ uint8_t log_message(const char *msgtext, int msgtype);
 #define IMU2_INT2_GPIO_Port GPIOD
 #define FLASH_CS_Pin GPIO_PIN_10
 #define FLASH_CS_GPIO_Port GPIOG
-#define EEPROM_WC_Pin GPIO_PIN_11
-#define EEPROM_WC_GPIO_Port GPIOG
-#define BUZZ_Pin GPIO_PIN_8
-#define BUZZ_GPIO_Port GPIOB
-#define LED_RED_Pin GPIO_PIN_9
-#define LED_RED_GPIO_Port GPIOB
-#define LED_GREEN_Pin GPIO_PIN_0
-#define LED_GREEN_GPIO_Port GPIOE
-#define LED_BLUE_Pin GPIO_PIN_1
-#define LED_BLUE_GPIO_Port GPIOE
+#define TC2_CS_Pin GPIO_PIN_4
+#define TC2_CS_GPIO_Port GPIOB
+#define EEPROM_WC_Pin GPIO_PIN_5
+#define EEPROM_WC_GPIO_Port GPIOB
+#define TC3_CS_Pin GPIO_PIN_9
+#define TC3_CS_GPIO_Port GPIOB
+#define HBRIDGE_EN_Pin GPIO_PIN_0
+#define HBRIDGE_EN_GPIO_Port GPIOE
+#define HBRIDGE_DIR_Pin GPIO_PIN_1
+#define HBRIDGE_DIR_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

@@ -29,4 +29,46 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>ADS1120</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/board-drivers/ADS1120</locationURI>
+		</link>
+		<link>
+			<name>LSM6DSO32XTR</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/board-drivers/LSM6DSO32XTR</locationURI>
+		</link>
+		<link>
+			<name>M24256E</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/board-drivers/M24256E</locationURI>
+		</link>
+		<link>
+			<name>MAX11128</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/board-drivers/MAX11128</locationURI>
+		</link>
+		<link>
+			<name>MS5611</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/board-drivers/MS5611</locationURI>
+		</link>
+		<link>
+			<name>TCP</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/board-drivers/TCP</locationURI>
+		</link>
+		<link>
+			<name>VLVs</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/board-drivers/VLVs</locationURI>
+		</link>
+		<link>
+			<name>system-errors</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/system-errors</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>

@@ -41,21 +41,21 @@
 
 
 // Flight Computer error messages
-#define FC_ERR_TCP_SERV_SOCK_CREAT_NOBUF		"001 No buffer space - creating server listen socket. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_CREAT_NOSOCK		"002 No available sockets - creating server listen socket. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_CREAT_UNKNOWN		"003 Unknown errno - creating server listen socket. Exiting thread, errno "
+#define FC_ERR_TCP_SERV_SOCK_CREAT_NOBUF		"001 No buffer space - creating server listen socket"
+#define FC_ERR_TCP_SERV_SOCK_CREAT_NOSOCK		"002 No available sockets - creating server listen socket"
+#define FC_ERR_TCP_SERV_SOCK_CREAT_UNKNOWN		"003 Unknown errno - creating server listen socket, errno "
 
-#define FC_ERR_TCP_SERV_SOCK_BIND_NSOCK			"004 NULL socket - binding server listen socket. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_BIND_BADPCB		"005 Bad PCB - binding server listen socket. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_BIND_USEDADDR		"006 Address already used - binding server listen socket. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_BIND_UNKNOWN		"007 Unknown errno - binding server listen socket. Exiting thread, errno "
+#define FC_ERR_TCP_SERV_SOCK_BIND_NSOCK			"004 NULL socket - binding server listen socket"
+#define FC_ERR_TCP_SERV_SOCK_BIND_BADPCB		"005 Bad PCB - binding server listen socket"
+#define FC_ERR_TCP_SERV_SOCK_BIND_USEDADDR		"006 Address already used - binding server listen socket"
+#define FC_ERR_TCP_SERV_SOCK_BIND_UNKNOWN		"007 Unknown errno - binding server listen socket, errno "
 
-#define FC_ERR_TCP_SERV_SOCK_LISTEN_NSOCK		"008 NULL socket - setting server listen socket to listening. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_LISTEN_NNETCONN	"009 NULL netconn - setting server listen socket to listening. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_LISTEN_NPCB		"010 NULL PCB - setting server listen socket to listening. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_LISTEN_BADPCB		"011 Bad PCB - setting server listen socket to listening. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_LISTEN_NOMEM		"012 No memory - setting server listen socket to listening. Exiting thread"
-#define FC_ERR_TCP_SERV_SOCK_LISTEN_UNKNOWN		"013 Unknown errno - setting server listen socket to listening. Exiting thread, errno "
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_NSOCK		"008 NULL socket - setting server listen socket to listening"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_NNETCONN	"009 NULL netconn - setting server listen socket to listening"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_NPCB		"010 NULL PCB - setting server listen socket to listening"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_BADPCB		"011 Bad PCB - setting server listen socket to listening"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_NOMEM		"012 No memory - setting server listen socket to listening"
+#define FC_ERR_TCP_SERV_SOCK_LISTEN_UNKNOWN		"013 Unknown errno - setting server listen socket to listening, errno "
 
 #define FC_ERR_TCP_SERV_SOCK_ACCEPT_NSOCK		"014 NULL socket - waiting/accepting TCP connection"
 #define FC_ERR_TCP_SERV_SOCK_ACCEPT_NNETCONN	"015 NULL netconn - waiting/accepting TCP connection"
@@ -110,6 +110,48 @@
 
 #define FC_ERR_REINIT_TCP_THREAD_ERR			"054 TCP server thread not started during reinit"
 
+#define FC_ERR_TCP_SERV_RECV_ERROR_RESET		"055 Reset by peer - TCP server socket flagged as error, fd "
+#define FC_ERR_TCP_SERV_RECV_ERROR_TIMEO		"056 Unresponsive peer - TCP server socket flagged as error, fd "
+#define FC_ERR_TCP_SERV_RECV_ERROR_CLOSED		"057 Connection closed - TCP server socket flagged as error, fd "
+#define FC_ERR_TCP_SERV_RECV_ERROR_NOTCONN		"058 Socket not connected - TCP server socket flagged as error, fd "
+#define FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN		"059 Unknown errno - TCP server socket flagged as error, fd/errno "
+
+// Bay Board error messages
+#define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"
+#define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOSOCK		"002 No available sockets - creating client socket"
+#define BB_ERR_TCP_CLIENT_SOCK_CREAT_UNKNOWN	"003 Unknown errno - creating client socket, errno "
+
+#define BB_ERR_TCP_CLIENT_CONNECT_NSOCK			"004 NULL socket - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_ERR			"005 Error connecting - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_TIMEO			"006 Connection timed out - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_NRTE			"007 No route - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_ABORT			"008 Internally aborted - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_NBUF			"009 Buffer error - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_NMEM			"010 Memory error - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_UNKNOWN		"011 Unknown errno - client connecting, errno "
+
+#define BB_ERR_TCP_CLIENT_WAIT_NSOCK			"012 NULL socket - client waiting for packet"
+#define BB_ERR_TCP_CLIENT_WAIT_NOMEM			"013 Memory error - client waiting for packet"
+#define BB_ERR_TCP_CLIENT_WAIT_BUSY				"014 Socket busy - client waiting for packet"
+#define BB_ERR_TCP_CLIENT_WAIT_UNKNOWN			"015 Unknown errno - client waiting for packet, errno "
+
+#define BB_ERR_TCP_CLIENT_READ_NSOCK			"016 NULL socket - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_TIMEOUT			"017 Read timeout - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_CONN_RST			"018 Reset by peer - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_SOCK_NCONN		"019 Not connected - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_NOMEM			"020 No memory - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_NOBUF			"021 No buffer space - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_UNKNOWN			"022 Unknown errno - client receiving packet, errno "
+
+#define BB_ERR_TCP_CLIENT_ERROR_RESET			"023 Reset by peer - client socket flagged as error"
+#define BB_ERR_TCP_CLIENT_ERROR_TIMEO			"024 Unresponsive peer - client socket flagged as error"
+#define BB_ERR_TCP_CLIENT_ERROR_CLOSED			"025 Connection closed - client socket flagged as error"
+#define BB_ERR_TCP_CLIENT_ERROR_NOTCONN			"026 Socket not connected - client socket flagged as error"
+#define BB_ERR_TCP_CLIENT_ERROR_UNKNOWN			"027 Unknown errno - client socket flagged as error, errno "
+
+#define BB_ERR_TCP_CLIENT_SAVE_BUFFULL			"028 rxbuffer full - client saving packet"
+#define BB_ERR_TCP_CLIENT_SAVE_NOMEM			"029 No memory - client saving packet"
+
 // General status messages
 #define STAT_EXAMPLE							"000 This is a general status message"
 #define STAT_NETWORK_LOG_ONLINE					"701 UDP logging online, IP "
@@ -130,6 +172,10 @@
 #define FC_STAT_EEPROM_DEFAULT_LOADED			"504 EEPROM defaults loaded, overridden by macro"
 #define FC_STAT_TCP_SERV_RUNNING				"505 TCP server initialized and running"
 #define FC_STAT_TCP_SERV_REINIT					"506 TCP server reinitialized after link down"
+
+// Bay Board status messages
+#define BB_STAT_TCP_CLIENT_CONNECTED			"501 TCP client connected"
+#define BB_STAT_TCP_CLIENT_CLOSED				"502 TCP client disconnected"
 
 // Flight Computer error message types - used for throttling
 #define FC_ERR_TYPE_TCP_SERV_LISTEN				0
@@ -153,5 +199,9 @@
 #define FC_ERR_PERI_TYPE_BAR1					3
 #define FC_ERR_PERI_TYPE_BAR2					4
 #define FC_ERR_PERI_TYPE_ADS					5
+
+// Bay Board error message types
+#define BB_ERR_TYPE_TCP_CLIENT_CONNECT			0
+#define BB_ERR_TYPE_TCP_CLIENT_RECV				1
 
 #endif /* INC_LOG_ERRORS_H_ */

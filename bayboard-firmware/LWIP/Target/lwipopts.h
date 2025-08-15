@@ -99,6 +99,8 @@
 #define DEFAULT_ACCEPTMBOX_SIZE 6
 /*----- Default Value for LWIP_TCP_KEEPALIVE: 0 ---*/
 #define LWIP_TCP_KEEPALIVE 1
+/*----- Default Value for LWIP_SO_SNDTIMEO: 0 ---*/
+#define LWIP_SO_SNDTIMEO 1
 /*----- Default Value for LWIP_SO_RCVTIMEO: 0 ---*/
 #define LWIP_SO_RCVTIMEO 1
 /*----- Value in opt.h for RECV_BUFSIZE_DEFAULT: INT_MAX -----*/
