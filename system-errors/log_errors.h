@@ -38,6 +38,10 @@
 #define ERR_TFTP_EEPROM_BAD_CRC					"222 Invalid CRC during EEPROM write"
 #define ERR_UDP_REINIT							"223 Error trying to reinit UDP logging"
 #define ERR_RTC_NOT_SET							"224 Error trying to set the RTC"
+#define ERR_EEPROM_INIT							"225 EEPROM init failed, loading defaults"
+#define ERR_EEPROM_LOAD_COMM_ERR				"226 EEPROM config loading failed, loading defaults"
+#define ERR_EEPROM_LOAD_TC_ERR					"227 EEPROM config invalid TC gains, loading default gains"
+#define ERR_EEPROM_LOAD_VLV_ERR					"228 EEPROM config invalid valve config, loading default settings"
 
 
 // Flight Computer error messages
@@ -97,11 +101,6 @@
 #define FC_ERR_TCP_SERV_FD_SCAN_NSOCK			"044 NULL socket - TCP server fd scanning, fd "
 #define FC_ERR_TCP_SERV_FD_SCAN_UNKNOWN			"045 Unknown errno - TCP server fd scanning, fd/errno "
 
-#define FC_ERR_EEPROM_INIT						"046 EEPROM init failed, loading defaults"
-#define FC_ERR_EEPROM_LOAD_COMM_ERR				"047 EEPROM config loading failed, loading defaults"
-#define FC_ERR_EEPROM_LOAD_TC_ERR				"048 EEPROM config invalid TC gains, loading default gains"
-#define FC_ERR_EEPROM_LOAD_VLV_ERR				"049 EEPROM config invalid valve config, loading default settings"
-
 #define FC_ERR_CREAT_TCP_MEM_ERR				"050 Memory error creating TCP server"
 #define FC_ERR_INIT_TCP_THREAD_ERR				"051 TCP server thread not started during code init"
 
@@ -152,6 +151,19 @@
 #define BB_ERR_TCP_CLIENT_SAVE_BUFFULL			"028 rxbuffer full - client saving packet"
 #define BB_ERR_TCP_CLIENT_SAVE_NOMEM			"029 No memory - client saving packet"
 
+#define BB_ERR_TCP_CLIENT_SEND_NSOCK			"030 NULL socket - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_SOCK_BUSY		"031 Netconn busy - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_NPCB				"032 NULL PCB - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_NNETCONN			"033 NULL netconn - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_MEM_ERR			"034 Internal memory error - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_UNKNOWN			"035 Unknown errno - client sending packet, errno "
+
+#define BB_ERR_TCP_CLIENT_SEND_STOPPED			"036 TCP client send thread stopped"
+
+#define BB_ERR_EEPROM_LOAD_BB_NUM_ERR			"037 EEPROM config invalid Bay Board number, loading defaults"
+
+#define BB_ERR_ADC1_INIT						"038 ADC1 init failed"
+
 // General status messages
 #define STAT_EXAMPLE							"000 This is a general status message"
 #define STAT_NETWORK_LOG_ONLINE					"701 UDP logging online, IP "
@@ -163,19 +175,20 @@
 #define STAT_LINK_DOWN							"707 Ethernet link down"
 #define STAT_AVAILABLE_FLASH					"708 Used flash space: "
 #define STAT_CLEAR_FLASH						"709 Flash cleared"
+#define STAT_EEPROM_LOADED						"710 EEPROM config loaded successfully"
+#define STAT_EEPROM_DEFAULT_LOADED				"711 EEPROM defaults loaded, overridden by macro"
 
 // Flight Computer status messages
 #define FC_STAT_EXAMPLE							"000 This is a status message unique to the FC (e.g. radio thread started)"
 #define FC_STAT_TCP_SERV_NEW_CONN				"501 TCP server accepting new connection, fd/addr "
 #define FC_STAT_TCP_CONN_CLOSED					"502 TCP connection closed gracefully, fd "
-#define FC_STAT_EEPROM_LOADED					"503 EEPROM config loaded successfully"
-#define FC_STAT_EEPROM_DEFAULT_LOADED			"504 EEPROM defaults loaded, overridden by macro"
 #define FC_STAT_TCP_SERV_RUNNING				"505 TCP server initialized and running"
 #define FC_STAT_TCP_SERV_REINIT					"506 TCP server reinitialized after link down"
 
 // Bay Board status messages
 #define BB_STAT_TCP_CLIENT_CONNECTED			"501 TCP client connected"
 #define BB_STAT_TCP_CLIENT_CLOSED				"502 TCP client disconnected"
+#define BB_STAT_STARTING_IDENTIFY				"503 Bay Board starting as Bay Board "
 
 // Flight Computer error message types - used for throttling
 #define FC_ERR_TYPE_TCP_SERV_LISTEN				0
@@ -203,5 +216,6 @@
 // Bay Board error message types
 #define BB_ERR_TYPE_TCP_CLIENT_CONNECT			0
 #define BB_ERR_TYPE_TCP_CLIENT_RECV				1
+#define BB_ERR_TYPE_TCP_CLIENT_SEND				2
 
 #endif /* INC_LOG_ERRORS_H_ */

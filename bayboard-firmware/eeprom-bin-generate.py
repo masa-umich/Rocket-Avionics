@@ -1,11 +1,6 @@
 # /// script
 # requires-python = ">=3.13"
-# dependencies = [
-#     "enum",
-#     "ipaddress",
-#     "struct",
-#     "zlib",
-# ]
+# dependencies = []
 # ///
 from enum import Enum
 import ipaddress
@@ -47,9 +42,32 @@ pt5_offset = 0.5
 pt5_range = 6000
 pt5_max = 4.5
 
+pt6_offset = 0.5
+pt6_range = 5000
+pt6_max = 4.5
+
+pt7_offset = 1
+pt7_range = 2000
+pt7_max = 3
+
+pt8_offset = 0.5
+pt8_range = 5000
+pt8_max = 4.5
+
+pt9_offset = 0.5
+pt9_range = 5000
+pt9_max = 5
+
+pt10_offset = 0.5
+pt10_range = 6000
+pt10_max = 4.5
+
 tc1_gain = TCGain.Gain_2x
 tc2_gain = TCGain.Gain_1x
 tc3_gain = TCGain.Gain_128x
+tc4_gain = TCGain.Gain_2x
+tc5_gain = TCGain.Gain_1x
+tc6_gain = TCGain.Gain_128x
 
 vlv1_voltage = ValveVoltage.Valve_12V
 vlv1_enable = 1
@@ -60,23 +78,37 @@ vlv2_enable = 0
 vlv3_voltage = ValveVoltage.Valve_24V
 vlv3_enable = 1
 
-limewire_IP = ipaddress.IPv4Address("192.168.0.5")
-flight_computer_IP = ipaddress.IPv4Address("192.168.0.10")
-bay_board_1_IP = ipaddress.IPv4Address("0.0.0.0")
-bay_board_2_IP = ipaddress.IPv4Address("0.0.0.0")
-bay_board_3_IP = ipaddress.IPv4Address("0.0.0.0")
-flight_recorder_IP = ipaddress.IPv4Address("0.0.0.0")
+vlv4_voltage = ValveVoltage.Valve_24V
+vlv4_enable = 1
 
-raw_out = struct.pack('<f', pt1_offset) + struct.pack('<f', pt1_range) + struct.pack('<f', pt1_max)
+vlv5_voltage = ValveVoltage.Valve_24V
+vlv5_enable = 1
+
+bay_board_number = 1
+flight_computer_IP = ipaddress.IPv4Address("192.168.0.10")
+bay_board_IP = ipaddress.IPv4Address("192.168.0.15")
+
+raw_out = struct.pack('<B', bay_board_number)
+raw_out += struct.pack('<f', pt1_offset) + struct.pack('<f', pt1_range) + struct.pack('<f', pt1_max)
 raw_out += struct.pack('<f', pt2_offset) + struct.pack('<f', pt2_range) + struct.pack('<f', pt2_max)
 raw_out += struct.pack('<f', pt3_offset) + struct.pack('<f', pt3_range) + struct.pack('<f', pt3_max)
 raw_out += struct.pack('<f', pt4_offset) + struct.pack('<f', pt4_range) + struct.pack('<f', pt4_max)
 raw_out += struct.pack('<f', pt5_offset) + struct.pack('<f', pt5_range) + struct.pack('<f', pt5_max)
+raw_out += struct.pack('<f', pt6_offset) + struct.pack('<f', pt6_range) + struct.pack('<f', pt6_max)
+raw_out += struct.pack('<f', pt7_offset) + struct.pack('<f', pt7_range) + struct.pack('<f', pt7_max)
+raw_out += struct.pack('<f', pt8_offset) + struct.pack('<f', pt8_range) + struct.pack('<f', pt8_max)
+raw_out += struct.pack('<f', pt9_offset) + struct.pack('<f', pt9_range) + struct.pack('<f', pt9_max)
+raw_out += struct.pack('<f', pt10_offset) + struct.pack('<f', pt10_range) + struct.pack('<f', pt10_max)
 raw_out += struct.pack('<B', tc1_gain.value) + struct.pack('<B', tc2_gain.value) + struct.pack('<B', tc3_gain.value)
+raw_out += struct.pack('<B', tc4_gain.value) + struct.pack('<B', tc5_gain.value) + struct.pack('<B', tc6_gain.value)
 raw_out += struct.pack('<B', vlv1_voltage.value) + struct.pack('<B', vlv1_enable)
 raw_out += struct.pack('<B', vlv2_voltage.value) + struct.pack('<B', vlv2_enable)
 raw_out += struct.pack('<B', vlv3_voltage.value) + struct.pack('<B', vlv3_enable)
-raw_out += limewire_IP.packed + flight_computer_IP.packed + bay_board_1_IP.packed + bay_board_2_IP.packed + bay_board_3_IP.packed + flight_recorder_IP.packed
+raw_out += struct.pack('<B', vlv4_voltage.value) + struct.pack('<B', vlv4_enable)
+raw_out += struct.pack('<B', vlv5_voltage.value) + struct.pack('<B', vlv5_enable)
+raw_out += flight_computer_IP.packed + bay_board_IP.packed
+
+print(len(raw_out))
 
 crc = zlib.crc32(raw_out)
 

@@ -30,7 +30,7 @@
 
 /* USER CODE BEGIN 0 */
 #include "sntp.h"
-#include "server.h"
+#include "client.h"
 #include "tftp_server.h"
 #include "lwip/udp.h"
 #include "log_errors.h"
@@ -42,7 +42,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
 extern const struct tftp_context my_tftp_ctx;
-extern ip4_addr_t fc_addr;
+extern ip4_addr_t bb_addr;
 extern struct netconn *errormsgudp;
 extern SemaphoreHandle_t errorudp_mutex;
 extern void send_udp_online(ip4_addr_t * ip);
@@ -86,10 +86,10 @@ void MX_LWIP_Init(void)
   GATEWAY_ADDRESS[3] = 0;
 
 /* USER CODE BEGIN IP_ADDRESSES */
-  IP_ADDRESS[0] = ip4_addr1(&fc_addr);
-  IP_ADDRESS[1] = ip4_addr2(&fc_addr);
-  IP_ADDRESS[2] = ip4_addr3(&fc_addr);
-  IP_ADDRESS[3] = ip4_addr4(&fc_addr);
+  IP_ADDRESS[0] = ip4_addr1(&bb_addr);
+  IP_ADDRESS[1] = ip4_addr2(&bb_addr);
+  IP_ADDRESS[2] = ip4_addr3(&bb_addr);
+  IP_ADDRESS[3] = ip4_addr4(&bb_addr);
 /* USER CODE END IP_ADDRESSES */
 
   /* Initialize the LwIP stack with RTOS */
@@ -194,27 +194,7 @@ static void ethernet_link_status_updated(struct netif *netif)
 		  log_message(ERR_UDP_REINIT, -1);
 	  }
 	  sntp_init();
-      switch(server_init()) {
-      	  case 0: {
-      	  	  // TCP server started
-      	  	  log_message(FC_STAT_TCP_SERV_REINIT, -1);
-      	  	  break;
-      	  }
-      	  case -1: {
-      	  	  break;
-      	  }
-      	  case -2: {
-      	  	  // one of the threads failed to start
-      	  	  log_message(FC_ERR_REINIT_TCP_THREAD_ERR, -1);
-      	  	  break;
-      	  }
-      	  case -3: {
-      	  	  break;
-      	  }
-      	  default: {
-      	  	  break;
-      	  }
-      }
+	  client_reinit();
 	  tftp_init(&my_tftp_ctx);
 	  // link up
 	  log_message(STAT_LINK_UP, -1);
@@ -231,7 +211,7 @@ static void ethernet_link_status_updated(struct netif *netif)
 		  xSemaphoreGive(errorudp_mutex);
 	  }
 	  sntp_stop();
-	  shutdown_server();
+	  client_stop();
 	  tftp_cleanup();
 	  // link down
 	  log_message(STAT_LINK_DOWN, -1);

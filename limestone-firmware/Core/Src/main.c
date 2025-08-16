@@ -969,14 +969,24 @@ int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
 	IP4_ADDR(&(conf->bayboard3IP), buffer[85], buffer[86], buffer[87], buffer[88]);
 	IP4_ADDR(&(conf->flightrecordIP), buffer[89], buffer[90], buffer[91], buffer[92]);
 
+	int ret = 0;
 	if(conf->tc1_gain > 0x0E || conf->tc2_gain > 0x0E || conf->tc3_gain > 0x0E) {
-		return -2;
+		conf->tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+		conf->tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+		conf->tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+		ret = -2;
 	}
 
 	if(conf->vlv1_v > 0x01 || conf->vlv1_en > 0x01 || conf->vlv2_v > 0x01 || conf->vlv2_en > 0x01 || conf->vlv3_v > 0x01 || conf->vlv3_en > 0x01) {
-		return -3;
+		conf->vlv1_v = FC_EEPROM_VLV_VOL_DEFAULT;
+		conf->vlv1_en = FC_EEPROM_VLV_EN_DEFAULT;
+		conf->vlv2_v = FC_EEPROM_VLV_VOL_DEFAULT;
+		conf->vlv2_en = FC_EEPROM_VLV_EN_DEFAULT;
+		conf->vlv3_v = FC_EEPROM_VLV_VOL_DEFAULT;
+		conf->vlv3_en = FC_EEPROM_VLV_EN_DEFAULT;
+		ret = -3;
 	}
-	return 0;
+	return ret;
 }
 
 void load_eeprom_defaults(EEPROM_conf_t *conf) {
@@ -1496,7 +1506,7 @@ int main(void)
   // Create RTC mutex
   RTC_mutex = xSemaphoreCreateMutex();
   flash_mutex = xSemaphoreCreateMutex();
-  flash_clear_mutex = xSemaphoreCreateMutex();
+  flash_clear_mutex = xSemaphoreCreateBinary();
   errormsg_mutex = xSemaphoreCreateMutex();
   perierrormsg_mutex = xSemaphoreCreateMutex();
   errorudp_mutex = xSemaphoreCreateMutex();
@@ -1533,19 +1543,19 @@ int main(void)
   if(eeprom_init(&eeprom_h, &hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin) == EEPROM_OK) {
 #ifdef EEPROM_OVERRIDE
 	  load_eeprom_defaults(&loaded_config);
-	  log_message(FC_STAT_EEPROM_DEFAULT_LOADED, -1);
+	  log_message(STAT_EEPROM_DEFAULT_LOADED, -1);
 #else
 	  switch(load_eeprom_config(&eeprom_h, &loaded_config)) {
 	  	  case -1: {
 	  		  // eeprom load error, defaults loaded
-	  		  log_message(FC_ERR_EEPROM_LOAD_COMM_ERR, -1);
+	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
 	  		  load_eeprom_defaults(&loaded_config);
 	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
 	  		  break;
 	  	  }
 	  	  case -2: {
 	  		  // eeprom tc gain value error
-	  		  log_message(FC_ERR_EEPROM_LOAD_TC_ERR, -1);
+	  		  log_message(ERR_EEPROM_LOAD_TC_ERR, -1);
 	  		  loaded_config.tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
 	  		  loaded_config.tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
 	  		  loaded_config.tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
@@ -1554,7 +1564,7 @@ int main(void)
 	  	  }
 	  	  case -3: {
 	  		  // eeprom valve conf error
-	  		  log_message(FC_ERR_EEPROM_LOAD_VLV_ERR, -1);
+	  		  log_message(ERR_EEPROM_LOAD_VLV_ERR, -1);
 	  		  loaded_config.vlv1_en = FC_EEPROM_VLV_EN_DEFAULT;
 	  		  loaded_config.vlv1_v = FC_EEPROM_VLV_VOL_DEFAULT;
 	  		  loaded_config.vlv2_en = FC_EEPROM_VLV_EN_DEFAULT;
@@ -1566,7 +1576,7 @@ int main(void)
 	  	  }
 	  	  default: {
 	  		  // eeprom conf loaded
-	  		  log_message(FC_STAT_EEPROM_LOADED, -1);
+	  		  log_message(STAT_EEPROM_LOADED, -1);
 	  		  break;
 	  	  }
 	  }
@@ -1574,7 +1584,7 @@ int main(void)
   }
   else {
 	  // eeprom init error, defaults loaded
-	  log_message(FC_ERR_EEPROM_INIT, -1);
+	  log_message(ERR_EEPROM_INIT, -1);
 	  load_eeprom_defaults(&loaded_config);
 	  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
   }

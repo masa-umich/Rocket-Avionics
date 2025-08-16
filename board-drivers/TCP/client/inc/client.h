@@ -19,7 +19,7 @@ typedef struct {
 	int packet_len; // length of the packet
 } RawMessage;
 
-int client_init(ip4_addr_t *fcaddr);
+int client_init(ip4_addr_t *fcaddr, int start);
 
 int client_stop();
 
@@ -33,6 +33,6 @@ void client_receive_thread(void *arg);
 
 void client_send_thread(void *arg);
 
-int is_client_running();
+int is_client_connected();
 
 #endif /* INC_CLIENT_H_ */

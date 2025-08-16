@@ -118,6 +118,8 @@ int server_init(void) {
     // Reset shutdownStart semaphore to 0, in case one or more of the threads exited early
     while(xSemaphoreTake(shutdownStart, 0) == pdTRUE) {}
 
+    drain_lists();
+
     // start the tasks
     listenerTaskHandle = osThreadNew(server_listener_thread, NULL, &listenerTask_attributes);
     readerTaskHandle = osThreadNew(server_reader_thread, NULL, &readerTask_attributes);
@@ -567,7 +569,7 @@ void server_reader_thread(void *arg) {
                         	default: {
                         		// unknown
 			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN) + 10];
-			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN "%d/%d", (int16_t) connection_fd, errno);
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN "%d/%d", (int16_t) connection_fd, err);
 			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
                         		break;
                         	}

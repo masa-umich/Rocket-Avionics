@@ -47,51 +47,31 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define FLIGHT_COMPUTER
+#define BAY_BOARD
 
 #define TCP_PORT			5000
 
 #define TELEMETRY_HZ		(uint32_t)50
 
-#define FC_EEPROM_LEN		(uint16_t)93
+#define BB_EEPROM_LEN		(uint16_t)145
 //#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
 
-#define FC_EEPROM_PT_ZERO_DEFAULT			0.5
-#define FC_EEPROM_PT_RANGE_DEFAULT			5000
-#define FC_EEPROM_PT_MAX_DEFAULT			4.5
-#define FC_EEPROM_TC_GAIN_DEFAULT			0x00
-#define FC_EEPROM_VLV_VOL_DEFAULT			0x01
-#define FC_EEPROM_VLV_EN_DEFAULT			0x01
+#define BB_EEPROM_PT_ZERO_DEFAULT			0.5
+#define BB_EEPROM_PT_RANGE_DEFAULT			5000
+#define BB_EEPROM_PT_MAX_DEFAULT			4.5
+#define BB_EEPROM_TC_GAIN_DEFAULT			0x00
+#define BB_EEPROM_VLV_VOL_DEFAULT			0x01
+#define BB_EEPROM_VLV_EN_DEFAULT			0x01
 
-#define FC_EEPROM_LIMEWIREIP_DEFAULT_1		192
-#define FC_EEPROM_LIMEWIREIP_DEFAULT_2		0
-#define FC_EEPROM_LIMEWIREIP_DEFAULT_3		0
-#define FC_EEPROM_LIMEWIREIP_DEFAULT_4		5
+#define BB_EEPROM_FCIP_DEFAULT_1			192
+#define BB_EEPROM_FCIP_DEFAULT_2			0
+#define BB_EEPROM_FCIP_DEFAULT_3			0
+#define BB_EEPROM_FCIP_DEFAULT_4			10
 
-#define FC_EEPROM_FCIP_DEFAULT_1			192
-#define FC_EEPROM_FCIP_DEFAULT_2			0
-#define FC_EEPROM_FCIP_DEFAULT_3			0
-#define FC_EEPROM_FCIP_DEFAULT_4			10
-
-#define FC_EEPROM_BB1IP_DEFAULT_1			192
-#define FC_EEPROM_BB1IP_DEFAULT_2			0
-#define FC_EEPROM_BB1IP_DEFAULT_3			0
-#define FC_EEPROM_BB1IP_DEFAULT_4			15
-
-#define FC_EEPROM_BB2IP_DEFAULT_1			192
-#define FC_EEPROM_BB2IP_DEFAULT_2			0
-#define FC_EEPROM_BB2IP_DEFAULT_3			0
-#define FC_EEPROM_BB2IP_DEFAULT_4			20
-
-#define FC_EEPROM_BB3IP_DEFAULT_1			192
-#define FC_EEPROM_BB3IP_DEFAULT_2			0
-#define FC_EEPROM_BB3IP_DEFAULT_3			0
-#define FC_EEPROM_BB3IP_DEFAULT_4			25
-
-#define FC_EEPROM_FRIP_DEFAULT_1			192
-#define FC_EEPROM_FRIP_DEFAULT_2			0
-#define FC_EEPROM_FRIP_DEFAULT_3			0
-#define FC_EEPROM_FRIP_DEFAULT_4			30
+#define BB_EEPROM_BBIP_DEFAULT_1			192
+#define BB_EEPROM_BBIP_DEFAULT_2			0
+#define BB_EEPROM_BBIP_DEFAULT_3			0
+#define BB_EEPROM_BBIP_DEFAULT_4			15
 
 #define FLASH_TELEM_MARK	(uint8_t)0x1D
 #define FLASH_MSG_MARK		(uint8_t)0x1E
@@ -99,7 +79,7 @@ extern "C" {
 #define ERROR_UDP_PORT		(uint16_t)1234
 
 #define ERROR_MSG_TYPES		(size_t)32 // Should be a multiple of 2
-#define PERI_ERROR_MSG_TYPES	(size_t)8
+#define PERI_ERROR_MSG_TYPES	(size_t)10
 
 #define ERROR_THROTTLE_MAX		10 // Not more than 15
 
@@ -120,22 +100,31 @@ extern "C" {
 #define POWER_3V3_RES_A		(uint32_t)1000
 #define POWER_3V3_RES_B		(uint32_t)10000
 
-#define ADC_3V3_BUS_I		(size_t)0
-#define ADC_VLV1_CURRENT_I	(size_t)1
-#define ADC_VLV2_CURRENT_I	(size_t)2
-#define ADC_VLV3_CURRENT_I	(size_t)3
-#define ADC_PT1_I			(size_t)4
-#define ADC_PT2_I			(size_t)5
-#define ADC_PT3_I			(size_t)6
-#define ADC_PT4_I			(size_t)7
-#define ADC_PT5_I			(size_t)8
-#define ADC_24V_CURRENT_I	(size_t)9
-#define ADC_12V_CURRENT_I	(size_t)10
-#define ADC_5V_CURRENT_I	(size_t)11
-#define ADC_3V3_CURRENT_I	(size_t)12
-#define ADC_5V_BUS_I		(size_t)13
-#define ADC_12V_BUS_I		(size_t)14
-#define ADC_24V_BUS_I		(size_t)15
+#define ADC1_3V3_BUS_I		(size_t)1
+#define ADC1_VLV1_CURRENT_I	(size_t)8
+#define ADC1_VLV2_CURRENT_I	(size_t)9
+#define ADC1_VLV3_CURRENT_I	(size_t)10
+#define ADC1_VLV4_CURRENT_I	(size_t)11
+#define ADC1_VLV5_CURRENT_I	(size_t)12
+#define ADC1_24V_CURRENT_I	(size_t)7
+#define ADC1_12V_CURRENT_I	(size_t)5
+#define ADC1_5V_CURRENT_I	(size_t)3
+#define ADC1_3V3_CURRENT_I	(size_t)0
+#define ADC1_5V_BUS_I		(size_t)2
+#define ADC1_12V_BUS_I		(size_t)4
+#define ADC1_24V_BUS_I		(size_t)6
+
+#define ADC2_PT1_I			(size_t)12
+#define ADC2_PT2_I			(size_t)10
+#define ADC2_PT3_I			(size_t)8
+#define ADC2_PT4_I			(size_t)7
+#define ADC2_PT5_I			(size_t)13
+#define ADC2_PT6_I			(size_t)11
+#define ADC2_PT7_I			(size_t)9
+#define ADC2_PT8_I			(size_t)6
+#define ADC2_PT9_I			(size_t)5
+#define ADC2_PT10_I			(size_t)14
+#define ADC2_HBRIDGE_I		(size_t)3
 
 #define DIVIDER_VALVE		(uint8_t)1
 #define DIVIDER_12V_24V		(uint8_t)0

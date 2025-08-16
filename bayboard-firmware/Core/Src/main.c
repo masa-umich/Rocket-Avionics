@@ -32,7 +32,7 @@
 #include "time.h"
 #include "api.h"
 #include "string.h"
-#include "server.h"
+#include "client.h"
 #include "messages.h"
 #include "M24256E.h"
 #include "utils.h"
@@ -49,42 +49,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct {
-	float pt1;
-	float pt2;
-	float pt3;
-	float pt4;
-	float pt5;
-	float tc1;
-	float tc2;
-	float tc3;
-	Accel imu1_A;
-	Accel imu2_A;
-	AngRate imu1_W;
-	AngRate imu2_W;
-	float gps_lat;
-	float gps_long;
-	float gps_alt;
-	float bar1;
-	float bar2;
-	float bus24v_voltage;
-	float bus24v_current;
-	float bus12v_voltage;
-	float bus12v_current;
-	float bus5v_voltage;
-	float bus5v_current;
-	float bus3v3_voltage;
-	float bus3v3_current;
-	float vlv1_current;
-	VLV_OpenLoad vlv1_old;
-	float vlv2_current;
-	VLV_OpenLoad vlv2_old;
-	float vlv3_current;
-	VLV_OpenLoad vlv3_old;
-
-	uint64_t timestamp; // Only used to monitor how "fresh" the data is
-} Flight_Computer_State_t;
-
 typedef struct {
 	float pt1;
 	float pt2;
@@ -135,41 +99,12 @@ typedef struct {
 } Bay_Board_State_t;
 
 typedef struct {
-	Accel imu1_A;
-	Accel imu2_A;
-	AngRate imu1_W;
-	AngRate imu2_W;
-	float bar1;
-	float bar2;
-
-	uint64_t timestamp;
-} Flight_Recorder_State_t;
-
-typedef struct {
-	SemaphoreHandle_t fcState_access;
-	SemaphoreHandle_t fcValve_access;
-	Flight_Computer_State_t fcState;
-	Valve fcValves[3];
-	Valve_State_t fcValveStates[3];
-
-	SemaphoreHandle_t bb1State_access;
-	SemaphoreHandle_t bb1Valve_access;
-	Bay_Board_State_t bb1State;
-	Valve_State_t bb1ValveStates[7];
-
-	SemaphoreHandle_t bb2State_access;
-	SemaphoreHandle_t bb2Valve_access;
-	Bay_Board_State_t bb2State;
-	Valve_State_t bb2ValveStates[7];
-
-	SemaphoreHandle_t bb3State_access;
-	SemaphoreHandle_t bb3Valve_access;
-	Bay_Board_State_t bb3State;
-	Valve_State_t bb3ValveStates[7];
-
-	SemaphoreHandle_t frState_access;
-	Flight_Recorder_State_t frState;
-} Rocket_State_t;
+	SemaphoreHandle_t bbState_access;
+	SemaphoreHandle_t bbValve_access;
+	Bay_Board_State_t bbState;
+	Valve bbValves[5];
+	Valve_State_t bbValveStates[7];
+} Board_State_t;
 
 typedef struct {
 	PT_t *pt1;
@@ -177,10 +112,18 @@ typedef struct {
 	PT_t *pt3;
 	PT_t *pt4;
 	PT_t *pt5;
+	PT_t *pt6;
+	PT_t *pt7;
+	PT_t *pt8;
+	PT_t *pt9;
+	PT_t *pt10;
 
 	uint8_t tc1_gain;
 	uint8_t tc2_gain;
 	uint8_t tc3_gain;
+	uint8_t tc4_gain;
+	uint8_t tc5_gain;
+	uint8_t tc6_gain;
 
 	VLV_Voltage vlv1_v;
 	uint8_t vlv1_en;
@@ -188,23 +131,24 @@ typedef struct {
 	uint8_t vlv2_en;
 	VLV_Voltage vlv3_v;
 	uint8_t vlv3_en;
+	VLV_Voltage vlv4_v;
+	uint8_t vlv4_en;
+	VLV_Voltage vlv5_v;
+	uint8_t vlv5_en;
 
-	ip4_addr_t limewireIP;
 	ip4_addr_t flightcomputerIP;
-	ip4_addr_t bayboard1IP;
-	ip4_addr_t bayboard2IP;
-	ip4_addr_t bayboard3IP;
-	ip4_addr_t flightrecordIP;
+	ip4_addr_t bayboardIP;
 } EEPROM_conf_t;
 
 typedef struct {
 	IMU imu1_h;
 	IMU imu2_h;
 
-  	GPIO_MAX11128_Pinfo adc_h;
+  	GPIO_MAX11128_Pinfo adc1_h;
+  	GPIO_MAX11128_Pinfo adc2_h;
 
   	ADS_Main_t tc_main_h;
-  	ADS_TC_t TCs[3];
+  	ADS_TC_t TCs[6];
 
   	MS5611 bar1_h;
   	MS5611 bar2_h;
@@ -257,14 +201,15 @@ const osThreadAttr_t startTask_attributes = {
 /* USER CODE BEGIN PV */
 SemaphoreHandle_t RTC_mutex; // For safe concurrent access of the RTC
 
-Rocket_State_t Rocket_h; // Main rocket state handle
+Board_State_t Board_h; // Main rocket state handle
 eeprom_t eeprom_h = {0};
 
 extern struct netif gnetif;
 
 size_t eeprom_cursor = 0;
 
-ip4_addr_t fc_addr;
+ip4_addr_t bb_addr;
+uint8_t bb_num;
 
 EEPROM_conf_t loaded_config = {0};
 PT_t PT1_h = {0.5f, 5000.0f, 4.5f}; // Default
@@ -272,6 +217,11 @@ PT_t PT2_h = {0.5f, 5000.0f, 4.5f};
 PT_t PT3_h = {0.5f, 5000.0f, 4.5f};
 PT_t PT4_h = {0.5f, 5000.0f, 4.5f};
 PT_t PT5_h = {0.5f, 5000.0f, 4.5f};
+PT_t PT6_h = {0.5f, 5000.0f, 4.5f};
+PT_t PT7_h = {0.5f, 5000.0f, 4.5f};
+PT_t PT8_h = {0.5f, 5000.0f, 4.5f};
+PT_t PT9_h = {0.5f, 5000.0f, 4.5f};
+PT_t PT10_h = {0.5f, 5000.0f, 4.5f};
 
 Sensors_t sensors_h = {0};
 
@@ -526,276 +476,64 @@ void get_iso_time(char *outbuf) {
 // Pack telemetry message
 // returns 0 if successful, 1 if the telemetry data could not be accessed
 // timeout_ticks: how many FreeRTOS ticks to wait before giving up
-int pack_fc_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t timeout_ticks) {
-	msg->board_id = BOARD_FC;
-	msg->num_channels = FC_TELEMETRY_CHANNELS;
+int pack_bb_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t timeout_ticks) {
+	msg->board_id = bb_num;
+	msg->num_channels = BB1_TELEMETRY_CHANNELS; // all the bay boards have the same number of channels
 	msg->timestamp = timestamp;
-	if(xSemaphoreTake(Rocket_h.fcState_access, timeout_ticks) == pdPASS) {
-		msg->telemetry_data[FC_VLV1_CURRENT_I] = Rocket_h.fcState.vlv1_current;
-		msg->telemetry_data[FC_VLV1_OLD_I] = Rocket_h.fcState.vlv1_old;
-		msg->telemetry_data[FC_VLV2_CURRENT_I] = Rocket_h.fcState.vlv2_current;
-		msg->telemetry_data[FC_VLV2_OLD_I] = Rocket_h.fcState.vlv2_old;
-		msg->telemetry_data[FC_VLV3_CURRENT_I] = Rocket_h.fcState.vlv3_current;
-		msg->telemetry_data[FC_VLV3_OLD_I] = Rocket_h.fcState.vlv3_old;
-		msg->telemetry_data[FC_PT_1_I] = Rocket_h.fcState.pt1;
-		msg->telemetry_data[FC_PT_2_I] = Rocket_h.fcState.pt2;
-		msg->telemetry_data[FC_PT_3_I] = Rocket_h.fcState.pt3;
-		msg->telemetry_data[FC_PT_4_I] = Rocket_h.fcState.pt4;
-		msg->telemetry_data[FC_PT_5_I] = Rocket_h.fcState.pt5;
-		msg->telemetry_data[FC_TC_1_I] = Rocket_h.fcState.tc1;
-		msg->telemetry_data[FC_TC_2_I] = Rocket_h.fcState.tc2;
-		msg->telemetry_data[FC_TC_3_I] = Rocket_h.fcState.tc3;
-		msg->telemetry_data[FC_IMU1_X_I] = Rocket_h.fcState.imu1_A.XL_x;
-		msg->telemetry_data[FC_IMU1_Y_I] = Rocket_h.fcState.imu1_A.XL_y;
-		msg->telemetry_data[FC_IMU1_Z_I] = Rocket_h.fcState.imu1_A.XL_z;
-		msg->telemetry_data[FC_IMU1_WP_I] = Rocket_h.fcState.imu1_W.G_y;
-		msg->telemetry_data[FC_IMU1_WR_I] = Rocket_h.fcState.imu1_W.G_x;
-		msg->telemetry_data[FC_IMU1_WY_I] = Rocket_h.fcState.imu1_W.G_z;
-		msg->telemetry_data[FC_IMU2_X_I] = Rocket_h.fcState.imu2_A.XL_x;
-		msg->telemetry_data[FC_IMU2_Y_I] = Rocket_h.fcState.imu2_A.XL_y;
-		msg->telemetry_data[FC_IMU2_Z_I] = Rocket_h.fcState.imu2_A.XL_z;
-		msg->telemetry_data[FC_IMU2_WP_I] = Rocket_h.fcState.imu2_W.G_y;
-		msg->telemetry_data[FC_IMU2_WR_I] = Rocket_h.fcState.imu2_W.G_x;
-		msg->telemetry_data[FC_IMU2_WY_I] = Rocket_h.fcState.imu2_W.G_z;
-		msg->telemetry_data[FC_GPS_LAT_I] = Rocket_h.fcState.gps_lat;
-		msg->telemetry_data[FC_GPS_LONG_I] = Rocket_h.fcState.gps_long;
-		msg->telemetry_data[FC_GPS_ALT_I] = Rocket_h.fcState.gps_alt;
-		msg->telemetry_data[FC_BAR_1_I] = Rocket_h.fcState.bar1;
-		msg->telemetry_data[FC_BAR_2_I] = Rocket_h.fcState.bar2;
-		msg->telemetry_data[FC_24V_VOLTAGE_I] = Rocket_h.fcState.bus24v_voltage;
-		msg->telemetry_data[FC_24V_CURRENT_I] = Rocket_h.fcState.bus24v_current;
-		msg->telemetry_data[FC_12V_VOLTAGE_I] = Rocket_h.fcState.bus12v_voltage;
-		msg->telemetry_data[FC_12V_CURRENT_I] = Rocket_h.fcState.bus12v_current;
-		msg->telemetry_data[FC_5V_VOLTAGE_I] = Rocket_h.fcState.bus5v_voltage;
-		msg->telemetry_data[FC_5V_CURRENT_I] = Rocket_h.fcState.bus5v_current;
-		msg->telemetry_data[FC_3V3_VOLTAGE_I] = Rocket_h.fcState.bus3v3_voltage;
-		msg->telemetry_data[FC_3V3_CURRENT_I] = Rocket_h.fcState.bus3v3_current;
-		xSemaphoreGive(Rocket_h.fcState_access);
-	}
-	else {
-		return 1;
-	}
-
-	return 0;
-}
-
-// Unpack bay board message
-// returns 0 if successful, 1 if the telemetry data could not be accessed or an invalid board id
-// timeout_ticks: how many FreeRTOS ticks to wait before giving up
-int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
-	switch(msg->board_id) {
-	    case BOARD_BAY_1:
-	    	if(xSemaphoreTake(Rocket_h.bb1State_access, timeout_ticks) == pdPASS) {
-	    		Rocket_h.bb1State.vlv1_current = msg->telemetry_data[BB1_VLV1_CURRENT_I];
-	    		Rocket_h.bb1State.vlv1_old = msg->telemetry_data[BB1_VLV1_OLD_I];
-	    		Rocket_h.bb1State.vlv2_current = msg->telemetry_data[BB1_VLV2_CURRENT_I];
-	    		Rocket_h.bb1State.vlv2_old = msg->telemetry_data[BB1_VLV2_OLD_I];
-	    		Rocket_h.bb1State.vlv3_current = msg->telemetry_data[BB1_VLV3_CURRENT_I];
-	    		Rocket_h.bb1State.vlv3_old = msg->telemetry_data[BB1_VLV3_OLD_I];
-	    		Rocket_h.bb1State.vlv4_current = msg->telemetry_data[BB1_VLV4_CURRENT_I];
-	    		Rocket_h.bb1State.vlv4_old = msg->telemetry_data[BB1_VLV4_OLD_I];
-	    		Rocket_h.bb1State.vlv5_current = msg->telemetry_data[BB1_VLV5_CURRENT_I];
-	    		Rocket_h.bb1State.vlv5_old = msg->telemetry_data[BB1_VLV5_OLD_I];
-	    		Rocket_h.bb1State.vlv6_current = msg->telemetry_data[BB1_VLV6_CURRENT_I];
-	    		Rocket_h.bb1State.vlv6_old = msg->telemetry_data[BB1_VLV6_OLD_I];
-	    		Rocket_h.bb1State.vlv7_current = msg->telemetry_data[BB1_VLV7_CURRENT_I];
-	    		Rocket_h.bb1State.vlv7_old = msg->telemetry_data[BB1_VLV7_OLD_I];
-	    		Rocket_h.bb1State.pt1 = msg->telemetry_data[BB1_PT_1_I];
-	    		Rocket_h.bb1State.pt2 = msg->telemetry_data[BB1_PT_2_I];
-	    		Rocket_h.bb1State.pt3 = msg->telemetry_data[BB1_PT_3_I];
-	    		Rocket_h.bb1State.pt4 = msg->telemetry_data[BB1_PT_4_I];
-	    		Rocket_h.bb1State.pt5 = msg->telemetry_data[BB1_PT_5_I];
-	    		Rocket_h.bb1State.pt6 = msg->telemetry_data[BB1_PT_6_I];
-	    		Rocket_h.bb1State.pt7 = msg->telemetry_data[BB1_PT_7_I];
-	    		Rocket_h.bb1State.pt8 = msg->telemetry_data[BB1_PT_8_I];
-	    		Rocket_h.bb1State.pt9 = msg->telemetry_data[BB1_PT_9_I];
-	    		Rocket_h.bb1State.pt10 = msg->telemetry_data[BB1_PT_10_I];
-	    		Rocket_h.bb1State.tc1 = msg->telemetry_data[BB1_TC_1_I];
-	    		Rocket_h.bb1State.tc2 = msg->telemetry_data[BB1_TC_2_I];
-	    		Rocket_h.bb1State.tc3 = msg->telemetry_data[BB1_TC_3_I];
-	    		Rocket_h.bb1State.tc4 = msg->telemetry_data[BB1_TC_4_I];
-	    		Rocket_h.bb1State.tc5 = msg->telemetry_data[BB1_TC_5_I];
-	    		Rocket_h.bb1State.tc6 = msg->telemetry_data[BB1_TC_6_I];
-	    		Rocket_h.bb1State.imu1_A.XL_x = msg->telemetry_data[BB1_IMU1_X_I];
-	    		Rocket_h.bb1State.imu1_A.XL_y = msg->telemetry_data[BB1_IMU1_Y_I];
-	    		Rocket_h.bb1State.imu1_A.XL_z = msg->telemetry_data[BB1_IMU1_Z_I];
-	    		Rocket_h.bb1State.imu1_W.G_y = msg->telemetry_data[BB1_IMU1_WP_I];
-	    		Rocket_h.bb1State.imu1_W.G_x = msg->telemetry_data[BB1_IMU1_WR_I];
-	    		Rocket_h.bb1State.imu1_W.G_z = msg->telemetry_data[BB1_IMU1_WY_I];
-	    		Rocket_h.bb1State.imu2_A.XL_x = msg->telemetry_data[BB1_IMU2_X_I];
-	    		Rocket_h.bb1State.imu2_A.XL_y = msg->telemetry_data[BB1_IMU2_Y_I];
-	    		Rocket_h.bb1State.imu2_A.XL_z = msg->telemetry_data[BB1_IMU2_Z_I];
-	    		Rocket_h.bb1State.imu2_W.G_y = msg->telemetry_data[BB1_IMU2_WP_I];
-	    		Rocket_h.bb1State.imu2_W.G_x = msg->telemetry_data[BB1_IMU2_WR_I];
-	    		Rocket_h.bb1State.imu2_W.G_z = msg->telemetry_data[BB1_IMU2_WY_I];
-	    		Rocket_h.bb1State.bar1 = msg->telemetry_data[BB1_BAR_1_I];
-	    		Rocket_h.bb1State.bar2 = msg->telemetry_data[BB1_BAR_2_I];
-	    		Rocket_h.bb1State.bus24v_voltage = msg->telemetry_data[BB1_24V_VOLTAGE_I];
-	    		Rocket_h.bb1State.bus24v_current = msg->telemetry_data[BB1_24V_CURRENT_I];
-	    		Rocket_h.bb1State.bus12v_voltage = msg->telemetry_data[BB1_12V_VOLTAGE_I];
-	    		Rocket_h.bb1State.bus12v_current = msg->telemetry_data[BB1_12V_CURRENT_I];
-	    		Rocket_h.bb1State.bus5v_voltage = msg->telemetry_data[BB1_5V_VOLTAGE_I];
-	    		Rocket_h.bb1State.bus5v_current = msg->telemetry_data[BB1_5V_CURRENT_I];
-	    		Rocket_h.bb1State.bus3v3_voltage = msg->telemetry_data[BB1_3V3_VOLTAGE_I];
-	    		Rocket_h.bb1State.bus3v3_current = msg->telemetry_data[BB1_3V3_CURRENT_I];
-	    		Rocket_h.bb1State.timestamp = msg->timestamp;
-	    		xSemaphoreGive(Rocket_h.bb1State_access);
-	    	}
-	    	else {
-	    		return 1;
-	    	}
-	        break;
-	    case BOARD_BAY_2:
-	    	if(xSemaphoreTake(Rocket_h.bb2State_access, timeout_ticks) == pdPASS) {
-	    		Rocket_h.bb2State.vlv1_current = msg->telemetry_data[BB2_VLV1_CURRENT_I];
-	    		Rocket_h.bb2State.vlv1_old = msg->telemetry_data[BB2_VLV1_OLD_I];
-	    		Rocket_h.bb2State.vlv2_current = msg->telemetry_data[BB2_VLV2_CURRENT_I];
-	    		Rocket_h.bb2State.vlv2_old = msg->telemetry_data[BB2_VLV2_OLD_I];
-	    		Rocket_h.bb2State.vlv3_current = msg->telemetry_data[BB2_VLV3_CURRENT_I];
-	    		Rocket_h.bb2State.vlv3_old = msg->telemetry_data[BB2_VLV3_OLD_I];
-	    		Rocket_h.bb2State.vlv4_current = msg->telemetry_data[BB2_VLV4_CURRENT_I];
-	    		Rocket_h.bb2State.vlv4_old = msg->telemetry_data[BB2_VLV4_OLD_I];
-	    		Rocket_h.bb2State.vlv5_current = msg->telemetry_data[BB2_VLV5_CURRENT_I];
-	    		Rocket_h.bb2State.vlv5_old = msg->telemetry_data[BB2_VLV5_OLD_I];
-	    		Rocket_h.bb2State.vlv6_current = msg->telemetry_data[BB2_VLV6_CURRENT_I];
-	    		Rocket_h.bb2State.vlv6_old = msg->telemetry_data[BB2_VLV6_OLD_I];
-	    		Rocket_h.bb2State.vlv7_current = msg->telemetry_data[BB2_VLV7_CURRENT_I];
-	    		Rocket_h.bb2State.vlv7_old = msg->telemetry_data[BB2_VLV7_OLD_I];
-	    		Rocket_h.bb2State.pt1 = msg->telemetry_data[BB2_PT_1_I];
-	    		Rocket_h.bb2State.pt2 = msg->telemetry_data[BB2_PT_2_I];
-	    		Rocket_h.bb2State.pt3 = msg->telemetry_data[BB2_PT_3_I];
-	    		Rocket_h.bb2State.pt4 = msg->telemetry_data[BB2_PT_4_I];
-	    		Rocket_h.bb2State.pt5 = msg->telemetry_data[BB2_PT_5_I];
-	    		Rocket_h.bb2State.pt6 = msg->telemetry_data[BB2_PT_6_I];
-	    		Rocket_h.bb2State.pt7 = msg->telemetry_data[BB2_PT_7_I];
-	    		Rocket_h.bb2State.pt8 = msg->telemetry_data[BB2_PT_8_I];
-	    		Rocket_h.bb2State.pt9 = msg->telemetry_data[BB2_PT_9_I];
-	    		Rocket_h.bb2State.pt10 = msg->telemetry_data[BB2_PT_10_I];
-	    		Rocket_h.bb2State.tc1 = msg->telemetry_data[BB2_TC_1_I];
-	    		Rocket_h.bb2State.tc2 = msg->telemetry_data[BB2_TC_2_I];
-	    		Rocket_h.bb2State.tc3 = msg->telemetry_data[BB2_TC_3_I];
-	    		Rocket_h.bb2State.tc4 = msg->telemetry_data[BB2_TC_4_I];
-	    		Rocket_h.bb2State.tc5 = msg->telemetry_data[BB2_TC_5_I];
-	    		Rocket_h.bb2State.tc6 = msg->telemetry_data[BB2_TC_6_I];
-	    		Rocket_h.bb2State.imu1_A.XL_x = msg->telemetry_data[BB2_IMU1_X_I];
-	    		Rocket_h.bb2State.imu1_A.XL_y = msg->telemetry_data[BB2_IMU1_Y_I];
-	    		Rocket_h.bb2State.imu1_A.XL_z = msg->telemetry_data[BB2_IMU1_Z_I];
-	    		Rocket_h.bb2State.imu1_W.G_y = msg->telemetry_data[BB2_IMU1_WP_I];
-	    		Rocket_h.bb2State.imu1_W.G_x = msg->telemetry_data[BB2_IMU1_WR_I];
-	    		Rocket_h.bb2State.imu1_W.G_z = msg->telemetry_data[BB2_IMU1_WY_I];
-	    		Rocket_h.bb2State.imu2_A.XL_x = msg->telemetry_data[BB2_IMU2_X_I];
-	    		Rocket_h.bb2State.imu2_A.XL_y = msg->telemetry_data[BB2_IMU2_Y_I];
-	    		Rocket_h.bb2State.imu2_A.XL_z = msg->telemetry_data[BB2_IMU2_Z_I];
-	    		Rocket_h.bb2State.imu2_W.G_y = msg->telemetry_data[BB2_IMU2_WP_I];
-	    		Rocket_h.bb2State.imu2_W.G_x = msg->telemetry_data[BB2_IMU2_WR_I];
-	    		Rocket_h.bb2State.imu2_W.G_z = msg->telemetry_data[BB2_IMU2_WY_I];
-	    		Rocket_h.bb2State.bar1 = msg->telemetry_data[BB2_BAR_1_I];
-	    		Rocket_h.bb2State.bar2 = msg->telemetry_data[BB2_BAR_2_I];
-	    		Rocket_h.bb2State.bus24v_voltage = msg->telemetry_data[BB2_24V_VOLTAGE_I];
-	    		Rocket_h.bb2State.bus24v_current = msg->telemetry_data[BB2_24V_CURRENT_I];
-	    		Rocket_h.bb2State.bus12v_voltage = msg->telemetry_data[BB2_12V_VOLTAGE_I];
-	    		Rocket_h.bb2State.bus12v_current = msg->telemetry_data[BB2_12V_CURRENT_I];
-	    		Rocket_h.bb2State.bus5v_voltage = msg->telemetry_data[BB2_5V_VOLTAGE_I];
-	    		Rocket_h.bb2State.bus5v_current = msg->telemetry_data[BB2_5V_CURRENT_I];
-	    		Rocket_h.bb2State.bus3v3_voltage = msg->telemetry_data[BB2_3V3_VOLTAGE_I];
-	    		Rocket_h.bb2State.bus3v3_current = msg->telemetry_data[BB2_3V3_CURRENT_I];
-	    		Rocket_h.bb2State.timestamp = msg->timestamp;
-	    		xSemaphoreGive(Rocket_h.bb2State_access);
-	    	}
-	    	else {
-	    		return 1;
-	    	}
-	        break;
-	    case BOARD_BAY_3:
-	    	if(xSemaphoreTake(Rocket_h.bb3State_access, timeout_ticks) == pdPASS) {
-	    		Rocket_h.bb3State.vlv1_current = msg->telemetry_data[BB3_VLV1_CURRENT_I];
-	    		Rocket_h.bb3State.vlv1_old = msg->telemetry_data[BB3_VLV1_OLD_I];
-	    		Rocket_h.bb3State.vlv2_current = msg->telemetry_data[BB3_VLV2_CURRENT_I];
-	    		Rocket_h.bb3State.vlv2_old = msg->telemetry_data[BB3_VLV2_OLD_I];
-	    		Rocket_h.bb3State.vlv3_current = msg->telemetry_data[BB3_VLV3_CURRENT_I];
-	    		Rocket_h.bb3State.vlv3_old = msg->telemetry_data[BB3_VLV3_OLD_I];
-	    		Rocket_h.bb3State.vlv4_current = msg->telemetry_data[BB3_VLV4_CURRENT_I];
-	    		Rocket_h.bb3State.vlv4_old = msg->telemetry_data[BB3_VLV4_OLD_I];
-	    		Rocket_h.bb3State.vlv5_current = msg->telemetry_data[BB3_VLV5_CURRENT_I];
-	    		Rocket_h.bb3State.vlv5_old = msg->telemetry_data[BB3_VLV5_OLD_I];
-	    		Rocket_h.bb3State.vlv6_current = msg->telemetry_data[BB3_VLV6_CURRENT_I];
-	    		Rocket_h.bb3State.vlv6_old = msg->telemetry_data[BB3_VLV6_OLD_I];
-	    		Rocket_h.bb3State.vlv7_current = msg->telemetry_data[BB3_VLV7_CURRENT_I];
-	    		Rocket_h.bb3State.vlv7_old = msg->telemetry_data[BB3_VLV7_OLD_I];
-	    		Rocket_h.bb3State.pt1 = msg->telemetry_data[BB3_PT_1_I];
-	    		Rocket_h.bb3State.pt2 = msg->telemetry_data[BB3_PT_2_I];
-	    		Rocket_h.bb3State.pt3 = msg->telemetry_data[BB3_PT_3_I];
-	    		Rocket_h.bb3State.pt4 = msg->telemetry_data[BB3_PT_4_I];
-	    		Rocket_h.bb3State.pt5 = msg->telemetry_data[BB3_PT_5_I];
-	    		Rocket_h.bb3State.pt6 = msg->telemetry_data[BB3_PT_6_I];
-	    		Rocket_h.bb3State.pt7 = msg->telemetry_data[BB3_PT_7_I];
-	    		Rocket_h.bb3State.pt8 = msg->telemetry_data[BB3_PT_8_I];
-	    		Rocket_h.bb3State.pt9 = msg->telemetry_data[BB3_PT_9_I];
-	    		Rocket_h.bb3State.pt10 = msg->telemetry_data[BB3_PT_10_I];
-	    		Rocket_h.bb3State.tc1 = msg->telemetry_data[BB3_TC_1_I];
-	    		Rocket_h.bb3State.tc2 = msg->telemetry_data[BB3_TC_2_I];
-	    		Rocket_h.bb3State.tc3 = msg->telemetry_data[BB3_TC_3_I];
-	    		Rocket_h.bb3State.tc4 = msg->telemetry_data[BB3_TC_4_I];
-	    		Rocket_h.bb3State.tc5 = msg->telemetry_data[BB3_TC_5_I];
-	    		Rocket_h.bb3State.tc6 = msg->telemetry_data[BB3_TC_6_I];
-	    		Rocket_h.bb3State.imu1_A.XL_x = msg->telemetry_data[BB3_IMU1_X_I];
-	    		Rocket_h.bb3State.imu1_A.XL_y = msg->telemetry_data[BB3_IMU1_Y_I];
-	    		Rocket_h.bb3State.imu1_A.XL_z = msg->telemetry_data[BB3_IMU1_Z_I];
-	    		Rocket_h.bb3State.imu1_W.G_y = msg->telemetry_data[BB3_IMU1_WP_I];
-	    		Rocket_h.bb3State.imu1_W.G_x = msg->telemetry_data[BB3_IMU1_WR_I];
-	    		Rocket_h.bb3State.imu1_W.G_z = msg->telemetry_data[BB3_IMU1_WY_I];
-	    		Rocket_h.bb3State.imu2_A.XL_x = msg->telemetry_data[BB3_IMU2_X_I];
-	    		Rocket_h.bb3State.imu2_A.XL_y = msg->telemetry_data[BB3_IMU2_Y_I];
-	    		Rocket_h.bb3State.imu2_A.XL_z = msg->telemetry_data[BB3_IMU2_Z_I];
-	    		Rocket_h.bb3State.imu2_W.G_y = msg->telemetry_data[BB3_IMU2_WP_I];
-	    		Rocket_h.bb3State.imu2_W.G_x = msg->telemetry_data[BB3_IMU2_WR_I];
-	    		Rocket_h.bb3State.imu2_W.G_z = msg->telemetry_data[BB3_IMU2_WY_I];
-	    		Rocket_h.bb3State.bar1 = msg->telemetry_data[BB3_BAR_1_I];
-	    		Rocket_h.bb3State.bar2 = msg->telemetry_data[BB3_BAR_2_I];
-	    		Rocket_h.bb3State.bus24v_voltage = msg->telemetry_data[BB3_24V_VOLTAGE_I];
-	    		Rocket_h.bb3State.bus24v_current = msg->telemetry_data[BB3_24V_CURRENT_I];
-	    		Rocket_h.bb3State.bus12v_voltage = msg->telemetry_data[BB3_12V_VOLTAGE_I];
-	    		Rocket_h.bb3State.bus12v_current = msg->telemetry_data[BB3_12V_CURRENT_I];
-	    		Rocket_h.bb3State.bus5v_voltage = msg->telemetry_data[BB3_5V_VOLTAGE_I];
-	    		Rocket_h.bb3State.bus5v_current = msg->telemetry_data[BB3_5V_CURRENT_I];
-	    		Rocket_h.bb3State.bus3v3_voltage = msg->telemetry_data[BB3_3V3_VOLTAGE_I];
-	    		Rocket_h.bb3State.bus3v3_current = msg->telemetry_data[BB3_3V3_CURRENT_I];
-	    		Rocket_h.bb3State.timestamp = msg->timestamp;
-	    		xSemaphoreGive(Rocket_h.bb3State_access);
-	    	}
-	    	else {
-	    		return 1;
-	    	}
-	        break;
-	    default:
-	    	return 1;
-	        break;
-	}
-
-	return 0;
-}
-
-// Unpack flight recorder telemetry message
-// returns 0 if successful, 1 if the telemetry data could not be accessed
-// timeout_ticks: how many FreeRTOS ticks to wait before giving up
-int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
-	if(xSemaphoreTake(Rocket_h.frState_access, timeout_ticks) == pdPASS) {
-		Rocket_h.frState.imu1_A.XL_x = msg->telemetry_data[FR_IMU1_X_I];
-		Rocket_h.frState.imu1_A.XL_y = msg->telemetry_data[FR_IMU1_Y_I];
-		Rocket_h.frState.imu1_A.XL_z = msg->telemetry_data[FR_IMU1_Z_I];
-		Rocket_h.frState.imu1_W.G_y = msg->telemetry_data[FR_IMU1_WP_I];
-		Rocket_h.frState.imu1_W.G_x = msg->telemetry_data[FR_IMU1_WR_I];
-		Rocket_h.frState.imu1_W.G_z = msg->telemetry_data[FR_IMU1_WY_I];
-		Rocket_h.frState.imu2_A.XL_x = msg->telemetry_data[FR_IMU2_X_I];
-		Rocket_h.frState.imu2_A.XL_y = msg->telemetry_data[FR_IMU2_Y_I];
-		Rocket_h.frState.imu2_A.XL_z = msg->telemetry_data[FR_IMU2_Z_I];
-		Rocket_h.frState.imu2_W.G_y = msg->telemetry_data[FR_IMU2_WP_I];
-		Rocket_h.frState.imu2_W.G_x = msg->telemetry_data[FR_IMU2_WR_I];
-		Rocket_h.frState.imu2_W.G_z = msg->telemetry_data[FR_IMU2_WY_I];
-		Rocket_h.frState.bar1 = msg->telemetry_data[FR_BAR_1_I];
-		Rocket_h.frState.bar2 = msg->telemetry_data[FR_BAR_2_I];
-		Rocket_h.frState.timestamp = msg->timestamp;
-		xSemaphoreGive(Rocket_h.frState_access);
+	if(xSemaphoreTake(Board_h.bbState_access, timeout_ticks) == pdPASS) {
+		msg->telemetry_data[BB1_VLV1_CURRENT_I] 	= Board_h.bbState.vlv1_current;
+		msg->telemetry_data[BB1_VLV1_OLD_I] 		= Board_h.bbState.vlv1_old;
+		msg->telemetry_data[BB1_VLV2_CURRENT_I] 	= Board_h.bbState.vlv2_current;
+		msg->telemetry_data[BB1_VLV2_OLD_I] 		= Board_h.bbState.vlv2_old;
+		msg->telemetry_data[BB1_VLV3_CURRENT_I] 	= Board_h.bbState.vlv3_current;
+		msg->telemetry_data[BB1_VLV3_OLD_I] 		= Board_h.bbState.vlv3_old;
+		msg->telemetry_data[BB1_VLV4_CURRENT_I] 	= Board_h.bbState.vlv4_current;
+		msg->telemetry_data[BB1_VLV4_OLD_I] 		= Board_h.bbState.vlv4_old;
+		msg->telemetry_data[BB1_VLV5_CURRENT_I] 	= Board_h.bbState.vlv5_current;
+		msg->telemetry_data[BB1_VLV5_OLD_I] 		= Board_h.bbState.vlv5_old;
+		msg->telemetry_data[BB1_VLV6_CURRENT_I] 	= Board_h.bbState.vlv6_current;
+		msg->telemetry_data[BB1_VLV6_OLD_I] 		= Board_h.bbState.vlv6_old;
+		msg->telemetry_data[BB1_VLV7_CURRENT_I] 	= Board_h.bbState.vlv7_current;
+		msg->telemetry_data[BB1_VLV7_OLD_I] 		= Board_h.bbState.vlv7_old;
+		msg->telemetry_data[BB1_PT_1_I] 			= Board_h.bbState.pt1;
+		msg->telemetry_data[BB1_PT_2_I] 			= Board_h.bbState.pt2;
+		msg->telemetry_data[BB1_PT_3_I] 			= Board_h.bbState.pt3;
+		msg->telemetry_data[BB1_PT_4_I] 			= Board_h.bbState.pt4;
+		msg->telemetry_data[BB1_PT_5_I] 			= Board_h.bbState.pt5;
+		msg->telemetry_data[BB1_PT_6_I] 			= Board_h.bbState.pt6;
+		msg->telemetry_data[BB1_PT_7_I] 			= Board_h.bbState.pt7;
+		msg->telemetry_data[BB1_PT_8_I] 			= Board_h.bbState.pt8;
+		msg->telemetry_data[BB1_PT_9_I] 			= Board_h.bbState.pt9;
+		msg->telemetry_data[BB1_PT_10_I] 			= Board_h.bbState.pt10;
+		msg->telemetry_data[BB1_TC_1_I] 			= Board_h.bbState.tc1;
+		msg->telemetry_data[BB1_TC_2_I] 			= Board_h.bbState.tc2;
+		msg->telemetry_data[BB1_TC_3_I] 			= Board_h.bbState.tc3;
+		msg->telemetry_data[BB1_TC_4_I] 			= Board_h.bbState.tc4;
+		msg->telemetry_data[BB1_TC_5_I] 			= Board_h.bbState.tc5;
+		msg->telemetry_data[BB1_TC_6_I] 			= Board_h.bbState.tc6;
+		msg->telemetry_data[BB1_IMU1_X_I] 			= Board_h.bbState.imu1_A.XL_x;
+		msg->telemetry_data[BB1_IMU1_Y_I] 			= Board_h.bbState.imu1_A.XL_y;
+		msg->telemetry_data[BB1_IMU1_Z_I] 			= Board_h.bbState.imu1_A.XL_z;
+		msg->telemetry_data[BB1_IMU1_WP_I] 			= Board_h.bbState.imu1_W.G_y;
+		msg->telemetry_data[BB1_IMU1_WR_I] 			= Board_h.bbState.imu1_W.G_x;
+		msg->telemetry_data[BB1_IMU1_WY_I] 			= Board_h.bbState.imu1_W.G_z;
+		msg->telemetry_data[BB1_IMU2_X_I] 			= Board_h.bbState.imu2_A.XL_x;
+		msg->telemetry_data[BB1_IMU2_Y_I] 			= Board_h.bbState.imu2_A.XL_y;
+		msg->telemetry_data[BB1_IMU2_Z_I] 			= Board_h.bbState.imu2_A.XL_z;
+		msg->telemetry_data[BB1_IMU2_WP_I] 			= Board_h.bbState.imu2_W.G_y;
+		msg->telemetry_data[BB1_IMU2_WR_I] 			= Board_h.bbState.imu2_W.G_x;
+		msg->telemetry_data[BB1_IMU2_WY_I] 			= Board_h.bbState.imu2_W.G_z;
+		msg->telemetry_data[BB1_BAR_1_I] 			= Board_h.bbState.bar1;
+		msg->telemetry_data[BB1_BAR_2_I] 			= Board_h.bbState.bar2;
+		msg->telemetry_data[BB1_24V_VOLTAGE_I] 		= Board_h.bbState.bus24v_voltage;
+		msg->telemetry_data[BB1_24V_CURRENT_I] 		= Board_h.bbState.bus24v_current;
+		msg->telemetry_data[BB1_12V_VOLTAGE_I] 		= Board_h.bbState.bus12v_voltage;
+		msg->telemetry_data[BB1_12V_CURRENT_I] 		= Board_h.bbState.bus12v_current;
+		msg->telemetry_data[BB1_5V_VOLTAGE_I] 		= Board_h.bbState.bus5v_voltage;
+		msg->telemetry_data[BB1_5V_CURRENT_I] 		= Board_h.bbState.bus5v_current;
+		msg->telemetry_data[BB1_3V3_VOLTAGE_I] 		= Board_h.bbState.bus3v3_voltage;
+		msg->telemetry_data[BB1_3V3_CURRENT_I] 		= Board_h.bbState.bus3v3_current;
+		xSemaphoreGive(Board_h.bbState_access);
 	}
 	else {
 		return 1;
@@ -807,31 +545,26 @@ int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 // Send a LMP message over TCP
 // wait is the number of ticks to wait for room in the txbuffer
 // buffersize is the maximum size that it will take to serialize the LMP message, if this is 0, it will use the maximum possible message size to ensure proper serialization
-// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer or space to allocate a buffer, -3 if the target device is not connected, and -4 on a LMP serialization error
+// returns 0 on success, -1 if the client is not connected, -2 if there is no room in the txbuffer or space to allocate a buffer and -3 on a LMP serialization error
 int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size_t buffersize) {
 	if(buffersize == 0) {
 		buffersize = MAX_MSG_LEN;
 	}
-	if(is_server_running() <= 0) {
-		return -1; // Server not running
-	}
-	int devicefd = get_device_fd(device);
-	if(devicefd < 0) {
-		return -3; // Device not connected
+	if(is_client_connected() <= 0) {
+		return -1; // Client not connected
 	}
 	uint8_t tempbuffer[buffersize];
 	int buflen = serialize_message(msg, tempbuffer, buffersize);
 	if(buflen == -1) {
-		return -4; // Serialization error
+		return -3; // Serialization error
 	}
     uint8_t *buffer = malloc(buflen);
     if(buffer) {
         memcpy(buffer, tempbuffer, buflen);
-    	Raw_message rawmsg = {0};
+    	RawMessage rawmsg = {0};
     	rawmsg.bufferptr = buffer;
     	rawmsg.packet_len = buflen;
-    	rawmsg.connection_fd = devicefd;
-    	int result = server_send(&rawmsg, wait);
+    	int result = client_send(&rawmsg, wait);
     	if(result != 0) {
     		free(buffer);
     	}
@@ -842,17 +575,13 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size
 
 // Send a message over TCP
 // wait is the number of ticks to wait for room in the txbuffer
-// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer, -3 if the target device is not connected
+// returns 0 on success, -1 if the client is not connected, -2 if there is no room in the txbuffer
 // IMPORTANT: you are responsible for freeing the buffer in msg if this function returns something other than 0
-int send_raw_msg_to_device(Target_Device device, Raw_message *msg, TickType_t wait) {
-	if(is_server_running() <= 0) {
-		return -1; // Server not running
+int send_raw_msg_to_device(RawMessage *msg, TickType_t wait) {
+	if(is_client_connected() <= 0) {
+		return -1; // Client not running
 	}
-	int devicefd = get_device_fd(device);
-	if(devicefd < 0) {
-		return -3; // Device not connected
-	}
-	return server_send(msg, wait);
+	return client_send(msg, wait);
 }
 
 // Gets the valve index from the LMP valve id
@@ -894,21 +623,24 @@ uint8_t check_valve_id(uint8_t valveId) {
 // Set a valve to a state and update its corresponding valve state
 // Returns the state of the valve after setting it (this should be equal to desiredState, but in the case of an error, it will accurately reflect the current state of the valve)
 Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredState) {
+	if(valve > Vlv5) {
+		return Valve_Deenergized;
+	}
 	uint8_t vlverror = 0;
-	 if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
+	 if(xSemaphoreTake(Board_h.bbValve_access, 5) == pdPASS) {
 		 if(desiredState == Valve_Energized) {
-			 VLV_En(Rocket_h.fcValves[valve]);
-			 Rocket_h.fcValveStates[valve] = Valve_Energized;
+			 VLV_En(Board_h.bbValves[valve]);
+			 Board_h.bbValveStates[valve] = Valve_Energized;
 		 }
 		 else if(desiredState == Valve_Deenergized) {
 			 VLV_Den(Rocket_h.fcValves[valve]);
-			 Rocket_h.fcValveStates[valve] = Valve_Deenergized;
+			 Board_h.bbValveStates[valve] = Valve_Deenergized;
 		 }
 		 else {
 			 // Error invalid state
 			 vlverror = 1;
 		 }
-		 xSemaphoreGive(Rocket_h.fcValve_access);
+		 xSemaphoreGive(Board_h.bbValve_access);
 	 }
 	 else {
 		 vlverror = 1;
@@ -917,95 +649,158 @@ Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredSta
 		 return desiredState;
 	 }
 	 else {
-		 return HAL_GPIO_ReadPin(Rocket_h.fcValves[valve].VLV_EN_GPIO_Port, Rocket_h.fcValves[valve].VLV_EN_GPIO_Pin);
+		 return HAL_GPIO_ReadPin(Board_h.bbValves[valve].VLV_EN_GPIO_Port, Board_h.bbValves[valve].VLV_EN_GPIO_Pin);
 	 }
 }
 
-// Load board configuration from a buffer. Returns 0 on success, -1 on an eeprom error, -2 on invalid tc gains, and -3 on invalid valve configuration values
-int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
-	uint8_t buffer[FC_EEPROM_LEN];
-	eeprom_status_t read_stat = eeprom_read_mem(eeprom, 0, buffer, FC_EEPROM_LEN);
+// Load board configuration from a buffer. Returns 0 on success, -1 on an eeprom error, -2 on invalid tc gains, -3 on invalid valve configuration values, and -4 on an invalid bay board number
+int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf, uint8_t *bb) {
+	uint8_t buffer[BB_EEPROM_LEN];
+	eeprom_status_t read_stat = eeprom_read_mem(eeprom, 0, buffer, BB_EEPROM_LEN);
 	if(read_stat != EEPROM_OK) {
 		return -1;
 	}
-	memcpy(&(conf->pt1->zero_V), buffer, 4);
-	memcpy(&(conf->pt1->pres_range), buffer + 4, 4);
-	memcpy(&(conf->pt1->max_V), buffer + 8, 4);
-	memcpy(&(conf->pt2->zero_V), buffer + 12, 4);
-	memcpy(&(conf->pt2->pres_range), buffer + 16, 4);
-	memcpy(&(conf->pt2->max_V), buffer + 20, 4);
-	memcpy(&(conf->pt3->zero_V), buffer + 24, 4);
-	memcpy(&(conf->pt3->pres_range), buffer + 28, 4);
-	memcpy(&(conf->pt3->max_V), buffer + 32, 4);
-	memcpy(&(conf->pt4->zero_V), buffer + 36, 4);
-	memcpy(&(conf->pt4->pres_range), buffer + 40, 4);
-	memcpy(&(conf->pt4->max_V), buffer + 44, 4);
-	memcpy(&(conf->pt5->zero_V), buffer + 48, 4);
-	memcpy(&(conf->pt5->pres_range), buffer + 52, 4);
-	memcpy(&(conf->pt5->max_V), buffer + 56, 4);
 
-	conf->tc1_gain = buffer[60] << 1;
-	conf->tc2_gain = buffer[61] << 1;
-	conf->tc3_gain = buffer[62] << 1;
+	*bb = buffer[0];
 
-	conf->vlv1_v = buffer[63];
-	conf->vlv1_en = buffer[64];
-	conf->vlv2_v = buffer[65];
-	conf->vlv2_en = buffer[66];
-	conf->vlv3_v = buffer[67];
-	conf->vlv3_en = buffer[68];
+	memcpy(&(conf->pt1->zero_V), 		buffer + 1, 4);
+	memcpy(&(conf->pt1->pres_range), 	buffer + 5, 4);
+	memcpy(&(conf->pt1->max_V), 		buffer + 9, 4);
+	memcpy(&(conf->pt2->zero_V), 		buffer + 13, 4);
+	memcpy(&(conf->pt2->pres_range), 	buffer + 17, 4);
+	memcpy(&(conf->pt2->max_V), 		buffer + 21, 4);
+	memcpy(&(conf->pt3->zero_V), 		buffer + 25, 4);
+	memcpy(&(conf->pt3->pres_range), 	buffer + 29, 4);
+	memcpy(&(conf->pt3->max_V), 		buffer + 33, 4);
+	memcpy(&(conf->pt4->zero_V), 		buffer + 37, 4);
+	memcpy(&(conf->pt4->pres_range), 	buffer + 41, 4);
+	memcpy(&(conf->pt4->max_V), 		buffer + 45, 4);
+	memcpy(&(conf->pt5->zero_V), 		buffer + 49, 4);
+	memcpy(&(conf->pt5->pres_range), 	buffer + 53, 4);
+	memcpy(&(conf->pt5->max_V), 		buffer + 57, 4);
+	memcpy(&(conf->pt6->zero_V), 		buffer + 61, 4);
+	memcpy(&(conf->pt6->pres_range),	buffer + 65, 4);
+	memcpy(&(conf->pt6->max_V), 		buffer + 69, 4);
+	memcpy(&(conf->pt7->zero_V), 		buffer + 73, 4);
+	memcpy(&(conf->pt7->pres_range), 	buffer + 77, 4);
+	memcpy(&(conf->pt7->max_V), 		buffer + 81, 4);
+	memcpy(&(conf->pt8->zero_V), 		buffer + 85, 4);
+	memcpy(&(conf->pt8->pres_range), 	buffer + 89, 4);
+	memcpy(&(conf->pt8->max_V), 		buffer + 93, 4);
+	memcpy(&(conf->pt9->zero_V), 		buffer + 97, 4);
+	memcpy(&(conf->pt9->pres_range), 	buffer + 101, 4);
+	memcpy(&(conf->pt9->max_V), 		buffer + 105, 4);
+	memcpy(&(conf->pt10->zero_V), 		buffer + 109, 4);
+	memcpy(&(conf->pt10->pres_range), 	buffer + 113, 4);
+	memcpy(&(conf->pt10->max_V), 		buffer + 117, 4);
 
-	IP4_ADDR(&(conf->limewireIP), buffer[69], buffer[70], buffer[71], buffer[72]);
-	IP4_ADDR(&(conf->flightcomputerIP), buffer[73], buffer[74], buffer[75], buffer[76]);
-	IP4_ADDR(&(conf->bayboard1IP), buffer[77], buffer[78], buffer[79], buffer[80]);
-	IP4_ADDR(&(conf->bayboard2IP), buffer[81], buffer[82], buffer[83], buffer[84]);
-	IP4_ADDR(&(conf->bayboard3IP), buffer[85], buffer[86], buffer[87], buffer[88]);
-	IP4_ADDR(&(conf->flightrecordIP), buffer[89], buffer[90], buffer[91], buffer[92]);
+	conf->tc1_gain = buffer[121] << 1;
+	conf->tc2_gain = buffer[122] << 1;
+	conf->tc3_gain = buffer[123] << 1;
+	conf->tc4_gain = buffer[124] << 1;
+	conf->tc5_gain = buffer[125] << 1;
+	conf->tc6_gain = buffer[126] << 1;
 
-	if(conf->tc1_gain > 0x0E || conf->tc2_gain > 0x0E || conf->tc3_gain > 0x0E) {
-		return -2;
+	conf->vlv1_v = buffer[127];
+	conf->vlv1_en = buffer[128];
+	conf->vlv2_v = buffer[129];
+	conf->vlv2_en = buffer[130];
+	conf->vlv3_v = buffer[131];
+	conf->vlv3_en = buffer[132];
+	conf->vlv4_v = buffer[133];
+	conf->vlv4_en = buffer[134];
+	conf->vlv5_v = buffer[135];
+	conf->vlv6_en = buffer[136];
+
+	IP4_ADDR(&(conf->flightcomputerIP), buffer[137], buffer[138], buffer[139], buffer[140]);
+	IP4_ADDR(&(conf->bayboardIP), buffer[141], buffer[142], buffer[143], buffer[144]);
+
+	int ret = 0;
+	if(conf->tc1_gain > 0x0E || conf->tc2_gain > 0x0E || conf->tc3_gain > 0x0E || conf->tc4_gain > 0x0E || conf->tc5_gain > 0x0E || conf->tc6_gain > 0x0E) {
+		conf->tc1_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+		conf->tc2_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+		conf->tc3_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+		conf->tc4_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+		conf->tc5_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+		conf->tc6_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+		ret = -2;
 	}
 
-	if(conf->vlv1_v > 0x01 || conf->vlv1_en > 0x01 || conf->vlv2_v > 0x01 || conf->vlv2_en > 0x01 || conf->vlv3_v > 0x01 || conf->vlv3_en > 0x01) {
-		return -3;
+	if(conf->vlv1_v > 0x01 || conf->vlv1_en > 0x01 || conf->vlv2_v > 0x01 || conf->vlv2_en > 0x01 || conf->vlv3_v > 0x01 || conf->vlv3_en > 0x01 || conf->vlv4_v > 0x01 || conf->vlv4_en > 0x01 || conf->vlv5_v > 0x01 || conf->vlv5_en > 0x01) {
+		conf->vlv1_v = BB_EEPROM_VLV_VOL_DEFAULT;
+		conf->vlv1_en = BB_EEPROM_VLV_EN_DEFAULT;
+		conf->vlv2_v = BB_EEPROM_VLV_VOL_DEFAULT;
+		conf->vlv2_en = BB_EEPROM_VLV_EN_DEFAULT;
+		conf->vlv3_v = BB_EEPROM_VLV_VOL_DEFAULT;
+		conf->vlv3_en = BB_EEPROM_VLV_EN_DEFAULT;
+		conf->vlv4_v = BB_EEPROM_VLV_VOL_DEFAULT;
+		conf->vlv4_en = BB_EEPROM_VLV_EN_DEFAULT;
+		conf->vlv5_v = BB_EEPROM_VLV_VOL_DEFAULT;
+		conf->vlv5_en = BB_EEPROM_VLV_EN_DEFAULT;
+		ret = -3;
 	}
-	return 0;
+
+	if(*bb == 0 || *bb > 3) {
+		*bb = 1;
+		ret = -4;
+	}
+
+	return ret;
 }
 
-void load_eeprom_defaults(EEPROM_conf_t *conf) {
-	conf->pt1->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
-	conf->pt1->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
-	conf->pt1->max_V = FC_EEPROM_PT_MAX_DEFAULT;
-	conf->pt2->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
-	conf->pt2->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
-	conf->pt2->max_V = FC_EEPROM_PT_MAX_DEFAULT;
-	conf->pt3->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
-	conf->pt3->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
-	conf->pt3->max_V = FC_EEPROM_PT_MAX_DEFAULT;
-	conf->pt4->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
-	conf->pt4->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
-	conf->pt4->max_V = FC_EEPROM_PT_MAX_DEFAULT;
-	conf->pt5->zero_V = FC_EEPROM_PT_ZERO_DEFAULT;
-	conf->pt5->pres_range = FC_EEPROM_PT_RANGE_DEFAULT;
-	conf->pt5->max_V = FC_EEPROM_PT_MAX_DEFAULT;
+void load_eeprom_defaults(EEPROM_conf_t *conf, uint8_t *bb) {
+	*bb = 1;
+	conf->pt1->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt1->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt1->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt2->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt2->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt2->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt3->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt3->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt3->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt4->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt4->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt4->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt5->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt5->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt5->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt6->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt6->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt6->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt7->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt7->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt7->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt8->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt8->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt8->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt9->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt9->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt9->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
+	conf->pt10->zero_V 		= BB_EEPROM_PT_ZERO_DEFAULT;
+	conf->pt10->pres_range 	= BB_EEPROM_PT_RANGE_DEFAULT;
+	conf->pt10->max_V 		= BB_EEPROM_PT_MAX_DEFAULT;
 
-	conf->tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
-	conf->tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
-	conf->tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+	conf->tc1_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+	conf->tc2_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+	conf->tc3_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+	conf->tc4_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+	conf->tc5_gain = BB_EEPROM_TC_GAIN_DEFAULT;
+	conf->tc6_gain = BB_EEPROM_TC_GAIN_DEFAULT;
 
-	conf->vlv1_v = FC_EEPROM_VLV_VOL_DEFAULT;
-	conf->vlv1_en = FC_EEPROM_VLV_EN_DEFAULT;
-	conf->vlv2_v = FC_EEPROM_VLV_VOL_DEFAULT;
-	conf->vlv2_en = FC_EEPROM_VLV_EN_DEFAULT;
-	conf->vlv3_v = FC_EEPROM_VLV_VOL_DEFAULT;
-	conf->vlv3_en = FC_EEPROM_VLV_EN_DEFAULT;
+	conf->vlv1_v = BB_EEPROM_VLV_VOL_DEFAULT;
+	conf->vlv1_en = BB_EEPROM_VLV_EN_DEFAULT;
+	conf->vlv2_v = BB_EEPROM_VLV_VOL_DEFAULT;
+	conf->vlv2_en = BB_EEPROM_VLV_EN_DEFAULT;
+	conf->vlv3_v = BB_EEPROM_VLV_VOL_DEFAULT;
+	conf->vlv3_en = BB_EEPROM_VLV_EN_DEFAULT;
+	conf->vlv4_v = BB_EEPROM_VLV_VOL_DEFAULT;
+	conf->vlv4_en = BB_EEPROM_VLV_EN_DEFAULT;
+	conf->vlv5_v = BB_EEPROM_VLV_VOL_DEFAULT;
+	conf->vlv5_en = BB_EEPROM_VLV_EN_DEFAULT;
 
-	IP4_ADDR(&(conf->limewireIP), FC_EEPROM_LIMEWIREIP_DEFAULT_1, FC_EEPROM_LIMEWIREIP_DEFAULT_2, FC_EEPROM_LIMEWIREIP_DEFAULT_3, FC_EEPROM_LIMEWIREIP_DEFAULT_4);
-	IP4_ADDR(&(conf->flightcomputerIP), FC_EEPROM_FCIP_DEFAULT_1, FC_EEPROM_FCIP_DEFAULT_2, FC_EEPROM_FCIP_DEFAULT_3, FC_EEPROM_FCIP_DEFAULT_4);
-	IP4_ADDR(&(conf->bayboard1IP), FC_EEPROM_BB1IP_DEFAULT_1, FC_EEPROM_BB1IP_DEFAULT_2, FC_EEPROM_BB1IP_DEFAULT_3, FC_EEPROM_BB1IP_DEFAULT_4);
-	IP4_ADDR(&(conf->bayboard2IP), FC_EEPROM_BB2IP_DEFAULT_1, FC_EEPROM_BB2IP_DEFAULT_2, FC_EEPROM_BB2IP_DEFAULT_3, FC_EEPROM_BB2IP_DEFAULT_4);
-	IP4_ADDR(&(conf->bayboard3IP), FC_EEPROM_BB3IP_DEFAULT_1, FC_EEPROM_BB3IP_DEFAULT_2, FC_EEPROM_BB3IP_DEFAULT_3, FC_EEPROM_BB3IP_DEFAULT_4);
-	IP4_ADDR(&(conf->flightrecordIP), FC_EEPROM_FRIP_DEFAULT_1, FC_EEPROM_FRIP_DEFAULT_2, FC_EEPROM_FRIP_DEFAULT_3, FC_EEPROM_FRIP_DEFAULT_4);
+	IP4_ADDR(&(conf->flightcomputerIP), BB_EEPROM_FCIP_DEFAULT_1, BB_EEPROM_FCIP_DEFAULT_2, BB_EEPROM_FCIP_DEFAULT_3, BB_EEPROM_FCIP_DEFAULT_4);
+	IP4_ADDR(&(conf->bayboardIP), BB_EEPROM_BB1IP_DEFAULT_1, BB_EEPROM_BB1IP_DEFAULT_2, BB_EEPROM_BB1IP_DEFAULT_3, BB_EEPROM_BB1IP_DEFAULT_4);
 }
 
 // Writes text to flash, msgtext does not have to be null terminated and msglen should not include the null character if it is included
@@ -1092,7 +887,25 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time((char *) &rawmsgbuf[1]);
 		rawmsgbuf[25] = ' ';
-		rawmsgbuf[26] = '1';
+		// I don't want to use snprinf here - there are few enough options
+		switch(bb_num) {
+			case 1: {
+				rawmsgbuf[26] = '2';
+				break;
+			}
+			case 2: {
+				rawmsgbuf[26] = '3';
+				break;
+			}
+			case 3: {
+				rawmsgbuf[26] = '4';
+				break;
+			}
+			default: {
+				rawmsgbuf[26] = '9';
+				break;
+			}
+		}
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;
@@ -1135,7 +948,24 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time((char *) &rawmsgbuf[1]);
 		rawmsgbuf[25] = ' ';
-		rawmsgbuf[26] = '1';
+		switch(bb_num) {
+			case 1: {
+				rawmsgbuf[26] = '2';
+				break;
+			}
+			case 2: {
+				rawmsgbuf[26] = '3';
+				break;
+			}
+			case 3: {
+				rawmsgbuf[26] = '4';
+				break;
+			}
+			default: {
+				rawmsgbuf[26] = '9';
+				break;
+			}
+		}
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;
@@ -1160,7 +990,24 @@ void send_flash_full() {
 				if(pkt_buf) {
 					get_iso_time(pkt_buf);
 					pkt_buf[24] = ' ';
-					pkt_buf[25] = '1';
+					switch(bb_num) {
+						case 1: {
+							pkt_buf[25] = '2';
+							break;
+						}
+						case 2: {
+							pkt_buf[25] = '3';
+							break;
+						}
+						case 3: {
+							pkt_buf[25] = '4';
+							break;
+						}
+						default: {
+							pkt_buf[25] = '9';
+							break;
+						}
+					}
 					memcpy(&pkt_buf[26], ERR_FLASH_FULL, sizeof(ERR_FLASH_FULL) - 1);
 					netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
 				}
@@ -1193,7 +1040,24 @@ void send_udp_online(ip4_addr_t * ip) {
 		if(pkt_buf) {
 			get_iso_time((char *) pkt_buf);
 			pkt_buf[24] = ' ';
-			pkt_buf[25] = '1';
+			switch(bb_num) {
+				case 1: {
+					pkt_buf[25] = '2';
+					break;
+				}
+				case 2: {
+					pkt_buf[25] = '3';
+					break;
+				}
+				case 3: {
+					pkt_buf[25] = '4';
+					break;
+				}
+				default: {
+					pkt_buf[25] = '9';
+					break;
+				}
+			}
 			snprintf((char *) &pkt_buf[26], sizeof(STAT_NETWORK_LOG_ONLINE) + 15, STAT_NETWORK_LOG_ONLINE "%u.%u.%u.%u", ip4_addr1(ip), ip4_addr2(ip), ip4_addr3(ip), ip4_addr4(ip));
 			netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
 		}
@@ -1235,14 +1099,14 @@ void ftp_close(void *handle) {
 	uint32_t fd = (uint32_t) handle;
 	if(fd == 1) {
 		eeprom_cursor -= 4;
-		if(eeprom_cursor < FC_EEPROM_LEN) {
+		if(eeprom_cursor < BB_EEPROM_LEN) {
 			// too short
 			log_message(ERR_TFTP_EERPOM_TOO_SHORT, -1);
 			return;
 		}
 		// CRC check
 		uint32_t sent_crc;
-		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor + FC_EEPROM_LEN, (uint8_t *) &sent_crc, 4);
+		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor + BB_EEPROM_LEN, (uint8_t *) &sent_crc, 4);
 		if(read_stat != EEPROM_OK) {
 			// read error
 			log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
@@ -1254,7 +1118,7 @@ void ftp_close(void *handle) {
 		do {
 			int read_bytes = (eeprom_cursor - cursor < 64) ? eeprom_cursor - cursor : 64;
 			uint8_t buf[read_bytes];
-			read_stat = eeprom_read_mem(&eeprom_h, FC_EEPROM_LEN + cursor, buf, read_bytes);
+			read_stat = eeprom_read_mem(&eeprom_h, BB_EEPROM_LEN + cursor, buf, read_bytes);
 			if(read_stat != EEPROM_OK) {
 				// read error
 				log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
@@ -1272,7 +1136,7 @@ void ftp_close(void *handle) {
 			do {
 				int read_bytes = (eeprom_cursor - cursor < 64) ? eeprom_cursor - cursor : 64;
 				uint8_t buf[read_bytes];
-				read_stat = eeprom_read_mem(&eeprom_h, FC_EEPROM_LEN + cursor, buf, read_bytes);
+				read_stat = eeprom_read_mem(&eeprom_h, BB_EEPROM_LEN + cursor, buf, read_bytes);
 				if(read_stat != EEPROM_OK) {
 					// copy read error
 					log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
@@ -1303,7 +1167,7 @@ int ftp_read(void *handle, void *buf, int bytes) {
 	uint32_t fd = (uint32_t) handle;
 	if(fd == 1) {
 		// Read from EEPROM
-		int bytes_to_read = (eeprom_cursor + bytes > FC_EEPROM_LEN) ? FC_EEPROM_LEN - eeprom_cursor : bytes;
+		int bytes_to_read = (eeprom_cursor + bytes > BB_EEPROM_LEN) ? BB_EEPROM_LEN - eeprom_cursor : bytes;
 		if(bytes_to_read == 0) {
 			return 0;
 		}
@@ -1399,7 +1263,7 @@ int ftp_write(void *handle, struct pbuf *p) {
 		// EEPROM
 		struct pbuf *currbuf = p;
 		do {
-			eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, eeprom_cursor + FC_EEPROM_LEN, currbuf->payload, currbuf->len);
+			eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, eeprom_cursor + BB_EEPROM_LEN, currbuf->payload, currbuf->len);
 			if(write_stat != EEPROM_OK) {
 				// eeprom write error
 				log_message(ERR_TFTP_EEPROM_WRITE_ERR, FC_ERR_TYPE_TFTP_EEPROM_WRITE);
@@ -1486,7 +1350,7 @@ int main(void)
   // Create RTC mutex
   RTC_mutex = xSemaphoreCreateMutex();
   flash_mutex = xSemaphoreCreateMutex();
-  flash_clear_mutex = xSemaphoreCreateMutex();
+  flash_clear_mutex = xSemaphoreCreateBinary();
   errormsg_mutex = xSemaphoreCreateMutex();
   perierrormsg_mutex = xSemaphoreCreateMutex();
   errorudp_mutex = xSemaphoreCreateMutex();
@@ -1520,43 +1384,45 @@ int main(void)
   loaded_config.pt3 = &PT3_h;
   loaded_config.pt4 = &PT4_h;
   loaded_config.pt5 = &PT5_h;
+  loaded_config.pt6 = &PT6_h;
+  loaded_config.pt7 = &PT7_h;
+  loaded_config.pt8 = &PT8_h;
+  loaded_config.pt9 = &PT9_h;
+  loaded_config.pt10 = &PT10_h;
   if(eeprom_init(&eeprom_h, &hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin) == EEPROM_OK) {
 #ifdef EEPROM_OVERRIDE
-	  load_eeprom_defaults(&loaded_config);
-	  log_message(FC_STAT_EEPROM_DEFAULT_LOADED, -1);
+	  load_eeprom_defaults(&loaded_config, &bb_num);
+	  log_message(STAT_EEPROM_DEFAULT_LOADED, -1);
 #else
-	  switch(load_eeprom_config(&eeprom_h, &loaded_config)) {
+	  switch(load_eeprom_config(&eeprom_h, &loaded_config, &bb_num)) {
 	  	  case -1: {
 	  		  // eeprom load error, defaults loaded
-	  		  log_message(FC_ERR_EEPROM_LOAD_COMM_ERR, -1);
-	  		  load_eeprom_defaults(&loaded_config);
+	  		  load_eeprom_defaults(&loaded_config, &bb_num);
+	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
 	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
 	  		  break;
 	  	  }
 	  	  case -2: {
 	  		  // eeprom tc gain value error
-	  		  log_message(FC_ERR_EEPROM_LOAD_TC_ERR, -1);
-	  		  loaded_config.tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
-	  		  loaded_config.tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
-	  		  loaded_config.tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
+	  		  log_message(ERR_EEPROM_LOAD_TC_ERR, -1);
 	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
 	  		  break;
 	  	  }
 	  	  case -3: {
 	  		  // eeprom valve conf error
-	  		  log_message(FC_ERR_EEPROM_LOAD_VLV_ERR, -1);
-	  		  loaded_config.vlv1_en = FC_EEPROM_VLV_EN_DEFAULT;
-	  		  loaded_config.vlv1_v = FC_EEPROM_VLV_VOL_DEFAULT;
-	  		  loaded_config.vlv2_en = FC_EEPROM_VLV_EN_DEFAULT;
-	  		  loaded_config.vlv2_v = FC_EEPROM_VLV_VOL_DEFAULT;
-	  		  loaded_config.vlv3_en = FC_EEPROM_VLV_EN_DEFAULT;
-	  		  loaded_config.vlv3_v = FC_EEPROM_VLV_VOL_DEFAULT;
+	  		  log_message(ERR_EEPROM_LOAD_VLV_ERR, -1);
+	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
+	  		  break;
+	  	  }
+	  	  case -4: {
+	  		  // invalid bb number
+	  		  log_message(BB_ERR_EEPROM_LOAD_BB_NUM_ERR, -1);
 	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
 	  		  break;
 	  	  }
 	  	  default: {
 	  		  // eeprom conf loaded
-	  		  log_message(FC_STAT_EEPROM_LOADED, -1);
+	  		  log_message(STAT_EEPROM_LOADED, -1);
 	  		  break;
 	  	  }
 	  }
@@ -1564,11 +1430,14 @@ int main(void)
   }
   else {
 	  // eeprom init error, defaults loaded
-	  log_message(FC_ERR_EEPROM_INIT, -1);
 	  load_eeprom_defaults(&loaded_config);
+	  log_message(ERR_EEPROM_INIT, -1);
 	  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
   }
-  fc_addr = loaded_config.flightcomputerIP;
+  bb_addr = loaded_config.bayboardIP;
+  char logmsg[sizeof(BB_STAT_STARTING_IDENTIFY) + 1];
+  snprintf(logmsg, sizeof(logmsg), BB_STAT_STARTING_IDENTIFY "%d", bb_num);
+  log_message(logmsg, -1);
 
   // Init flash
   fc_init_flash(&flash_h, &hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
@@ -2608,22 +2477,10 @@ void StartAndMonitor(void *argument)
     	xTimerStart(timers->buzzTimer, 0);
     }
 
-	// Setup TCP server
-	if(server_create(loaded_config.limewireIP, loaded_config.bayboard1IP, loaded_config.bayboard2IP, loaded_config.bayboard3IP, loaded_config.flightrecordIP)) {
-		// memory error creating TCP server, TCP server will not start
-		log_message(FC_ERR_CREAT_TCP_MEM_ERR, -1);
-	}
-
 	// Init rocket state struct
-	memset(&Rocket_h, 0, sizeof(Rocket_h)); // Reset contents
-	Rocket_h.fcState_access = xSemaphoreCreateMutex();
-	Rocket_h.fcValve_access = xSemaphoreCreateMutex();
-	Rocket_h.bb1State_access = xSemaphoreCreateMutex();
-	Rocket_h.bb1Valve_access = xSemaphoreCreateMutex();
-	Rocket_h.bb2State_access = xSemaphoreCreateMutex();
-	Rocket_h.bb2Valve_access = xSemaphoreCreateMutex();
-	Rocket_h.bb3State_access = xSemaphoreCreateMutex();
-	Rocket_h.bb3Valve_access = xSemaphoreCreateMutex();
+	memset(&Board_h, 0, sizeof(Board_h)); // Reset contents
+	Board_h.bbState_access = xSemaphoreCreateMutex();
+	Board_h.bbValve_access = xSemaphoreCreateMutex();
 
 	// Config SR
   	Shift_Reg reg = {0};
@@ -2631,46 +2488,70 @@ void StartAndMonitor(void *argument)
   	reg.VLV_CTR_GPIO_Pin = VLV_CTRL_Pin;
   	reg.VLV_CLK_GPIO_Port = BUFF_CLK_GPIO_Port;
   	reg.VLV_CLK_GPIO_Pin = BUFF_CLK_Pin;
-  	reg.VLV_CLR_GPIO_Port = BUFF_CLR_GPIO_Port;
-  	reg.VLV_CLR_GPIO_Pin = BUFF_CLR_Pin;
 
-  	VLV_Set_Conf(reg, loaded_config.vlv1_en, loaded_config.vlv1_v, loaded_config.vlv2_en, loaded_config.vlv2_v, loaded_config.vlv3_en, loaded_config.vlv3_v);
+  	VLV_Set_Conf(reg, loaded_config.vlv1_en, loaded_config.vlv1_v,
+  				loaded_config.vlv2_en, loaded_config.vlv2_v,
+				loaded_config.vlv3_en, loaded_config.vlv3_v,
+				loaded_config.vlv4_en, loaded_config.vlv4_v,
+				loaded_config.vlv5_en, loaded_config.vlv5_v);
 
   	// Load valve pins
-  	Rocket_h.fcValves[0].VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
-  	Rocket_h.fcValves[0].VLV_EN_GPIO_Pin = VLV1_EN_Pin;
-  	Rocket_h.fcValves[0].VLV_OLD_GPIO_Port = VLV1_OLD_GPIO_Port;
-  	Rocket_h.fcValves[0].VLV_OLD_GPIO_Pin = VLV1_OLD_Pin;
+  	Board_h.bbValves[0].VLV_EN_GPIO_Port = VLV1_EN_GPIO_Port;
+  	Board_h.bbValves[0].VLV_EN_GPIO_Pin = VLV1_EN_Pin;
+  	Board_h.bbValves[0].VLV_OLD_GPIO_Port = VLV1_OLD_GPIO_Port;
+  	Board_h.bbValves[0].VLV_OLD_GPIO_Pin = VLV1_OLD_Pin;
 
-  	Rocket_h.fcValves[1].VLV_EN_GPIO_Port = VLV2_EN_GPIO_Port;
-  	Rocket_h.fcValves[1].VLV_EN_GPIO_Pin = VLV2_EN_Pin;
-  	Rocket_h.fcValves[1].VLV_OLD_GPIO_Port = VLV2_OLD_GPIO_Port;
-  	Rocket_h.fcValves[1].VLV_OLD_GPIO_Pin = VLV2_OLD_Pin;
+  	Board_h.bbValves[1].VLV_EN_GPIO_Port = VLV2_EN_GPIO_Port;
+  	Board_h.bbValves[1].VLV_EN_GPIO_Pin = VLV2_EN_Pin;
+  	Board_h.bbValves[1].VLV_OLD_GPIO_Port = VLV2_OLD_GPIO_Port;
+  	Board_h.bbValves[1].VLV_OLD_GPIO_Pin = VLV2_OLD_Pin;
 
-  	Rocket_h.fcValves[2].VLV_EN_GPIO_Port = VLV3_EN_GPIO_Port;
-  	Rocket_h.fcValves[2].VLV_EN_GPIO_Pin = VLV3_EN_Pin;
-  	Rocket_h.fcValves[2].VLV_OLD_GPIO_Port = VLV3_OLD_GPIO_Port;
-  	Rocket_h.fcValves[2].VLV_OLD_GPIO_Pin = VLV3_OLD_Pin;
+  	Board_h.bbValves[2].VLV_EN_GPIO_Port = VLV3_EN_GPIO_Port;
+  	Board_h.bbValves[2].VLV_EN_GPIO_Pin = VLV3_EN_Pin;
+  	Board_h.bbValves[2].VLV_OLD_GPIO_Port = VLV3_OLD_GPIO_Port;
+  	Board_h.bbValves[2].VLV_OLD_GPIO_Pin = VLV3_OLD_Pin;
+
+  	Board_h.bbValves[3].VLV_EN_GPIO_Port = VLV4_EN_GPIO_Port;
+  	Board_h.bbValves[3].VLV_EN_GPIO_Pin = VLV4_EN_Pin;
+  	Board_h.bbValves[3].VLV_OLD_GPIO_Port = VLV4_OLD_GPIO_Port;
+  	Board_h.bbValves[3].VLV_OLD_GPIO_Pin = VLV4_OLD_Pin;
+
+  	Board_h.bbValves[4].VLV_EN_GPIO_Port = VLV5_EN_GPIO_Port;
+  	Board_h.bbValves[4].VLV_EN_GPIO_Pin = VLV5_EN_Pin;
+  	Board_h.bbValves[4].VLV_OLD_GPIO_Port = VLV5_OLD_GPIO_Port;
+  	Board_h.bbValves[4].VLV_OLD_GPIO_Pin = VLV5_OLD_Pin;
 
   	// These should always be 0 but in the case that code is added later than adds a default valve state I'm leaving this here
-  	Rocket_h.fcValveStates[0] = VLV_State(Rocket_h.fcValves[0]);
-  	Rocket_h.fcValveStates[1] = VLV_State(Rocket_h.fcValves[1]);
-  	Rocket_h.fcValveStates[2] = VLV_State(Rocket_h.fcValves[2]);
+  	Board_h.bbValveStates[0] = VLV_State(Board_h.bbValves[0]);
+  	Board_h.bbValveStates[1] = VLV_State(Board_h.bbValves[1]);
+  	Board_h.bbValveStates[2] = VLV_State(Board_h.bbValves[2]);
+  	Board_h.bbValveStates[3] = VLV_State(Board_h.bbValves[3]);
+  	Board_h.bbValveStates[4] = VLV_State(Board_h.bbValves[4]);
 
 	// Init sensors and peripherals
   	// ADC
-  	sensors_h.adc_h.MAX11128_CS_PORT = ADC_CS_GPIO_Port;
-  	sensors_h.adc_h.MAX11128_CS_ADDR = ADC_CS_Pin;
-  	sensors_h.adc_h.HARDWARE_CONFIGURATION = NO_EOC_NOR_CNVST;
-  	sensors_h.adc_h.NUM_CHANNELS = 16;
+  	sensors_h.adc1_h.MAX11128_CS_PORT = ADC1_CS_GPIO_Port;
+  	sensors_h.adc1_h.MAX11128_CS_ADDR = ADC1_CS_Pin;
+  	sensors_h.adc1_h.HARDWARE_CONFIGURATION = NO_EOC_NOR_CNVST;
+  	sensors_h.adc1_h.NUM_CHANNELS = 16;
 
-  	init_adc(&hspi4, &(sensors_h.adc_h));
+  	sensors_h.adc2_h.MAX11128_CS_PORT = ADC2_CS_GPIO_Port;
+  	sensors_h.adc2_h.MAX11128_CS_ADDR = ADC2_CS_Pin;
+  	sensors_h.adc2_h.HARDWARE_CONFIGURATION = NO_EOC_NOR_CNVST;
+  	sensors_h.adc2_h.NUM_CHANNELS = 16;
+
+  	init_adc(&hspi4, &(sensors_h.adc1_h));
   	// Check to make sure the chip is connected
 	uint16_t adc_values[16] = {0};
-	read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
-	if(adc_values[ADC_3V3_BUS_I] == 0) { // 3v3 bus voltage should always be greater than 0
-		log_message(FC_ERR_SING_ADC_INIT, -1);
+	read_adc(&hspi4, &(sensors_h.adc1_h), adc_values);
+	if(adc_values[ADC1_3V3_BUS_I] == 0) { // 3v3 bus voltage should always be greater than 0
+		// ADC1 error
+		log_message(BB_ERR_ADC1_INIT, -1);
 	}
+
+  	init_adc(&hspi4, &(sensors_h.adc2_h));
+
+#error "here"
 
   	// TC ADCs
   	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
@@ -2747,30 +2628,22 @@ void StartAndMonitor(void *argument)
   	// Start packet handler
   	packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
 
-  	// Start TCP server only if the ethernet link is up
-	if(netif_is_link_up(&gnetif)) {
-		switch(server_init()) {
-			case 0: {
-				// TCP server started
-				log_message(FC_STAT_TCP_SERV_RUNNING, -1);
-				break;
-			}
-			case -1: {
-				break;
-			}
-			case -2: {
-				// one of the threads failed to start
-				log_message(FC_ERR_INIT_TCP_THREAD_ERR, -1);
-				break;
-			}
-			case -3: {
-				break;
-			}
-			default: {
-				break;
-			}
-		}
-	}
+  	// Start TCP client
+  	switch(client_init(&loaded_config.flightcomputerIP, netif_is_link_up(&gnetif))) {
+  		case 2: {
+  			// TODO threads didn't start
+  			break;
+  		}
+  		case 1: {
+  			// TODO memory error
+  			break;
+  		}
+  		default: {
+  			// TODO client initialized
+  			break;
+  		}
+  	}
+
 	// log startup done
 	log_message(STAT_STARTUP_DONE, -1);
 

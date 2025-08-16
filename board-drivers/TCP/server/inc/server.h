@@ -83,5 +83,6 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
 int get_device_fd(Target_Device dev);
 
 void remove_bad_fds(void);
+void drain_lists();
 #endif
 
