@@ -32,6 +32,14 @@ public:
     // this takes the raw height reading from MASTRAN and computes the actual
     // temperature reading in celsius
     double compute_temp(double height);
+
+    //takes the raw height reading from MASTRAN and computes 'rho', the 
+    //air density constant at that height
+    double compute_rho(double height);
+
+    //takes the raw height reading from MASTRAN and computes the 
+    //speed of
+    double speed_of_sound(double height);
 };
 
 class Barometer
