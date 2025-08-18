@@ -1,0 +1,10 @@
+===Flight Summary===
+MECO detection time (s): 22
+MECO detection altitude (m): 6186.53
+Estimated speed at MECO altitude (m/s): 538.807
+Mach number at MECO: 1.69028
+Wait time until phase two (s): 15.0948
+Apogee detection time (s): 70.31
+Apogee detection altitude (m): 17736.3
+Drogue chute detection altitude (m): 1642.72
+Main chute detection altitude (m): 312.692
