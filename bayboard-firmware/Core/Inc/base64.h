@@ -8,6 +8,8 @@
 
 #ifndef BASE64_H
 #define BASE64_H
+
+#include "main.h"
 #include "stddef.h"
 
 unsigned char * base64_encode(const unsigned char *src, size_t len,

@@ -45,6 +45,7 @@
 
 
 // Flight Computer error messages
+#ifdef FLIGHT_COMPUTER
 #define FC_ERR_TCP_SERV_SOCK_CREAT_NOBUF		"001 No buffer space - creating server listen socket"
 #define FC_ERR_TCP_SERV_SOCK_CREAT_NOSOCK		"002 No available sockets - creating server listen socket"
 #define FC_ERR_TCP_SERV_SOCK_CREAT_UNKNOWN		"003 Unknown errno - creating server listen socket, errno "
@@ -115,6 +116,7 @@
 #define FC_ERR_TCP_SERV_RECV_ERROR_NOTCONN		"058 Socket not connected - TCP server socket flagged as error, fd "
 #define FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN		"059 Unknown errno - TCP server socket flagged as error, fd/errno "
 
+#elif defined(BAY_BOARD)
 // Bay Board error messages
 #define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"
 #define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOSOCK		"002 No available sockets - creating client socket"
@@ -124,7 +126,7 @@
 #define BB_ERR_TCP_CLIENT_CONNECT_ERR			"005 Error connecting - client connecting"
 #define BB_ERR_TCP_CLIENT_CONNECT_TIMEO			"006 Connection timed out - client connecting"
 #define BB_ERR_TCP_CLIENT_CONNECT_NRTE			"007 No route - client connecting"
-#define BB_ERR_TCP_CLIENT_CONNECT_ABORT			"008 Internally aborted - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_ABORT			"008 Timed out - client connecting"
 #define BB_ERR_TCP_CLIENT_CONNECT_NBUF			"009 Buffer error - client connecting"
 #define BB_ERR_TCP_CLIENT_CONNECT_NMEM			"010 Memory error - client connecting"
 #define BB_ERR_TCP_CLIENT_CONNECT_UNKNOWN		"011 Unknown errno - client connecting, errno "
@@ -157,12 +159,18 @@
 #define BB_ERR_TCP_CLIENT_SEND_NNETCONN			"033 NULL netconn - client sending packet"
 #define BB_ERR_TCP_CLIENT_SEND_MEM_ERR			"034 Internal memory error - client sending packet"
 #define BB_ERR_TCP_CLIENT_SEND_UNKNOWN			"035 Unknown errno - client sending packet, errno "
-
 #define BB_ERR_TCP_CLIENT_SEND_STOPPED			"036 TCP client send thread stopped"
 
 #define BB_ERR_EEPROM_LOAD_BB_NUM_ERR			"037 EEPROM config invalid Bay Board number, loading defaults"
 
 #define BB_ERR_ADC1_INIT						"038 ADC1 init failed"
+
+#define BB_ERR_TCP_CLIENT_INIT_THREAD			"039 TCP client thread not started"
+#define BB_ERR_TCP_CLIENT_INIT_MEM_ERR			"040 TCP client memory issue on init"
+
+#define BB_ERR_ADC1_READ						"041 ADC 1 read error"
+
+#endif
 
 // General status messages
 #define STAT_EXAMPLE							"000 This is a general status message"
@@ -179,6 +187,7 @@
 #define STAT_EEPROM_DEFAULT_LOADED				"711 EEPROM defaults loaded, overridden by macro"
 
 // Flight Computer status messages
+#ifdef FLIGHT_COMPUTER
 #define FC_STAT_EXAMPLE							"000 This is a status message unique to the FC (e.g. radio thread started)"
 #define FC_STAT_TCP_SERV_NEW_CONN				"501 TCP server accepting new connection, fd/addr "
 #define FC_STAT_TCP_CONN_CLOSED					"502 TCP connection closed gracefully, fd "
@@ -186,11 +195,16 @@
 #define FC_STAT_TCP_SERV_REINIT					"506 TCP server reinitialized after link down"
 
 // Bay Board status messages
+#elif defined(BAY_BOARD)
 #define BB_STAT_TCP_CLIENT_CONNECTED			"501 TCP client connected"
 #define BB_STAT_TCP_CLIENT_CLOSED				"502 TCP client disconnected"
 #define BB_STAT_STARTING_IDENTIFY				"503 Bay Board starting as Bay Board "
+#define BB_STAT_TCP_CLIENT_INIT					"504 TCP client initialized"
+
+#endif
 
 // Flight Computer error message types - used for throttling
+#ifdef FLIGHT_COMPUTER
 #define FC_ERR_TYPE_TCP_SERV_LISTEN				0
 #define FC_ERR_TYPE_TCP_SERV_RECV_SELECT		1
 #define FC_ERR_TYPE_TCP_SERV_RECV_READ			2
@@ -214,8 +228,28 @@
 #define FC_ERR_PERI_TYPE_ADS					5
 
 // Bay Board error message types
+#elif defined(BAY_BOARD)
 #define BB_ERR_TYPE_TCP_CLIENT_CONNECT			0
 #define BB_ERR_TYPE_TCP_CLIENT_RECV				1
 #define BB_ERR_TYPE_TCP_CLIENT_SEND				2
+#define BB_ERR_TYPE_TELEM_OVERTIME				3
+#define BB_ERR_TYPE_BAD_VLVID					4
+#define BB_ERR_TYPE_UNKNOWN_LMP					5
+#define BB_ERR_TYPE_TFTP_EEPROM_WRITE			6
+#define BB_ERR_TYPE_TFTP_EEPROM_READ			7
+#define BB_ERR_TYPE_TELEM_NUPDATED				8
+#define BB_ERR_TYPE_TELEM_MEM_ERR				9
+
+// Flight Computer peripheral error message types
+#define BB_ERR_PERI_TYPE_ADC1					0
+#define BB_ERR_PERI_TYPE_ADC2					1
+#define BB_ERR_PERI_TYPE_IMU1					2
+#define BB_ERR_PERI_TYPE_IMU2					3
+#define BB_ERR_PERI_TYPE_BAR1					4
+#define BB_ERR_PERI_TYPE_BAR2					5
+#define BB_ERR_PERI_TYPE_ADS					6
+#define BB_ERR_PERI_TYPE_CONNECT				7
+
+#endif
 
 #endif /* INC_LOG_ERRORS_H_ */

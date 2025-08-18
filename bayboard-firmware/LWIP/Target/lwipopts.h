@@ -61,12 +61,16 @@
 #define LWIP_RAM_HEAP_POINTER 0x30000200
 /*----- Default Value for MEMP_NUM_NETBUF: 2 ---*/
 #define MEMP_NUM_NETBUF 10
+/*----- Default Value for MEMP_NUM_NETCONN: 4 ---*/
+#define MEMP_NUM_NETCONN 10
 /*----- Value supported for H7 devices: 1 -----*/
 #define LWIP_SUPPORT_CUSTOM_PBUF 1
 /*----- Value in opt.h for LWIP_ETHERNET: LWIP_ARP || PPPOE_SUPPORT -*/
 #define LWIP_ETHERNET 1
 /*----- Value in opt.h for LWIP_DNS_SECURE: (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT) -*/
 #define LWIP_DNS_SECURE 7
+/*----- Default Value for TCP_SYNMAXRTX: 6 ---*/
+#define TCP_SYNMAXRTX 0
 /*----- Value in opt.h for TCP_SND_QUEUELEN: (4*TCP_SND_BUF + (TCP_MSS - 1))/TCP_MSS -----*/
 #define TCP_SND_QUEUELEN 9
 /*----- Value in opt.h for TCP_SNDLOWAT: LWIP_MIN(LWIP_MAX(((TCP_SND_BUF)/2), (2 * TCP_MSS) + 1), (TCP_SND_BUF) - 1) -*/
@@ -135,10 +139,18 @@
 //#define TCP_KEEPIDLE 10000 // 10 seconds
 //#define TCP_KEEPINTVL 5000 // 5 seconds
 /*#define LWIP_DEBUG
-#define SNTP_DEBUG    LWIP_DBG_ON
-#define UDP_DEBUG     LWIP_DBG_ON
-#define ICMP_DEBUG 	  LWIP_DBG_ON
-#define LWIP_DBG_MIN_LEVEL LWIP_DBG_LEVEL_ALL*/
+#define TCP_DEBUG		LWIP_DBG_ON
+#define PBUF_DEBUF		LWIP_DBG_ON
+//#define SNTP_DEBUG    LWIP_DBG_ON
+//#define UDP_DEBUG     LWIP_DBG_ON
+//#define ICMP_DEBUG 	  LWIP_DBG_ON
+#define LWIP_DBG_TYPES_ON     LWIP_DBG_ON
+#define LWIP_DBG_MIN_LEVEL LWIP_DBG_LEVEL_ALL
+#define LWIP_STATS 1
+#define TCP_STATS 1
+#define MEM_STATS 1
+#define MEMP_STATS 1
+#define SYS_STATS 1*/
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

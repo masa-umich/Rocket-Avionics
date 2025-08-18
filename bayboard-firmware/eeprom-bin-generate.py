@@ -78,8 +78,8 @@ vlv2_enable = 0
 vlv3_voltage = ValveVoltage.Valve_24V
 vlv3_enable = 1
 
-vlv4_voltage = ValveVoltage.Valve_24V
-vlv4_enable = 1
+vlv4_voltage = ValveVoltage.Valve_12V
+vlv4_enable = 0
 
 vlv5_voltage = ValveVoltage.Valve_24V
 vlv5_enable = 1

@@ -15,7 +15,6 @@
 #include "lwip/sockets.h"
 #include "lwip.h"
 #include <string.h>
-#include <stdbool.h>
 #include "main.h"
 #include "tsqueue.h"
 

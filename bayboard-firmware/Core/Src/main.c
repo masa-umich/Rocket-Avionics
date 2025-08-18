@@ -44,6 +44,7 @@
 #include "lwip/udp.h"
 #include "timers.h"
 #include "log_errors.h"
+#include "queue.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -262,7 +263,7 @@ uint8_t perierrormsgtimers[PERI_ERROR_MSG_TYPES];
 struct netconn *errormsgudp = NULL;
 SemaphoreHandle_t errorudp_mutex;
 
-List* errorMsgList;
+QueueHandle_t errorMsgList = NULL;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -546,7 +547,7 @@ int pack_bb_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t tim
 // wait is the number of ticks to wait for room in the txbuffer
 // buffersize is the maximum size that it will take to serialize the LMP message, if this is 0, it will use the maximum possible message size to ensure proper serialization
 // returns 0 on success, -1 if the client is not connected, -2 if there is no room in the txbuffer or space to allocate a buffer and -3 on a LMP serialization error
-int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size_t buffersize) {
+int send_msg_to_device(Message *msg, TickType_t wait, size_t buffersize) {
 	if(buffersize == 0) {
 		buffersize = MAX_MSG_LEN;
 	}
@@ -633,7 +634,7 @@ Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredSta
 			 Board_h.bbValveStates[valve] = Valve_Energized;
 		 }
 		 else if(desiredState == Valve_Deenergized) {
-			 VLV_Den(Rocket_h.fcValves[valve]);
+			 VLV_Den(Board_h.bbValves[valve]);
 			 Board_h.bbValveStates[valve] = Valve_Deenergized;
 		 }
 		 else {
@@ -710,7 +711,7 @@ int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf, uint8_t *bb) {
 	conf->vlv4_v = buffer[133];
 	conf->vlv4_en = buffer[134];
 	conf->vlv5_v = buffer[135];
-	conf->vlv6_en = buffer[136];
+	conf->vlv5_en = buffer[136];
 
 	IP4_ADDR(&(conf->flightcomputerIP), buffer[137], buffer[138], buffer[139], buffer[140]);
 	IP4_ADDR(&(conf->bayboardIP), buffer[141], buffer[142], buffer[143], buffer[144]);
@@ -800,7 +801,7 @@ void load_eeprom_defaults(EEPROM_conf_t *conf, uint8_t *bb) {
 	conf->vlv5_en = BB_EEPROM_VLV_EN_DEFAULT;
 
 	IP4_ADDR(&(conf->flightcomputerIP), BB_EEPROM_FCIP_DEFAULT_1, BB_EEPROM_FCIP_DEFAULT_2, BB_EEPROM_FCIP_DEFAULT_3, BB_EEPROM_FCIP_DEFAULT_4);
-	IP4_ADDR(&(conf->bayboardIP), BB_EEPROM_BB1IP_DEFAULT_1, BB_EEPROM_BB1IP_DEFAULT_2, BB_EEPROM_BB1IP_DEFAULT_3, BB_EEPROM_BB1IP_DEFAULT_4);
+	IP4_ADDR(&(conf->bayboardIP), BB_EEPROM_BBIP_DEFAULT_1, BB_EEPROM_BBIP_DEFAULT_2, BB_EEPROM_BBIP_DEFAULT_3, BB_EEPROM_BBIP_DEFAULT_4);
 }
 
 // Writes text to flash, msgtext does not have to be null terminated and msglen should not include the null character if it is included
@@ -911,7 +912,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		errormsg_t fullmsg;
 		fullmsg.content = rawmsgbuf;
 		fullmsg.len = msglen;
-		if(list_push(errorMsgList, (void *)&fullmsg, 1)) {
+		if(xQueueSend(errorMsgList, (void *)&fullmsg, 1) != pdPASS) {
 			// No space for more messages
 			free(rawmsgbuf);
 			return 3;
@@ -971,7 +972,7 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 		errormsg_t fullmsg;
 		fullmsg.content = rawmsgbuf;
 		fullmsg.len = msglen;
-		if(list_push(errorMsgList, (void *)&fullmsg, 1)) {
+		if(xQueueSend(errorMsgList, (void *)&fullmsg, 1) != pdPASS) {
 			// No space for more messages
 			free(rawmsgbuf);
 			return 3;
@@ -1109,7 +1110,7 @@ void ftp_close(void *handle) {
 		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor + BB_EEPROM_LEN, (uint8_t *) &sent_crc, 4);
 		if(read_stat != EEPROM_OK) {
 			// read error
-			log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
+			log_message(ERR_TFTP_EEPROM_READ_ERR, BB_ERR_TYPE_TFTP_EEPROM_READ);
 			return;
 		}
 		HAL_CRC_Calculate(&hcrc, NULL, 0); // reset calculation
@@ -1121,7 +1122,7 @@ void ftp_close(void *handle) {
 			read_stat = eeprom_read_mem(&eeprom_h, BB_EEPROM_LEN + cursor, buf, read_bytes);
 			if(read_stat != EEPROM_OK) {
 				// read error
-				log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
+				log_message(ERR_TFTP_EEPROM_READ_ERR, BB_ERR_TYPE_TFTP_EEPROM_READ);
 				return;
 			}
 			calc_crc = HAL_CRC_Accumulate(&hcrc, (uint32_t *) buf, read_bytes);
@@ -1139,13 +1140,13 @@ void ftp_close(void *handle) {
 				read_stat = eeprom_read_mem(&eeprom_h, BB_EEPROM_LEN + cursor, buf, read_bytes);
 				if(read_stat != EEPROM_OK) {
 					// copy read error
-					log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
+					log_message(ERR_TFTP_EEPROM_READ_ERR, BB_ERR_TYPE_TFTP_EEPROM_READ);
 					return;
 				}
 				eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, cursor, buf, read_bytes);
 				if(write_stat != EEPROM_OK) {
 					// copy write error
-					log_message(ERR_TFTP_EEPROM_WRITE_ERR, FC_ERR_TYPE_TFTP_EEPROM_WRITE);
+					log_message(ERR_TFTP_EEPROM_WRITE_ERR, BB_ERR_TYPE_TFTP_EEPROM_WRITE);
 					return;
 				}
 				cursor += read_bytes;
@@ -1174,7 +1175,7 @@ int ftp_read(void *handle, void *buf, int bytes) {
 		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor, buf, bytes_to_read);
 		if(read_stat != EEPROM_OK) {
 			// eeprom read error
-			log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
+			log_message(ERR_TFTP_EEPROM_READ_ERR, BB_ERR_TYPE_TFTP_EEPROM_READ);
 			return -1;
 		}
 		eeprom_cursor += bytes_to_read;
@@ -1266,7 +1267,7 @@ int ftp_write(void *handle, struct pbuf *p) {
 			eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, eeprom_cursor + BB_EEPROM_LEN, currbuf->payload, currbuf->len);
 			if(write_stat != EEPROM_OK) {
 				// eeprom write error
-				log_message(ERR_TFTP_EEPROM_WRITE_ERR, FC_ERR_TYPE_TFTP_EEPROM_WRITE);
+				log_message(ERR_TFTP_EEPROM_WRITE_ERR, BB_ERR_TYPE_TFTP_EEPROM_WRITE);
 				return -1;
 			}
 			eeprom_cursor += currbuf->len;
@@ -1371,7 +1372,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  errorMsgList = list_create(sizeof(errormsg_t), msgFreeCallback);
+  errorMsgList = xQueueCreate(100, sizeof(errormsg_t));
 
   // This next section is considered the "critical" portion of initialization. This portion has no access to logging and therefore needs to communicate status other ways. The section ends on the return of the MX_LWIP_Init function
   // The end of this section is marked by a UDP message and/or the on-board LED becoming solid and/or a short buzzer beep
@@ -1430,7 +1431,7 @@ int main(void)
   }
   else {
 	  // eeprom init error, defaults loaded
-	  load_eeprom_defaults(&loaded_config);
+	  load_eeprom_defaults(&loaded_config, &bb_num);
 	  log_message(ERR_EEPROM_INIT, -1);
 	  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
   }
@@ -2079,12 +2080,14 @@ void TelemetryTask(void *argument) {
 	for(;;) {
 		uint32_t startTime = HAL_GetTick();
 		// Read from sensors
-		uint16_t adc_values[16] = {0};
-		read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
-		if(adc_values[ADC_3V3_BUS_I] == 0) {
+		uint16_t adc1_values[16] = {0};
+		uint16_t adc2_values[16] = {0};
+		read_adc(&hspi4, &(sensors_h.adc1_h), adc1_values);
+		if(adc1_values[ADC1_3V3_BUS_I] == 0) {
 			// ADC read error
-			log_peri_message(FC_ERR_SING_ADC_READ, FC_ERR_PERI_TYPE_ADC);
+			log_peri_message(BB_ERR_ADC1_READ, BB_ERR_PERI_TYPE_ADC1);
 		}
+		read_adc(&hspi4, &(sensors_h.adc2_h), adc2_values);
 
   		Accel XL_readings1 = {0};
   		Accel XL_readings2 = {0};
@@ -2093,12 +2096,12 @@ void TelemetryTask(void *argument) {
   		int imu1_stat = IMU_getAccel(&(sensors_h.imu1_h), &XL_readings1);
   		if(imu1_stat == -1) {
   			// IMU 1 read error
-			log_peri_message(ERR_IMU_READ "1", FC_ERR_PERI_TYPE_IMU1);
+			log_peri_message(ERR_IMU_READ "1", BB_ERR_PERI_TYPE_IMU1);
   		}
   		int imu2_stat = IMU_getAccel(&(sensors_h.imu2_h), &XL_readings2);
   		if(imu2_stat == -1) {
   			// IMU 2 read error
-			log_peri_message(ERR_IMU_READ "2", FC_ERR_PERI_TYPE_IMU2);
+			log_peri_message(ERR_IMU_READ "2", BB_ERR_PERI_TYPE_IMU2);
   		}
   		IMU_getAngRate(&(sensors_h.imu1_h), &angRate_readings1);
   		IMU_getAngRate(&(sensors_h.imu2_h), &angRate_readings2);
@@ -2108,104 +2111,126 @@ void TelemetryTask(void *argument) {
   	  	int bar1_stat = MS5611_getPres(&(sensors_h.bar1_h), &pres1, &(sensors_h.prom1), OSR_1024);
   	  	if(bar1_stat) {
   	  		// BAR 1 read error
-			log_peri_message(ERR_BAR_READ "1", FC_ERR_PERI_TYPE_BAR1);
+			log_peri_message(ERR_BAR_READ "1", BB_ERR_PERI_TYPE_BAR1);
   	  	}
   	  	int bar2_stat = MS5611_getPres(&(sensors_h.bar2_h), &pres2, &(sensors_h.prom2), OSR_1024);
   	  	if(bar2_stat) {
   	  		// BAR 2 read error
-			log_peri_message(ERR_BAR_READ "2", FC_ERR_PERI_TYPE_BAR2);
+			log_peri_message(ERR_BAR_READ "2", BB_ERR_PERI_TYPE_BAR2);
   	  	}
 
-  	  	float TCvalues[3];
+  	  	float TCvalues[NUM_TCS];
   	  	int TC_stat = ADS_readAll(&(sensors_h.tc_main_h), TCvalues);
-  	  	if(TC_stat || isnan(TCvalues[0]) || isnan(TCvalues[1]) || isnan(TCvalues[2])) {
+  	  	if(TC_stat || isnan(TCvalues[0]) || isnan(TCvalues[1]) || isnan(TCvalues[2]) || isnan(TCvalues[3]) || isnan(TCvalues[4]) || isnan(TCvalues[5])) {
   	  		// ADS read error
-			log_peri_message(ERR_ADS_READ, FC_ERR_PERI_TYPE_ADS);
+			log_peri_message(ERR_ADS_READ, BB_ERR_PERI_TYPE_ADS);
   	  	}
 
   	  	VLV_OpenLoad vlv1_old = 0;
   	  	VLV_OpenLoad vlv2_old = 0;
   	  	VLV_OpenLoad vlv3_old = 0;
+  	  	VLV_OpenLoad vlv4_old = 0;
+  	  	VLV_OpenLoad vlv5_old = 0;
   	  	uint8_t old_stat = 1;
 
-  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
-  	  		vlv1_old = VLV_isOpenLoad(Rocket_h.fcValves[0]);
-  	  		vlv2_old = VLV_isOpenLoad(Rocket_h.fcValves[1]);
-  	  		vlv3_old = VLV_isOpenLoad(Rocket_h.fcValves[2]);
+  	  	if(xSemaphoreTake(Board_h.bbValve_access, 5) == pdPASS) {
+  	  		vlv1_old = VLV_isOpenLoad(Board_h.bbValves[0]);
+  	  		vlv2_old = VLV_isOpenLoad(Board_h.bbValves[1]);
+  	  		vlv3_old = VLV_isOpenLoad(Board_h.bbValves[2]);
+  	  		vlv4_old = VLV_isOpenLoad(Board_h.bbValves[3]);
+  	  		vlv5_old = VLV_isOpenLoad(Board_h.bbValves[4]);
   	  		old_stat = 0;
-  	  		xSemaphoreGive(Rocket_h.fcValve_access);
+  	  		xSemaphoreGive(Board_h.bbValve_access);
   	  	}
 
   	  	uint64_t recordtime = get_rtc_time();
 
-  	  	// Set global rocket state struct
-  		if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+  	  	// Set board state struct
+  		if(xSemaphoreTake(Board_h.bbState_access, 5) == pdPASS) {
   			if(!bar1_stat) {
-  				Rocket_h.fcState.bar1 = pres1;
+  				Board_h.bbState.bar1 = pres1;
   			}
 
   			if(!bar2_stat) {
-  				Rocket_h.fcState.bar2 = pres2;
+  				Board_h.bbState.bar2 = pres2;
   			}
 
-  			Rocket_h.fcState.imu1_A = XL_readings1;
-  			Rocket_h.fcState.imu1_W = angRate_readings1;
-  			Rocket_h.fcState.imu2_A = XL_readings2;
-  			Rocket_h.fcState.imu2_W = angRate_readings2;
+  			Board_h.bbState.imu1_A = XL_readings1;
+  			Board_h.bbState.imu1_W = angRate_readings1;
+  			Board_h.bbState.imu2_A = XL_readings2;
+  			Board_h.bbState.imu2_W = angRate_readings2;
 
-  			Rocket_h.fcState.pt1 = PT_calc(PT1_h, adc_values[ADC_PT1_I]);
-  			Rocket_h.fcState.pt2 = PT_calc(PT2_h, adc_values[ADC_PT2_I]);
-  			Rocket_h.fcState.pt3 = PT_calc(PT3_h, adc_values[ADC_PT3_I]);
-  			Rocket_h.fcState.pt4 = PT_calc(PT4_h, adc_values[ADC_PT4_I]);
-  			Rocket_h.fcState.pt5 = PT_calc(PT5_h, adc_values[ADC_PT5_I]);
+  			Board_h.bbState.pt1 = PT_calc(PT1_h, adc2_values[ADC2_PT1_I]);
+  			Board_h.bbState.pt2 = PT_calc(PT2_h, adc2_values[ADC2_PT2_I]);
+  			Board_h.bbState.pt3 = PT_calc(PT3_h, adc2_values[ADC2_PT3_I]);
+  			Board_h.bbState.pt4 = PT_calc(PT4_h, adc2_values[ADC2_PT4_I]);
+  			Board_h.bbState.pt5 = PT_calc(PT5_h, adc2_values[ADC2_PT5_I]);
+  			Board_h.bbState.pt6 = PT_calc(PT6_h, adc2_values[ADC2_PT6_I]);
+  			Board_h.bbState.pt7 = PT_calc(PT7_h, adc2_values[ADC2_PT7_I]);
+  			Board_h.bbState.pt8 = PT_calc(PT8_h, adc2_values[ADC2_PT8_I]);
+  			Board_h.bbState.pt9 = PT_calc(PT9_h, adc2_values[ADC2_PT9_I]);
+  			Board_h.bbState.pt10 = PT_calc(PT10_h, adc2_values[ADC2_PT10_I]);
 
-  			Rocket_h.fcState.bus24v_voltage = bus_voltage_calc(adc_values[ADC_24V_BUS_I], POWER_24V_RES_A, POWER_24V_RES_B);
-  			Rocket_h.fcState.bus12v_voltage = bus_voltage_calc(adc_values[ADC_12V_BUS_I], POWER_12V_RES_A, POWER_12V_RES_B);
-  			Rocket_h.fcState.bus5v_voltage = bus_voltage_calc(adc_values[ADC_5V_BUS_I], POWER_5V_RES_A, POWER_5V_RES_B);
-  			Rocket_h.fcState.bus3v3_voltage = bus_voltage_calc(adc_values[ADC_3V3_BUS_I], POWER_3V3_RES_A, POWER_3V3_RES_B);
+  			Board_h.bbState.bus24v_voltage = bus_voltage_calc(adc1_values[ADC1_24V_BUS_I], POWER_24V_RES_A, POWER_24V_RES_B);
+  			Board_h.bbState.bus12v_voltage = bus_voltage_calc(adc1_values[ADC1_12V_BUS_I], POWER_12V_RES_A, POWER_12V_RES_B);
+  			Board_h.bbState.bus5v_voltage = bus_voltage_calc(adc1_values[ADC1_5V_BUS_I], POWER_5V_RES_A, POWER_5V_RES_B);
+  			Board_h.bbState.bus3v3_voltage = bus_voltage_calc(adc1_values[ADC1_3V3_BUS_I], POWER_3V3_RES_A, POWER_3V3_RES_B);
 
-  			Rocket_h.fcState.bus24v_current = current_sense_calc(adc_values[ADC_24V_CURRENT_I], POWER_SHUNT_12V_24V, DIVIDER_12V_24V);
-  			Rocket_h.fcState.bus12v_current = current_sense_calc(adc_values[ADC_12V_CURRENT_I], POWER_SHUNT_12V_24V, DIVIDER_12V_24V);
-  			Rocket_h.fcState.bus5v_current = current_sense_calc(adc_values[ADC_5V_CURRENT_I], POWER_SHUNT_3V3_5V, DIVIDER_3V3_5V);
-  			Rocket_h.fcState.bus3v3_current = current_sense_calc(adc_values[ADC_3V3_CURRENT_I], POWER_SHUNT_3V3_5V, DIVIDER_3V3_5V);
+  			Board_h.bbState.bus24v_current = current_sense_calc(adc1_values[ADC1_24V_CURRENT_I], POWER_SHUNT_12V_24V, DIVIDER_12V_24V);
+  			Board_h.bbState.bus12v_current = current_sense_calc(adc1_values[ADC1_12V_CURRENT_I], POWER_SHUNT_12V_24V, DIVIDER_12V_24V);
+  			Board_h.bbState.bus5v_current = current_sense_calc(adc1_values[ADC1_5V_CURRENT_I], POWER_SHUNT_3V3_5V, DIVIDER_3V3_5V);
+  			Board_h.bbState.bus3v3_current = current_sense_calc(adc1_values[ADC1_3V3_CURRENT_I], POWER_SHUNT_3V3_5V, DIVIDER_3V3_5V);
 
-  			Rocket_h.fcState.vlv1_current = current_sense_calc(adc_values[ADC_VLV1_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
-  			Rocket_h.fcState.vlv2_current = current_sense_calc(adc_values[ADC_VLV2_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
-  			Rocket_h.fcState.vlv3_current = current_sense_calc(adc_values[ADC_VLV3_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+  			Board_h.bbState.vlv1_current = current_sense_calc(adc1_values[ADC1_VLV1_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+  			Board_h.bbState.vlv2_current = current_sense_calc(adc1_values[ADC1_VLV2_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+  			Board_h.bbState.vlv3_current = current_sense_calc(adc1_values[ADC1_VLV3_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+  			Board_h.bbState.vlv4_current = current_sense_calc(adc1_values[ADC1_VLV4_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+  			Board_h.bbState.vlv5_current = current_sense_calc(adc1_values[ADC1_VLV5_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
 
   			if(!TC_stat) {
   				if(!isnan(TCvalues[0])) {
-  					Rocket_h.fcState.tc1 = TCvalues[0];
+  					Board_h.bbState.tc1 = TCvalues[0];
   				}
   				if(!isnan(TCvalues[1])) {
-  					Rocket_h.fcState.tc2 = TCvalues[1];
+  					Board_h.bbState.tc2 = TCvalues[1];
   				}
   				if(!isnan(TCvalues[2])) {
-  					Rocket_h.fcState.tc3 = TCvalues[2];
+  					Board_h.bbState.tc3 = TCvalues[2];
+  				}
+  				if(!isnan(TCvalues[3])) {
+  					Board_h.bbState.tc4 = TCvalues[3];
+  				}
+  				if(!isnan(TCvalues[4])) {
+  					Board_h.bbState.tc5 = TCvalues[4];
+  				}
+  				if(!isnan(TCvalues[5])) {
+  					Board_h.bbState.tc6 = TCvalues[5];
   				}
   			}
 
   			if(!old_stat) {
-  				Rocket_h.fcState.vlv1_old = vlv1_old;
-  				Rocket_h.fcState.vlv2_old = vlv2_old;
-  				Rocket_h.fcState.vlv3_old = vlv3_old;
+  				Board_h.bbState.vlv1_old = vlv1_old;
+  				Board_h.bbState.vlv2_old = vlv2_old;
+  				Board_h.bbState.vlv3_old = vlv3_old;
+  				Board_h.bbState.vlv4_old = vlv4_old;
+  				Board_h.bbState.vlv5_old = vlv5_old;
   			}
 
-  			Rocket_h.fcState.timestamp = recordtime;
+  			Board_h.bbState.timestamp = recordtime;
 
-  			xSemaphoreGive(Rocket_h.fcState_access);
+  			xSemaphoreGive(Board_h.bbState_access);
   		}
   		else {
   			// No telemetry updated
-  			log_message(ERR_TELEM_NOT_UPDATED, FC_ERR_TYPE_TELEM_NUPDATED);
+  			log_message(ERR_TELEM_NOT_UPDATED, BB_ERR_TYPE_TELEM_NUPDATED);
   		}
 
   		Message telemsg = {0};
   		telemsg.type = MSG_TELEMETRY;
-  		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
-  			if(send_msg_to_device(LimeWire_d, &telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) == -2) {
+  		if(!pack_bb_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
+  			if(send_msg_to_device(&telemsg, 5, 11 + (4 * BB1_TELEMETRY_CHANNELS) + 5) == -2) {
   				// txbuffer full or memory error
-  	  			log_message(ERR_TELEM_MEM_ERR, FC_ERR_TYPE_TELEM_MEM_ERR);
+  	  			log_message(ERR_TELEM_MEM_ERR, BB_ERR_TYPE_TELEM_MEM_ERR);
   			}
   		}
 
@@ -2214,7 +2239,7 @@ void TelemetryTask(void *argument) {
 		uint32_t delta = HAL_GetTick() - startTime;
 		if(delta > (1000 / TELEMETRY_HZ) * 2) {
 			// telemetry collection overtime by more than 2x
-  			log_message(ERR_TELEM_OVERTIME, FC_ERR_TYPE_TELEM_OVERTIME);
+  			log_message(ERR_TELEM_OVERTIME, BB_ERR_TYPE_TELEM_OVERTIME);
 		}
 		osDelay((1000 / TELEMETRY_HZ) > delta ? (1000 / TELEMETRY_HZ) - delta : 1);
 	}
@@ -2254,40 +2279,16 @@ void ProcessPackets(void *argument) {
 	// Started processing thread
 	log_message(STAT_PACKET_TASK_STARTED, -1);
 	for(;;) {
-		Raw_message msg = {0};
-		int read_stat = server_read(&msg, 1000);
+		RawMessage msg = {0};
+		int read_stat = client_receive(&msg, 1000);
 		if(read_stat >= 0) {
 			// The way the msg.bufferptr memory is handled past this point is that any result that doesn't relay msg to a different destination should NOT continue early, any result that does relay msg should continue early
 			Message parsedmsg = {0};
 			if(deserialize_message(msg.bufferptr, msg.packet_len, &parsedmsg) > 0) {
 				switch(parsedmsg.type) {
-				    case MSG_TELEMETRY: {
-				        // Save and relay to Limewire
-				    	if(parsedmsg.data.telemetry.board_id == BOARD_FR) {
-				    		if(unpack_fr_telemetry(&(parsedmsg.data.telemetry), 5)) {
-				    			// Failed to save data
-				    			log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
-				    		}
-				    	}
-				    	else {
-					    	if(unpack_bb_telemetry(&(parsedmsg.data.telemetry), 5)) {
-					    		// Failed to save data
-					    		log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
-					    	}
-				    	}
-
-				    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
-				    		// Continue to prevent freeing memory we're still using
-				    		continue;
-				    	}
-				    	else {
-				    	  	// Server not up, target device not connected, or txbuffer is full
-				    	}
-				        break;
-				    }
 				    case MSG_VALVE_COMMAND: {
 				    	if(check_valve_id(parsedmsg.data.valve_command.valve_id)) {
-				    		if(get_valve_board(parsedmsg.data.valve_command.valve_id) == BOARD_FC) {
+				    		if(get_valve_board(parsedmsg.data.valve_command.valve_id) == bb_num) {
 				    			// Do valve command and send state message
 				    			Valve_State_t endState = set_and_update_valve(get_valve(parsedmsg.data.valve_command.valve_id), parsedmsg.data.valve_command.valve_state);
 				    			Message returnMsg = {0};
@@ -2295,74 +2296,23 @@ void ProcessPackets(void *argument) {
 				    			returnMsg.data.valve_state.valve_state = endState;
 				    			returnMsg.data.valve_state.valve_id = parsedmsg.data.valve_command.valve_id;
 				    			returnMsg.data.valve_state.timestamp = get_rtc_time();
-				      			if(send_msg_to_device(LimeWire_d, &returnMsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5) != 0) {
+				      			if(send_msg_to_device(&returnMsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5) != 0) {
 				      				// Server not up, target device not connected, or txbuffer is full
 				      			}
 				    		}
 				    		else {
-				    			// Relay to Bay Boards
-				    			if(send_raw_msg_to_device(get_valve_board(parsedmsg.data.valve_command.valve_id), &msg, 5) == 0) {
-						    		// Continue to prevent freeing memory we're still using
-						    		continue;
-				    			}
-				    			else {
-				    				// Server not up, target device not connected, or txbuffer is full
-				    			}
+				    			// Not a message for this bay board. This is bad because it means the flight computer is malfunctioning
+				    			log_message(ERR_PROCESS_VLV_CMD_BADID, BB_ERR_TYPE_BAD_VLVID);
 				    		}
 				    	}
 				    	else {
 				    		// Invalid valve id
-				    		log_message(ERR_PROCESS_VLV_CMD_BADID, FC_ERR_TYPE_BAD_VLVID);
-				    	}
-				        break;
-				    }
-				    case MSG_VALVE_STATE: {
-				        // Save and relay to Limewire
-				    	if(check_valve_id(parsedmsg.data.valve_state.valve_id)) {
-					    	switch(get_valve_board(parsedmsg.data.valve_state.valve_id)) {
-					    	    case BOARD_BAY_1: {
-					    	  	  	if(xSemaphoreTake(Rocket_h.bb1Valve_access, 5) == pdPASS) {
-					    	  	  		Rocket_h.bb1ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
-					    	  	  		xSemaphoreGive(Rocket_h.bb1Valve_access);
-					    	  	  	}
-					    	        break;
-					    	    }
-					    	    case BOARD_BAY_2: {
-					    	  	  	if(xSemaphoreTake(Rocket_h.bb2Valve_access, 5) == pdPASS) {
-					    	  	  		Rocket_h.bb2ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
-					    	  	  		xSemaphoreGive(Rocket_h.bb2Valve_access);
-					    	  	  	}
-					    	        break;
-					    	    }
-					    	    case BOARD_BAY_3: {
-					    	  	  	if(xSemaphoreTake(Rocket_h.bb3Valve_access, 5) == pdPASS) {
-					    	  	  		Rocket_h.bb3ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
-					    	  	  		xSemaphoreGive(Rocket_h.bb3Valve_access);
-					    	  	  	}
-					    	        break;
-					    	    }
-					    	    default: {
-					    	        // The flight computer should not receive valve state messages for its own valves
-					    	        break;
-					    	    }
-					    	}
-
-					    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
-					    		// Continue to prevent freeing memory we're still using
-					    		continue;
-					    	}
-					    	else {
-					    	  	// Server not up, target device not connected, or txbuffer is full
-					    	}
-				    	}
-				    	else {
-				    		// Invalid valve id
-				    		log_message(ERR_PROCESS_VLV_STATE_BADID, FC_ERR_TYPE_BAD_VLVID);
+				    		log_message(ERR_PROCESS_VLV_CMD_BADID, BB_ERR_TYPE_BAD_VLVID);
 				    	}
 				        break;
 				    }
 				    case MSG_DEVICE_COMMAND: {
-				    	if(parsedmsg.data.device_command.board_id == BOARD_FC) {
+				    	if(parsedmsg.data.device_command.board_id == bb_num) {
 				    		// Process device command
 				    		switch(parsedmsg.data.device_command.cmd_id) {
 				    			case DEVICE_CMD_RESET: {
@@ -2382,16 +2332,6 @@ void ProcessPackets(void *argument) {
 				    			}
 				    		}
 				    	}
-				    	else {
-			    			// Relay to other boards
-			    			if(send_raw_msg_to_device(parsedmsg.data.device_command.board_id, &msg, 5) == 0) {
-					    		// Continue to prevent freeing memory we're still using
-					    		continue;
-			    			}
-			    			else {
-			    				// Server not up, target device not connected, or txbuffer is full
-			    			}
-				    	}
 				    	break;
 				    }
 				    default: {
@@ -2401,7 +2341,7 @@ void ProcessPackets(void *argument) {
 			}
 			else {
 				// Unknown message type
-				log_message(ERR_UNKNOWN_LMP_PACKET, FC_ERR_TYPE_UNKNOWN_LMP);
+				log_message(ERR_UNKNOWN_LMP_PACKET, BB_ERR_TYPE_UNKNOWN_LMP);
 			}
 			free(msg.bufferptr);
 		}
@@ -2551,14 +2491,15 @@ void StartAndMonitor(void *argument)
 
   	init_adc(&hspi4, &(sensors_h.adc2_h));
 
-#error "here"
-
   	// TC ADCs
-  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC3_CS_GPIO_Port, TC3_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC3_CS_GPIO_Port, TC3_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc2_gain, ADS_DATA_RATE_600);
   	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[3]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc4_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[4]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc5_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[5]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc6_gain, ADS_DATA_RATE_600);
 
-  	if(ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, 3)) {
+  	if(ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, NUM_TCS)) {
   		// ADS thread start error
   		log_message(ERR_ADS_INIT_THREAD_ERR, -1);
   	}
@@ -2631,15 +2572,18 @@ void StartAndMonitor(void *argument)
   	// Start TCP client
   	switch(client_init(&loaded_config.flightcomputerIP, netif_is_link_up(&gnetif))) {
   		case 2: {
-  			// TODO threads didn't start
+  			// threads didn't start
+  			log_message(BB_ERR_TCP_CLIENT_INIT_THREAD, -1);
   			break;
   		}
   		case 1: {
-  			// TODO memory error
+  			// memory error
+  			log_message(BB_ERR_TCP_CLIENT_INIT_MEM_ERR, -1);
   			break;
   		}
   		default: {
-  			// TODO client initialized
+  			// client initialized
+  			log_message(BB_STAT_TCP_CLIENT_INIT, -1);
   			break;
   		}
   	}
@@ -2667,14 +2611,14 @@ void StartAndMonitor(void *argument)
 	uint8_t telemcounter = 0;
 	uint8_t statecounter = 0;
 
-	uint8_t limewireconnected = 0;
+	uint8_t fcconnected = 0;
 
 	uint32_t startTick = HAL_GetTick();
 	uint32_t lastflashfull = 0;
 	/* Infinite loop */
 	for(;;) {
 		errormsg_t logmsg;
-		if(!list_pop(errorMsgList, (void *)&logmsg, 5)) {
+		if(xQueueReceive(errorMsgList, (void *)&logmsg, 5) == pdPASS) {
 			uint8_t flashstat = write_raw_to_flash(logmsg.content, logmsg.len);
 			if(flashstat == 2) {
 				// Flash is full, send UDP message every 5 seconds
@@ -2728,87 +2672,37 @@ void StartAndMonitor(void *argument)
 				xSemaphoreGive(perierrormsg_mutex);
 			}
 
-			int limefd = get_device_fd(LimeWire_d);
-			if(limefd > -2) {
-				if(limewireconnected == 0 && limefd > -1) {
+			int constat = is_client_connected();
+			if(constat > -1) {
+				if(fcconnected == 0 && constat == 1) {
 					uint64_t valvetime = get_rtc_time();
-			  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
-			  	  		Valve_State_t vstates[3];
-						for(int i = 0;i < 3;i++) {
-							vstates[i] = Rocket_h.fcValveStates[i];
+			  	  	if(xSemaphoreTake(Board_h.bbValve_access, 5) == pdPASS) {
+			  	  		Valve_State_t vstates[NUM_VALVE_CHS];
+						for(int i = 0;i < NUM_VALVE_CHS;i++) {
+							vstates[i] = Board_h.bbValveStates[i];
 						}
-			  	  		xSemaphoreGive(Rocket_h.fcValve_access);
-						for(int i = 0;i < 3;i++) {
+			  	  		xSemaphoreGive(Board_h.bbValve_access);
+						for(int i = 0;i < NUM_VALVE_CHS;i++) {
 							Message statemsg = {0};
 							statemsg.type = MSG_VALVE_STATE;
 							statemsg.data.valve_state.timestamp = valvetime;
-							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, i);
+							statemsg.data.valve_state.valve_id = generate_valve_id(bb_num, i);
 							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
-						}
-			  	  	}
-			  	  	if(xSemaphoreTake(Rocket_h.bb1Valve_access, 5) == pdPASS) {
-			  	  		Valve_State_t vstates[7];
-						for(int i = 0;i < 7;i++) {
-							vstates[i] = Rocket_h.bb1ValveStates[i];
-						}
-			  	  		xSemaphoreGive(Rocket_h.bb1Valve_access);
-						for(int i = 0;i < 7;i++) {
-							Message statemsg = {0};
-							statemsg.type = MSG_VALVE_STATE;
-							statemsg.data.valve_state.timestamp = valvetime;
-							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_1, i);
-							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
-						}
-			  	  	}
-			  	  	if(xSemaphoreTake(Rocket_h.bb2Valve_access, 5) == pdPASS) {
-			  	  		Valve_State_t vstates[7];
-						for(int i = 0;i < 7;i++) {
-							vstates[i] = Rocket_h.bb2ValveStates[i];
-						}
-			  	  		xSemaphoreGive(Rocket_h.bb2Valve_access);
-						for(int i = 0;i < 7;i++) {
-							Message statemsg = {0};
-							statemsg.type = MSG_VALVE_STATE;
-							statemsg.data.valve_state.timestamp = valvetime;
-							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_2, i);
-							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
-						}
-			  	  	}
-			  	  	if(xSemaphoreTake(Rocket_h.bb3Valve_access, 5) == pdPASS) {
-			  	  		Valve_State_t vstates[7];
-						for(int i = 0;i < 7;i++) {
-							vstates[i] = Rocket_h.bb3ValveStates[i];
-						}
-			  	  		xSemaphoreGive(Rocket_h.bb3Valve_access);
-						for(int i = 0;i < 7;i++) {
-							Message statemsg = {0};
-							statemsg.type = MSG_VALVE_STATE;
-							statemsg.data.valve_state.timestamp = valvetime;
-							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_3, i);
-							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+							send_msg_to_device(&statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
 						}
 			  	  	}
 				}
-				if(limefd > -1) {
-					limewireconnected = 1;
-				}
-				else {
-					limewireconnected = 0;
-				}
+				fcconnected = constat;
 			}
 
 			if(telemcounter == 0) {
 		  		Message telemsg = {0};
 		  		telemsg.type = MSG_TELEMETRY;
-		  		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), get_rtc_time(), 5)) {
-		  			uint8_t tempbuffer[11 + (4 * FC_TELEMETRY_CHANNELS) + 5];
-		  			int buflen = serialize_message(&telemsg, tempbuffer, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5);
+		  		if(!pack_bb_telemetry_msg(&(telemsg.data.telemetry), get_rtc_time(), 5)) {
+		  			uint8_t tempbuffer[11 + (4 * BB1_TELEMETRY_CHANNELS) + 5];
+		  			int buflen = serialize_message(&telemsg, tempbuffer, 11 + (4 * BB1_TELEMETRY_CHANNELS) + 5);
 		  			if(buflen != -1) {
-		  				if(log_lmp_packet(tempbuffer, buflen) == 2) {
+ 		  				if(log_lmp_packet(tempbuffer, buflen) == 2) {
 		  					if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
 		  						send_flash_full();
 		  						lastflashfull = HAL_GetTick();
@@ -2823,18 +2717,18 @@ void StartAndMonitor(void *argument)
 			}
 
 			if(statecounter == 0) {
-		  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
-		  	  		Valve_State_t vstates[3];
-					for(int i = 0;i < 3;i++) {
-						vstates[i] = Rocket_h.fcValveStates[i];
+		  	  	if(xSemaphoreTake(Board_h.bbValve_access, 5) == pdPASS) {
+		  	  		Valve_State_t vstates[NUM_VALVE_CHS];
+					for(int i = 0;i < NUM_VALVE_CHS;i++) {
+						vstates[i] = Board_h.bbValveStates[i];
 					}
-		  	  		xSemaphoreGive(Rocket_h.fcValve_access);
+		  	  		xSemaphoreGive(Board_h.bbValve_access);
 					uint64_t valvetime = get_rtc_time();
-					for(int i = 0;i < 3;i++) {
+					for(int i = 0;i < NUM_VALVE_CHS;i++) {
 						Message statemsg = {0};
 						statemsg.type = MSG_VALVE_STATE;
 						statemsg.data.valve_state.timestamp = valvetime;
-						statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, i);
+						statemsg.data.valve_state.valve_id = generate_valve_id(bb_num, i);
 						statemsg.data.valve_state.valve_state = vstates[i];
 						uint8_t tempbuffer[MAX_VALVE_STATE_MSG_SIZE + 5];
 						int buflen = serialize_message(&statemsg, tempbuffer, MAX_VALVE_STATE_MSG_SIZE + 5);

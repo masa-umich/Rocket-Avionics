@@ -64,12 +64,12 @@ extern "C" {
 #define BB_EEPROM_VLV_EN_DEFAULT			0x01
 
 #define BB_EEPROM_FCIP_DEFAULT_1			192
-#define BB_EEPROM_FCIP_DEFAULT_2			0
+#define BB_EEPROM_FCIP_DEFAULT_2			168
 #define BB_EEPROM_FCIP_DEFAULT_3			0
 #define BB_EEPROM_FCIP_DEFAULT_4			10
 
 #define BB_EEPROM_BBIP_DEFAULT_1			192
-#define BB_EEPROM_BBIP_DEFAULT_2			0
+#define BB_EEPROM_BBIP_DEFAULT_2			168
 #define BB_EEPROM_BBIP_DEFAULT_3			0
 #define BB_EEPROM_BBIP_DEFAULT_4			15
 
@@ -84,6 +84,10 @@ extern "C" {
 #define ERROR_THROTTLE_MAX		10 // Not more than 15
 
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
+
+#define NUM_TCS				6
+#define NUM_SOLENOIDS		5
+#define NUM_VALVE_CHS		7
 
 #define SHUNT_RES_20M		(uint16_t)20
 #define SHUNT_RES_2M		(uint16_t)2
@@ -138,6 +142,7 @@ void Error_Handler(void);
 void set_system_time(uint32_t sec, uint32_t us);
 
 uint8_t log_message(const char *msgtext, int msgtype);
+uint8_t log_peri_message(const char *msgtext, int msgtype);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

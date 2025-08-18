@@ -775,6 +775,9 @@ int update_fd_set(fd_set *rfds, fd_set *efds) {
 }
 
 int is_server_running() {
+	if(!txMsgBuffer) {
+		return 0;
+	}
 	if(xSemaphoreTake(runningMutex, 2) == pdPASS) {
 		uint8_t stat = running;
 		xSemaphoreGive(runningMutex);
@@ -797,6 +800,9 @@ void drain_lists() {
 }
 
 int shutdown_server() {
+	if(!txMsgBuffer) {
+		return -1;
+	}
 	if(xSemaphoreTake(runningMutex, portMAX_DELAY) == pdPASS) {
 		if(!running) {
 			xSemaphoreGive(runningMutex);
@@ -838,6 +844,9 @@ int shutdown_server() {
 }
 
 int get_device_fd(Target_Device dev) {
+	if(!txMsgBuffer) {
+		return -1;
+	}
 	if(dev >= NUM_TARGET_DEVICES) {
 		return -2;
 	}

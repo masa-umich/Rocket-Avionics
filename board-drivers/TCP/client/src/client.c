@@ -7,18 +7,17 @@
 
 #include "client.h"
 #include "queue.h"
-#include "semphr.h"
-#include "task.h"
-#include "lwip/sockets.h"
 #include "log_errors.h"
+#include "errno.h"
+#include "stdio.h"
 
 QueueHandle_t txbuffer = NULL;
 QueueHandle_t rxbuffer = NULL;
 
 int conn_fd = -1;
-SemaphoreHandle_t netconn_use = NULL;
-SemaphoreHandle_t netconn_hold = NULL;
-SemaphoreHandle_t netconn_free = NULL;
+SemaphoreHandle_t conn_use = NULL;
+SemaphoreHandle_t conn_hold = NULL;
+SemaphoreHandle_t conn_free = NULL;
 
 uint8_t running = 0;
 SemaphoreHandle_t runningMutex = NULL;
@@ -26,10 +25,10 @@ SemaphoreHandle_t runningMutex = NULL;
 uint8_t connected = 0;
 SemaphoreHandle_t connectedMutex = NULL;
 
-SemaphoreHandle_t client_stop = NULL;
+SemaphoreHandle_t client_stop_sig = NULL;
 SemaphoreHandle_t client_stopped = NULL;
 
-struct sockaddr_in fc_addr;
+struct sockaddr_in fc_addr = {0};
 
 int client_init(ip4_addr_t *fcaddr, int start) {
 	fc_addr.sin_family = AF_INET;
@@ -39,15 +38,19 @@ int client_init(ip4_addr_t *fcaddr, int start) {
 	txbuffer = xQueueCreate(100, sizeof(RawMessage));
 	rxbuffer = xQueueCreate(100, sizeof(RawMessage));
 
-	netconn_use = xSemaphoreCreateBinary();
-	netconn_hold = xSemaphoreCreateBinary();
-	netconn_free = xSemaphoreCreateBinary();
-	runningMutex = xSemaphoreCreateMutex();
+	conn_use = xSemaphoreCreateBinary();
+	conn_hold = xSemaphoreCreateBinary();
+	conn_free = xSemaphoreCreateBinary();
 	connectedMutex = xSemaphoreCreateMutex();
-	client_stop = xSemaphoreCreateBinary();
+	client_stop_sig = xSemaphoreCreateBinary();
 	client_stopped = xSemaphoreCreateBinary();
 
-	if(txbuffer == NULL || rxbuffer == NULL || netconn_use == NULL || netconn_hold == NULL || netconn_free == NULL) {
+	if(txbuffer == NULL || rxbuffer == NULL || conn_use == NULL || conn_hold == NULL || conn_free == NULL || connectedMutex == NULL || client_stop_sig == NULL || client_stopped == NULL) {
+		return 1;
+	}
+
+	runningMutex = xSemaphoreCreateMutex(); // This is the "test" semaphore. We can check this throughout the code and if it's not NULL then we can be confident that the other semaphores are also not NULL
+	if(runningMutex == NULL) {
 		return 1;
 	}
 
@@ -70,7 +73,7 @@ int client_init(ip4_addr_t *fcaddr, int start) {
     };
 
     receiveTaskHandle = osThreadNew(client_receive_thread, NULL, &receiveTask_attributes);
-    sendTaskHandle = osThreadNew(client_send_thread, NULL, &sendTaskHandle);
+    sendTaskHandle = osThreadNew(client_send_thread, NULL, &sendTask_attributes);
 
     if(receiveTaskHandle == NULL || sendTaskHandle == NULL) {
     	return 2;
@@ -81,6 +84,7 @@ int client_init(ip4_addr_t *fcaddr, int start) {
 
 void client_receive_thread(void *arg) {
 	for(;;) {
+		osDelay(100);
 		uint8_t stat;
 		do {
 			stat = 0;
@@ -151,12 +155,13 @@ void client_receive_thread(void *arg) {
         		}
         		case EHOSTUNREACH: {
         			// no route to host
-        	    	log_message(BB_ERR_TCP_CLIENT_CONNECT_NRTE, BB_ERR_TYPE_TCP_CLIENT_CONNECT);
+        	    	log_peri_message(BB_ERR_TCP_CLIENT_CONNECT_NRTE, BB_ERR_PERI_TYPE_CONNECT);
+        	    	osDelay(500);
         			break;
         		}
         		case ECONNABORTED: {
-        			// connection internally aborted
-        	    	log_message(BB_ERR_TCP_CLIENT_CONNECT_ABORT, BB_ERR_TYPE_TCP_CLIENT_CONNECT);
+        			// connection internally aborted - also if the connection times out
+        	    	log_peri_message(BB_ERR_TCP_CLIENT_CONNECT_ABORT, BB_ERR_PERI_TYPE_CONNECT);
         			break;
         		}
         		case ENOBUFS: {
@@ -193,7 +198,7 @@ void client_receive_thread(void *arg) {
 			free(msg.bufferptr);
 		}
 
-		xSemaphoreGive(netconn_use);
+		xSemaphoreGive(conn_use);
 
 		xSemaphoreTake(connectedMutex, portMAX_DELAY);
 		connected = 1;
@@ -204,18 +209,18 @@ void client_receive_thread(void *arg) {
 	    fd_set efdset;
 	    struct timeval timeout;
 
-	    FD_ZERO(&rfdset);
-	    FD_ZERO(&efdset);
-	    FD_SET(conn_fd, &rfdset);
-	    FD_SET(conn_fd, &efdset);
-
 	    timeout.tv_sec = 0;
 	    timeout.tv_usec = 100000;
 
 	    for(;;) {
-			if(xSemaphoreTake(client_stop, 0) == pdPASS) {
+			if(xSemaphoreTake(client_stop_sig, 0) == pdPASS) {
 				break;
 			}
+
+		    FD_ZERO(&rfdset);
+		    FD_ZERO(&efdset);
+		    FD_SET(conn_fd, &rfdset);
+		    FD_SET(conn_fd, &efdset);
 
 	    	int ready = select(conn_fd + 1, &rfdset, NULL, &efdset, &timeout);
 
@@ -294,7 +299,7 @@ void client_receive_thread(void *arg) {
 	            else if(FD_ISSET(conn_fd, &efdset)) {
 	            	int err = 0;
                     socklen_t len = sizeof(err);
-                    if(getsockopt(connection_fd, SOL_SOCKET, SO_ERROR, &err, &len) == 0 && err != 0) {
+                    if(getsockopt(conn_fd, SOL_SOCKET, SO_ERROR, &err, &len) == 0 && err != 0) {
                         switch(err) {
                         	case ECONNRESET: {
                         		// reset by peer, closing
@@ -364,8 +369,8 @@ void client_receive_thread(void *arg) {
 		// when the connection is going to be closed
 	    // closed
     	log_message(BB_STAT_TCP_CLIENT_CLOSED, -1);
-		xSemaphoreGive(netconn_hold);
-		xSemaphoreTake(netconn_free, portMAX_DELAY);
+		xSemaphoreGive(conn_hold);
+		xSemaphoreTake(conn_free, portMAX_DELAY);
 		// close connection
 		xSemaphoreTake(connectedMutex, portMAX_DELAY);
 		connected = 0;
@@ -379,10 +384,10 @@ void client_receive_thread(void *arg) {
 
 void client_send_thread(void *arg) {
 	for(;;) {
-		xSemaphoreTake(netconn_use, portMAX_DELAY);
+		xSemaphoreTake(conn_use, portMAX_DELAY);
 		for(;;) {
 			// send loop
-			if(xSemaphoreTake(netconn_hold, 0) == pdPASS) {
+			if(xSemaphoreTake(conn_hold, 0) == pdPASS) {
 				break;
 			}
 
@@ -415,6 +420,10 @@ void client_send_thread(void *arg) {
 			    	    	log_message(BB_ERR_TCP_CLIENT_SEND_MEM_ERR, BB_ERR_TYPE_TCP_CLIENT_SEND);
 			    	        break;
 			    	    }
+			    	    case ECONNRESET: {
+			    	    	// do nothing since the receive thread will handle this
+			    	    	break;
+			    	    }
 			    	    default: {
 			    	    	// unknown error when sending data, use errno in message
 		        	    	char logmsg[sizeof(BB_ERR_TCP_CLIENT_SEND_UNKNOWN) + 3];
@@ -429,7 +438,7 @@ void client_send_thread(void *arg) {
 		}
 		// stopped by receive thread
     	log_message(BB_ERR_TCP_CLIENT_SEND_STOPPED, -1);
-		xSemaphoreGive(netconn_free);
+		xSemaphoreGive(conn_free);
 	}
 }
 
@@ -463,6 +472,9 @@ int client_receive(RawMessage *msg, TickType_t block) {
 }
 
 int is_client_connected() {
+	if(!runningMutex) {
+		return 0;
+	}
 	if(xSemaphoreTake(connectedMutex, 2) == pdPASS) {
 		uint8_t stat = connected;
 		xSemaphoreGive(connectedMutex);
@@ -474,6 +486,9 @@ int is_client_connected() {
 }
 
 int client_stop() {
+	if(!runningMutex) {
+		return -1;
+	}
 	xSemaphoreTake(runningMutex, portMAX_DELAY);
 	if(!running) {
 		xSemaphoreGive(runningMutex);
@@ -483,14 +498,16 @@ int client_stop() {
 		running = 0;
 		xSemaphoreGive(runningMutex);
 	}
-
-	xSemaphoreGive(client_stop);
+	xSemaphoreGive(client_stop_sig);
 	xSemaphoreTake(client_stopped, portMAX_DELAY);
 
 	return 0;
 }
 
 int client_reinit() {
+	if(!runningMutex) {
+		return -1;
+	}
 	xSemaphoreTake(runningMutex, portMAX_DELAY);
 	if(running) {
 		xSemaphoreGive(runningMutex);

@@ -8,6 +8,11 @@
 #ifndef INC_CLIENT_H_
 #define INC_CLIENT_H_
 
+#include "lwip/api.h"
+#include "lwip/sockets.h"
+#include "main.h"
+#include "semphr.h"
+
 #define TCP_KEEP_ALIVE_IDLE	5
 #define TCP_KEEP_ALIVE_INTERVAL	3
 #define TCP_KEEP_ALIVE_COUNT 3

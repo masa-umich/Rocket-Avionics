@@ -194,7 +194,16 @@ void HAL_ETH_ErrorCallback(ETH_HandleTypeDef *handlerEth)
 }
 
 /* USER CODE BEGIN 4 */
-
+void ethernetif_patch(void* argument)
+{
+  for( ;; )
+  {
+    if (osSemaphoreAcquire(TxPktSemaphore, TIME_WAITING_FOR_INPUT) == osOK)
+    {
+    	HAL_ETH_ReleaseTxPacket(&heth);
+    }
+  }
+}
 /* USER CODE END 4 */
 
 /*******************************************************************************
@@ -287,7 +296,12 @@ static void low_level_init(struct netif *netif)
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN PHY_PRE_CONFIG */
-
+  osThreadAttr_t attributes1;
+  memset(&attributes1, 0x0, sizeof(osThreadAttr_t));
+  attributes1.name = "EthClr";
+  attributes1.stack_size = INTERFACE_THREAD_STACK_SIZE;
+  attributes1.priority = osPriorityRealtime;
+  osThreadNew(ethernetif_patch, NULL, &attributes1);
 /* USER CODE END PHY_PRE_CONFIG */
   /* Set PHY IO functions */
   LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
@@ -924,7 +938,7 @@ void HAL_ETH_TxFreeCallback(uint32_t * buff)
 {
 /* USER CODE BEGIN HAL ETH TxFreeCallback */
 
-  pbuf_free((struct pbuf *)buff);
+  pbuf_free_callback((struct pbuf *)buff);
 
 /* USER CODE END HAL ETH TxFreeCallback */
 }

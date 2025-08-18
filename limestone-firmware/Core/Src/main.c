@@ -2742,6 +2742,14 @@ void StartAndMonitor(void *argument)
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
 
+
+  int sockpls = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  struct sockaddr_in testaddr;
+  memset(&testaddr, 0, sizeof(testaddr));
+  testaddr.sin_family = AF_INET;
+  testaddr.sin_port = htons(5000);
+  testaddr.sin_addr.s_addr = inet_addr("192.168.0.5");
+  connect(sockpls, (struct sockaddr *)&testaddr, sizeof(testaddr));
   	// Signal end of critical section
     inittimers_t * timers = (inittimers_t *) argument;
 

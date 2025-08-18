@@ -5,6 +5,8 @@ Read Me last updated: 8/15/2025
 ## Important Notes:
 Major STM32 bug: the EthIf task does not get enough stack by default, you must go into the ethernetif.c file and change the INTERFACE_THREAD_STACK_SIZE definition at the top from 350 to anything above 380 (I would pick 500 to be safe). If this is not done, the task will start corrupting memory as soon as it starts.
 
+Major STM32 LAN8742 driver bug: The Ethernet link output does not free sent TX packets until the TX descriptors have run out of space. One fix is to add a task that waits on the tx buffer semaphore and clears the descriptors of sent packets every time the LAN chip triggers a TX complete. See ethernetif.c ethernet_patch(), along with the initialization of the task in low_level_init() for an example.
+
 
 ## EEPROM Data Ordering
 
