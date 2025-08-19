@@ -36,7 +36,7 @@ email pickos@umich.edu OR the current A&R team lead.
 #include <iomanip>
 
 #include "noise_generator.hpp"
-#include "speed_LUT.hpp"
+#include "speed_LUT.h"
 
 using namespace std;
 
