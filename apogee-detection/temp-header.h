@@ -71,6 +71,13 @@ typedef struct {
 	float gps_alt;
 	float bar1;
 	float bar2;
+
+	//***
+	//not in main.c but needed
+	float bar1_temp_C;
+	float bar2_temp_C;
+	//*** 
+
 	float bus24v_voltage;
 	float bus24v_current;
 	float bus12v_voltage;

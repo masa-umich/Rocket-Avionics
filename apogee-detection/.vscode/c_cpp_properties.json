@@ -22,8 +22,9 @@
         "${workspaceFolder}/../board-drivers/LSM6DSO32XTR/inc",
         "${workspaceFolder}/../board-drivers/LSM6DSO32XTR/inc",
         "${workspaceFolder}/../board-drivers/VLVs/inc",
+        "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/",
         "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/portable/**",
-        "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang",
+        "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang"
 
       ],
       "browse": {

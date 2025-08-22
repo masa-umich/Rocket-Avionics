@@ -4,6 +4,9 @@
 //size of the array of readings we maintain during the flight
 //used with the barometer and the IMU
 #define AD_CAPACITY 5
+#define CROSS_SECT_AREA 0.08
+#define MASS_AT_MECO 255 //kg
+#define CD 0.50 //drag coefficient
 
 typedef struct 
 {
@@ -40,6 +43,10 @@ float ad_mean(int size, float * arr);
 
 int ad_min(int x, int y);
 
+float compute_rho(float height);
+
+float speed_of_sound(float height);
+
 void insert(Detector * detector, float reading1, float reading2, FlightPhase phase);
 
 int is_buffer_average_less_than_this_value(Detector *detector, float search_value);
@@ -55,7 +62,7 @@ float advance_chunk();
 //wait-time helper 
 float wait_time_peicewise();
 
-TickType_t compute_wait_time();
+float compute_wait_time(int meco_time, float avg_pressure, float avg_temp);
 
 //phase 2
 int detect_apogee(Detector *detector);
