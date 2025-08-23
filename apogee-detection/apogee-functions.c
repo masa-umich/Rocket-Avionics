@@ -14,14 +14,28 @@
 //Rocket_State_t, Flight_Computer_State_t etc.
 //Made while I was building this file out so I didn't need to 
 //change main.c/main.h in limestone-firmware part of repo! 
-//Needed becuase this program couldn't 'see' Rocket_h - the main rocket handle 
+//Needed becuase my intellisense couldn't 'see' Rocket_h - the main rocket handle 
 #include "temp-header.h" 
+
+//all necessary environment / rocket parameters defined here
+const float CROSS_SECT_AREA = 0.08f;     // m^2
+const float MASS_AT_MECO = 255.0f;       // kg
+const float CD = 0.50f;                   //drag coefficient
+
+const float P_SEA_LEVEL = 1.0f;          // atmospheres
+const float P_11k = 0.2301575866f;       // atmospheres  
+const float LAPSE_RATE = 0.0065f;        // Celsius per meter
+const float T_SEA_LEVEL = 293.0f;        // Kelvin (20 deg C)
+const float T_ISO = 216.65f;             // temp constant in isothermic region
+const float G = 9.8f;                    // gravity
+const float MOLAR_MASS_AIR = 0.02896f;   // kg/mol
+const float R_GAS_CONST = 8.315f;        // gas constant
 
 float ad_mean(int size, float * arr)
 {
     if (size == 0)
-        return 0;
-    float sum = 0;
+        return 0.0f;
+    float sum = 0.0f;
     for(int i = 0; i < size; ++i)
         sum += arr[i];
 
@@ -35,21 +49,19 @@ int ad_min(int x, int y)
     else return y;
 }
 
-float compute_rho(float height)
+int ad_max(int x, int y)
 {
-
-}
-
-float speed_of_sound(float height)
-{
-
+    if(x > y)
+        return x;
+    else return y;
 }
 
 void insert(Detector * detector, float reading1, float reading2, FlightPhase phase)
 {
     //WARNING!!!! COMPARING FLOAT TO ZERO HAS CHANCE OF FAILURE!!!!!!
-    float bar1_reading = reading1 / 100.0; //Division by 100.0 may not be necessary here
-    if(bar1_reading == 0.0){                  //Depending on the barometer value received from the driver
+    //TODO: VERIFY UNITIS HERE
+    float bar1_reading = reading1 / 100.0f; //Division by 100.0 may not be necessary here
+    if(bar1_reading == 0.0f){               //Depending on the barometer value received from the driver
         bar1_reading = ad_mean(detector->size_1, detector->readings_1);
     }
 
@@ -59,8 +71,9 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
     detector->size_1 = ad_min(detector->size_1 + 1, AD_CAPACITY);
 
     //WARNING!!!! COMPARING FLOAT TO ZERO HAS CHANCE OF FAILURE!!!!!!
-    float bar2_reading = reading2 / 100.0; //Division by 100.0 may not be necessary here 
-    if(bar2_reading == 0.0){                  //Depending on the barometer value received from the driver
+    //TODO: VERIFY UNITS HERE
+    float bar2_reading = reading2 / 100.0f;    //Division by 100.0 may not be necessary here 
+    if(bar2_reading == 0.0f){                  //Depending on the barometer value received from the driver
         bar2_reading = ad_mean(detector->size_2, detector->readings_2);
     }
 
@@ -121,7 +134,7 @@ int is_buffer_average_greater_than_this_value(Detector * detector, float search_
             if (detector->average[i] > search_value)
                 ++count;
         }
-        if (count >= (AD_CAPACITY * 0.8))
+        if (count >= (AD_CAPACITY * 0.8f))
             return 1;
     }
     return 0;
@@ -154,50 +167,119 @@ int detect_apogee(Detector *detector)
 
 int detect_altitude(Detector * detector, FlightPhase phase)
 {
-    if (phase == ST_WAIT_DROGUE)
-        return is_buffer_average_greater_than_this_value(detector, 825); //approximate pressure in hPa at 1500 m
+    if (phase == ST_WAIT_DROGUE)                         //TODO:VERIFY UNITS HERE
+        return is_buffer_average_greater_than_this_value(detector, 825.0f); //approximate pressure in hPa at 1500 m
 
-    else if (phase == ST_WAIT_MAIN)
-        return is_buffer_average_greater_than_this_value(detector, 975); //aproximate pressure in hPa at 300 m 
+    else if (phase == ST_WAIT_MAIN)                      //TODO:VERIFY UNITS HERE
+        return is_buffer_average_greater_than_this_value(detector, 975.0f); //aproximate pressure in hPa at 300 m 
     
     else 
         return 0;
 }
 
-float speed_of_sound(float height)
+//Accepts temperature in Kelvin, returns sp of sound in m/s
+float speed_of_sound(float temp)
 {
-
+    const float gamma = 1.4f;
+    float Rspec = R_GAS_CONST / MOLAR_MASS_AIR;
+    return sqrtf(gamma * Rspec * temp);
 }
 
-float compute_rho(float height)
+//Accepts temperatures in Kelvin, pressure in pascals?? 
+float compute_rho(float pressure, float temp)
+{             
+    return (pressure * MOLAR_MASS_AIR) / (R_GAS_CONST * temp);
+}
+
+//MECO expected to occur below 11,000 m 
+//So here we will just use the equation for the troposphere. 
+//If that changes and we suspect we'll need to compute height above 11,000 m 
+//we should add a separate `if` branch for the isotropic region (cause the formulas change).
+//For the exact math, see Apogee Detection PDR slide on 'Noise Generation' 
+float compute_height(float avg_pressure /*, float avg_temp*/)
 {
-    const double Temp_K = (compute_temp(height) / 100.0) + 273.15; // C×100 -> K
-    const double P_Pa = compute_pressure(height);               // numerically Pa
-    return (P_Pa * M) / (R * Temp_K);
+    
+    float expo = (R_GAS_CONST * LAPSE_RATE) / (G * MOLAR_MASS_AIR);
+    float estimated_height = (T_SEA_LEVEL / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_SEA_LEVEL, expo));
+
+ 
+    return estimated_height;
 }
 
 //wait-time helper 
-float advance_chunk()
+float advance_chunk(float *h, float *v, float chunk_dt, float press, float temp)
 {
+    const float local_s_of_s  = speed_of_sound(temp);
+    const float rho = compute_rho(press, temp); // air density           
+    const float drag_accel_coeff = ad_max(1e-9f, 0.5f * rho * CD * CROSS_SECT_AREA / MASS_AT_MECO); // guard
 
+    // Helper lambdas for closed-form v(t)
+    const float s      = sqrtf(drag_accel_coeff/G);
+    const float omega  = sqrtf(G*drag_accel_coeff);
+
+    //CLOSED FORM SOLUTION to dv/dt = -g -(drag_coeff_accel)v^2
+    //Since we are precomputing drag_coeff_accel once per chunk, we treat it as constant.
+    //This simplifies the above differential equation allowing us to come to this clean
+    //solution that we can simply evaluate once per chunk! 
+    //*******************************************************/
+    #define vel_at(t) (sqrtf(G/drag_accel_coeff) * tanf(atanf(s*(*v)) - omega*(t)))
+    //*******************************************************/
+
+    // Time (with this drag_accel_coeff) to drop to local Mach 1 speed
+    //This is just solving the above closed form solution for t 
+    const float t_to_mach = ad_max(0.0f, (atanf(s*(*v)) - atanf(s*local_s_of_s)) / omega);
+
+    // Use at most chunk_dt this pass
+    const float t_used = ad_min(chunk_dt, t_to_mach);
+    const float v_new  = vel_at(t_used);
+
+    // Altitude update: trapezoid (good within a short chunk)
+    const float dh = 0.5f * ((*v) + v_new) * t_used;
+
+    //Update 
+    *h += dh;
+    *v  = v_new;
+    return t_used; // caller decides if we reached Mach 1
 }
 
 //wait-time helper 
-float wait_time_peicewise()
+float wait_time_peicewise(float h0, float v0, float pressure, float temp, float chunk_dt, float max_time)
 {
+    float t_tot = 0.0, h = h0, v = v0;
+    if (fabsf(v) <= speed_of_sound(h))
+        return 0.0f;
 
+    for (int i = 0 ; i < (int)ceilf(max_time/chunk_dt); ++i)
+    {
+        const float local_s_of_s = speed_of_sound(h);
+        if(fabsf(v) <= local_s_of_s)
+            break;
+        
+        float used = advance_chunk(&h, &v, chunk_dt, pressure, temp);
+        t_tot += used;
+
+        // If we hit Mach within this chunk (used < chunk_dt), stop.
+        if (used + 1e-9f < chunk_dt) 
+            break;
+    }
+    return t_tot;
 }
 
 
 float compute_wait_time(int meco_time, float avg_pressure, float avg_temp)
 {
+    //TODO:
     //goal here is to use integer division to index into our lookup
-    //table to get estimate of current speed. VERIFY UNITS HERE.
+    //table to get estimate of current speed. 
+    //VERIFY UNITS HERE.
     float current_speed = speed_LUT[(int)(meco_time / 25)];
 
-    //estimate height based on current temp and pressure
+    float current_height = compute_height(avg_pressure /*,avg_temp*/);
 
-    float wait_s = wait_time_peicewise()
+    float wait_s = wait_time_peicewise(current_height, current_speed, avg_pressure, avg_temp, 0.5f, 20.0f);
+
+    //TODO: VERIFY UNITIS HERE
+    return wait_s;
 }
 
 static void apogee_task(void *arg)
@@ -226,15 +308,15 @@ static void apogee_task(void *arg)
 
     while (1)
     {
-        float bar1 = 0;
-        float bar2 = 0;
-        float imu1 = 0;
-        float imu2 = 0;
+        float bar1 = 0.0f;
+        float bar2 = 0.0f;
+        float imu1 = 0.0f;
+        float imu2 = 0.0f;
 
         //temp from barometers not yet implemented in barometer driver
         //but would be helpful here, otherwise will need to estimate it
-        float bar1_temp_C = 0;
-        float bar2_temp_C = 0;
+        float bar1_temp_C = 0.0f;
+        float bar2_temp_C = 0.0f;
 
         if (xSemaphoreTake(Rocket_h.fcState_access, pdMS_TO_TICKS(5)) == pdPASS)
         {
@@ -281,8 +363,8 @@ static void apogee_task(void *arg)
                         //emergency fallback, avg the two most recent barometer readings
                         else
                         {
-                            //VERIFY CORRECT UNITS (divide by 100 necessary or no?)
-                            avg_pressure = 0.5 * ((bar1/100.0) + (bar2/100.0));
+                            //TODO: VERIFY UNITS HERE
+                            avg_pressure = 0.5f * ((bar1/100.0f) + (bar2/100.0f));
                         }
 
                         //if temp buffer is ready just get the average
@@ -294,12 +376,16 @@ static void apogee_task(void *arg)
                         //emergency fallback, avg the two most recent temperature readings
                         else
                         {
-                            //VERIFY CORRECT UNITS !!! (divide by 100 necessary here or no?)
-                            avg_temp = 0.5 * ((bar1_temp_C/100.0) + (bar2_temp_C/100.0));
+                            //TODO: VERIFY UNITS HERE 
+                            avg_temp = 0.5f * ((bar1_temp_C/100.0f) + (bar2_temp_C/100.0f));
                         }
 
                             int meco_time = (int)(meco_tick * portTICK_PERIOD_MS);
-                            lockout_tick = pdMS_TO_TICKS(compute_wait_time(meco_time, avg_pressure, avg_temp));
+
+                            int wait_time_s = compute_wait_time(meco_time, avg_pressure, avg_temp);
+
+                            //TODO: VERIFY UNITS HERE
+                            lockout_tick = pdMS_TO_TICKS(wait_time_s);
                     }
                 }
             }

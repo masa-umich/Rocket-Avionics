@@ -3,10 +3,7 @@
 
 //size of the array of readings we maintain during the flight
 //used with the barometer and the IMU
-#define AD_CAPACITY 5
-#define CROSS_SECT_AREA 0.08
-#define MASS_AT_MECO 255 //kg
-#define CD 0.50 //drag coefficient
+#define AD_CAPACITY 5          
 
 typedef struct 
 {
@@ -43,10 +40,16 @@ float ad_mean(int size, float * arr);
 
 int ad_min(int x, int y);
 
-float compute_rho(float height);
+//density of air a specific pressure, & temp
+float compute_rho(float pressure, float temp);
 
-float speed_of_sound(float height);
+//speed of sound at a specific temp
+float speed_of_sound(float temp);
 
+//estimate our height given pressure and temp
+float compute_height(float avg_pressure /*,float avg_temp*/);
+
+//safely inserts data from barometers, imus using a circular buffer 
 void insert(Detector * detector, float reading1, float reading2, FlightPhase phase);
 
 int is_buffer_average_less_than_this_value(Detector *detector, float search_value);
@@ -57,11 +60,13 @@ int is_buffer_average_greater_than_this_value(Detector *detector, float search_v
 int detect_MECO(Detector *detector);
 
 //wait-time helper 
-float advance_chunk();
+float advance_chunk(float *h, float *v, float chunk_dt, float press, float temp);
 
 //wait-time helper 
-float wait_time_peicewise();
+float wait_time_peicewise(float h0, float v0, float pressure, float temp, float chunk_dt, float max_time);
 
+//computes the time the rocket will take to drop back below mach 1
+//needs meco_time -> to index into speed_LUT for estimated velocity
 float compute_wait_time(int meco_time, float avg_pressure, float avg_temp);
 
 //phase 2
