@@ -40,16 +40,26 @@ float ad_mean(int size, float * arr);
 
 int ad_min(int x, int y);
 
-//density of air a specific pressure, & temp
+int ad_max(int x, int y); 
+
+//Accepts temperatures in Kelvin
+//Accepts pressures in hPa (converts to Pa)
 float compute_rho(float pressure, float temp);
 
-//speed of sound at a specific temp
+//Accepts temperature in Kelvin
+//Returns sp of sound in m/s
 float speed_of_sound(float temp);
 
-//estimate our height given pressure and temp
+//Estimate our height given pressure and temp
+//Expects hPa and Kelvin
 float compute_height(float avg_pressure /*,float avg_temp*/);
 
-//safely inserts data from barometers, imus using a circular buffer 
+//Safely inserts data from barometers & imus using a circular buffer. 
+//If we 'miss' a reading from a sensor, don't pass in bad data! Pass 0.0f
+//Reason: this insert module will be used for barometer temp, barometer pressure, 
+//and IMU x acceleration (up), and relies on imputation to handle missed readings.
+//If the IMU or barometer driver misses data from the sensor it should pass 0.0f. 
+//to the Flight_Computer_State_t in main.c so the data is good by the time it reaches here
 void insert(Detector * detector, float reading1, float reading2, FlightPhase phase);
 
 int is_buffer_average_less_than_this_value(Detector *detector, float search_value);
@@ -67,7 +77,7 @@ float wait_time_peicewise(float h0, float v0, float pressure, float temp, float 
 
 //computes the time the rocket will take to drop back below mach 1
 //needs meco_time -> to index into speed_LUT for estimated velocity
-float compute_wait_time(int meco_time, float avg_pressure, float avg_temp);
+float compute_wait_time(int meco_time_ms, float avg_pressure, float avg_temp);
 
 //phase 2
 int detect_apogee(Detector *detector);

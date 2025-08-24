@@ -640,6 +640,9 @@ void launch()
         cout << "MECO detected at approximately: " << heights[MECO_time] << " meters\n";
         summary.MECO_altitude = heights[MECO_time];
 
+        //BREAKS if MECO_time happens after 30 seconds for the current LUT. 
+        //If you want longer times get a bigger LUT (good), or clamp this to the biggest 
+        //table index (less good, answer will be wrong)
         double current_speed = speed_LUT[static_cast<int>(MECO_time / 25)];
         summary.MECO_speed = current_speed;
 
