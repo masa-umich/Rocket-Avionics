@@ -140,7 +140,7 @@
 "./Middlewares/Third_Party/LwIP/src/netif/ppp/utils.o"
 "./Middlewares/Third_Party/LwIP/src/netif/ppp/vj.o"
 "./Middlewares/Third_Party/LwIP/system/OS/sys_arch.o"
-"./TCP/server/src/messages.o"
+"./TCP/LMP/src/messages.o"
 "./TCP/server/src/server.o"
 "./TCP/server/src/tsqueue.o"
 "./VLVs/src/VLVs.o"
