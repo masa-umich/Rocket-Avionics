@@ -127,7 +127,9 @@ int IMU_init(IMU* IMU) {
 int IMU_getAccel(IMU* IMU, Accel* accel) {
 	uint8_t buf[6];
 
-	IMU_read(IMU, IMU_OUTX_L_A, buf, 6);
+	if(IMU_read(IMU, IMU_OUTX_L_A, buf, 6) != HAL_OK) {
+		return -1;
+	}
 	//We are able to do a single read because when doing multiple reads, it will automatically increment the register address
 	//This is good not only for code duplication, but also reduces overhead
 	//The option to disable this is in the datasheet under CTRL3_C
