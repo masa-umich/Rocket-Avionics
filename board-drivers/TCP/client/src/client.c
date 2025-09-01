@@ -15,6 +15,8 @@ QueueHandle_t txbuffer = NULL;
 QueueHandle_t rxbuffer = NULL;
 
 int conn_fd = -1;
+size_t lmpmsgbufferlen = 0;
+uint8_t lmpmsgbuffer[MAX_MSG_LEN];
 SemaphoreHandle_t conn_use = NULL;
 SemaphoreHandle_t conn_hold = NULL;
 SemaphoreHandle_t conn_free = NULL;
@@ -62,14 +64,14 @@ int client_init(ip4_addr_t *fcaddr, int start) {
 
     const osThreadAttr_t receiveTask_attributes = {
       .name = "receiveTask",
-      .stack_size = 512 * 6,
-      .priority = (osPriority_t) osPriorityNormal,
+      .stack_size = 1024 * 6,
+      .priority = (osPriority_t) osPriorityAboveNormal,
     };
 
     const osThreadAttr_t sendTask_attributes = {
       .name = "sendTask",
       .stack_size = 512 * 6,
-      .priority = (osPriority_t) osPriorityNormal,
+      .priority = (osPriority_t) osPriorityAboveNormal,
     };
 
     receiveTaskHandle = osThreadNew(client_receive_thread, NULL, &receiveTask_attributes);
@@ -226,9 +228,9 @@ void client_receive_thread(void *arg) {
 
 	    	if(ready > 0) {
 	            if(FD_ISSET(conn_fd, &rfdset)) {
-                	uint8_t tempbuffer[MAX_MSG_LEN];
+                	uint8_t tempbuffer[1024];
 
-				    int packet_len = recv(conn_fd, tempbuffer, MAX_MSG_LEN, 0);
+				    int packet_len = recv(conn_fd, tempbuffer, 1024, 0);
 				    if(packet_len == 0) {
 				    	break;
 				    }
@@ -277,22 +279,35 @@ void client_receive_thread(void *arg) {
 				    	}
 				    }
 				    else {
-				    	RawMessage msg = {0};
-					    uint8_t *buffer = malloc(packet_len);
-					    if(buffer) {
-						    memcpy(buffer, tempbuffer, packet_len);
-						    msg.bufferptr = buffer;
-						    msg.packet_len = packet_len;
+					    for(int j = 0;j < packet_len;j++) {
+					    	if(lmpmsgbufferlen == 0) {
+					    		if(tempbuffer[j] == 0) {
+					    			continue;
+					    		}
+					    	}
+					    	lmpmsgbuffer[lmpmsgbufferlen] = tempbuffer[j];
+					    	lmpmsgbufferlen++;
+					    	if(lmpmsgbufferlen - 1 == lmpmsgbuffer[0]) {
+					    		//process packet
+						    	RawMessage msg = {0};
+							    uint8_t *buffer = malloc(lmpmsgbufferlen);
+							    if(buffer) {
+								    memcpy(buffer, lmpmsgbuffer, lmpmsgbufferlen);
+								    msg.bufferptr = buffer;
+								    msg.packet_len = lmpmsgbufferlen;
 
-		                    if(xQueueSend(rxbuffer, (void *)&msg, portMAX_DELAY) != pdPASS) {
-		                    	// rxbuffer full
-		            	    	log_message(BB_ERR_TCP_CLIENT_SAVE_BUFFULL, BB_ERR_TYPE_TCP_CLIENT_RECV);
-		                    	free(buffer);
-		                    }
-					    }
-					    else {
-					    	// no memory creating receiving buffer
-		        	    	log_message(BB_ERR_TCP_CLIENT_SAVE_NOMEM, BB_ERR_TYPE_TCP_CLIENT_RECV);
+				                    if(xQueueSend(rxbuffer, (void *)&msg, portMAX_DELAY) != pdPASS) {
+				                    	// rxbuffer full
+				            	    	log_message(BB_ERR_TCP_CLIENT_SAVE_BUFFULL, BB_ERR_TYPE_TCP_CLIENT_RECV);
+				                    	free(buffer);
+				                    }
+							    }
+							    else {
+							    	// no memory creating receiving buffer
+				        	    	log_message(BB_ERR_TCP_CLIENT_SAVE_NOMEM, BB_ERR_TYPE_TCP_CLIENT_RECV);
+							    }
+					    		lmpmsgbufferlen = 0;
+					    	}
 					    }
 				    }
 	            }

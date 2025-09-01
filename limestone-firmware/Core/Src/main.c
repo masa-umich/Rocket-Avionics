@@ -859,6 +859,7 @@ int send_raw_msg_to_device(Target_Device device, Raw_message *msg, TickType_t wa
 	if(devicefd < 0) {
 		return -3; // Device not connected
 	}
+	msg->connection_fd = devicefd;
 	return server_send(msg, wait);
 }
 
@@ -1067,6 +1068,7 @@ uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
  * Returns 0 on success, 1 if a message of this type was sent too recently, 2 on general error, and 3 if there isn't enough memory available
  */
 uint8_t log_message(const char *msgtext, int msgtype) {
+	return 0;
 	if(msgtype != -1) {
 		if(msgtype >= ERROR_MSG_TYPES) {
 			return 2;
@@ -2741,15 +2743,6 @@ void StartAndMonitor(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
-
-
-  int sockpls = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  struct sockaddr_in testaddr;
-  memset(&testaddr, 0, sizeof(testaddr));
-  testaddr.sin_family = AF_INET;
-  testaddr.sin_port = htons(5000);
-  testaddr.sin_addr.s_addr = inet_addr("192.168.0.5");
-  connect(sockpls, (struct sockaddr *)&testaddr, sizeof(testaddr));
   	// Signal end of critical section
     inittimers_t * timers = (inittimers_t *) argument;
 

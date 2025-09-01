@@ -19,6 +19,8 @@ List* rxMsgBuffer = NULL; // thread-safe queue for incoming messages
 List* txMsgBuffer = NULL;
 
 int connections[MAX_CONN_NUM]; // List of active connections
+uint8_t lmpmsgbuffers[MAX_CONN_NUM][MAX_MSG_LEN];
+size_t lmpmsgbufferlens[MAX_CONN_NUM] = {0};
 sys_mutex_t conn_mu; // Mutex for the connections list
 
 SemaphoreHandle_t shutdownStart;
@@ -93,17 +95,17 @@ int server_init(void) {
     const osThreadAttr_t listenerTask_attributes = {
       .name = "listenerTask",
       .stack_size = 512 * 16, // I just increased this until it worked, it may be able to be reduced
-      .priority = (osPriority_t) osPriorityNormal,
+      .priority = (osPriority_t) osPriorityAboveNormal,
     };
     const osThreadAttr_t readerTask_attributes = {
       .name = "readerTask",
-      .stack_size = 512 * 6,
-      .priority = (osPriority_t) osPriorityNormal,
+      .stack_size = 2048 * 6,
+      .priority = (osPriority_t) osPriorityAboveNormal5,
     };
     const osThreadAttr_t writerTask_attributes = {
       .name = "writerTask",
       .stack_size = 512 * 6,
-      .priority = (osPriority_t) osPriorityNormal,
+      .priority = (osPriority_t) osPriorityAboveNormal5,
     };
 
     // Note: this doesn't need to be a ts-queue it's just a list of 
@@ -340,6 +342,7 @@ void server_listener_thread(void *arg) {
 	    for (int i = 0; i < MAX_CONN_NUM; ++i) {
 	    	if (connections[i] == -1) { // -1 is an empty space in the list
 	    		connections[i] = connection_fd;
+	    		lmpmsgbufferlens[i] = 0;
                 break;
 	    	}
 	    }
@@ -413,11 +416,12 @@ void server_reader_thread(void *arg) {
                 int connection_fd = connections[i];
 
                 if (FD_ISSET(connection_fd, &rx_fd_set)) {
-                    // make space for the packet
-                	uint8_t tempbuffer[MAX_MSG_LEN];
-
+                	uint8_t tempbuffer[4096];
                     // read the message
-				    int packet_len = recv(connection_fd, tempbuffer, MAX_MSG_LEN, 0);
+				    int packet_len = recv(connection_fd, tempbuffer, 4096, 0);
+				    if(packet_len == 4096) {
+				    	log_message("AHHHHHHHHH", -1);
+				    }
 
 				    if(packet_len == 0) {
 				    	// Connection is closed
@@ -512,25 +516,38 @@ void server_reader_thread(void *arg) {
 				    	continue;
 				    }
 
-				    Raw_message msg = {0};
-				    uint8_t *buffer = malloc(packet_len);
-				    if(buffer) {
-					    memcpy(buffer, tempbuffer, packet_len);
-					    msg.bufferptr = buffer;
-					    msg.connection_fd = connection_fd;
-					    msg.packet_len = packet_len;
+				    for(int j = 0;j < packet_len;j++) {
+				    	if(lmpmsgbufferlens[i] == 0) {
+				    		if(tempbuffer[j] == 0) {
+				    			continue;
+				    		}
+				    	}
+				    	lmpmsgbuffers[i][lmpmsgbufferlens[i]] = tempbuffer[j];
+				    	lmpmsgbufferlens[i]++;
+				    	if(lmpmsgbufferlens[i] - 1 == lmpmsgbuffers[i][0]) {
+				    		//process packet
+						    Raw_message msg = {0};
+						    uint8_t *buffer = malloc(lmpmsgbufferlens[i]);
+						    if(buffer) {
+							    memcpy(buffer, lmpmsgbuffers[i], lmpmsgbufferlens[i]);
+							    msg.bufferptr = buffer;
+							    msg.connection_fd = connection_fd;
+							    msg.packet_len = lmpmsgbufferlens[i];
 
-					    // add the message to the RX Message Buffer to be parsed
-	                    if(list_push(rxMsgBuffer, (void*)(&msg), portMAX_DELAY)) {
-	                    	// JUST in case
-	                    	free(buffer);
-	                    }
-				    }
-				    else {
-				    	// no memory creating receiving buffer
-	        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_STORE_NOMEM) + 6];
-	        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_STORE_NOMEM "%d", (int16_t) connection_fd);
-	        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
+							    // add the message to the RX Message Buffer to be parsed
+			                    if(list_push(rxMsgBuffer, (void*)(&msg), portMAX_DELAY)) {
+			                    	// JUST in case
+			                    	free(buffer);
+			                    }
+						    }
+						    else {
+						    	// no memory creating receiving buffer
+			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_STORE_NOMEM) + 6];
+			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_STORE_NOMEM "%d", (int16_t) connection_fd);
+			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
+						    }
+				    		lmpmsgbufferlens[i] = 0;
+				    	}
 				    }
                 }
                 else if(FD_ISSET(connection_fd, &err_fd_set)) {
@@ -655,6 +672,7 @@ void server_writer_thread(void *arg) {
         	free(msg.bufferptr);
             continue;
         }
+
         xSemaphoreTake(closeMutex, portMAX_DELAY);
 		if(send(msg.connection_fd, msg.bufferptr, msg.packet_len, 0) == -1) { // opts = 0
 	    	switch(errno) {
