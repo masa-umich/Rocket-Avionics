@@ -1,12 +1,12 @@
 #include "apogee-functions.h"
 #include <math.h>
 
+#include "main.h"
 #include "FreeRTOS.h"
 #include "LSM6DSO32XTR.h"
 #include "cmsis_os.h"
 #include "semphr.h"
 #include "task.h"
-#include "main.h"
 #include "speed_LUT.h"
 
 //TO DELETE 
@@ -299,6 +299,9 @@ float compute_wait_time(int meco_time_ms, float avg_pressure, float avg_temp)
     return wait_s * 1000;
 }
 
+//If we don't need a dedicated function for this autosequence, Felix recommended we just 
+//copy/paste the code from this function direcly after the engine firing autosequence within 
+//a larger task in main.c that contains both autosequences back-to-back (engine fire followed by apogee detection) 
 static void apogee_task(void *arg)
 {
 
