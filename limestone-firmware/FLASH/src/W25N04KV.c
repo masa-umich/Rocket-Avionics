@@ -30,7 +30,7 @@
 #define W25N04KV_CS_INACTIVE (uint8_t) GPIO_PIN_SET
 
 // SPI timeout value
-#define W25N04KV_SPI_TIMEOUT (uint8_t) 0xFF
+#define W25N04KV_SPI_TIMEOUT (uint8_t) 0x64
 
 /**
  * Selects which die to communicate with
