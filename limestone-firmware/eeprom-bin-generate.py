@@ -1,11 +1,6 @@
 # /// script
 # requires-python = ">=3.13"
-# dependencies = [
-#     "enum",
-#     "ipaddress",
-#     "struct",
-#     "zlib",
-# ]
+# dependencies = []
 # ///
 from enum import Enum
 import ipaddress
@@ -78,6 +73,7 @@ raw_out += struct.pack('<B', vlv2_voltage.value) + struct.pack('<B', vlv2_enable
 raw_out += struct.pack('<B', vlv3_voltage.value) + struct.pack('<B', vlv3_enable)
 raw_out += limewire_IP.packed + flight_computer_IP.packed + bay_board_1_IP.packed + bay_board_2_IP.packed + bay_board_3_IP.packed + flight_recorder_IP.packed
 
+print(len(raw_out))
 crc = zlib.crc32(raw_out)
 
 raw_out += struct.pack('<I', crc)

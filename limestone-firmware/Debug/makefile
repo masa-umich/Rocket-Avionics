@@ -11,6 +11,7 @@ RM := rm -rf
 -include sources.mk
 -include VLVs/src/subdir.mk
 -include TCP/server/src/subdir.mk
+-include TCP/LMP/src/subdir.mk
 -include Middlewares/Third_Party/LwIP/system/OS/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/netif/ppp/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/netif/subdir.mk
@@ -85,8 +86,8 @@ all: main-build
 main-build: limestone-firmware.elf secondary-outputs
 
 # Tool invocations
-limestone-firmware.elf limestone-firmware.map: $(OBJS) $(USER_OBJS) C:\Users\felix\Desktop\MASA\Rocket-Avionics\limestone-firmware\STM32H725ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "limestone-firmware.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\felix\Desktop\MASA\Rocket-Avionics\limestone-firmware\STM32H725ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="limestone-firmware.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+limestone-firmware.elf limestone-firmware.map: $(OBJS) $(USER_OBJS) /Users/felix/Desktop/Rocket-Avionics/limestone-firmware/STM32H725ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "limestone-firmware.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"/Users/felix/Desktop/Rocket-Avionics/limestone-firmware/STM32H725ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="limestone-firmware.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

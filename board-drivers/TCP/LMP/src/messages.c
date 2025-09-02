@@ -107,6 +107,20 @@ int serialize_valve_state(const ValveStateMessage *message, uint8_t *buffer,
 	return num_bytes;
 }
 
+int serialize_device_command(const DeviceCommandMessage *message, uint8_t *buffer,
+							uint32_t buffer_size) {
+	int num_bytes = MAX_DEVICE_COMMAND_MSG_SIZE;
+	if (buffer_size < num_bytes) {
+		return -1;
+	}
+
+	buffer[0] = (uint8_t) (num_bytes - 1);
+	buffer[2] = message->board_id;
+	buffer[3] = message->cmd_id;
+
+	return num_bytes;
+}
+
 int serialize_message(const Message *message, uint8_t *buffer,
 					  uint32_t buffer_size) {
 	if (buffer_size < 2)
@@ -125,6 +139,10 @@ int serialize_message(const Message *message, uint8_t *buffer,
 										 buffer_size);
 		case MSG_HEARTBEAT:
 			return 1; // No data to serialize
+
+		case MSG_DEVICE_COMMAND:
+			return serialize_device_command(&message->data.device_command, buffer,
+					 	 	 	 	 	 buffer_size);
 		default:
 			return -1; // Unknown message type
 	}
@@ -200,6 +218,19 @@ int deserialize_valve_state(const uint8_t *buffer, uint32_t buffer_size,
 	return num_bytes;
 }
 
+int deserialize_device_command(const uint8_t *buffer, uint32_t buffer_size,
+							DeviceCommandMessage *msg) {
+	int num_bytes = MAX_DEVICE_COMMAND_MSG_SIZE;
+	if (buffer_size < num_bytes) {
+		return 0;
+	}
+
+	msg->board_id = buffer[2];
+	msg->cmd_id = buffer[3];
+
+	return num_bytes;
+}
+
 int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 						Message *msg) {
 	if (buffer_size < 2)
@@ -218,6 +249,10 @@ int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 										   &msg->data.valve_state);
 		case MSG_HEARTBEAT:
 			return 1; // No data to deserialize
+
+		case MSG_DEVICE_COMMAND:
+			return deserialize_device_command(buffer, buffer_size,
+					   	   	   	   	   	   &msg->data.device_command);
 		default:
 			return -1; // Unknown message type
 	}
