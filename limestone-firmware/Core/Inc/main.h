@@ -52,6 +52,44 @@ extern "C" {
 #define TELEMETRY_HZ		(uint32_t)50
 
 #define FC_EEPROM_LEN		(uint16_t)93
+//#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
+
+#define FC_EEPROM_PT_ZERO_DEFAULT			0.5
+#define FC_EEPROM_PT_RANGE_DEFAULT			5000
+#define FC_EEPROM_PT_MAX_DEFAULT			4.5
+#define FC_EEPROM_TC_GAIN_DEFAULT			0x00
+#define FC_EEPROM_VLV_VOL_DEFAULT			0x01
+#define FC_EEPROM_VLV_EN_DEFAULT			0x01
+
+#define FC_EEPROM_LIMEWIREIP_DEFAULT_1		192
+#define FC_EEPROM_LIMEWIREIP_DEFAULT_2		0
+#define FC_EEPROM_LIMEWIREIP_DEFAULT_3		0
+#define FC_EEPROM_LIMEWIREIP_DEFAULT_4		5
+
+#define FC_EEPROM_FCIP_DEFAULT_1			192
+#define FC_EEPROM_FCIP_DEFAULT_2			0
+#define FC_EEPROM_FCIP_DEFAULT_3			0
+#define FC_EEPROM_FCIP_DEFAULT_4			10
+
+#define FC_EEPROM_BB1IP_DEFAULT_1			192
+#define FC_EEPROM_BB1IP_DEFAULT_2			0
+#define FC_EEPROM_BB1IP_DEFAULT_3			0
+#define FC_EEPROM_BB1IP_DEFAULT_4			15
+
+#define FC_EEPROM_BB2IP_DEFAULT_1			192
+#define FC_EEPROM_BB2IP_DEFAULT_2			0
+#define FC_EEPROM_BB2IP_DEFAULT_3			0
+#define FC_EEPROM_BB2IP_DEFAULT_4			20
+
+#define FC_EEPROM_BB3IP_DEFAULT_1			192
+#define FC_EEPROM_BB3IP_DEFAULT_2			0
+#define FC_EEPROM_BB3IP_DEFAULT_3			0
+#define FC_EEPROM_BB3IP_DEFAULT_4			25
+
+#define FC_EEPROM_FRIP_DEFAULT_1			192
+#define FC_EEPROM_FRIP_DEFAULT_2			0
+#define FC_EEPROM_FRIP_DEFAULT_3			0
+#define FC_EEPROM_FRIP_DEFAULT_4			30
 
 #define FLASH_TELEM_MARK	(uint8_t)0x1D
 #define FLASH_MSG_MARK		(uint8_t)0x1E
@@ -59,6 +97,7 @@ extern "C" {
 #define ERROR_UDP_PORT		(uint16_t)1234
 
 #define ERROR_MSG_TYPES		(size_t)32 // Should be a multiple of 2
+#define PERI_ERROR_MSG_TYPES	(size_t)8
 
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 
@@ -104,6 +143,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void set_system_time(uint32_t sec, uint32_t us);
+
+uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

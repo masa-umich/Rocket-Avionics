@@ -33,6 +33,7 @@
 #include "server.h"
 #include "tftp_server.h"
 #include "lwip/udp.h"
+#include "log_errors.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -44,6 +45,8 @@ extern const struct tftp_context my_tftp_ctx;
 extern ip4_addr_t fc_addr;
 extern struct netconn *errormsgudp;
 extern SemaphoreHandle_t errorudp_mutex;
+extern void send_udp_online(ip4_addr_t * ip);
+extern uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -111,6 +114,38 @@ void MX_LWIP_Init(void)
 
   /* Create the Ethernet link handler thread */
 /* USER CODE BEGIN H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
+
+  	// Putting this here to avoid calling sntp and tftp functions in different running threads
+    // Also has the advantage of trying to start the UDP message logging early on
+
+	// Setup NTP listener
+	sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
+
+	if(netif_is_link_up(&gnetif)) {
+		sntp_init();
+		tftp_init(&my_tftp_ctx);
+		if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
+			errormsgudp = netconn_new(NETCONN_UDP);
+			if(errormsgudp) {
+				ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+				send_udp_online(&ipaddr);
+			}
+			else {
+				// failed to create netconn
+				log_message(ERR_UDP_INIT_NNETCONN, -1);
+			}
+			xSemaphoreGive(errorudp_mutex);
+		}
+		else {
+			// failed to take mutex
+			log_message(ERR_UDP_INIT_MUTEX, -1);
+		}
+	}
+	else {
+		// ethernet link down
+		log_message(ERR_LINK_INIT_DOWN, -1);
+	}
+
   memset(&attributes, 0x0, sizeof(osThreadAttr_t));
   attributes.name = "EthLink";
   attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
@@ -140,27 +175,66 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
-	  sntp_init();
-	  server_init();
-	  tftp_init(&my_tftp_ctx);
 	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-	  	  errormsgudp = netconn_new(NETCONN_UDP);
-          ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+		  if(!errormsgudp) {
+		  	  errormsgudp = netconn_new(NETCONN_UDP);
+		  	  if(errormsgudp) {
+		  		  ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
+		  	  }
+		  	  else {
+				  log_message(ERR_UDP_REINIT, -1);
+		  	  }
+		  }
+		  else {
+			  log_message(ERR_UDP_REINIT, -1);
+		  }
 	  	  xSemaphoreGive(errorudp_mutex);
 	  }
+	  else {
+		  log_message(ERR_UDP_REINIT, -1);
+	  }
+	  sntp_init();
+      switch(server_init()) {
+      	  case 0: {
+      	  	  // TCP server started
+      	  	  log_message(FC_STAT_TCP_SERV_REINIT, -1);
+      	  	  break;
+      	  }
+      	  case -1: {
+      	  	  break;
+      	  }
+      	  case -2: {
+      	  	  // one of the threads failed to start
+      	  	  log_message(FC_ERR_REINIT_TCP_THREAD_ERR, -1);
+      	  	  break;
+      	  }
+      	  case -3: {
+      	  	  break;
+      	  }
+      	  default: {
+      	  	  break;
+      	  }
+      }
+	  tftp_init(&my_tftp_ctx);
+	  // link up
+	  log_message(STAT_LINK_UP, -1);
+
 /* USER CODE END 5 */
   }
   else /* netif is down */
   {
 /* USER CODE BEGIN 6 */
-	  sntp_stop();
-	  shutdown_server();
-	  tftp_cleanup();
 	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
 		  netconn_close(errormsgudp);
 		  netconn_delete(errormsgudp);
+		  errormsgudp = NULL;
 		  xSemaphoreGive(errorudp_mutex);
 	  }
+	  sntp_stop();
+	  shutdown_server();
+	  tftp_cleanup();
+	  // link down
+	  log_message(STAT_LINK_DOWN, -1);
 /* USER CODE END 6 */
   }
 }

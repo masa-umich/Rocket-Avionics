@@ -39,7 +39,7 @@ typedef struct {
 	int packet_len; // length of the packet
 } Raw_message;
 
-// Function to initialize the server. Returns -1 if server is already running
+// Function to initialize the server. Returns -1 if server is already running and -2 if one or more of the spin off tasks couldn't be created
 int server_init(void);
 
 // Listen for incoming connections and spawn reader and writer threads for each connection
@@ -79,5 +79,6 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
 // Get the fd of a connected device. Returns the fd if the device is connected, -1 if the device is not connected
 int get_device_fd(Target_Device dev);
 
+void remove_bad_fds(void);
 #endif
 

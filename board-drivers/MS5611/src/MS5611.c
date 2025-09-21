@@ -119,17 +119,17 @@ int MS5611_readADC(MS5611 *BAR, uint32_t *result) {
 uint8_t osr_to_ms_wait(OSR osr) {
 	switch (osr) {
 		case OSR_256:
-			return 1;
-		case OSR_512:
 			return 2;
-		case OSR_1024:
+		case OSR_512:
 			return 3;
+		case OSR_1024:
+			return 4;
 		case OSR_2048:
-			return 5;
+			return 6;
 		case OSR_4096:
-			return 10;
+			return 11;
 		default:
-			return 10;
+			return 11;
 	}
 }
 
