@@ -1,4 +1,0 @@
-../Core/Src/valves.c:19:6:VLV_Set_Voltage	2
-../Core/Src/valves.c:37:6:VLV_Toggle	1
-../Core/Src/valves.c:41:6:VLV_En	1
-../Core/Src/valves.c:45:6:VLV_Den	1
