@@ -84,12 +84,12 @@ public:
    void view_data();
 };
 
-class IMU
-{
-   double a_x; 
-   double a_y; 
-   double a_z; 
-};
+// class IMU
+// {
+//    double a_x; 
+//    double a_y; 
+//    double a_z; 
+// };
 
 class Timer
 {
