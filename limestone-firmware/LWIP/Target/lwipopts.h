@@ -61,6 +61,8 @@
 #define LWIP_RAM_HEAP_POINTER 0x30000200
 /*----- Default Value for MEMP_NUM_NETBUF: 2 ---*/
 #define MEMP_NUM_NETBUF 10
+/*----- Default Value for MEMP_NUM_NETCONN: 4 ---*/
+#define MEMP_NUM_NETCONN 10
 /*----- Value supported for H7 devices: 1 -----*/
 #define LWIP_SUPPORT_CUSTOM_PBUF 1
 /*----- Value in opt.h for LWIP_ETHERNET: LWIP_ARP || PPPOE_SUPPORT -*/
@@ -99,6 +101,8 @@
 #define DEFAULT_ACCEPTMBOX_SIZE 6
 /*----- Default Value for LWIP_TCP_KEEPALIVE: 0 ---*/
 #define LWIP_TCP_KEEPALIVE 1
+/*----- Default Value for LWIP_SO_SNDTIMEO: 0 ---*/
+#define LWIP_SO_SNDTIMEO 1
 /*----- Default Value for LWIP_SO_RCVTIMEO: 0 ---*/
 #define LWIP_SO_RCVTIMEO 1
 /*----- Value in opt.h for RECV_BUFSIZE_DEFAULT: INT_MAX -----*/
