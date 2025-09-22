@@ -15,8 +15,8 @@ extern ip4_addr_t ipaddr; // get our IP address from somewhere
 #define SERVER_PORT TCP_PORT
 #define MAX_CONN_NUM 8
 
-List* rxMsgBuffer = NULL; // thread-safe queue for incoming messages
-List* txMsgBuffer = NULL;
+QueueHandle_t txbuffer = NULL;
+QueueHandle_t rxbuffer = NULL;
 
 int connections[MAX_CONN_NUM]; // List of active connections
 uint8_t lmpmsgbuffers[MAX_CONN_NUM][MAX_MSG_LEN];
@@ -56,12 +56,12 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
     }
 
     // make thread-safe queues for incoming and outgoing messages
-    rxMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
-    if(!rxMsgBuffer) {
+	rxbuffer = xQueueCreate(100, sizeof(Raw_message));
+    if(!rxbuffer) {
     	return 1;
     }
-	txMsgBuffer = list_create(sizeof(Raw_message), msgFreeCallback);
-    if(!txMsgBuffer) {
+	txbuffer = xQueueCreate(100, sizeof(Raw_message));
+    if(!txbuffer) {
     	return 1;
     }
     return 0;
@@ -72,7 +72,7 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
 // Spins off a listener, reader, and writer task/thread 
 // as well as initializes the message buffers and connection list
 int server_init(void) {
-	if(!txMsgBuffer) {
+	if(!txbuffer) {
 		return -3;
 	}
 
@@ -170,7 +170,7 @@ void server_listener_thread(void *arg) {
 
         struct timeval timeout;
         timeout.tv_sec = 0;
-        timeout.tv_usec = 100000;
+        timeout.tv_usec = SERVER_ACCEPT_TIMEOUT_US;
         setsockopt(listen_sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
         // Bind socket to port
@@ -329,7 +329,7 @@ void server_listener_thread(void *arg) {
         int probecnt = TCP_KEEP_ALIVE_COUNT;
         struct timeval conntimeout;
         conntimeout.tv_sec = 0;
-        conntimeout.tv_usec = 100000;
+        conntimeout.tv_usec = SERVER_RECV_TIMEOUT_US;
         setsockopt(connection_fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
         setsockopt(connection_fd, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
         setsockopt(connection_fd, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl));
@@ -338,15 +338,23 @@ void server_listener_thread(void *arg) {
         setsockopt(connection_fd, SOL_SOCKET, SO_SNDTIMEO, &conntimeout, sizeof(conntimeout));
 
         // add the new connection to the active connections list
+        uint8_t conn_added = 0;
         sys_mutex_lock(&conn_mu);
 	    for (int i = 0; i < MAX_CONN_NUM; ++i) {
 	    	if (connections[i] == -1) { // -1 is an empty space in the list
 	    		connections[i] = connection_fd;
 	    		lmpmsgbufferlens[i] = 0;
+	    		conn_added = 1;
                 break;
 	    	}
 	    }
 	    sys_mutex_unlock(&conn_mu);
+
+	    if(!conn_added) {
+	    	log_message(FC_ERR_TCP_SERV_ACCEPT_NO_ROOM, -1);
+	    	close(connection_fd);
+	    	continue;
+	    }
 
 	    for(int i = 0; i < 5; i++) {
 	    	if(deviceIPs[i].addr == (u32_t) connection_socket.sin_addr.s_addr) {
@@ -535,7 +543,7 @@ void server_reader_thread(void *arg) {
 							    msg.packet_len = lmpmsgbufferlens[i];
 
 							    // add the message to the RX Message Buffer to be parsed
-			                    if(list_push(rxMsgBuffer, (void*)(&msg), portMAX_DELAY)) {
+							    if(xQueueSend(rxbuffer, (void *)&msg, 5) != pdPASS) {
 			                    	// JUST in case
 			                    	free(buffer);
 			                    }
@@ -662,7 +670,7 @@ void server_writer_thread(void *arg) {
 		Raw_message msg = {0};
 
         // blocks until a message is available in the TX Message Buffer
-		if(list_pop(txMsgBuffer, (void*)(&msg), 100)) {
+		if(xQueueReceive(txbuffer, (void *)&msg, 100) != pdPASS) {
 			// returned early, no messages
 			continue;
 		}
@@ -740,7 +748,7 @@ int server_read(Raw_message* msg, TickType_t block) {
     // Pop a message from the RX Message Buffer
     // This will block until a message is available
 	if(is_server_running() > 0) {
-		if(list_pop(rxMsgBuffer, (void*)msg, block)) {
+		if(xQueueReceive(rxbuffer, (void *)msg, block) != pdPASS) {
 			// No message available
 			return -2;
 		}
@@ -758,7 +766,7 @@ int server_send(Raw_message* msg, TickType_t block) {
 	if(is_server_running() > 0) {
 		// Push a message to the TX Message Buffer
 		// This will block until there is space in the buffer
-		if(list_push(txMsgBuffer, (void*)msg, block)) {
+		if(xQueueSend(txbuffer, (void *)msg, block) != pdPASS) {
 			// Timed out
 			return -2;
 		}
@@ -793,7 +801,7 @@ int update_fd_set(fd_set *rfds, fd_set *efds) {
 }
 
 int is_server_running() {
-	if(!txMsgBuffer) {
+	if(!txbuffer) {
 		return 0;
 	}
 	if(xSemaphoreTake(runningMutex, 2) == pdPASS) {
@@ -808,17 +816,16 @@ int is_server_running() {
 
 void drain_lists() {
 	Raw_message msg = {0};
-	while(!list_pop(txMsgBuffer, (void*)(&msg), 0)) {
+	while(xQueueReceive(txbuffer, (void *)&msg, 0) == pdPASS) {
 		free(msg.bufferptr);
 	}
-
-	while(!list_pop(rxMsgBuffer, (void*)(&msg), 0)) {
+	while(xQueueReceive(rxbuffer, (void *)&msg, 0) == pdPASS) {
 		free(msg.bufferptr);
 	}
 }
 
 int shutdown_server() {
-	if(!txMsgBuffer) {
+	if(!txbuffer) {
 		return -1;
 	}
 	if(xSemaphoreTake(runningMutex, portMAX_DELAY) == pdPASS) {
@@ -862,7 +869,7 @@ int shutdown_server() {
 }
 
 int get_device_fd(Target_Device dev) {
-	if(!txMsgBuffer) {
+	if(!txbuffer) {
 		return -1;
 	}
 	if(dev >= NUM_TARGET_DEVICES) {

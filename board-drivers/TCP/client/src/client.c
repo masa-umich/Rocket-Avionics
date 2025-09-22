@@ -136,7 +136,7 @@ void client_receive_thread(void *arg) {
         setsockopt(conn_fd, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl));
         setsockopt(conn_fd, IPPROTO_TCP, TCP_KEEPCNT, &probecnt, sizeof(probecnt));
         setsockopt(conn_fd, SOL_SOCKET, SO_RCVTIMEO, &conntimeout, sizeof(conntimeout));
-        setsockopt(conn_fd, SOL_SOCKET, SO_SNDTIMEO, &conntimeout, sizeof(conntimeout));
+        //setsockopt(conn_fd, SOL_SOCKET, SO_SNDTIMEO, &conntimeout, sizeof(conntimeout));
 
         if(connect(conn_fd, (struct sockaddr *)&fc_addr, sizeof(fc_addr)) < 0) {
         	switch(errno) {
@@ -296,7 +296,7 @@ void client_receive_thread(void *arg) {
 								    msg.bufferptr = buffer;
 								    msg.packet_len = lmpmsgbufferlen;
 
-				                    if(xQueueSend(rxbuffer, (void *)&msg, portMAX_DELAY) != pdPASS) {
+				                    if(xQueueSend(rxbuffer, (void *)&msg, 5) != pdPASS) {
 				                    	// rxbuffer full
 				            	    	log_message(BB_ERR_TCP_CLIENT_SAVE_BUFFULL, BB_ERR_TYPE_TCP_CLIENT_RECV);
 				                    	free(buffer);

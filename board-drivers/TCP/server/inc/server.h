@@ -16,13 +16,15 @@
 #include "lwip.h"
 #include <string.h>
 #include "main.h"
-#include "tsqueue.h"
 
 #define MAX_MSG_LEN	300
 #define TCP_KEEP_ALIVE_IDLE	5
 #define TCP_KEEP_ALIVE_INTERVAL	3
 #define TCP_KEEP_ALIVE_COUNT 3
 #define TCP_RETRY_DELAY_MS 100
+
+#define SERVER_ACCEPT_TIMEOUT_US 100000 // Both of these are to keep the tasks looping often enough to listen to server shutdown if needed
+#define SERVER_RECV_TIMEOUT_US 100000
 
 typedef enum {
 	LimeWire_d = 0U,

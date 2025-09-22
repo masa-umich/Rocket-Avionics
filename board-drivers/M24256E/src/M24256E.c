@@ -30,7 +30,7 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define EEPROM_SPI_TIMEOUT		0x64
+#define EEPROM_I2C_TIMEOUT		100 // 100ms is ok since eeprom is only used on started and not during time-critical periods
 
 static inline void eeprom_enable_writes(eeprom_t* eeprom) {
     HAL_GPIO_WritePin(eeprom->wc.port, eeprom->wc.pin, GPIO_PIN_RESET);
@@ -116,7 +116,7 @@ static eeprom_status_t eeprom_single_write(eeprom_t* eeprom,
 static eeprom_status_t eeprom_check_cda(eeprom_t* eeprom) {
     uint8_t buf[2] = {B1ADDR_CDA, B2ADDR_CDA};
     return eeprom_single_write(eeprom, I2C_ADDR_CDA(eeprom->cda), buf, 2,
-    						EEPROM_SPI_TIMEOUT);
+    		EEPROM_I2C_TIMEOUT);
 }
 
 eeprom_status_t eeprom_init(eeprom_t* eeprom, I2C_HandleTypeDef* hi2c,
@@ -165,7 +165,7 @@ eeprom_status_t eeprom_write_mem(eeprom_t* eeprom, uint16_t addr,
 
         eeprom_status_t ret = eeprom_polling_write(
             eeprom, I2C_ADDR_MEM(eeprom->cda), buf,
-            sizeof(addr) + num_data_bytes_to_write, EEPROM_SPI_TIMEOUT);
+            sizeof(addr) + num_data_bytes_to_write, EEPROM_I2C_TIMEOUT);
         if (ret != EEPROM_OK) {
             eeprom_disable_writes(eeprom);
             return ret;
@@ -193,7 +193,7 @@ eeprom_status_t eeprom_write_cda(eeprom_t* eeprom, uint8_t data) {
     eeprom_enable_writes(eeprom);
 
     eeprom_status_t ret = eeprom_polling_write(
-        eeprom, I2C_ADDR_CDA(eeprom->cda), buf, sizeof(buf), EEPROM_SPI_TIMEOUT);
+        eeprom, I2C_ADDR_CDA(eeprom->cda), buf, sizeof(buf), EEPROM_I2C_TIMEOUT);
     if (ret != EEPROM_OK) {
         eeprom_disable_writes(eeprom);
         return ret;
@@ -223,7 +223,7 @@ eeprom_status_t eeprom_write_id_page(eeprom_t* eeprom, uint8_t addr,
 
     eeprom_status_t ret =
         eeprom_polling_write(eeprom, I2C_ADDR_ID_PAGE(eeprom->cda), buf,
-                             1 + sizeof(addr) + num_bytes, EEPROM_SPI_TIMEOUT);
+                             1 + sizeof(addr) + num_bytes, EEPROM_I2C_TIMEOUT);
 
     eeprom_disable_writes(eeprom);
 
@@ -236,7 +236,7 @@ eeprom_status_t eeprom_lock_id_page(eeprom_t* eeprom) {
     uint8_t buf[3] = {B1ADDR_ID_PAGE_LOCK, B2ADDR_ID_PAGE_LOCK, 0b10};
     eeprom_status_t ret =
         eeprom_polling_write(eeprom, I2C_ADDR_ID_PAGE_LOCK(eeprom->cda),
-                             buf, sizeof(buf), EEPROM_SPI_TIMEOUT);
+                             buf, sizeof(buf), EEPROM_I2C_TIMEOUT);
 
     eeprom_disable_writes(eeprom);
 
@@ -256,13 +256,13 @@ eeprom_status_t eeprom_read_mem(eeprom_t* eeprom, uint16_t addr,
     buf[0] = (addr >> 8) & 0xFF;
     buf[1] = addr & 0xFF;
     eeprom_status_t tx_ret = eeprom_polling_write(
-        eeprom, I2C_ADDR_MEM(eeprom->cda), buf, sizeof(buf), EEPROM_SPI_TIMEOUT);
+        eeprom, I2C_ADDR_MEM(eeprom->cda), buf, sizeof(buf), EEPROM_I2C_TIMEOUT);
     if (tx_ret != EEPROM_OK) return tx_ret;
 
     // Perform read
     HAL_StatusTypeDef rx_ret =
         HAL_I2C_Master_Receive(eeprom->hi2c, I2C_ADDR_MEM(eeprom->cda),
-                               dest, num_bytes, EEPROM_SPI_TIMEOUT);
+                               dest, num_bytes, EEPROM_I2C_TIMEOUT);
     if (rx_ret != HAL_OK) return EEPROM_RX_ERROR;
 
     return EEPROM_OK;
@@ -275,12 +275,12 @@ eeprom_status_t eeprom_read_cda(eeprom_t* eeprom, uint8_t* dest) {
     buf[0] = B1ADDR_CDA;
     buf[1] = B2ADDR_CDA;
     eeprom_status_t tx_ret = eeprom_polling_write(
-        eeprom, I2C_ADDR_CDA(eeprom->cda), buf, 2, EEPROM_SPI_TIMEOUT);
+        eeprom, I2C_ADDR_CDA(eeprom->cda), buf, 2, EEPROM_I2C_TIMEOUT);
     if (tx_ret != EEPROM_OK) return EEPROM_TX_ERROR;
 
     // Perform read
     HAL_StatusTypeDef rx_ret = HAL_I2C_Master_Receive(
-        eeprom->hi2c, I2C_ADDR_CDA(eeprom->cda), buf, 1, EEPROM_SPI_TIMEOUT);
+        eeprom->hi2c, I2C_ADDR_CDA(eeprom->cda), buf, 1, EEPROM_I2C_TIMEOUT);
     if (rx_ret != HAL_OK) return EEPROM_RX_ERROR;
 
     *dest = buf[0];
@@ -302,13 +302,13 @@ eeprom_status_t eeprom_read_id_page(eeprom_t* eeprom, uint8_t addr,
     buf[1] = addr;
     eeprom_status_t tx_ret =
         eeprom_polling_write(eeprom, I2C_ADDR_ID_PAGE(eeprom->cda), buf,
-                             sizeof(buf), EEPROM_SPI_TIMEOUT);
+                             sizeof(buf), EEPROM_I2C_TIMEOUT);
     if (tx_ret != EEPROM_OK) return EEPROM_TX_ERROR;
 
     // Perform read
     HAL_StatusTypeDef rx_ret =
         HAL_I2C_Master_Receive(eeprom->hi2c, I2C_ADDR_ID_PAGE(eeprom->cda),
-                               dest, num_bytes, EEPROM_SPI_TIMEOUT);
+                               dest, num_bytes, EEPROM_I2C_TIMEOUT);
     if (rx_ret != HAL_OK) return EEPROM_RX_ERROR;
 
     return EEPROM_OK;
@@ -323,10 +323,10 @@ eeprom_status_t eeprom_is_id_page_locked(eeprom_t* eeprom, bool* dest) {
     for (int i = 0; i < EEPROM_MAX_WRITE_ATTEMPTS; i++) {
         ret =
             eeprom_single_write(eeprom, I2C_ADDR_ID_PAGE_LOCK(eeprom->cda),
-                                buf, sizeof(buf), EEPROM_SPI_TIMEOUT);
+                                buf, sizeof(buf), EEPROM_I2C_TIMEOUT);
         // Reset the device internal logic (see Datasheet pg. 25)
         eeprom_single_write(eeprom, I2C_ADDR_ID_PAGE_LOCK(eeprom->cda),
-                            NULL, 0, EEPROM_SPI_TIMEOUT);
+                            NULL, 0, EEPROM_I2C_TIMEOUT);
 
         if (ret == EEPROM_OK) {
             *dest = false;

@@ -34,6 +34,7 @@
 #include "tftp_server.h"
 #include "lwip/udp.h"
 #include "log_errors.h"
+#include "semphr.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);

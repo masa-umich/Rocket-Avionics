@@ -147,6 +147,8 @@ extern "C" {
 #define DIVIDER_VALVE		(uint8_t)1
 #define DIVIDER_12V_24V		(uint8_t)0
 #define DIVIDER_3V3_5V		(uint8_t)1
+
+#define PERIPHERAL_TIMEOUT		1
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

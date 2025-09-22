@@ -62,31 +62,31 @@ pt10_offset = 0.5
 pt10_range = 6000
 pt10_max = 4.5
 
-tc1_gain = TCGain.Gain_2x
-tc2_gain = TCGain.Gain_1x
-tc3_gain = TCGain.Gain_128x
-tc4_gain = TCGain.Gain_2x
-tc5_gain = TCGain.Gain_1x
-tc6_gain = TCGain.Gain_128x
+tc1_gain = TCGain.Gain_64x
+tc2_gain = TCGain.Gain_64x
+tc3_gain = TCGain.Gain_64x
+tc4_gain = TCGain.Gain_64x
+tc5_gain = TCGain.Gain_64x
+tc6_gain = TCGain.Gain_64x
 
-vlv1_voltage = ValveVoltage.Valve_12V
+vlv1_voltage = ValveVoltage.Valve_24V
 vlv1_enable = 1
 
 vlv2_voltage = ValveVoltage.Valve_24V
-vlv2_enable = 0
+vlv2_enable = 1
 
 vlv3_voltage = ValveVoltage.Valve_24V
 vlv3_enable = 1
 
-vlv4_voltage = ValveVoltage.Valve_12V
-vlv4_enable = 0
+vlv4_voltage = ValveVoltage.Valve_24V
+vlv4_enable = 1
 
 vlv5_voltage = ValveVoltage.Valve_24V
 vlv5_enable = 1
 
 bay_board_number = 1
-flight_computer_IP = ipaddress.IPv4Address("192.168.0.10")
-bay_board_IP = ipaddress.IPv4Address("192.168.0.15")
+flight_computer_IP = ipaddress.IPv4Address("141.212.192.170")
+bay_board_IP = ipaddress.IPv4Address("141.212.192.180")
 
 raw_out = struct.pack('<B', bay_board_number)
 raw_out += struct.pack('<f', pt1_offset) + struct.pack('<f', pt1_range) + struct.pack('<f', pt1_max)
