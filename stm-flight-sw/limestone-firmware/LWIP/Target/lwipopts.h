@@ -59,24 +59,32 @@
 #define MEM_SIZE 32232
 /*----- Default Value for H7 devices: 0x30004000 -----*/
 #define LWIP_RAM_HEAP_POINTER 0x30000200
+/*----- Default Value for MEMP_NUM_TCP_SEG: 16 ---*/
+#define MEMP_NUM_TCP_SEG 32
+/*----- Default Value for MEMP_NUM_SYS_TIMEOUT: 3 ---*/
+#define MEMP_NUM_SYS_TIMEOUT 16
 /*----- Default Value for MEMP_NUM_NETBUF: 2 ---*/
 #define MEMP_NUM_NETBUF 10
 /*----- Default Value for MEMP_NUM_NETCONN: 4 ---*/
 #define MEMP_NUM_NETCONN 10
+/*----- Default Value for MEMP_NUM_TCPIP_MSG_INPKT: 8 ---*/
+#define MEMP_NUM_TCPIP_MSG_INPKT 16
+/*----- Default Value for MEMP_NUM_NETDB: 1 ---*/
+#define MEMP_NUM_NETDB 4
+/*----- Default Value for MEMP_NUM_API_MSG: 8 ---*/
+#define MEMP_NUM_API_MSG 10
 /*----- Value supported for H7 devices: 1 -----*/
 #define LWIP_SUPPORT_CUSTOM_PBUF 1
 /*----- Value in opt.h for LWIP_ETHERNET: LWIP_ARP || PPPOE_SUPPORT -*/
 #define LWIP_ETHERNET 1
 /*----- Value in opt.h for LWIP_DNS_SECURE: (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT) -*/
 #define LWIP_DNS_SECURE 7
-/*----- Value in opt.h for TCP_SND_QUEUELEN: (4*TCP_SND_BUF + (TCP_MSS - 1))/TCP_MSS -----*/
-#define TCP_SND_QUEUELEN 9
-/*----- Value in opt.h for TCP_SNDLOWAT: LWIP_MIN(LWIP_MAX(((TCP_SND_BUF)/2), (2 * TCP_MSS) + 1), (TCP_SND_BUF) - 1) -*/
-#define TCP_SNDLOWAT 1071
-/*----- Value in opt.h for TCP_SNDQUEUELOWAT: LWIP_MAX(TCP_SND_QUEUELEN)/2, 5) -*/
-#define TCP_SNDQUEUELOWAT 5
-/*----- Value in opt.h for TCP_WND_UPDATE_THRESHOLD: LWIP_MIN(TCP_WND/4, TCP_MSS*4) -----*/
-#define TCP_WND_UPDATE_THRESHOLD 536
+/*----- Default Value for TCP_MSS: 536 ---*/
+#define TCP_MSS 1436
+/*----- Default Value for TCP_SND_BUF: 2872 ---*/
+#define TCP_SND_BUF 5744
+/*----- Default Value for TCP_SND_QUEUELEN: 17 ---*/
+#define TCP_SND_QUEUELEN 16
 /*----- Value in opt.h for LWIP_NETIF_LINK_CALLBACK: 0 -----*/
 #define LWIP_NETIF_LINK_CALLBACK 1
 /*----- Value in opt.h for TCPIP_THREAD_STACKSIZE: 0 -----*/
@@ -84,7 +92,7 @@
 /*----- Value in opt.h for TCPIP_THREAD_PRIO: 1 -----*/
 #define TCPIP_THREAD_PRIO 24
 /*----- Value in opt.h for TCPIP_MBOX_SIZE: 0 -----*/
-#define TCPIP_MBOX_SIZE 6
+#define TCPIP_MBOX_SIZE 16
 /*----- Value in opt.h for SLIPIF_THREAD_STACKSIZE: 0 -----*/
 #define SLIPIF_THREAD_STACKSIZE 1024
 /*----- Value in opt.h for SLIPIF_THREAD_PRIO: 1 -----*/
@@ -96,9 +104,9 @@
 /*----- Value in opt.h for DEFAULT_UDP_RECVMBOX_SIZE: 0 -----*/
 #define DEFAULT_UDP_RECVMBOX_SIZE 6
 /*----- Value in opt.h for DEFAULT_TCP_RECVMBOX_SIZE: 0 -----*/
-#define DEFAULT_TCP_RECVMBOX_SIZE 6
+#define DEFAULT_TCP_RECVMBOX_SIZE 32
 /*----- Value in opt.h for DEFAULT_ACCEPTMBOX_SIZE: 0 -----*/
-#define DEFAULT_ACCEPTMBOX_SIZE 6
+#define DEFAULT_ACCEPTMBOX_SIZE 16
 /*----- Default Value for LWIP_TCP_KEEPALIVE: 0 ---*/
 #define LWIP_TCP_KEEPALIVE 1
 /*----- Default Value for LWIP_SO_SNDTIMEO: 0 ---*/
@@ -111,8 +119,10 @@
 #define LWIP_SNTP 1
 /*----- Default Value for LWIP_TFTP: 0 ---*/
 #define LWIP_TFTP 1
-/*----- Value in opt.h for LWIP_STATS: 1 -----*/
-#define LWIP_STATS 0
+/*----- Default Value for LWIP_STATS: 0 ---*/
+#define LWIP_STATS 1
+/*----- Value in opt.h for MIB2_STATS: 0 or SNMP_LWIP_MIB2 -----*/
+#define MIB2_STATS 0
 /*----- Value in opt.h for CHECKSUM_GEN_IP: 1 -----*/
 #define CHECKSUM_GEN_IP 0
 /*----- Value in opt.h for CHECKSUM_GEN_UDP: 1 -----*/
@@ -129,6 +139,34 @@
 #define CHECKSUM_CHECK_TCP 0
 /*----- Value in opt.h for CHECKSUM_CHECK_ICMP6: 1 -----*/
 #define CHECKSUM_CHECK_ICMP6 0
+/*----- Default Value for ETHARP_DEBUG: LWIP_DBG_OFF ---*/
+#define ETHARP_DEBUG LWIP_DBG_ON
+/*----- Default Value for NETIF_DEBUG: LWIP_DBG_OFF ---*/
+#define NETIF_DEBUG LWIP_DBG_ON
+/*----- Default Value for PBUF_DEBUG: LWIP_DBG_OFF ---*/
+#define PBUF_DEBUG LWIP_DBG_ON
+/*----- Default Value for SYS_DEBUG: LWIP_DBG_OFF ---*/
+#define SYS_DEBUG LWIP_DBG_ON
+/*----- Default Value for TIMERS_DEBUG: LWIP_DBG_OFF ---*/
+#define TIMERS_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_INPUT_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_INPUT_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_FR_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_FR_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_RTO_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_RTO_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_CWND_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_CWND_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_WND_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_WND_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_OUTPUT_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_OUTPUT_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_RST_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_RST_DEBUG LWIP_DBG_ON
+/*----- Default Value for TCP_QLEN_DEBUG: LWIP_DBG_OFF ---*/
+#define TCP_QLEN_DEBUG LWIP_DBG_ON
 /*-----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
 #define IP_SOF_BROADCAST      1
@@ -136,11 +174,20 @@
 
 //#define TCP_KEEPIDLE 10000 // 10 seconds
 //#define TCP_KEEPINTVL 5000 // 5 seconds
-/*#define LWIP_DEBUG
+#define LWIP_DEBUG
 #define SNTP_DEBUG    LWIP_DBG_ON
 #define UDP_DEBUG     LWIP_DBG_ON
 #define ICMP_DEBUG 	  LWIP_DBG_ON
-#define LWIP_DBG_MIN_LEVEL LWIP_DBG_LEVEL_ALL*/
+#define LWIP_DBG_MIN_LEVEL LWIP_DBG_LEVEL_ALL
+#define TCP_STATS 1
+#define LINK_STATS 1
+#define ETHARP_STATS 1
+#define IPFRAG_STATS 1
+#define UDP_STATS 1
+#define TCP_STATS 1
+#define MEM_STATS 1
+#define MEMP_STATS 1
+#define SYS_STATS 1
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

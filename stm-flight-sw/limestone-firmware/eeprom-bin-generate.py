@@ -42,22 +42,22 @@ pt5_offset = 0.5
 pt5_range = 6000
 pt5_max = 4.5
 
-tc1_gain = TCGain.Gain_2x
-tc2_gain = TCGain.Gain_1x
-tc3_gain = TCGain.Gain_128x
+tc1_gain = TCGain.Gain_64x
+tc2_gain = TCGain.Gain_64x
+tc3_gain = TCGain.Gain_64x
 
-vlv1_voltage = ValveVoltage.Valve_12V
+vlv1_voltage = ValveVoltage.Valve_24V
 vlv1_enable = 1
 
 vlv2_voltage = ValveVoltage.Valve_24V
-vlv2_enable = 0
+vlv2_enable = 1
 
 vlv3_voltage = ValveVoltage.Valve_24V
 vlv3_enable = 1
 
-limewire_IP = ipaddress.IPv4Address("192.168.0.5")
-flight_computer_IP = ipaddress.IPv4Address("192.168.0.10")
-bay_board_1_IP = ipaddress.IPv4Address("0.0.0.0")
+limewire_IP = ipaddress.IPv4Address("141.212.192.160")
+flight_computer_IP = ipaddress.IPv4Address("141.212.192.170")
+bay_board_1_IP = ipaddress.IPv4Address("141.212.192.180")
 bay_board_2_IP = ipaddress.IPv4Address("0.0.0.0")
 bay_board_3_IP = ipaddress.IPv4Address("0.0.0.0")
 flight_recorder_IP = ipaddress.IPv4Address("0.0.0.0")

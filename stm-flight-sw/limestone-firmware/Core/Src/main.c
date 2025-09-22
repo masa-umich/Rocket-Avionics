@@ -44,6 +44,7 @@
 #include "lwip/udp.h"
 #include "timers.h"
 #include "log_errors.h"
+#include "semphr.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -316,7 +317,7 @@ uint8_t perierrormsgtimers[PERI_ERROR_MSG_TYPES];
 struct netconn *errormsgudp = NULL;
 SemaphoreHandle_t errorudp_mutex;
 
-List* errorMsgList;
+QueueHandle_t errorMsglist;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -422,7 +423,10 @@ void set_system_time(uint32_t sec, uint32_t us) {
 	sDate.WeekDay = (tm_time->tm_wday == 0) ? 7 : tm_time->tm_wday;
 
 	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
+		// These constants have to do with the counters associated with the RTC
+		// 6250 is the 1hz counter, so every increment of that counter is 1/6250th of a second
 		uint32_t subsecond_shift = 6249 - ((us / 1000000.0) * 6250);
+
 		//uint32_t subsecond_shift = 6249ULL - ((((uint64_t) us) * ((uint64_t) 6250)) / 1000000ULL); // This works too but I think above is more memory efficient
 		taskENTER_CRITICAL();
 		HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
@@ -1068,7 +1072,6 @@ uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
  * Returns 0 on success, 1 if a message of this type was sent too recently, 2 on general error, and 3 if there isn't enough memory available
  */
 uint8_t log_message(const char *msgtext, int msgtype) {
-	return 0;
 	if(msgtype != -1) {
 		if(msgtype >= ERROR_MSG_TYPES) {
 			return 2;
@@ -1117,7 +1120,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		errormsg_t fullmsg;
 		fullmsg.content = rawmsgbuf;
 		fullmsg.len = msglen;
-		if(list_push(errorMsgList, (void *)&fullmsg, 1)) {
+		if(xQueueSend(errorMsglist, (void *)&fullmsg, 1) != pdPASS) {
 			// No space for more messages
 			free(rawmsgbuf);
 			return 3;
@@ -1160,7 +1163,7 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 		errormsg_t fullmsg;
 		fullmsg.content = rawmsgbuf;
 		fullmsg.len = msglen;
-		if(list_push(errorMsgList, (void *)&fullmsg, 1)) {
+		if(xQueueSend(errorMsglist, (void *)&fullmsg, 1) != pdPASS) {
 			// No space for more messages
 			free(rawmsgbuf);
 			return 3;
@@ -1529,7 +1532,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  errorMsgList = list_create(sizeof(errormsg_t), msgFreeCallback);
+  errorMsglist = xQueueCreate(100, sizeof(errormsg_t));
 
   // This next section is considered the "critical" portion of initialization. This portion has no access to logging and therefore needs to communicate status other ways. The section ends on the return of the MX_LWIP_Init function
   // The end of this section is marked by a UDP message and/or the on-board LED becoming solid and/or a short buzzer beep
@@ -2440,6 +2443,7 @@ void TelemetryTask(void *argument) {
 
   	  	uint64_t recordtime = get_rtc_time();
 
+
   	  	// Set global rocket state struct
   		if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
   			if(!bar1_stat) {
@@ -2557,7 +2561,7 @@ void ProcessPackets(void *argument) {
 	log_message(STAT_PACKET_TASK_STARTED, -1);
 	for(;;) {
 		Raw_message msg = {0};
-		int read_stat = server_read(&msg, 1000);
+		int read_stat = server_read(&msg, 50);
 		if(read_stat >= 0) {
 			// The way the msg.bufferptr memory is handled past this point is that any result that doesn't relay msg to a different destination should NOT continue early, any result that does relay msg should continue early
 			Message parsedmsg = {0};
@@ -2578,7 +2582,7 @@ void ProcessPackets(void *argument) {
 					    	}
 				    	}
 
-				    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
+				    	if(send_raw_msg_to_device(LimeWire_d, &msg, 2) == 0) {
 				    		// Continue to prevent freeing memory we're still using
 				    		continue;
 				    	}
@@ -2843,9 +2847,9 @@ void StartAndMonitor(void *argument)
 	}
 
   	// TC ADCs
-  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
 
   	if(ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, 3)) {
   		// ADS thread start error
@@ -2854,7 +2858,7 @@ void StartAndMonitor(void *argument)
 
   	// IMUs
   	sensors_h.imu1_h.hi2c = &hi2c5;
-  	sensors_h.imu1_h.I2C_TIMEOUT = 5;
+  	sensors_h.imu1_h.I2C_TIMEOUT = PERIPHERAL_TIMEOUT;
   	sensors_h.imu1_h.XL_x_offset = 0;
   	sensors_h.imu1_h.XL_y_offset = 0;
   	sensors_h.imu1_h.XL_z_offset = 0;
@@ -2864,7 +2868,7 @@ void StartAndMonitor(void *argument)
   	sensors_h.imu1_h.SA0 = 0;
 
   	sensors_h.imu2_h.hi2c = &hi2c5;
-  	sensors_h.imu2_h.I2C_TIMEOUT = 5;
+  	sensors_h.imu2_h.I2C_TIMEOUT = PERIPHERAL_TIMEOUT;
   	sensors_h.imu2_h.XL_x_offset = 0;
   	sensors_h.imu2_h.XL_y_offset = 0;
   	sensors_h.imu2_h.XL_z_offset = 0;
@@ -2884,14 +2888,14 @@ void StartAndMonitor(void *argument)
 
   	// Barometers
   	sensors_h.bar1_h.hspi = &hspi6;
-  	sensors_h.bar1_h.SPI_TIMEOUT = 5;
+  	sensors_h.bar1_h.SPI_TIMEOUT = PERIPHERAL_TIMEOUT;
   	sensors_h.bar1_h.CS_GPIO_Port = BAR1_CS_GPIO_Port;
   	sensors_h.bar1_h.CS_GPIO_Pin = BAR1_CS_Pin;
   	sensors_h.bar1_h.pres_offset = 0;
   	sensors_h.bar1_h.alt_offset = 0;
 
   	sensors_h.bar2_h.hspi = &hspi6;
-  	sensors_h.bar2_h.SPI_TIMEOUT = 5;
+  	sensors_h.bar2_h.SPI_TIMEOUT = PERIPHERAL_TIMEOUT;
   	sensors_h.bar2_h.CS_GPIO_Port = BAR2_CS_GPIO_Port;
   	sensors_h.bar2_h.CS_GPIO_Pin = BAR2_CS_Pin;
   	sensors_h.bar2_h.pres_offset = 0;
@@ -2918,6 +2922,7 @@ void StartAndMonitor(void *argument)
   	packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
 
   	// Start TCP server only if the ethernet link is up
+
 	if(netif_is_link_up(&gnetif)) {
 		switch(server_init()) {
 			case 0: {
@@ -2971,7 +2976,7 @@ void StartAndMonitor(void *argument)
 	/* Infinite loop */
 	for(;;) {
 		errormsg_t logmsg;
-		if(!list_pop(errorMsgList, (void *)&logmsg, 5)) {
+		if(xQueueReceive(errorMsglist, (void *)&logmsg, 5) == pdPASS) {
 			uint8_t flashstat = write_raw_to_flash(logmsg.content, logmsg.len);
 			if(flashstat == 2) {
 				// Flash is full, send UDP message every 5 seconds

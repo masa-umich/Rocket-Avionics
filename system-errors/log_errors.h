@@ -115,6 +115,7 @@
 #define FC_ERR_TCP_SERV_RECV_ERROR_CLOSED		"057 Connection closed - TCP server socket flagged as error, fd "
 #define FC_ERR_TCP_SERV_RECV_ERROR_NOTCONN		"058 Socket not connected - TCP server socket flagged as error, fd "
 #define FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN		"059 Unknown errno - TCP server socket flagged as error, fd/errno "
+#define FC_ERR_TCP_SERV_ACCEPT_NO_ROOM			"060 TCP server connection list full"
 
 #elif defined(BAY_BOARD)
 // Bay Board error messages
