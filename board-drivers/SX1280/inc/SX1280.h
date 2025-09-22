@@ -1,10 +1,11 @@
-/*
- * Header file for communicating with SX1280 Radio Module.
- * Datasheet: https://www.semtech.com/products/wireless-rf/24-ghz-transceivers/sx1280
+/**
+ * @file SX1280.h
+ * @brief Header file for the SX1280 radio transceiver driver.
  *
+ * This file contains the function prototypes for the high-level API
+ * to interact with the SX1280 chip
  *
- * Each command sent over SPI is a 1 byte OPCODE followed by an N byte value, which is configurable based on command.
- *
+ * MASA - University of Michigan
  */
 
 #include <stdint.h>
