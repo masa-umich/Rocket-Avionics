@@ -9,44 +9,77 @@
  */
 
 #include <stdint.h>
+#include "stm32h7xx_hal.h"
 
 #ifndef SX1280_H_
 #define SX1280_H_
 
 /**
- * \brief initializes the sx1280 radio transceiver module
- * 
- *  This function performs the necessary initialization steps to prepare the SX1280 module for operation.
- * It configures the SPI interface, sets up GPIO pins, and initializes the module with
- * default settings.
- * Prepares the chip for transmit and receive operations.
- * 
- * @return status code indicating success or failure of the initialization process.
+ * @brief status enum for driver functions
+ */
+typedef enum {
+    SX1280_OK = 0,
+    SX1280_ERROR,
+    SX1280_BUSY,
+    SX1280_TIMEOUT
+} SX1280_Status_t;
+
+/**
+ * @brief structure to handle all necessary hardware handles/pins for the SX1280
+ * instance of this struct should be passed to Initialize function
  */
 
- int SX1280_Init(void);
+ typedef struct {
+    SPI_HandleTypeDef* spiHandle;
+    GPIO_TypeDef* nssPort;
+    uint16_t nssPin;
+    GPIO_TypeDef* resetPort;
+    uint16_t resetPin;
+    GPIO_TypeDef* busyPort;
+    uint16_t busyPin;
+    GPIO_TypeDef* irq_port; // DIO1 pin
+    uint16_t irq_pin;
+ } SX1280_Hal_t;
+
+ // PUBLIC API FUNCTION PROTOTYPES
+
+
 
  /**
-  * @brief transmits a data buffer over the SX1280 radio module
-  * 
-  * @param txBuffer Pointer to the data buffer to be transmitted
-  * @param size Size of the data buffer in bytes
-  * @return status code indicating success or failure of the transmission process
-  * 
+  * @brief initializes the SX1280 radio module with the provided hardware configuration
+  * @param hal_config Pointer to a structure containing the hardware configuration for the SX1280
+  * @return status code indicating success or failure of the initialization process
   */
- int SX1280_Transmit(uint8_t* txBuffer, uint8_t size);
 
- /**
-  * @brief reads a received data buffer from the SX1280 radio module
-  * 
-  * @param rxBuffer pointer to the buffer where the received data will be stored
-  * @param size pointer to a variable where the size of the received data will be stored
-  * @return status code indicating success or failure of the reception process
-  */
- int SX1280_Receive(uint8_t* rxBuffer, uint8_t* size);
+SX1280_Status_t SX1280_Init(const SX1280_Hal_t* hal_config);
+
+/**
+ * @brief transmit a data payload over the radio
+ * 
+ * this function writes a data buffer to radio's FIFO and initiates transmission
+ * note this is a blocking call and will wait until transmission is complete
+ * 
+ * @param data pointer to the data buffer to be transmitted
+ * @param length the number of bytes to transfer
+ * @return SX1280_Status_t status of the transmission
+ */
+
+SX1280_Status_t SX1280_Transmit(const uint8_t* data, uint8_t length);
+
+/**
+ * @brief receive a data payload from the radio
+ * this function waits for a packet to be received and reads it from the radio's FIFO
+ * note this is a blocking call and will wait until a packet is received or timeout occurs
+ * 
+ * @param data pointer to the buffer where received data will be stored
+ * @param max_length the maximum number of bytes to read into the buffer
+ * @return number of bytes actually received, or negative value on error
+ */
+
+int SX1280_Receive(uint8_t* data, uint8_t max_length);
 
 
  
 
  // this marks the end of the header file, additional function prototypes can be added above this line
-#endif /* RADIO_H_ */
+#endif // SX1280_H_

@@ -9,74 +9,116 @@
  */
 
 #include "SX1280.h"
-#include "stm32h7xx_hal.h" // adjust based on stm32 series
+#include "stm32h7xx_hal.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
-// private function prototype for SPI communication
-static void SX1280_SPI_TransmitReceive(uint8_t *txData, uint8_t *rxData, uint16_t size);
+
+// for clarity, this section is to hold private defines -------------------//
+
+// add SX1280 command opcodes, etc here
+
+
+//
+
+// private static variables --------------------------//
+// static pointer to hardware config struct
+static const SX1280_Hal_t* sx1280_hal_config;
+
+// private function prototypes ----------------------//
 
 /**
- * @brief private helper function to handle SPI transmit and receive operations
- *
- * this function wraps the STM32 HAL SPI communication calls in a FreeRTOS
- * critical section to ensure thread safety
- *
- * @param txData Pointer to the data to be transmitted
- * @param rxData Pointer to the buffer to store received data
- * @param size   Number of bytes to transmit/receive
+ * @brief private helper func for thread-safe spi comms
+ * 
+ * this function handles low-level detail of SPI transact, inclding
+ * NSS chip select, busy pin wait
+ * wrapped in FreeRTOS critical section for thread safety
+ * 
+ * @param pTxData pointer to data to be transmitted
+ * @param pRxData pointer to buffer for received data
+ * @param size number of bytes to transfer
  */
-static void SX1280_SPI_TransmitReceive(uint8_t *txData, uint8_t *rxData, uint16_t size)
-{
-    // enter critical section to prevent task switching during SPI communication
+static void SX1280_SPI_TransmitReceive(uint8_t* pTxData, uint8_t* pRxData, uint16_t size);
+
+/**
+ * @brief waits for busy pin to go low, indicating chip is ready
+ * @param timeout maximum time to wait in ms
+ * @return SX1280_Status_t SX1280_OK if ready, SX1280_TIMEOUT if timeout
+ */
+static SX1280_Status_t SX1280_WaitForReady(uint32_t timeout);
+
+// public API function definitions ------------------//
+
+SX1280_Status_t SX1280_Init(const SX1280_Hal_t* hal_config) {
+    // store hal config
+    sx1280_hal_config = hal_config;
+
+    //hardware reset sequence to be done here
+
+    //set radio to known state here, ex standby mode
+
+    //further configs ex. packet type, freq, etc, here
+
+    //return success for now
+    return SX1280_OK;
+}
+
+SX1280_Status_t SX1280_WriteBuffer(uint8_t* data, uint16_t length) {
+    // implementation to be added
+    //involves setting packet parameters writing payload to
+    //radio buffer, issuing transmit comand
+    (void)data;
+    (void)length;
+
+    return SX1280_OK;
+}
+
+int16_t SX1280_ReadBuffer(uint8_t* data, uint8_t maxLength) {
+    // implmementation to be added
+    // involves checking IRQ status, getting received packet's
+    //length, reading payload from radio buffer
+    (void)data;
+    (void)maxLength;
+    return 0; //return number of bytes read
+}
+
+// private function definitions -------------------//
+
+static void SX1280_SPI_TransmitReceive(uint8_t* pTxData, uint8_t* pRxData, uint16_t size) {
+    // wait for radio to not be busy before starting SPI transaction
+    SX1280_WaitForReady(100); //100ms timeout
+
+    //enter critical section for thread safety
     taskENTER_CRITICAL();
 
-    // placeholder for HAL SPI Transmit/Receive call
-    // ex: HAL_SPI_TransmitReceive(&hspi1, txData, rxData, size, HAL_MAX_DELAY);
-    // TODO:add chip select (NSS) pin handling here (set low before, high after)
+    //set NSS low to select the radio
+    HAL_GPIO_WritePin(sx1280_hal_config->nssPort, sx1280_hal_config->nssPin, GPIO_PIN_RESET);
 
-    // exit critical section
+    //perform SPI transaction
+    if (pRxData == NULL)
+    {
+        HAL_SPI_Transmit(sx1280_hal_config->spiHandle, pTxData, size, HAL_MAX_DELAY);
+    }
+    else
+    {
+        HAL_SPI_TransmitReceive(sx1280_hal_config->spiHandle, pTxData, pRxData, size, HAL_MAX_DELAY);
+    }
+    //set NSS high to deselect the radio
+    HAL_GPIO_WritePin(sx1280_hal_config->nssPort, sx1280_hal_config->nssPin, GPIO_PIN_SET);
+    //exit critical section
     taskEXIT_CRITICAL();
+
+    //wait for radio to be ready after transaction
+    SX1280_WaitForReady(100); //100ms timeout
+
 }
 
-/**
- * @brief init the SX1280 radio transceiver.
- *
- * @return int Status code (0 for success).
- */
-int SX1280_Init(void)
-{
-    //TODO: implement initialization sequence based on SX1280 datasheet
-    // this will involve sending a series of commands via the SPI wrapper
-    return 0;
+static SX1280_Status_t SX1280_WaitForReady(uint32_t timeout) {
+    uint32_t startTick = xTaskGetTickCount();
+    while (HAL_GPIO_ReadPin(sx1280_hal_config->busyPort, sx1280_hal_config->busyPin) == GPIO_PIN_SET) {
+        if ((xTaskGetTickCount() - startTick) > timeout) {
+            return SX1280_TIMEOUT;
+        }
+    }
+    return SX1280_OK;
 }
-
-/**
- * @brief transmits a data buffer over the SX1280 radio
- *
- * @param txBuffer pointer to the data buffer to be transmitted
- * @param size number of bytes to transmit
- * @return int status code (0 for success)
- */
-int SX1280_WriteBuffer(uint8_t *txBuffer, uint8_t size)
-{
-    //TODO: implement the logic to write data to the radio's buffer
-    // and initiate transmission
-    return 0;
-}
-
-/**
- * @brief reads a received data buffer from the SX1280 radio
- *
- * @param rxBuffer Pointer to the buffer where the received data will be stored
- * @param size Pointer to a variable that will store the size of the received data
- * @return int Status code (0 for success)
- */
-int SX1280_ReadBuffer(uint8_t *rxBuffer, uint8_t *size)
-{
-    //TODO: implement the logic to check for received data
-    // read the payload and its length from the radio's buffer
-    return 0;
-}
-
-// additional funcs here
