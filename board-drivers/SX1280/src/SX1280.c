@@ -16,6 +16,12 @@
 
 // for clarity, this section is to hold private defines -------------------//
 
+#define SX1280_NOP 0x00
+
+//standby modes for SET_STANDBY command
+#define STDBY_RC 0x00
+#define STDBY_XOSC 0x01
+
 // add SX1280 command opcodes, etc here
 
 
