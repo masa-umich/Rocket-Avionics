@@ -369,6 +369,27 @@ void reset_board() {
 	NVIC_SystemReset(); // This should never return
 }
 
+// use_bat 1 to use battery source, 0 to use GSE
+void PDB_source(uint8_t use_bat) {
+	HAL_GPIO_WritePin(PDB_DIO1_GPIO_Port, PDB_DIO1_Pin, use_bat);
+	if(use_bat) {
+		log_message(FC_STAT_PDB_SWITCH_BAT, -1);
+	}
+	else {
+		log_message(FC_STAT_PDB_SWITCH_GSE, -1);
+	}
+}
+
+void COTS_supply(uint8_t enabled) {
+	HAL_GPIO_WritePin(PDB_DIO2_GPIO_Port, PDB_DIO2_Pin, enabled);
+	if(enabled) {
+		log_message(FC_STAT_PDB_COTS_SUPPLY_ON, -1);
+	}
+	else {
+		log_message(FC_STAT_PDB_COTS_SUPPLY_OFF, -1);
+	}
+}
+
 void log_flash_storage() {
 	if(xSemaphoreTake(flash_mutex, 5) == pdPASS) {
 		uint32_t used = 536870912UL - fc_get_bytes_remaining(&flash_h);
@@ -2681,6 +2702,22 @@ void ProcessPackets(void *argument) {
 				    			}
 				    			case DEVICE_CMD_QUERY_FLASH: {
 				    				log_flash_storage();
+				    				break;
+				    			}
+				    			case DEVICE_CMD_PDB_SRC_GSE: {
+				    				PDB_source(0);
+				    				break;
+				    			}
+				    			case DEVICE_CMD_PDB_SRC_BAT: {
+				    				PDB_source(1);
+				    				break;
+				    			}
+				    			case DEVICE_CMD_PDB_COTS_OFF: {
+				    				COTS_supply(0);
+				    				break;
+				    			}
+				    			case DEVICE_CMD_PDB_COTS_ON: {
+				    				COTS_supply(1);
 				    				break;
 				    			}
 				    			default: {

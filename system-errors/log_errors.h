@@ -194,6 +194,10 @@
 #define FC_STAT_TCP_CONN_CLOSED					"502 TCP connection closed gracefully, fd "
 #define FC_STAT_TCP_SERV_RUNNING				"505 TCP server initialized and running"
 #define FC_STAT_TCP_SERV_REINIT					"506 TCP server reinitialized after link down"
+#define FC_STAT_PDB_SWITCH_BAT					"507 PDB switched to battery power"
+#define FC_STAT_PDB_SWITCH_GSE					"508 PDB switched to GSE power"
+#define FC_STAT_PDB_COTS_SUPPLY_ON				"509 PDB COTS supply on"
+#define FC_STAT_PDB_COTS_SUPPLY_OFF				"510 PDB COTS supply off"
 
 // Bay Board status messages
 #elif defined(BAY_BOARD)
