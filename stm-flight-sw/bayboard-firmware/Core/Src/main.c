@@ -2145,6 +2145,7 @@ void TelemetryTask(void *argument) {
 
   	  	uint64_t recordtime = get_rtc_time();
 
+
   	  	// Set board state struct
   		if(xSemaphoreTake(Board_h.bbState_access, 5) == pdPASS) {
   			if(!bar1_stat) {
@@ -2492,12 +2493,12 @@ void StartAndMonitor(void *argument)
   	init_adc(&hspi4, &(sensors_h.adc2_h));
 
   	// TC ADCs
-  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC3_CS_GPIO_Port, TC3_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC3_CS_GPIO_Port, TC3_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc2_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[3]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc4_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[4]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc5_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[5]), &hspi2, GPIOB, GPIO_PIN_14, 0x0005, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc6_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC3_CS_GPIO_Port, TC3_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC3_CS_GPIO_Port, TC3_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc2_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[3]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc4_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[4]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc5_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[5]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN3_AIN2, loaded_config.tc6_gain, ADS_DATA_RATE_600);
 
   	if(ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, NUM_TCS)) {
   		// ADS thread start error
@@ -2506,7 +2507,7 @@ void StartAndMonitor(void *argument)
 
   	// IMUs
   	sensors_h.imu1_h.hi2c = &hi2c5;
-  	sensors_h.imu1_h.I2C_TIMEOUT = 5;
+  	sensors_h.imu1_h.I2C_TIMEOUT = PERIPHERAL_TIMEOUT;
   	sensors_h.imu1_h.XL_x_offset = 0;
   	sensors_h.imu1_h.XL_y_offset = 0;
   	sensors_h.imu1_h.XL_z_offset = 0;
@@ -2516,7 +2517,7 @@ void StartAndMonitor(void *argument)
   	sensors_h.imu1_h.SA0 = 0;
 
   	sensors_h.imu2_h.hi2c = &hi2c5;
-  	sensors_h.imu2_h.I2C_TIMEOUT = 5;
+  	sensors_h.imu2_h.I2C_TIMEOUT = PERIPHERAL_TIMEOUT;
   	sensors_h.imu2_h.XL_x_offset = 0;
   	sensors_h.imu2_h.XL_y_offset = 0;
   	sensors_h.imu2_h.XL_z_offset = 0;
@@ -2536,14 +2537,14 @@ void StartAndMonitor(void *argument)
 
   	// Barometers
   	sensors_h.bar1_h.hspi = &hspi6;
-  	sensors_h.bar1_h.SPI_TIMEOUT = 5;
+  	sensors_h.bar1_h.SPI_TIMEOUT = PERIPHERAL_TIMEOUT;
   	sensors_h.bar1_h.CS_GPIO_Port = BAR1_CS_GPIO_Port;
   	sensors_h.bar1_h.CS_GPIO_Pin = BAR1_CS_Pin;
   	sensors_h.bar1_h.pres_offset = 0;
   	sensors_h.bar1_h.alt_offset = 0;
 
   	sensors_h.bar2_h.hspi = &hspi6;
-  	sensors_h.bar2_h.SPI_TIMEOUT = 5;
+  	sensors_h.bar2_h.SPI_TIMEOUT = PERIPHERAL_TIMEOUT;
   	sensors_h.bar2_h.CS_GPIO_Port = BAR2_CS_GPIO_Port;
   	sensors_h.bar2_h.CS_GPIO_Pin = BAR2_CS_Pin;
   	sensors_h.bar2_h.pres_offset = 0;

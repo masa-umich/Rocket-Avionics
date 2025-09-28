@@ -115,6 +115,7 @@
 #define FC_ERR_TCP_SERV_RECV_ERROR_CLOSED		"057 Connection closed - TCP server socket flagged as error, fd "
 #define FC_ERR_TCP_SERV_RECV_ERROR_NOTCONN		"058 Socket not connected - TCP server socket flagged as error, fd "
 #define FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN		"059 Unknown errno - TCP server socket flagged as error, fd/errno "
+#define FC_ERR_TCP_SERV_ACCEPT_NO_ROOM			"060 TCP server connection list full"
 
 #elif defined(BAY_BOARD)
 // Bay Board error messages
@@ -193,6 +194,10 @@
 #define FC_STAT_TCP_CONN_CLOSED					"502 TCP connection closed gracefully, fd "
 #define FC_STAT_TCP_SERV_RUNNING				"505 TCP server initialized and running"
 #define FC_STAT_TCP_SERV_REINIT					"506 TCP server reinitialized after link down"
+#define FC_STAT_PDB_SWITCH_BAT					"507 PDB switched to battery power"
+#define FC_STAT_PDB_SWITCH_GSE					"508 PDB switched to GSE power"
+#define FC_STAT_PDB_COTS_SUPPLY_ON				"509 PDB COTS supply on"
+#define FC_STAT_PDB_COTS_SUPPLY_OFF				"510 PDB COTS supply off"
 
 // Bay Board status messages
 #elif defined(BAY_BOARD)
