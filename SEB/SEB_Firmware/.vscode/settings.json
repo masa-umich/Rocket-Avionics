@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.bc": "ini",
+        "ms5611_sim.h": "c"
+    }
+}

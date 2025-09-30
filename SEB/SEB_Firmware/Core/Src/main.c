@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <string.h>
+#include "MS5611_SIM.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,6 +70,14 @@ static void MX_SPI2_Init(void);
 uint8_t SPI_rxBuffer[BUFFER_SIZE] = {0};
 uint8_t SPI_txBuffer[BUFFER_SIZE] = {0};
 
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
+	emulation_callback(hspi);
+}
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
+    // The data response has been sent. Now, reset the slave to listen for the next 1-byte command
+    HAL_SPI_Receive_IT(hspi, SPI_rxBuffer, 1);
+}
 
 /* USER CODE END 0 */
 
@@ -108,14 +116,12 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 
-  emulation_loop(&hspi2, &huart2); // Start the emulation loop for MS5611 sensor
-
+  emulation_init(&hspi2, &huart2); // Start the emulation for MS5611 sensor
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-	__WFI();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -283,7 +289,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi2.Init.NSS = SPI_NSS_HARD_INPUT;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
