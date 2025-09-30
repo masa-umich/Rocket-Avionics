@@ -8,6 +8,8 @@
 #include "ADS1120.h"
 //#include "semphr.h"
 
+uint8_t repeat_reading = 1;
+
 extern uint64_t getTimestamp(void);
 
 void delay_us(uint32_t us) { // I found this online - why is it so difficult to delay less than a millisecond?
@@ -129,7 +131,7 @@ int ADS_init(ADS_Main_t *ADSMain, ADS_TC_t *TCs, uint8_t num_TCs) {
 }
 
 // returns 0 if nothing should be done, returns 1 if dout should be checked, returns 2 if reading should be taken and moved on, basically a timeout
-uint8_t ADS_timerStatus(ADS_Chip *ADS) {
+uint8_t ADS_timerStatus(ADS_Chip *ADS, uint8_t delay) {
 	uint32_t delta_time = HAL_GetTick() - ADS->last_tick;
 	uint32_t total_time = HAL_GetTick() - ADS->timer_start;
 	uint8_t datarate = 0x00;
@@ -158,6 +160,8 @@ uint8_t ADS_timerStatus(ADS_Chip *ADS) {
 	else if(datarate == ADS_DATA_RATE_600) {
 		rate_delay = 5;
 	}
+
+	rate_delay += delay;
 
 	if(total_time >= rate_delay + 10) {
 		return 2;
@@ -267,10 +271,10 @@ void vTCTask(void *pvParameters) {
 			// also if this is the first chip, get internal temp on timer
 			
 			uint8_t read_and_switch = 0;
-			uint8_t timer = ADS_timerStatus(&(connected_chips[k]));
+			uint8_t timer = ADS_timerStatus(&(connected_chips[k]), 10);
 			if(timer == 1) {
 				ADS_chipSelect(&(connected_chips[k]));
-				delay_us(1);
+				delay_us(10);
 				if(!HAL_GPIO_ReadPin(connected_chips[k].DOUT_GPIO_Port, connected_chips[k].DOUT_GPIO_Pin)) {
 					read_and_switch = 1;
 				}
@@ -285,10 +289,10 @@ void vTCTask(void *pvParameters) {
 				uint8_t conf_byte_1 = 0x00;
 				uint8_t conf_byte_2 = 0x00;
 
-				if(k == 0 && HAL_GetTick() - ADS_main->last_temp > ADS_INTERNAL_TEMP_DELAY && connected_chips[k].current_mux != 2) {
+				if(k == 0 && (HAL_GetTick() - ADS_main->last_temp) > ADS_INTERNAL_TEMP_DELAY && connected_chips[k].current_mux != 2) {
 					next_index = 2;
 					conf_byte_1 = 0x00 | 0x00 | ADS_PGA_ENABLED;
-					conf_byte_2 = ADS_INTERNAL_TEMP_RATE | ADS_MODE_NORMAL | ADS_CONV_MODE_SING | ADS_INTERNAL_TEMP_ENABLED | ADS_BURN_OUT_DISABLED;
+					conf_byte_2 = ADS_INTERNAL_TEMP_RATE | ADS_MODE_NORMAL | ADS_CONV_MODE_CONT | ADS_INTERNAL_TEMP_ENABLED | ADS_BURN_OUT_DISABLED;
 				}
 				else {
 					if(next_index >= connected_chips[k].mux_count) {
@@ -296,7 +300,7 @@ void vTCTask(void *pvParameters) {
 					}
 
 					conf_byte_1 = connected_chips[k].muxes[next_index]->mux | connected_chips[k].muxes[next_index]->gain | ADS_PGA_ENABLED;
-					conf_byte_2 = connected_chips[k].muxes[next_index]->rate | ADS_MODE_NORMAL | ADS_CONV_MODE_SING | ADS_INTERNAL_TEMP_DISABLED | ADS_BURN_OUT_DISABLED;
+					conf_byte_2 = connected_chips[k].muxes[next_index]->rate | ADS_MODE_NORMAL | ADS_CONV_MODE_CONT | ADS_INTERNAL_TEMP_DISABLED | ADS_BURN_OUT_DISABLED;
 				}
 
 				ADS_chipSelect(&(connected_chips[k]));
@@ -304,6 +308,17 @@ void vTCTask(void *pvParameters) {
 
 				uint8_t MSB = 0x00;
 				uint8_t LSB = 0x00;
+
+				// Skip the first reading after an internet temp reading. Idk why this is needed, but the chip freaks out after the internal temp read
+				/*if(k == 0 && connected_chips[k].current_mux == 0) {
+					if(repeat_reading){
+						repeat_reading = 0;
+						ADS_chipRelease(&(connected_chips[k]));
+						connected_chips[k].last_tick = HAL_GetTick();
+						connected_chips[k].timer_start = HAL_GetTick();
+						continue;
+					}
+				}*/
 
 				if(read_and_switch) { // normal reading, clock out reading and replace conf in one step
 					uint8_t txbuffer[4] = {0x00, 0x41, conf_byte_1, conf_byte_2};
@@ -317,6 +332,24 @@ void vTCTask(void *pvParameters) {
 
 					MSB = rxbuffer[0];
 					LSB = rxbuffer[1];
+
+					/*uint8_t read_txbuffer[3] = {0x10, 0x00, 0x00};
+					uint8_t rxbuffer[3] = {0x00, 0x00, 0x00};
+
+					taskENTER_CRITICAL();
+					HAL_SPI_TransmitReceive(connected_chips[k].hspi, read_txbuffer, rxbuffer, 3, connected_chips[k].SPI_TIMEOUT);
+					taskEXIT_CRITICAL();
+
+					delay_us(1);
+
+					uint8_t txbuffer[3] = {0x41, conf_byte_1, conf_byte_2};
+
+					taskENTER_CRITICAL();
+					HAL_SPI_Transmit(connected_chips[k].hspi, txbuffer, 3, connected_chips[k].SPI_TIMEOUT);
+					taskEXIT_CRITICAL();
+
+					MSB = rxbuffer[1];
+					LSB = rxbuffer[2];*/
 
 					/*delay_us(1);
 
@@ -373,15 +406,20 @@ void vTCTask(void *pvParameters) {
 					if(xSemaphoreTake(connected_chips[k].muxes[connected_chips[k].current_mux]->reading_semaphore, (TickType_t) 2) == pdTRUE) {
 						connected_chips[k].muxes[connected_chips[k].current_mux]->current_raw = (MSB << 8) | LSB;
 						connected_chips[k].muxes[connected_chips[k].current_mux]->timestamp = getTimestamp();
+
 						xSemaphoreGive(connected_chips[k].muxes[connected_chips[k].current_mux]->reading_semaphore);
 					}
 				}
 
 				connected_chips[k].current_mux = next_index;
+				if(next_index == 2) {
+					repeat_reading = 1;
+				}
 				connected_chips[k].last_tick = HAL_GetTick();
 				connected_chips[k].timer_start = HAL_GetTick();
 			}
 		}
+		vTaskDelay(2);
 	}
 }
 
@@ -428,13 +466,13 @@ int ADS_configure(ADS_Chip *ADS, uint8_t TC_index, int check) {
 
 	if(TC_index == 2) {
 		conf_byte_1 = 0x00 | 0x00 | ADS_PGA_ENABLED;
-		conf_byte_2 = ADS_INTERNAL_TEMP_RATE | ADS_MODE_NORMAL | ADS_CONV_MODE_SING | ADS_INTERNAL_TEMP_ENABLED | ADS_BURN_OUT_DISABLED;
+		conf_byte_2 = ADS_INTERNAL_TEMP_RATE | ADS_MODE_NORMAL | ADS_CONV_MODE_CONT | ADS_INTERNAL_TEMP_ENABLED | ADS_BURN_OUT_DISABLED;
 		conf_byte_3 = ADS_VOLT_REF_INT | ADS_FILTER_DISABLED | ADS_PSW_DISABLED | ADS_IDAC_DISABLED;
 		conf_byte_4 = ADS_l1MUX_DISABLED | ADS_l2MUX_DISABLED | ADS_DRDY_MODE_BOTH;
 	}
 	else {
 		conf_byte_1 = ADS->muxes[TC_index]->mux | ADS->muxes[TC_index]->gain | ADS_PGA_ENABLED;
-		conf_byte_2 = ADS->muxes[TC_index]->rate | ADS_MODE_NORMAL | ADS_CONV_MODE_SING | ADS_INTERNAL_TEMP_DISABLED | ADS_BURN_OUT_DISABLED;
+		conf_byte_2 = ADS->muxes[TC_index]->rate | ADS_MODE_NORMAL | ADS_CONV_MODE_CONT | ADS_INTERNAL_TEMP_DISABLED | ADS_BURN_OUT_DISABLED;
 		conf_byte_3 = ADS_VOLT_REF_INT | ADS_FILTER_DISABLED | ADS_PSW_DISABLED | ADS_IDAC_DISABLED;
 		conf_byte_4 = ADS_l1MUX_DISABLED | ADS_l2MUX_DISABLED | ADS_DRDY_MODE_BOTH;
 	}

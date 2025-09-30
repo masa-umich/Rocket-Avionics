@@ -116,6 +116,23 @@ int MS5611_readADC(MS5611 *BAR, uint32_t *result) {
 	return 0;
 }
 
+uint8_t osr_to_ms_wait(OSR osr) {
+	switch (osr) {
+		case OSR_256:
+			return 2;
+		case OSR_512:
+			return 3;
+		case OSR_1024:
+			return 4;
+		case OSR_2048:
+			return 6;
+		case OSR_4096:
+			return 11;
+		default:
+			return 11;
+	}
+}
+
 // Pressure convert
 // OSR is the "Over Sampling Rate" which determines the resolution of the pressure and temperature
 int MS5611_presConvert(MS5611* BAR, uint32_t* pres_raw, OSR osr) {
@@ -141,7 +158,7 @@ int MS5611_presConvert(MS5611* BAR, uint32_t* pres_raw, OSR osr) {
 	}
 	if (cmd == 0x00) { return 1; } // invalid cmd
 	MS5611_write(BAR, cmd); // write the command
-	vTaskDelay(10); // 10ms conversion time
+	vTaskDelay(osr_to_ms_wait(osr)); // 10ms conversion time
 	if (MS5611_readADC(BAR, pres_raw)) {
 		return 1;
 	}
@@ -172,7 +189,7 @@ int MS5611_tempConvert(MS5611* BAR, uint32_t* temp_raw, OSR osr) {
 	}
 	if (cmd == 0x00) { return 1; } // invalid cmd
 	MS5611_write(BAR, cmd); // write the command
-	vTaskDelay(10); // 10ms conversion time
+	vTaskDelay(osr_to_ms_wait(osr)); // 10ms conversion time
 	if (MS5611_readADC(BAR, temp_raw)) {
 		return 1;
 	}

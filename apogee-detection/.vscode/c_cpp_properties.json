@@ -1,0 +1,39 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "STM32-apogee",
+      "intelliSenseMode": "gcc-arm",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "compilerPath": "/usr/bin/arm-none-eabi-gcc", 
+      "defines": [
+        "STM32H7xx",
+        "USE_HAL_DRIVER"
+      ],
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/../limestone-firmware/Core/Inc",
+        "${workspaceFolder}/../limestone-firmware/Drivers/STM32H7xx_HAL_Driver/Inc",
+        "${workspaceFolder}/../limestone-firmware/Drivers/CMSIS/Device/ST/STM32H7xx/Include",
+        "${workspaceFolder}/../limestone-firmware/Drivers/CMSIS/Include",
+        "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/include",
+        "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2",
+        "${workspaceFolder}/../board-drivers/LSM6DSO32XTR/inc",
+        "${workspaceFolder}/../board-drivers/LSM6DSO32XTR/inc",
+        "${workspaceFolder}/../board-drivers/VLVs/inc",
+        "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/",
+        "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/portable/**",
+        "${workspaceFolder}/../limestone-firmware/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang"
+
+      ],
+      "browse": {
+        "path": [
+          "${workspaceFolder}",
+          "${workspaceFolder}/.."
+        ],
+        "limitSymbolsToIncludedHeaders": true
+      }
+    }
+  ]
+}

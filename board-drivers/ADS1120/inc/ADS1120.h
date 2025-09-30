@@ -69,7 +69,7 @@
 #define ADS_DATA_RATE_1000            	(uint8_t)0xC0 // 1000 SPS ~ 1000hz in normal mode
 
 
-#define ADS_INTERNAL_TEMP_RATE			ADS_DATA_RATE_175
+#define ADS_INTERNAL_TEMP_RATE			ADS_DATA_RATE_600
 #define ADS_INTERNAL_TEMP_DELAY			(uint32_t)500 // ms between internal temp readings
 
 // Type T thermocouple constants

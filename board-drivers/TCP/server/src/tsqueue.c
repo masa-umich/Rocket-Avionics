@@ -32,13 +32,15 @@ List *list_create(int dataSize, CallbackFree free_callback) {
 	assert(dataSize > 0);
 
 	List *list = (List *)malloc(sizeof(List));
-	list->count = 0;
-	list->data_size = dataSize;
-	list->head = calloc(sizeof(Node), 1); // next init to NULL
-	list->callback_free = free_callback;
-	list->mutex = xSemaphoreCreateMutex();
-	list->msgs = xSemaphoreCreateCounting(MAX_QUEUE_SIZE, 0);
-	list->remainingSpace = xSemaphoreCreateCounting(MAX_QUEUE_SIZE, MAX_QUEUE_SIZE);
+	if(list) {
+		list->count = 0;
+		list->data_size = dataSize;
+		list->head = calloc(sizeof(Node), 1); // next init to NULL
+		list->callback_free = free_callback;
+		list->mutex = xSemaphoreCreateMutex();
+		list->msgs = xSemaphoreCreateCounting(MAX_QUEUE_SIZE, 0);
+		list->remainingSpace = xSemaphoreCreateCounting(MAX_QUEUE_SIZE, MAX_QUEUE_SIZE);
+	}
 
 	return list;
 }

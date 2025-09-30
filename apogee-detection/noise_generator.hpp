@@ -32,6 +32,14 @@ public:
     // this takes the raw height reading from MASTRAN and computes the actual
     // temperature reading in celsius
     double compute_temp(double height);
+
+    //takes the raw height reading from MASTRAN and computes 'rho', the 
+    //air density constant at that height
+    double compute_rho(double height);
+
+    //takes the raw height reading from MASTRAN and computes the 
+    //speed of
+    double speed_of_sound(double height);
 };
 
 class Barometer
@@ -75,6 +83,13 @@ public:
    // view_data() prints the above report for each timestep across the rocket flight
    void view_data();
 };
+
+// class IMU
+// {
+//    double a_x; 
+//    double a_y; 
+//    double a_z; 
+// };
 
 class Timer
 {

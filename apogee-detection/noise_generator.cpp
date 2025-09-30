@@ -53,6 +53,28 @@ double Environment::compute_temp(double height)
    return TEMP * 100;
 }
 
+//takes the raw height reading from MASTRAN and computes 'rho', the 
+//air density constant at that height
+double Environment::compute_rho(double height) 
+{
+    const double Temp_K = (compute_temp(height) / 100.0) + 273.15; // C×100 -> K
+    const double P_Pa = compute_pressure(height);               // numerically Pa
+    return (P_Pa * M) / (R * Temp_K);
+}
+
+
+//takes the raw height reading from MASTRAN and computes the 
+//speed of
+double Environment::speed_of_sound(double height)
+{
+    const double gamma = 1.4;
+    double Temp_K = (compute_temp(height)/100.0) + 273.15;
+    double Rspec = R / M;
+    return std::sqrt(gamma * Rspec * Temp_K);
+}
+
+
+
 // this is the forward application of the 1st/2nd order pressure & temperature
 // calculations.
 // Since we have used the physics equations in compute_pressure and compute_temp,
