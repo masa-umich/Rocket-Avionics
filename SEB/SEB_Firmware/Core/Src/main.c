@@ -116,12 +116,13 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 
-  emulation_init(&hspi2, &huart2); // Start the emulation for MS5611 sensor
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
+    emulation_loop(&huart2);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
