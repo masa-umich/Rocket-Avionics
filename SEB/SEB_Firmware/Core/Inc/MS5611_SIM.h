@@ -36,6 +36,7 @@ typedef enum {
 } emulation_state_t;
 
 // Function prototypes
+void emulation_init();
 void emulation_IRQHandler(SPI_HandleTypeDef *hspi);
 void emulation_state_machine_update(uint8_t rx_byte);
 uint8_t emulation_get_response(void);

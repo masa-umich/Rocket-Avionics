@@ -147,9 +147,8 @@ void SysTick_Handler(void)
 void SPI2_IRQHandler(void)
 {
   /* USER CODE BEGIN SPI2_IRQn 0 */
-  emulation_IRQHandler(&hspi2); // Handle the MS5611 emulation
+  emulation_IRQHandler(&hspi2);
   /* USER CODE END SPI2_IRQn 0 */
-  HAL_SPI_IRQHandler(&hspi2);
   /* USER CODE BEGIN SPI2_IRQn 1 */
 
   /* USER CODE END SPI2_IRQn 1 */

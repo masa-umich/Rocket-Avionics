@@ -18,35 +18,29 @@ static const uint16_t fixed_prom_values[8] = {
     0x1234
 };
 
-enum emulation_state_t {
-    WAITING_FOR_COMMAND,
-    RESETTING,
-    SENDING_PROM_DATA_LOW,
-    SENDING_PROM_DATA_HIGH,
-    D1_CONVERSION_REQUESTED,
-    D2_CONVERSION_REQUESTED,
-    SENDING_ADC_DATA_XL,
-    SENDING_ADC_DATA_L,
-    SENDING_ADC_DATA_H,
-    SENDING_ADC_DATA_XH
-};
-
 static emulation_state_t state = WAITING_FOR_COMMAND;
 static uint8_t prom_address_index = 0;
 static uint8_t MS5611_ADC_Buffer[4] = {0};
 static uint8_t UART_txBuffer[1] = {0};
 
+void emulation_init() {
+	SPI2->CR1 |= SPI_CR1_SPE | SPI_CR1_SSM; // enable SPI
+	// IMPORTANT: Must enable hardware NSS in slave mode! Don't let the software option fool you
+	SPI2->CR2 |= SPI_CR2_RXNEIE | SPI_CR2_TXEIE;
+	NVIC_EnableIRQ(SPI2_IRQn);
+}
+
 void emulation_IRQHandler(SPI_HandleTypeDef *hspi) {
     // RX: something arrived
-    if (hspi->SR & SPI_SR_RXNE) {
-        uint8_t rx = *((__IO uint8_t*)&hspi->DR); // clears RXNE
+    if (SPI2->SR & SPI_SR_RXNE) {
+        uint8_t rx = *((__IO uint8_t*)&SPI2->DR); // clears RXNE
         emulation_state_machine_update(rx); // Update the state machine based on received byte
     }
 
     // TX: need a new byte for next cycle
-    if (hspi->SR & SPI_SR_TXE) {
+    if (SPI2->SR & SPI_SR_TXE) {
         uint8_t tx = emulation_get_response(); // maybe dummy if no response queued
-        *((__IO uint8_t*)&hspi->DR) = tx; // clears TXE
+        *((__IO uint8_t*)&SPI2->DR) = tx; // clears TXE
     }
 }
 
@@ -75,7 +69,7 @@ void emulation_state_machine_update(uint8_t rx_byte) {
                             break;
                         default:
                             // Unknown command, stay in WAITING_FOR_COMMAND
-                            printf("Unknown command: 0x%02X\n", rx_byte); // for debugging
+                            //printf("Unknown command: 0x%02X\n", rx_byte); // for debugging
                             break;
                     }
             }
@@ -101,6 +95,8 @@ void emulation_state_machine_update(uint8_t rx_byte) {
         case SENDING_ADC_DATA_XH:
             state = WAITING_FOR_COMMAND; // Finished sending ADC data
             break;
+        default:
+        	break; // Should never happen
     }
 }
 
