@@ -227,7 +227,19 @@ void SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime);
 
 
 
+/**
+* @brief Put radio in TX mode to transmit packet
+* @param timeout timeout in milliseconds (0 = no timeout)
+* @return SX1280_Status_t status of operation
+*/
+SX1280_Status_t SX1280_SetTx(uint16_t timeout);
 
+/**
+* @brief Put radio in RX mode to receive packets
+* @param timeout timeout in milliseconds (0 = continuous)
+* @return SX1280_Status_t status of operation
+*/
+SX1280_Status_t SX1280_SetRx(uint16_t timeout);
 
 
 

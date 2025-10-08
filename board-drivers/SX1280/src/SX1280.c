@@ -82,7 +82,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
    SX1280_SetPacketType(PACKET_TYPE_LORA);
    SX1280_SetRfFrequency(2400000000); //2.4 GHz
    SX1280_SetBufferBaseAddress(0, 128);
-   SX1280_SetModulationParams(LORA_SF7, LORA_BW_1600, LORA_CR_4_5);
+   SX1280_SetModulationParams(LORA_SF8, LORA_BW_400, LORA_CR_4_5);  //NOTEHERE IS WHERE TO ACHIEVE EFFECTIVE BIT RATES. REF. TABLE
    SX1280_SetPacketParams(12, LORA_EXPLICIT_HEADER, 255, LORA_CRC_ON, LORA_IQ_STANDARD);
    SX1280_SetTxParams(0, 0x80); //0dbm, 10us ramp time
    return SX1280_OK;
