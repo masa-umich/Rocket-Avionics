@@ -180,14 +180,14 @@ int16_t SX1280_ReadBuffer(uint8_t* data, uint8_t maxLength);
 * @brief set radio packet type (ex. LORA, GFSK).
 * Really we are only using LORA(?)
 */
-void SX1280_Status_t SX1280_SetPacketType(SX1280_PacketType_t packetType);
+SX1280_Status_t SX1280_SetPacketType(SX1280_PacketType_t packetType);
 
 
 /**
 * @brief set radio carrier freq
 * @param frequency the frequency in Hz (ex. 2400000000 for 2.4 GHz)
 */
-void SX1280_Status_t SX1280_SetRfFrequency(uint32_t frequency);
+SX1280_Status_t SX1280_SetRfFrequency(uint32_t frequency);
 
 
 /**
@@ -196,7 +196,7 @@ void SX1280_Status_t SX1280_SetRfFrequency(uint32_t frequency);
 * @param bw bandwidth (LoRa only)
 * @param cr coding rate (LoRa only)
 */
-void SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t bw, SX1280_LoRa_CR_t cr);
+SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t bw, SX1280_LoRa_CR_t cr);
 
 
 /**
@@ -207,7 +207,7 @@ void SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa
 * @param crcOn crc on or off (LoRa only)
 * @param invertIQ standard or inverted IQ (LoRa only)
 */
-void SX1280_Status_t SX1280_SetPacketParams(uint16_t preambleLength, SX1280_LoRa_Header_Type_t headerType, uint8_t payloadLength, SX1280_LoRa_CRC_t crc, SX1280_LoRa_IQ_t invertIQ);
+SX1280_Status_t SX1280_SetPacketParams(uint16_t preambleLength, SX1280_LoRa_Header_Type_t headerType, uint8_t payloadLength, SX1280_LoRa_CRC_t crc, SX1280_LoRa_IQ_t invertIQ);
 
 
 /**
@@ -215,7 +215,7 @@ void SX1280_Status_t SX1280_SetPacketParams(uint16_t preambleLength, SX1280_LoRa
 * @param txBaseAddress start address for the TX buffer (0-255)
 * @param rxBaseAddress start address for the RX buffer (0-255)
 */
-void SX1280_Status_t SX1280_SetBufferBaseAddress(uint8_t txBaseAddress, uint8_t rxBaseAddress);
+SX1280_Status_t SX1280_SetBufferBaseAddress(uint8_t txBaseAddress, uint8_t rxBaseAddress);
 
 
 /**
@@ -223,7 +223,7 @@ void SX1280_Status_t SX1280_SetBufferBaseAddress(uint8_t txBaseAddress, uint8_t 
 * @param power output power in dBm (-18 to +13 dBm)
 * @param rampTime Ramp time constant.
 */
-void SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime);
+SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime);
 
 
 
