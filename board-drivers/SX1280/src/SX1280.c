@@ -73,7 +73,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
    HAL_GPIO_WritePin(sx1280_hal_config->resetPort, sx1280_hal_config->resetPin, GPIO_PIN_RESET);
    HAL_Delay(20); //reset pulse
    HAL_GPIO_WritePin(sx1280_hal_config->resetPort, sx1280_hal_config->resetPin, GPIO_PIN_SET);
-   HAL_DELAY(50); //wait for chip to boot
+   HAL_Delay(50); //wait for chip to boot
 
 
    //set radio to state STDBY_RC
@@ -175,7 +175,7 @@ SX1280_Status_t SX1280_SetPacketType(SX1280_PacketType_t packetType) {
     return SX1280_OK;
 }
 
-SX1280_Status_t SX12800_SetRfFrequency(uint32_t frequency) {
+SX1280_Status_t SX1280_SetRfFrequency(uint32_t frequency) {
     // calc frequency reg value
     // freq = (freq * 2^18) / XTAL_FREQ
     //bascally we are converting real frequency in Hz into a register value that SX1280's PLL knows

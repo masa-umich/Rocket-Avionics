@@ -246,6 +246,8 @@ SX1280_Status_t SX1280_SetRx(uint16_t timeout);
 
 
 
+
+
 // low level API prototypes --------------------//
 /**
 * @brief sends a command to sx1280
