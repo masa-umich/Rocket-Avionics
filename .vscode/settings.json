@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.bc": "ini",
-        "fcbbadc.h": "c"
+        "fcbbadc.h": "c",
+        "stm32h7xx_hal.h": "c"
     }
 }
