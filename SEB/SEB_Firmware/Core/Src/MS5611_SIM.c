@@ -24,14 +24,37 @@ static uint8_t MS5611_ADC_Buffer[4] = {0};
 static uint8_t UART_txBuffer[1] = {0};
 
 void emulation_init() {
-	SPI2->CR1 |= SPI_CR1_SPE | SPI_CR1_SSM; // enable SPI
+	// Disable SPI2 before reconfiguring
+	SPI2->CR1 &= ~SPI_CR1_SPE;
 	// IMPORTANT: Must enable hardware NSS in slave mode! Don't let the software option fool you
-	SPI2->CR2 |= SPI_CR2_RXNEIE | SPI_CR2_TXEIE;
+	SPI2->CR1 = 0
+	    | (0 << SPI_CR1_BIDIMODE_Pos)   // 2-line full duplex
+	    | (0 << SPI_CR1_BIDIOE_Pos)     // (ignored since BIDIMODE=0)
+	    | (0 << SPI_CR1_CRCEN_Pos)      // No CRC
+	    | (0 << SPI_CR1_CPOL_Pos)       // Clock polarity (0 = idle low, adjust if needed)
+	    | (0 << SPI_CR1_CPHA_Pos)       // Clock phase (0 = sample on 1st edge, adjust if needed)
+	    | (0 << SPI_CR1_MSTR_Pos)       // Slave mode
+	    | (0 << SPI_CR1_LSBFIRST_Pos)   // MSB first
+	    ;
+	SPI2->CR2 = 0
+	    | (7 << SPI_CR2_DS_Pos)         // Data size = 8-bit (DS=0b0111 = 8 bits)
+	    | (1 << SPI_CR2_FRXTH_Pos)      // RXNE flag when FIFO has 8-bit (not 16-bit)
+	    | (0 << SPI_CR2_NSSP_Pos)       // No NSS pulse mode (important!)
+	    | (0 << SPI_CR2_TXDMAEN_Pos)    // No DMA
+	    | (0 << SPI_CR2_RXDMAEN_Pos)    // No DMA
+	    | (1 << SPI_CR2_RXNEIE_Pos)     // RXNE interrupt enable
+	    | (1 << SPI_CR2_TXEIE_Pos)      // TXE interrupt enable
+	    ;
+	SPI2->CR1 |= SPI_CR1_SPE; // Enable SPI peripheral
+	//SPI2->CR2 |= SPI_CR2_RXNEIE;// | SPI_CR2_FRXTH;// | SPI_CR2_DS_2 | SPI_CR2_DS_1 | SPI_CR2_DS_0;// | SPI_CR2_TXEIE;
+	//SPI2->CR1 |= SPI_CR1_SPE;  // Enable SPI peripheral
+	*((__IO uint8_t*)&SPI2->DR) = 0x00; // preload with a dummy byte
 	NVIC_EnableIRQ(SPI2_IRQn);
 }
 
 void emulation_IRQHandler(SPI_HandleTypeDef *hspi) {
-    // RX: something arrived
+    static uint8_t dummy = 0x01;
+	// RX: something arrived
     if (SPI2->SR & SPI_SR_RXNE) {
         uint8_t rx = *((__IO uint8_t*)&SPI2->DR); // clears RXNE
         emulation_state_machine_update(rx); // Update the state machine based on received byte
@@ -40,7 +63,7 @@ void emulation_IRQHandler(SPI_HandleTypeDef *hspi) {
     // TX: need a new byte for next cycle
     if (SPI2->SR & SPI_SR_TXE) {
         uint8_t tx = emulation_get_response(); // maybe dummy if no response queued
-        *((__IO uint8_t*)&SPI2->DR) = tx; // clears TXE
+        *((__IO uint8_t*)&SPI2->DR) = dummy++; // clears TXE
     }
 }
 
@@ -101,7 +124,10 @@ void emulation_state_machine_update(uint8_t rx_byte) {
 }
 
 uint8_t emulation_get_response() {
-    uint8_t response = 0x00; // Default dummy byte
+    static uint8_t pretend_state = 0x01;
+    return pretend_state++;
+    /*
+	uint8_t response = 0x00; // Default dummy byte
     // Check the state machine for what we should respond with
     switch (state) {
         case SENDING_PROM_DATA_LOW: // these might be backwards 
@@ -127,6 +153,7 @@ uint8_t emulation_get_response() {
             break;
     }
     return response;
+    */
 }
 
 void emulation_loop(UART_HandleTypeDef *huart) {
