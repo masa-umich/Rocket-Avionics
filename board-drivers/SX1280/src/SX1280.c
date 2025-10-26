@@ -81,9 +81,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
    SX1280_SendCommand(SX1280_CMD_SET_STANDBY, &standby_mode, 1);
 
 
-   // default to LoRa packet type
    // Set default LoRa packet type
-   // default lora packet
    if (SX1280_SetPacketType(PACKET_TYPE_LORA) != SX1280_OK){
         return SX1280_ERROR;
    }
@@ -178,7 +176,7 @@ SX1280_Status_t SX1280_SetPacketType(SX1280_PacketType_t packetType) {
 SX1280_Status_t SX1280_SetRfFrequency(uint32_t frequency) {
     // calc frequency reg value
     // freq = (freq * 2^18) / XTAL_FREQ
-    //bascally we are converting real frequency in Hz into a register value that SX1280's PLL knows
+    // Converting real frequency in Hz into a register value for SX1280's PLL
     // from datasheet, section 4.3, page 31: F_RF = F_xosc / 2^18 * rfFrequency
     // where F_RF is our desired, F_Xosc is crystal oscillator freq, rfFreq is 24-bit reg value, and
     // 2^18 is the PLL step resolution

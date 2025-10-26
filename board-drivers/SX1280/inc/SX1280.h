@@ -51,8 +51,8 @@
 
 // PeriodBase definitions for SetTx/SetRx timeout (Table 11-24)
 // These define the time step used for timeout calculations
-#define SX1280_PERIODBASE_15_625_US  0x00  // 15.625 μs steps
-#define SX1280_PERIODBASE_62_5_US    0x01  // 62.5 μs steps
+#define SX1280_PERIODBASE_15_625_US  0x00  // 15.625 us steps
+#define SX1280_PERIODBASE_62_5_US    0x01  // 62.5 us steps
 #define SX1280_PERIODBASE_1_MS       0x02  // 1 ms steps
 #define SX1280_PERIODBASE_4_MS       0x03  // 4 ms steps
 
@@ -202,7 +202,7 @@ int16_t SX1280_ReadBuffer(uint8_t* data, uint8_t maxLength);
 // config prototypes
 /**
 * @brief set radio packet type (ex. LORA, GFSK).
-* Really we are only using LORA(?)
+* LoRa is recommended for long-range telemetry applications
 */
 SX1280_Status_t SX1280_SetPacketType(SX1280_PacketType_t packetType);
 
