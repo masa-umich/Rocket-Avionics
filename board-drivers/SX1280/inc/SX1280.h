@@ -39,6 +39,32 @@
 #define SX1280_CMD_SET_BUFFER_BASE_ADDRESS 0x8F
 #define SX1280_CMD_GET_RX_BUFFER_STATUS 0x17
 
+// Ramp time definitions for SetTxParams (Table 11-49)
+#define SX1280_RAMP_02_US  0x00  // 2 us
+#define SX1280_RAMP_04_US  0x20  // 4 us
+#define SX1280_RAMP_06_US  0x40  // 6 us
+#define SX1280_RAMP_08_US  0x60  // 8 us
+#define SX1280_RAMP_10_US  0x80  // 10 us
+#define SX1280_RAMP_12_US  0xA0  // 12 us
+#define SX1280_RAMP_16_US  0xC0  // 16 us
+#define SX1280_RAMP_20_US  0xE0  // 20 us
+
+// PeriodBase definitions for SetTx/SetRx timeout (Table 11-24)
+// These define the time step used for timeout calculations
+#define SX1280_PERIODBASE_15_625_US  0x00  // 15.625 μs steps
+#define SX1280_PERIODBASE_62_5_US    0x01  // 62.5 μs steps
+#define SX1280_PERIODBASE_1_MS       0x02  // 1 ms steps
+#define SX1280_PERIODBASE_4_MS       0x03  // 4 ms steps
+
+// Special timeout values for SetTx/SetRx
+#define SX1280_TX_TIMEOUT_NONE       0x0000  // No timeout, Tx single mode
+#define SX1280_RX_TIMEOUT_NONE       0x0000  // No timeout, Rx single mode
+#define SX1280_RX_TIMEOUT_CONTINUOUS 0xFFFF  // Continuous RX mode
+
+
+
+
+
 
 /**
 * @brief status enum for driver functions
@@ -65,8 +91,6 @@ typedef struct {
    uint16_t resetPin;
    GPIO_TypeDef* busyPort;
    uint16_t busyPin;
-   GPIO_TypeDef* irq_port; // DIO1 pin
-   uint16_t irq_pin;
 } SX1280_Hal_t;
 
 
@@ -229,15 +253,20 @@ SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime);
 
 /**
 * @brief Put radio in TX mode to transmit packet
-* @param timeout timeout in milliseconds (0 = no timeout)
-* @return SX1280_Status_t status of operation
+* @param timeout Timeout in milliseconds (uses 1ms steps)
+*                0 = no timeout (single mode, returns to STDBY_RC after packet sent)
+*                >0 = timeout active (returns to STDBY_RC on timeout or after packet sent)
+* @return SX1280_Status_t Status of operation
 */
 SX1280_Status_t SX1280_SetTx(uint16_t timeout);
 
 /**
 * @brief Put radio in RX mode to receive packets
-* @param timeout timeout in milliseconds (0 = continuous)
-* @return SX1280_Status_t status of operation
+* @param timeout Timeout in milliseconds (uses 1ms steps)
+*                0x0000 = no timeout (single mode, returns to STDBY_RC after packet received)
+*                0xFFFF = continuous mode (stays in RX, can receive multiple packets)
+*                other = timeout active (returns to STDBY_RC on timeout or after packet received)
+* @return SX1280_Status_t Status of operation
 */
 SX1280_Status_t SX1280_SetRx(uint16_t timeout);
 

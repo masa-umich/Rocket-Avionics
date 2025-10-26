@@ -82,7 +82,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
 
 
    // default to LoRa packet type
-   // more robust handling here(?)
+   // Set default LoRa packet type
    // default lora packet
    if (SX1280_SetPacketType(PACKET_TYPE_LORA) != SX1280_OK){
         return SX1280_ERROR;
@@ -101,7 +101,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
     if (SX1280_SetPacketParams(12, LORA_EXPLICIT_HEADER, 255, LORA_CRC_ON, LORA_IQ_STANDARD) != SX1280_OK) {
         return SX1280_ERROR;
     }
-    if (SX1280_SetTxParams(0, 0x80) != SX1280_OK) { // 0dBm, 10us ramp time
+    if (SX1280_SetTxParams(0, SX1280_RAMP_10_US) != SX1280_OK) { // 0dBm, 10us ramp time
         return SX1280_ERROR;
     }
 
@@ -248,10 +248,12 @@ SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime) {
 }
 
 SX1280_Status_t SX1280_SetTx(uint16_t timeout) {
-    // timeout is in units of 15.625 us (see table 11-22)
-    // convert milliseconds to these units: timeout_ms * 64
+    // Timeout in milliseconds
+    // Uses periodBase = 0x02 (1ms steps per Table 11-24)
+    // timeout = 0: no timeout, single mode (returns to STDBY_RC after packet sent)
+    // timeout > 0: timeout active, returns to STDBY_RC on timeout or packet sent
     uint8_t buf[3];
-    buf[0] = 0x00; // periodbase is 1ms step for lora
+    buf[0] = SX1280_PERIODBASE_1_MS;  // 1ms steps
     buf[1] = (timeout >> 8) & 0xFF;
     buf[2] = timeout & 0xFF;
     
@@ -260,10 +262,13 @@ SX1280_Status_t SX1280_SetTx(uint16_t timeout) {
 }
 
 SX1280_Status_t SX1280_SetRx(uint16_t timeout) {
-    // this timeout maybe troll but it might aso just be the same as tx
-    // 0xFFFF = continuous RX mode
+    // Timeout in milliseconds
+    // Uses periodBase = 0x02 (1ms steps per Table 11-24)
+    // timeout = 0x0000: no timeout, Rx single mode (returns to STDBY_RC after packet received)
+    // timeout = 0xFFFF: continuous RX mode (stays in RX, can receive multiple packets)
+    // timeout > 0: timeout active, returns to STDBY_RC on timeout or packet received
     uint8_t buf[3];
-    buf[0] = 0x00; // Periodbase = 1ms steps for LoRa
+    buf[0] = SX1280_PERIODBASE_1_MS;  // 1ms steps
     buf[1] = (timeout >> 8) & 0xFF;
     buf[2] = timeout & 0xFF;
     
