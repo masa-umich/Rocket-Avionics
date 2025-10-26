@@ -18,7 +18,7 @@ static const uint16_t fixed_prom_values[8] = {
     0x1234
 };
 
-static emulation_state_t state = WAITING_FOR_COMMAND;
+volatile static emulation_state_t state = WAITING_FOR_COMMAND;
 static uint8_t prom_address_index = 0;
 static uint8_t MS5611_ADC_Buffer[4] = {0};
 static uint8_t UART_txBuffer[1] = {0};
@@ -53,21 +53,43 @@ void emulation_init() {
 }
 
 void emulation_IRQHandler(SPI_HandleTypeDef *hspi) {
-    static uint8_t dummy = 0x01;
+    //static uint8_t dummy = 0x01;
 	// RX: something arrived
-    if (SPI2->SR & SPI_SR_RXNE) {
+    if (SPI_SR_RXNE & SPI2->SR) {
         uint8_t rx = *((__IO uint8_t*)&SPI2->DR); // clears RXNE
         emulation_state_machine_update(rx); // Update the state machine based on received byte
     }
-
     // TX: need a new byte for next cycle
-    if (SPI2->SR & SPI_SR_TXE) {
+    if (SPI_SR_TXE & SPI2->SR) {
         uint8_t tx = emulation_get_response(); // maybe dummy if no response queued
-        *((__IO uint8_t*)&SPI2->DR) = dummy++; // clears TXE
+        *((__IO uint8_t*)&SPI2->DR) = tx; // clears TXE
     }
 }
 
 void emulation_state_machine_update(uint8_t rx_byte) {
+
+	/*
+	switch(state) {
+		case WAITING_FOR_COMMAND:
+			switch (rx_byte & 0xF0) {
+	                default:
+	                	prom_address_index = (rx_byte & 0x0E) >> 1;
+	                	state = SENDING_PROM_DATA_LOW;
+	                	break;
+			}
+			break;
+		case SENDING_PROM_DATA_LOW:
+			state = SENDING_PROM_DATA_HIGH;
+			break;
+		case SENDING_PROM_DATA_HIGH:
+			state = WAITING_FOR_COMMAND; // Finished sending PROM data
+			break;
+		default:
+			printf("idk what's going on either\n");
+			break;
+	}
+*/
+
     switch (state) {
         case WAITING_FOR_COMMAND:
             // Handle command decoding
@@ -121,16 +143,17 @@ void emulation_state_machine_update(uint8_t rx_byte) {
         default:
         	break; // Should never happen
     }
+
 }
 
 uint8_t emulation_get_response() {
-    static uint8_t pretend_state = 0x01;
-    return pretend_state++;
-    /*
+//    static uint8_t pretend_state = 0x01;
+//    return pretend_state++;
+
 	uint8_t response = 0x00; // Default dummy byte
     // Check the state machine for what we should respond with
     switch (state) {
-        case SENDING_PROM_DATA_LOW: // these might be backwards 
+        case SENDING_PROM_DATA_LOW: // these might be backwards
             response = (fixed_prom_values[prom_address_index] >> 8) & 0xFF; // MSB
             break;
         case SENDING_PROM_DATA_HIGH:
@@ -153,7 +176,6 @@ uint8_t emulation_get_response() {
             break;
     }
     return response;
-    */
 }
 
 void emulation_loop(UART_HandleTypeDef *huart) {
