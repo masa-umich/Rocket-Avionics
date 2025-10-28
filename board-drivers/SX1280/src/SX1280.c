@@ -99,7 +99,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
     if (SX1280_SetPacketParams(12, LORA_EXPLICIT_HEADER, 255, LORA_CRC_ON, LORA_IQ_STANDARD) != SX1280_OK) {
         return SX1280_ERROR;
     }
-    if (SX1280_SetTxParams(0, SX1280_RAMP_10_US) != SX1280_OK) { // 0dBm, 10us ramp time
+    if (SX1280_SetTxParams(13, SX1280_RAMP_10_US) != SX1280_OK) { // 13dBm, 10us ramp time
         return SX1280_ERROR;
     }
 
