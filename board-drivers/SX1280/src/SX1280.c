@@ -71,9 +71,9 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
 
    // perform hardware reset
    HAL_GPIO_WritePin(sx1280_hal_config->resetPort, sx1280_hal_config->resetPin, GPIO_PIN_RESET);
-   HAL_Delay(20); //reset pulse
+   vTaskDelay(20); //reset pulse
    HAL_GPIO_WritePin(sx1280_hal_config->resetPort, sx1280_hal_config->resetPin, GPIO_PIN_SET);
-   HAL_Delay(50); //wait for chip to boot
+   vTaskDelay(50); //wait for chip to boot
 
 
    //set radio to state STDBY_RC
