@@ -24,16 +24,6 @@ typedef struct {
 	float max_V;
 } PT_t;
 
-typedef enum {
-	Vlv1 = 0U,
-	Vlv2,
-	Vlv3,
-	Vlv4,
-	Vlv5,
-	Vlv6,
-	Vlv7
-} Valve_Channel;
-
 
 // Calculate PT pressure from raw ADC value
 //This assumes the raw value is from a MAX11128 or other 12bit ADC, and the circuit uses a 3.3:5 voltage divider

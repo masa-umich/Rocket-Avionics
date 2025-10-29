@@ -34,7 +34,9 @@
 #include "tftp_server.h"
 #include "lwip/udp.h"
 #include "log_errors.h"
+#include "FreeRTOS.h"
 #include "semphr.h"
+#include "logging.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -125,22 +127,7 @@ void MX_LWIP_Init(void)
 	if(netif_is_link_up(&gnetif)) {
 		sntp_init();
 		tftp_init(&my_tftp_ctx);
-		if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-			errormsgudp = netconn_new(NETCONN_UDP);
-			if(errormsgudp) {
-				ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
-				send_udp_online(&ipaddr);
-			}
-			else {
-				// failed to create netconn
-				log_message(ERR_UDP_INIT_NNETCONN, -1);
-			}
-			xSemaphoreGive(errorudp_mutex);
-		}
-		else {
-			// failed to take mutex
-			log_message(ERR_UDP_INIT_MUTEX, -1);
-		}
+		init_network_logging(0);
 	}
 	else {
 		// ethernet link down
@@ -176,24 +163,7 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
-	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-		  if(!errormsgudp) {
-		  	  errormsgudp = netconn_new(NETCONN_UDP);
-		  	  if(errormsgudp) {
-		  		  ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
-		  	  }
-		  	  else {
-				  log_message(ERR_UDP_REINIT, -1);
-		  	  }
-		  }
-		  else {
-			  log_message(ERR_UDP_REINIT, -1);
-		  }
-	  	  xSemaphoreGive(errorudp_mutex);
-	  }
-	  else {
-		  log_message(ERR_UDP_REINIT, -1);
-	  }
+	  init_network_logging(1);
 	  sntp_init();
       switch(server_init()) {
       	  case 0: {
@@ -225,12 +195,7 @@ static void ethernet_link_status_updated(struct netif *netif)
   else /* netif is down */
   {
 /* USER CODE BEGIN 6 */
-	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-		  netconn_close(errormsgudp);
-		  netconn_delete(errormsgudp);
-		  errormsgudp = NULL;
-		  xSemaphoreGive(errorudp_mutex);
-	  }
+	  deinit_network_logging();
 	  sntp_stop();
 	  shutdown_server();
 	  tftp_cleanup();

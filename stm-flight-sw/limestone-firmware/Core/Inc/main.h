@@ -31,6 +31,10 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+// Include very commonly used files
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "log_errors.h"
 //#include "LSM6DSO32XTR.h"
 //#include "semphr.h"
 /* USER CODE END Includes */
@@ -155,9 +159,6 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void set_system_time(uint32_t sec, uint32_t us);
-
-uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

@@ -8,6 +8,6 @@
 #ifndef INC_TELEMETRY_H_
 #define INC_TELEMETRY_H_
 
-void TelemetryTask(void *argument);
+//void TelemetryTask(void *argument);
 
 #endif /* INC_TELEMETRY_H_ */

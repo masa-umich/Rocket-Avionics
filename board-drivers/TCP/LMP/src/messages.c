@@ -10,6 +10,43 @@
 #include <stdint.h>
 #include <string.h>
 
+
+// Gets the valve index from the LMP valve id
+// Be careful since the integer value of the Valve_Channel enum starts at 0
+// Returns -1 on an invalid id
+Valve_Channel get_valve(uint8_t valveId) {
+	return (valveId % 10) - 1;
+}
+
+// Gets the board from a LMP valve id
+// This will not check for an invalid id, call check_valve_id first
+BoardId get_valve_board(uint8_t valveId) {
+	return (BoardId) ((uint8_t)(valveId / 10));
+}
+
+// Generate the LMP valve id from the board and valve index
+uint8_t generate_valve_id(BoardId board, Valve_Channel valve) {
+	return (((uint8_t) board) * 10) + valve + 1;
+}
+
+// Check if a LMP valve id is valid. Returns 1 if the id is valid, 0 if it's not
+uint8_t check_valve_id(uint8_t valveId) {
+	if(valveId < 01 || valveId > 37) {
+		return 0;
+	}
+	if(get_valve_board(valveId) == BOARD_FC) {
+		if(get_valve(valveId) > 2) {
+			return 0;
+		}
+	}
+	else {
+		if(get_valve(valveId) == -1 || get_valve(valveId) > 6) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 // Utility functions for endianness conversion (I think either STM32 or lwip
 // might have these written, but I'm just going to leave these here for now)
 // Change to __REV?

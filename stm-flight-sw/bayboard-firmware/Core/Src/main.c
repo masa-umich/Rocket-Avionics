@@ -585,42 +585,6 @@ int send_raw_msg_to_device(RawMessage *msg, TickType_t wait) {
 	return client_send(msg, wait);
 }
 
-// Gets the valve index from the LMP valve id
-// Be careful since the integer value of the Valve_Channel enum starts at 0
-// Returns -1 on an invalid id
-Valve_Channel get_valve(uint8_t valveId) {
-	return (valveId % 10) - 1;
-}
-
-// Gets the board from a LMP valve id
-// This will not check for an invalid id, call check_valve_id first
-BoardId get_valve_board(uint8_t valveId) {
-	return (BoardId) ((uint8_t)(valveId / 10));
-}
-
-// Generate the LMP valve id from the board and valve index
-uint8_t generate_valve_id(BoardId board, Valve_Channel valve) {
-	return (((uint8_t) board) * 10) + valve + 1;
-}
-
-// Check if a LMP valve id is valid. Returns 1 if the id is valid, 0 if it's not
-uint8_t check_valve_id(uint8_t valveId) {
-	if(valveId < 01 || valveId > 37) {
-		return 0;
-	}
-	if(get_valve_board(valveId) == BOARD_FC) {
-		if(get_valve(valveId) > 2) {
-			return 0;
-		}
-	}
-	else {
-		if(get_valve(valveId) == -1 || get_valve(valveId) > 6) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
 // Set a valve to a state and update its corresponding valve state
 // Returns the state of the valve after setting it (this should be equal to desiredState, but in the case of an error, it will accurately reflect the current state of the valve)
 Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredState) {
@@ -808,7 +772,7 @@ void load_eeprom_defaults(EEPROM_conf_t *conf, uint8_t *bb) {
 // type is the msg type, use the macros in main.h
 // returns 0 on success, 1 if there is not enough space or the flash could not be accessed
 uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
-	if(xSemaphoreTake(flash_mutex, 1) == pdPASS) {
+	if(xSemaphoreTake(flash_mutex, 0) == pdPASS) {
 		if(fc_get_bytes_remaining(&flash_h) < msglen + 2) {
 			xSemaphoreGive(flash_mutex);
 			return 1;
@@ -827,7 +791,7 @@ uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
 
 // Returns 0 on success, 1 on access error, 2 if the flash is full
 uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
-	if(xSemaphoreTake(flash_mutex, 1) == pdPASS) {
+	if(xSemaphoreTake(flash_mutex, 0) == pdPASS) {
 		if(fc_get_bytes_remaining(&flash_h) < msglen) {
 			xSemaphoreGive(flash_mutex);
 			return 2;
