@@ -8,7 +8,7 @@
 
 #include "system-state.h"
 
-Rocket_State_t Rocket_h; // Main rocket state handle
+Rocket_State_t Rocket_h = {0};
 
 void setup_system_state() {
 	// Init rocket state struct

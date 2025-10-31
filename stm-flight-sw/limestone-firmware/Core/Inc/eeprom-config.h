@@ -10,6 +10,10 @@
 
 #include "main.h"
 #include "M24256E.h"
+#include "utils.h"
+#include "VLVs.h"
+#include "ip4_addr.h"
+#include "log_errors.h"
 
 typedef struct {
 	PT_t *pt1;
@@ -47,7 +51,7 @@ int eeprom_config_write(struct pbuf *p);
 
 uint8_t setup_eeprom(I2C_HandleTypeDef *hi2c, GPIO_TypeDef *WC_GPIO_Port, uint16_t WC_Pin);
 
-int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf);
+int load_eeprom_config(EEPROM_conf_t *conf);
 
 void load_eeprom_defaults(EEPROM_conf_t *conf);
 

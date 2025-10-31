@@ -10,6 +10,9 @@
 
 #include "main.h"
 #include "VLVs.h"
+#include "LSM6DSO32XTR.h"
+#include "messages.h"
+#include "log_errors.h"
 
 typedef struct {
 	float pt1;
@@ -132,6 +135,8 @@ typedef struct {
 	SemaphoreHandle_t frState_access;
 	Flight_Recorder_State_t frState;
 } Rocket_State_t;
+
+extern Rocket_State_t Rocket_h; // Main rocket state handle
 
 void setup_system_state();
 

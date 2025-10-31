@@ -23,48 +23,30 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "api.h"
+#include "server.h"
+#include "math.h"
+#include "timers.h"
+#include "semphr.h"
+#include "time-sync.h"
+#include "logging.h"
+#include "telemetry.h"
+#include "network-processing.h"
 #include "MS5611.h"
 #include "ADS1120.h"
 #include "MAX11128.h"
 #include "LSM6DSO32XTR.h"
-#include "VLVs.h"
-#include "sntp.h"
-#include "time.h"
-#include "api.h"
-#include "string.h"
-#include "server.h"
 #include "messages.h"
 #include "M24256E.h"
 #include "utils.h"
-#include "tftp_server.h"
-#include "lmp_channels.h"
-#include "math.h"
-#include "lwip/udp.h"
-#include "timers.h"
+#include "VLVs.h"
+#include "eeprom-config.h"
 #include "log_errors.h"
-#include "semphr.h"
-#include "time-sync.h"
-#include "logging.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct {
-	IMU imu1_h;
-	IMU imu2_h;
-
-  	GPIO_MAX11128_Pinfo adc_h;
-
-  	ADS_Main_t tc_main_h;
-  	ADS_TC_t TCs[3];
-
-  	MS5611 bar1_h;
-  	MS5611 bar2_h;
-  	MS5611_PROM_t prom1;
-  	MS5611_PROM_t prom2;
-} Sensors_t;
-
 typedef struct {
 	TimerHandle_t buzzTimer;
 	TimerHandle_t ledTimer;
@@ -160,7 +142,6 @@ static void MX_SPI3_Init(void);
 void StartAndMonitor(void *argument);
 
 /* USER CODE BEGIN PFP */
-void FlashClearTask(void *argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -182,150 +163,6 @@ void toggleLEDPins(TimerHandle_t xTimer) {
 void buzzerOff(TimerHandle_t xTimer) {
 	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 0);
 }
-
-void reset_board() {
-	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
-		fc_finish_flash_write(&flash_h);
-	}
-
-	NVIC_SystemReset(); // This should never return
-}
-
-// use_bat 1 to use battery source, 0 to use GSE
-void PDB_source(uint8_t use_bat) {
-	HAL_GPIO_WritePin(PDB_DIO1_GPIO_Port, PDB_DIO1_Pin, use_bat);
-	if(use_bat) {
-		log_message(FC_STAT_PDB_SWITCH_BAT, -1);
-	}
-	else {
-		log_message(FC_STAT_PDB_SWITCH_GSE, -1);
-	}
-}
-
-void COTS_supply(uint8_t enabled) {
-	HAL_GPIO_WritePin(PDB_DIO2_GPIO_Port, PDB_DIO2_Pin, enabled);
-	if(enabled) {
-		log_message(FC_STAT_PDB_COTS_SUPPLY_ON, -1);
-	}
-	else {
-		log_message(FC_STAT_PDB_COTS_SUPPLY_OFF, -1);
-	}
-}
-
-// Send a LMP message over TCP
-// wait is the number of ticks to wait for room in the txbuffer
-// buffersize is the maximum size that it will take to serialize the LMP message, if this is 0, it will use the maximum possible message size to ensure proper serialization
-// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer or space to allocate a buffer, -3 if the target device is not connected, and -4 on a LMP serialization error
-int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size_t buffersize) {
-	if(buffersize == 0) {
-		buffersize = MAX_MSG_LEN;
-	}
-	if(is_server_running() <= 0) {
-		return -1; // Server not running
-	}
-	int devicefd = get_device_fd(device);
-	if(devicefd < 0) {
-		return -3; // Device not connected
-	}
-	uint8_t tempbuffer[buffersize];
-	int buflen = serialize_message(msg, tempbuffer, buffersize);
-	if(buflen == -1) {
-		return -4; // Serialization error
-	}
-    uint8_t *buffer = malloc(buflen);
-    if(buffer) {
-        memcpy(buffer, tempbuffer, buflen);
-    	Raw_message rawmsg = {0};
-    	rawmsg.bufferptr = buffer;
-    	rawmsg.packet_len = buflen;
-    	rawmsg.connection_fd = devicefd;
-    	int result = server_send(&rawmsg, wait);
-    	if(result != 0) {
-    		free(buffer);
-    	}
-    	return result;
-    }
-    return -2;
-}
-
-// Send a message over TCP
-// wait is the number of ticks to wait for room in the txbuffer
-// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer, -3 if the target device is not connected
-// IMPORTANT: you are responsible for freeing the buffer in msg if this function returns something other than 0. This function does not
-// take "ownership" of the message object
-int send_raw_msg_to_device(Target_Device device, Raw_message *msg, TickType_t wait) {
-	if(is_server_running() <= 0) {
-		return -1; // Server not running
-	}
-	int devicefd = get_device_fd(device);
-	if(devicefd < 0) {
-		return -3; // Device not connected
-	}
-	msg->connection_fd = devicefd;
-	return server_send(msg, wait);
-}
-
-void *ftp_open(const char *fname, const char *mode, u8_t write) {
-	if(strcmp(fname, "eeprom.bin") == 0) {
-		prepare_eeprom_config();
-		return (void *) 1; // 1 refers to eeprom
-	}
-	else if(strcmp(fname, "messages.txt") == 0) {
-		if(!write) {
-			prepare_flash_dump();
-		}
-		return write ? (void *) 0 : (void *) FLASH_MSG_MARK; // FLASH_MSG_MARK refers to status/error messages. Only reading is valid
-	}
-	else if(strcmp(fname, "telemetry.bin") == 0) {
-		if(!write) {
-			prepare_flash_dump();
-		}
-		return write ? (void *) 0 : (void *) FLASH_TELEM_MARK; // FLASH_TELEM_MARK refers to telemetry and valve state LMP dump. Only reading is valid
-	}
-	else {
-		return (void *) 0;
-	}
-}
-
-void ftp_close(void *handle) {
-	uint32_t fd = (uint32_t) handle;
-	if(fd == 1) {
-		close_and_validate_config(&hcrc);
-	}
-	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK) {
-		finish_flash_dump();
-	}
-}
-
-int ftp_read(void *handle, void *buf, int bytes) {
-	uint32_t fd = (uint32_t) handle;
-	if(fd == 1) {
-		return eeprom_config_dump(buf, bytes);
-	}
-	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK) {
-		return dump_flash(fd, buf, bytes);
-	}
-	else {
-		return -1;
-	}
-}
-
-int ftp_write(void *handle, struct pbuf *p) {
-	uint32_t fd = (uint32_t) handle;
-	if(fd == 1) {
-		return eeprom_config_write(p);
-	}
-	else {
-		return -1;
-	}
-}
-
-const struct tftp_context my_tftp_ctx = {
-    .open = ftp_open,
-    .close = ftp_close,
-    .read = ftp_read,
-    .write = ftp_write
-};
 /* USER CODE END 0 */
 
 /**
@@ -422,7 +259,7 @@ int main(void)
 	  load_eeprom_defaults(&loaded_config);
 	  log_message(STAT_EEPROM_DEFAULT_LOADED, -1);
 #else
-	  switch(load_eeprom_config(&eeprom_h, &loaded_config)) {
+	  switch(load_eeprom_config(&loaded_config)) {
 	  	  case -1: {
 	  		  // eeprom load error, defaults loaded
 	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
@@ -468,7 +305,7 @@ int main(void)
   fc_addr = loaded_config.flightcomputerIP;
 
   // Init flash
-  if(init_flash_logging(&hspi1, FLASH_CS_GPIO_Port, FLASH_CS_GPIO_Pin)) {
+  if(init_flash_logging(&hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin)) {
 	  timers.ledTimer = xTimerCreate("led", 500, pdTRUE, NULL, toggleLEDPins);
   }
   //fc_erase_flash(&flash_h);
@@ -1246,370 +1083,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void TelemetryTask(void *argument) {
-	// started telemetry thread
-	log_message(STAT_TELEM_TASK_STARTED, -1);
-	for(;;) {
-		uint32_t startTime = HAL_GetTick();
-		// Read from sensors
-		uint16_t adc_values[16] = {0};
-		read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
-		if(adc_values[ADC_3V3_BUS_I] == 0) {
-			// ADC read error
-			log_peri_message(FC_ERR_SING_ADC_READ, FC_ERR_PERI_TYPE_ADC);
-		}
-
-  		Accel XL_readings1 = {0};
-  		Accel XL_readings2 = {0};
-  		AngRate angRate_readings1 = {0};
-  		AngRate angRate_readings2 = {0};
-  		int imu1_stat = IMU_getAccel(&(sensors_h.imu1_h), &XL_readings1);
-  		if(imu1_stat == -1) {
-  			// IMU 1 read error
-			log_peri_message(ERR_IMU_READ "1", FC_ERR_PERI_TYPE_IMU1);
-  		}
-  		int imu2_stat = IMU_getAccel(&(sensors_h.imu2_h), &XL_readings2);
-  		if(imu2_stat == -1) {
-  			// IMU 2 read error
-			log_peri_message(ERR_IMU_READ "2", FC_ERR_PERI_TYPE_IMU2);
-  		}
-  		IMU_getAngRate(&(sensors_h.imu1_h), &angRate_readings1);
-  		IMU_getAngRate(&(sensors_h.imu2_h), &angRate_readings2);
-
-  	  	float pres1 = 0.0;
-  	  	float pres2 = 0.0;
-  	  	int bar1_stat = MS5611_getPres(&(sensors_h.bar1_h), &pres1, &(sensors_h.prom1), OSR_1024);
-  	  	if(bar1_stat) {
-  	  		// BAR 1 read error
-			log_peri_message(ERR_BAR_READ "1", FC_ERR_PERI_TYPE_BAR1);
-  	  	}
-  	  	int bar2_stat = MS5611_getPres(&(sensors_h.bar2_h), &pres2, &(sensors_h.prom2), OSR_1024);
-  	  	if(bar2_stat) {
-  	  		// BAR 2 read error
-			log_peri_message(ERR_BAR_READ "2", FC_ERR_PERI_TYPE_BAR2);
-  	  	}
-
-  	  	float TCvalues[3];
-  	  	int TC_stat = ADS_readAll(&(sensors_h.tc_main_h), TCvalues);
-  	  	if(TC_stat || isnan(TCvalues[0]) || isnan(TCvalues[1]) || isnan(TCvalues[2])) {
-  	  		// ADS read error
-			log_peri_message(ERR_ADS_READ, FC_ERR_PERI_TYPE_ADS);
-  	  	}
-
-  	  	VLV_OpenLoad vlv1_old = 0;
-  	  	VLV_OpenLoad vlv2_old = 0;
-  	  	VLV_OpenLoad vlv3_old = 0;
-  	  	uint8_t old_stat = 1;
-
-  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
-  	  		vlv1_old = VLV_isOpenLoad(Rocket_h.fcValves[0]);
-  	  		vlv2_old = VLV_isOpenLoad(Rocket_h.fcValves[1]);
-  	  		vlv3_old = VLV_isOpenLoad(Rocket_h.fcValves[2]);
-  	  		old_stat = 0;
-  	  		xSemaphoreGive(Rocket_h.fcValve_access);
-  	  	}
-
-  	  	uint64_t recordtime = get_rtc_time();
-
-
-  	  	// Set global rocket state struct
-  		if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
-  			if(!bar1_stat) {
-  				Rocket_h.fcState.bar1 = pres1;
-  			}
-
-  			if(!bar2_stat) {
-  				Rocket_h.fcState.bar2 = pres2;
-  			}
-
-  			Rocket_h.fcState.imu1_A = XL_readings1;
-  			Rocket_h.fcState.imu1_W = angRate_readings1;
-  			Rocket_h.fcState.imu2_A = XL_readings2;
-  			Rocket_h.fcState.imu2_W = angRate_readings2;
-
-  			Rocket_h.fcState.pt1 = PT_calc(PT1_h, adc_values[ADC_PT1_I]);
-  			Rocket_h.fcState.pt2 = PT_calc(PT2_h, adc_values[ADC_PT2_I]);
-  			Rocket_h.fcState.pt3 = PT_calc(PT3_h, adc_values[ADC_PT3_I]);
-  			Rocket_h.fcState.pt4 = PT_calc(PT4_h, adc_values[ADC_PT4_I]);
-  			Rocket_h.fcState.pt5 = PT_calc(PT5_h, adc_values[ADC_PT5_I]);
-
-  			Rocket_h.fcState.bus24v_voltage = bus_voltage_calc(adc_values[ADC_24V_BUS_I], POWER_24V_RES_A, POWER_24V_RES_B);
-  			Rocket_h.fcState.bus12v_voltage = bus_voltage_calc(adc_values[ADC_12V_BUS_I], POWER_12V_RES_A, POWER_12V_RES_B);
-  			Rocket_h.fcState.bus5v_voltage = bus_voltage_calc(adc_values[ADC_5V_BUS_I], POWER_5V_RES_A, POWER_5V_RES_B);
-  			Rocket_h.fcState.bus3v3_voltage = bus_voltage_calc(adc_values[ADC_3V3_BUS_I], POWER_3V3_RES_A, POWER_3V3_RES_B);
-
-  			Rocket_h.fcState.bus24v_current = current_sense_calc(adc_values[ADC_24V_CURRENT_I], POWER_SHUNT_12V_24V, DIVIDER_12V_24V);
-  			Rocket_h.fcState.bus12v_current = current_sense_calc(adc_values[ADC_12V_CURRENT_I], POWER_SHUNT_12V_24V, DIVIDER_12V_24V);
-  			Rocket_h.fcState.bus5v_current = current_sense_calc(adc_values[ADC_5V_CURRENT_I], POWER_SHUNT_3V3_5V, DIVIDER_3V3_5V);
-  			Rocket_h.fcState.bus3v3_current = current_sense_calc(adc_values[ADC_3V3_CURRENT_I], POWER_SHUNT_3V3_5V, DIVIDER_3V3_5V);
-
-  			Rocket_h.fcState.vlv1_current = current_sense_calc(adc_values[ADC_VLV1_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
-  			Rocket_h.fcState.vlv2_current = current_sense_calc(adc_values[ADC_VLV2_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
-  			Rocket_h.fcState.vlv3_current = current_sense_calc(adc_values[ADC_VLV3_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
-
-  			if(!TC_stat) {
-  				if(!isnan(TCvalues[0])) {
-  					Rocket_h.fcState.tc1 = TCvalues[0];
-  				}
-  				if(!isnan(TCvalues[1])) {
-  					Rocket_h.fcState.tc2 = TCvalues[1];
-  				}
-  				if(!isnan(TCvalues[2])) {
-  					Rocket_h.fcState.tc3 = TCvalues[2];
-  				}
-  			}
-
-  			if(!old_stat) {
-  				Rocket_h.fcState.vlv1_old = vlv1_old;
-  				Rocket_h.fcState.vlv2_old = vlv2_old;
-  				Rocket_h.fcState.vlv3_old = vlv3_old;
-  			}
-
-  			Rocket_h.fcState.timestamp = recordtime;
-
-  			xSemaphoreGive(Rocket_h.fcState_access);
-  		}
-  		else {
-  			// No telemetry updated
-  			log_message(ERR_TELEM_NOT_UPDATED, FC_ERR_TYPE_TELEM_NUPDATED);
-  		}
-
-  		Message telemsg = {0};
-  		telemsg.type = MSG_TELEMETRY;
-  		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
-  			if(send_msg_to_device(LimeWire_d, &telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) == -2) {
-  				// txbuffer full or memory error
-  	  			log_message(ERR_TELEM_MEM_ERR, FC_ERR_TYPE_TELEM_MEM_ERR);
-  			}
-  		}
-
-  		// Target TELEMETRY_HZ polling rate, but always delay for at least 1 tick, otherwise we risk not letting other tasks get CPU time. Actually I'm not sure this is true, but a 1ms delay is fine regardless
-
-		uint32_t delta = HAL_GetTick() - startTime;
-		if(delta > (1000 / TELEMETRY_HZ) * 2) {
-			// telemetry collection overtime by more than 2x
-  			log_message(ERR_TELEM_OVERTIME, FC_ERR_TYPE_TELEM_OVERTIME);
-		}
-		osDelay((1000 / TELEMETRY_HZ) > delta ? (1000 / TELEMETRY_HZ) - delta : 1);
-	}
-
-	// Reference code
-
-	/*struct netbuf *outbuf = netbuf_new();
-	void *pkt_buf = netbuf_alloc(outbuf, 3);
-
-	memcpy(pkt_buf, "hi", 3);
-	err_t send_err = netconn_sendto(sendudp, outbuf, &debug_addr, 1234);
-	netbuf_delete(outbuf);
-
-	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 0);
-	osDelay(2000);
-	HAL_GPIO_WritePin(GPS_NRST_GPIO_Port, GPS_NRST_Pin, 1);
-	gps_handler gps;
-	gps.huart = &huart10;
-	int status = init_gps(&gps);
-	for(;;) {
-		if(xSemaphoreTake(gps.semaphore, 2)) {
-			char temp_rx[100];
-			if(gps.active_rx_buffer == 1) {
-				memcpy(temp_rx, gps.rx_buffer_2, 100);
-			}
-			else {
-				memcpy(temp_rx, gps.rx_buffer_1, 100);
-			}
-			gps_data data;
-			parse_gps_sentence(temp_rx, &data);
-		}
-		osDelay(100);
-	}*/
-}
-
-void ProcessPackets(void *argument) {
-	// Started processing thread
-	log_message(STAT_PACKET_TASK_STARTED, -1);
-	for(;;) {
-		Raw_message msg = {0};
-		int read_stat = server_read(&msg, 50);
-		if(read_stat >= 0) {
-			// The way the msg.bufferptr memory is handled past this point is that any result that doesn't relay msg to a different destination should NOT continue early, any result that does relay msg should continue early
-			Message parsedmsg = {0};
-			if(deserialize_message(msg.bufferptr, msg.packet_len, &parsedmsg) > 0) {
-				switch(parsedmsg.type) {
-				    case MSG_TELEMETRY: {
-				        // Save and relay to Limewire
-				    	if(parsedmsg.data.telemetry.board_id == BOARD_FR) {
-				    		if(unpack_fr_telemetry(&(parsedmsg.data.telemetry), 5)) {
-				    			// Failed to save data
-				    			log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
-				    		}
-				    	}
-				    	else {
-					    	if(unpack_bb_telemetry(&(parsedmsg.data.telemetry), 5)) {
-					    		// Failed to save data
-					    		log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
-					    	}
-				    	}
-
-				    	if(send_raw_msg_to_device(LimeWire_d, &msg, 2) == 0) {
-				    		// Continue to prevent freeing memory we're still using
-				    		continue;
-				    	}
-				    	else {
-				    	  	// Server not up, target device not connected, or txbuffer is full
-				    	}
-				        break;
-				    }
-				    case MSG_VALVE_COMMAND: {
-				    	if(check_valve_id(parsedmsg.data.valve_command.valve_id)) {
-				    		if(get_valve_board(parsedmsg.data.valve_command.valve_id) == BOARD_FC) {
-				    			// Do valve command and send state message
-				    			Valve_State_t endState = set_and_update_valve(get_valve(parsedmsg.data.valve_command.valve_id), parsedmsg.data.valve_command.valve_state);
-				    			Message returnMsg = {0};
-				    			returnMsg.type = MSG_VALVE_STATE;
-				    			returnMsg.data.valve_state.valve_state = endState;
-				    			returnMsg.data.valve_state.valve_id = parsedmsg.data.valve_command.valve_id;
-				    			returnMsg.data.valve_state.timestamp = get_rtc_time();
-				      			if(send_msg_to_device(LimeWire_d, &returnMsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5) != 0) {
-				      				// Server not up, target device not connected, or txbuffer is full
-				      			}
-				    		}
-				    		else {
-				    			// Relay to Bay Boards
-				    			if(send_raw_msg_to_device(get_valve_board(parsedmsg.data.valve_command.valve_id), &msg, 5) == 0) {
-						    		// Continue to prevent freeing memory we're still using
-						    		continue;
-				    			}
-				    			else {
-				    				// Server not up, target device not connected, or txbuffer is full
-				    			}
-				    		}
-				    	}
-				    	else {
-				    		// Invalid valve id
-				    		log_message(ERR_PROCESS_VLV_CMD_BADID, FC_ERR_TYPE_BAD_VLVID);
-				    	}
-				        break;
-				    }
-				    case MSG_VALVE_STATE: {
-				        // Save and relay to Limewire
-				    	if(check_valve_id(parsedmsg.data.valve_state.valve_id)) {
-					    	switch(get_valve_board(parsedmsg.data.valve_state.valve_id)) {
-					    	    case BOARD_BAY_1: {
-					    	  	  	if(xSemaphoreTake(Rocket_h.bb1Valve_access, 5) == pdPASS) {
-					    	  	  		Rocket_h.bb1ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
-					    	  	  		xSemaphoreGive(Rocket_h.bb1Valve_access);
-					    	  	  	}
-					    	        break;
-					    	    }
-					    	    case BOARD_BAY_2: {
-					    	  	  	if(xSemaphoreTake(Rocket_h.bb2Valve_access, 5) == pdPASS) {
-					    	  	  		Rocket_h.bb2ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
-					    	  	  		xSemaphoreGive(Rocket_h.bb2Valve_access);
-					    	  	  	}
-					    	        break;
-					    	    }
-					    	    case BOARD_BAY_3: {
-					    	  	  	if(xSemaphoreTake(Rocket_h.bb3Valve_access, 5) == pdPASS) {
-					    	  	  		Rocket_h.bb3ValveStates[get_valve(parsedmsg.data.valve_state.valve_id)] = parsedmsg.data.valve_state.valve_state;
-					    	  	  		xSemaphoreGive(Rocket_h.bb3Valve_access);
-					    	  	  	}
-					    	        break;
-					    	    }
-					    	    default: {
-					    	        // The flight computer should not receive valve state messages for its own valves
-					    	        break;
-					    	    }
-					    	}
-
-					    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
-					    		// Continue to prevent freeing memory we're still using
-					    		continue;
-					    	}
-					    	else {
-					    	  	// Server not up, target device not connected, or txbuffer is full
-					    	}
-				    	}
-				    	else {
-				    		// Invalid valve id
-				    		log_message(ERR_PROCESS_VLV_STATE_BADID, FC_ERR_TYPE_BAD_VLVID);
-				    	}
-				        break;
-				    }
-				    case MSG_DEVICE_COMMAND: {
-				    	if(parsedmsg.data.device_command.board_id == BOARD_FC) {
-				    		// Process device command
-				    		switch(parsedmsg.data.device_command.cmd_id) {
-				    			case DEVICE_CMD_RESET: {
-				    				reset_board();
-				    				break;
-				    			}
-				    			case DEVICE_CMD_CLEAR_FLASH: {
-				    				clear_flash();
-				    				break;
-				    			}
-				    			case DEVICE_CMD_QUERY_FLASH: {
-				    				log_flash_storage();
-				    				break;
-				    			}
-				    			case DEVICE_CMD_PDB_SRC_GSE: {
-				    				PDB_source(0);
-				    				break;
-				    			}
-				    			case DEVICE_CMD_PDB_SRC_BAT: {
-				    				PDB_source(1);
-				    				break;
-				    			}
-				    			case DEVICE_CMD_PDB_COTS_OFF: {
-				    				COTS_supply(0);
-				    				break;
-				    			}
-				    			case DEVICE_CMD_PDB_COTS_ON: {
-				    				COTS_supply(1);
-				    				break;
-				    			}
-				    			default: {
-				    				break;
-				    			}
-				    		}
-				    	}
-				    	else {
-			    			// Relay to other boards
-			    			if(send_raw_msg_to_device(parsedmsg.data.device_command.board_id, &msg, 5) == 0) {
-					    		// Continue to prevent freeing memory we're still using
-					    		continue;
-			    			}
-			    			else {
-			    				// Server not up, target device not connected, or txbuffer is full
-			    			}
-				    	}
-				    	break;
-				    }
-				    default: {
-				        break;
-				    }
-				}
-			}
-			else {
-				// Unknown message type
-				log_message(ERR_UNKNOWN_LMP_PACKET, FC_ERR_TYPE_UNKNOWN_LMP);
-			}
-			free(msg.bufferptr);
-		}
-		else if(read_stat == -1) {
-			// Server down, delay to prevent taking CPU time from other tasks
-			osDelay(100);
-		}
-		else {
-			// Timeout on waiting for messages
-		}
-	}
-}
-
-void FlashClearTask(void *argument) {
-    for(;;) {
-    	handle_flash_clearing();
-    }
-}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartAndMonitor */
@@ -1819,36 +1292,14 @@ void StartAndMonitor(void *argument)
 	uint32_t startTick = HAL_GetTick();
 	/* Infinite loop */
 	for(;;) {
+		// Log and send error/status messages
 		handle_logging();
 
 		// Send all valve states on connection with limewire
 		if(HAL_GetTick() - startTick > 250) {
 			startTick = HAL_GetTick();
 			//size_t freemem = xPortGetFreeHeapSize();
-			if(xSemaphoreTake(errormsg_mutex, 5) == pdPASS) {
-				for(int i = 0;i < ERROR_MSG_TYPES;i++) {
-					uint8_t val = (i % 2) == 0 ? errormsgtimers[i / 2] & 0x0F : errormsgtimers[i / 2] >> 4;
-					if(val) {
-						val--;
-						if(i % 2) {
-							errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0x0F) | (val << 4);
-						}
-						else {
-							errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0xF0) | val;
-						}
-					}
-				}
-				xSemaphoreGive(errormsg_mutex);
-			}
-
-			if(xSemaphoreTake(perierrormsg_mutex, 5) == pdPASS) {
-				for(int i = 0;i < PERI_ERROR_MSG_TYPES;i++) {
-					if(perierrormsgtimers[i]) {
-						perierrormsgtimers[i]--;
-					}
-				}
-				xSemaphoreGive(perierrormsg_mutex);
-			}
+			refresh_log_timers();
 
 			int limefd = get_device_fd(LimeWire_d);
 			if(limefd > -2) {

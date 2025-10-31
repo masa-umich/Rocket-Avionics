@@ -5,8 +5,6 @@
  *      Author: felix
  */
 
-// TODO: figure out how to do the TFTP things with flash and eeprom, maybe make tftp its own file and then it uses reading functions from this and eeprom
-
 
 #include "logging.h"
 
@@ -30,7 +28,7 @@ QueueHandle_t errorMsglist;
 
 uint32_t lastflashfull = 0;
 
-void init_network_logging(uint8_t reinit) {
+void init_network_logging(uint8_t reinit, ip4_addr_t ipaddr) {
 	if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
 		if(!errormsgudp) {
 			errormsgudp = netconn_new(NETCONN_UDP);
@@ -490,4 +488,44 @@ uint8_t is_net_logging_up() {
 		xSemaphoreGive(errorudp_mutex);
 	}
 	return status;
+}
+
+void FlashClearTask(void *argument) {
+    for(;;) {
+    	handle_flash_clearing();
+    }
+}
+
+void flush_flash_log() {
+	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
+		fc_finish_flash_write(&flash_h);
+		xSemaphoreGive(flash_mutex);
+	}
+}
+
+void refresh_log_timers() {
+	if(xSemaphoreTake(errormsg_mutex, 5) == pdPASS) {
+		for(int i = 0;i < ERROR_MSG_TYPES;i++) {
+			uint8_t val = (i % 2) == 0 ? errormsgtimers[i / 2] & 0x0F : errormsgtimers[i / 2] >> 4;
+			if(val) {
+				val--;
+				if(i % 2) {
+					errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0x0F) | (val << 4);
+				}
+				else {
+					errormsgtimers[i / 2] = (errormsgtimers[i / 2] & 0xF0) | val;
+				}
+			}
+		}
+		xSemaphoreGive(errormsg_mutex);
+	}
+
+	if(xSemaphoreTake(perierrormsg_mutex, 5) == pdPASS) {
+		for(int i = 0;i < PERI_ERROR_MSG_TYPES;i++) {
+			if(perierrormsgtimers[i]) {
+				perierrormsgtimers[i]--;
+			}
+		}
+		xSemaphoreGive(perierrormsg_mutex);
+	}
 }

@@ -16,6 +16,7 @@
 #include "lwip.h"
 #include <string.h>
 #include "main.h"
+#include "logging.h"
 
 #define MAX_MSG_LEN	300
 #define TCP_KEEP_ALIVE_IDLE	5

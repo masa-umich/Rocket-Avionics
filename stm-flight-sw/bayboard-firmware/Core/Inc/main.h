@@ -54,7 +54,7 @@ extern "C" {
 #define TELEMETRY_HZ		(uint32_t)50
 
 #define BB_EEPROM_LEN		(uint16_t)145
-#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
+//#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
 
 #define BB_EEPROM_PT_ZERO_DEFAULT			0.5
 #define BB_EEPROM_PT_RANGE_DEFAULT			5000

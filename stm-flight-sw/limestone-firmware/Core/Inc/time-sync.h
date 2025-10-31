@@ -12,6 +12,8 @@
 #include "time.h"
 #include "string.h"
 #include "stdio.h"
+#include "log_errors.h"
+#include "logging.h"
 
 void timesync_setup();
 

@@ -37,6 +37,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "logging.h"
+#include "remote-config.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -44,12 +45,7 @@ static void ethernet_link_status_updated(struct netif *netif);
 void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
-extern const struct tftp_context my_tftp_ctx;
 extern ip4_addr_t fc_addr;
-extern struct netconn *errormsgudp;
-extern SemaphoreHandle_t errorudp_mutex;
-extern void send_udp_online(ip4_addr_t * ip);
-extern uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -127,7 +123,7 @@ void MX_LWIP_Init(void)
 	if(netif_is_link_up(&gnetif)) {
 		sntp_init();
 		tftp_init(&my_tftp_ctx);
-		init_network_logging(0);
+		init_network_logging(0, fc_addr);
 	}
 	else {
 		// ethernet link down
@@ -163,7 +159,7 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
-	  init_network_logging(1);
+	  init_network_logging(1, fc_addr);
 	  sntp_init();
       switch(server_init()) {
       	  case 0: {

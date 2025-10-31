@@ -12,6 +12,8 @@
 #ifndef INC_LOG_ERRORS_H_
 #define INC_LOG_ERRORS_H_
 
+#include "main.h"
+
 // General error messages (all boards could have this happen)
 // To keep track of messages, I'm starting these at 200. This is not required, but it's easier to keep track of in this file
 #define ERR_FLASH_FULL							"201 Flash full"

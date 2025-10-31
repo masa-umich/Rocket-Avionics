@@ -2580,6 +2580,9 @@ void StartAndMonitor(void *argument)
 
 	uint32_t startTick = HAL_GetTick();
 	uint32_t lastflashfull = 0;
+
+	VLV_En(Board_h.bbValves[0]);
+
 	/* Infinite loop */
 	for(;;) {
 		errormsg_t logmsg;

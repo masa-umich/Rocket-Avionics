@@ -30,7 +30,7 @@ void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
 		log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
 		return;
 	}
-	HAL_CRC_Calculate(&hcrc, NULL, 0); // reset calculation
+	HAL_CRC_Calculate(hcrc, NULL, 0); // reset calculation
 	uint32_t calc_crc;
 	int cursor = 0;
 	do {
@@ -42,7 +42,7 @@ void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
 			log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
 			return;
 		}
-		calc_crc = HAL_CRC_Accumulate(&hcrc, (uint32_t *) buf, read_bytes);
+		calc_crc = HAL_CRC_Accumulate(hcrc, (uint32_t *) buf, read_bytes);
 		cursor += read_bytes;
 	} while(eeprom_cursor - cursor > 0);
 
@@ -113,9 +113,9 @@ uint8_t setup_eeprom(I2C_HandleTypeDef *hi2c, GPIO_TypeDef *WC_GPIO_Port, uint16
 }
 
 // Load board configuration from a buffer. Returns 0 on success, -1 on an eeprom error, -2 on invalid tc gains, and -3 on invalid valve configuration values
-int load_eeprom_config(eeprom_t *eeprom, EEPROM_conf_t *conf) {
+int load_eeprom_config(EEPROM_conf_t *conf) {
 	uint8_t buffer[FC_EEPROM_LEN];
-	eeprom_status_t read_stat = eeprom_read_mem(eeprom, 0, buffer, FC_EEPROM_LEN);
+	eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, 0, buffer, FC_EEPROM_LEN);
 	if(read_stat != EEPROM_OK) {
 		return -1;
 	}

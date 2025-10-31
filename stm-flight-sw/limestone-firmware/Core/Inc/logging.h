@@ -14,6 +14,10 @@
 #include "queue.h"
 #include "time-sync.h"
 #include "system-state.h"
+#include "api.h"
+#include "lwip/udp.h"
+#include "ip4_addr.h"
+#include "log_errors.h"
 
 typedef struct {
 	uint8_t *content;
@@ -22,7 +26,7 @@ typedef struct {
 
 uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type);
 
-void init_network_logging(uint8_t reinit);
+void init_network_logging(uint8_t reinit, ip4_addr_t ipaddr);
 
 void deinit_network_logging();
 
@@ -63,5 +67,11 @@ void clear_flash();
 void handle_flash_clearing();
 
 uint8_t is_net_logging_up();
+
+void FlashClearTask(void *argument);
+
+void refresh_log_timers();
+
+void flush_flash_log();
 
 #endif /* INC_LOGGING_H_ */
