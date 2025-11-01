@@ -61,7 +61,7 @@
 #define SX1280_RX_TIMEOUT_NONE       0x0000  // No timeout, Rx single mode
 #define SX1280_RX_TIMEOUT_CONTINUOUS 0xFFFF  // Continuous RX mode
 
-
+#define SX1280_SPI_TIMEOUT_MS 100
 
 
 
@@ -250,6 +250,20 @@ SX1280_Status_t SX1280_SetBufferBaseAddress(uint8_t txBaseAddress, uint8_t rxBas
 SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime);
 
 
+/**
+* @brief Enables the High Sensitivity Mode (LNA boost).
+*
+* noted in datasheet section 4.2.1, this enables the lowest noise,
+* highest sensitivity gain steps for up to 3dB sensitivity improvement,
+* at the cost of around 500uA of additional current consumption.
+*
+* This function performs a Read-Modify-Write on register 0x0891.
+*
+* @return SX1280_Status_t Status of operation
+*/
+SX1280_Status_t SX1280_SetHighSensitivityMode(void);
+
+
 
 /**
 * @brief Put radio in TX mode to transmit packet
@@ -285,11 +299,9 @@ SX1280_Status_t SX1280_SetRx(uint16_t timeout);
 * @param buffer pointer to command arguments
 * @param size number of param bytes
 */
-void SX1280_SendCommand(uint8_t opcode, uint8_t* buffer, uint16_t size);
-
-
-void SX1280_WriteRegister(uint16_t address, uint8_t* buffer, uint16_t size);
-void SX1280_ReadRegister(uint16_t address, uint8_t* buffer, uint16_t size);
+SX1280_Status_t SX1280_SendCommand(uint8_t opcode, uint8_t* buffer, uint16_t size);
+SX1280_Status_t SX1280_WriteRegister(uint16_t address, uint8_t* buffer, uint16_t size);
+SX1280_Status_t SX1280_ReadRegister(uint16_t address, uint8_t* buffer, uint16_t size);
 
 
 
