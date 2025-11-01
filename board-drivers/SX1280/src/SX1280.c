@@ -39,13 +39,16 @@
 #define SX1280_REG_SENSITIVITY_BOOST 0x0891
 // from datasheet section 13.4.1, page 112
 #define SX1280_REG_LORA_SF_CONFIG 0x0925
+// datasheet section 14.4.1, page 131 (V3.3) - Frequency Error Compensation
+#define SX1280_REG_FREQ_ERROR_COMP 0x093C
+
 
 
 //***********************************************************
 // * PRIVATE VARIABLES
 //***********************************************************
 // static pointer to hardware config struct
-static const SX1280_Hal_t* sx1280_hal_config = NULL;
+static SX1280_Hal_t* sx1280_hal_config = NULL;
 
 
 //***********************************************************
@@ -63,7 +66,7 @@ static const SX1280_Hal_t* sx1280_hal_config = NULL;
 * @param pRxData pointer to buffer for received data
 * @param size number of bytes to transfer
 */
-static SX1280_SPI_TransmitReceive(uint8_t* pTxData, uint8_t* pRxData, uint16_t size);
+static SX1280_Status_t SX1280_SPI_TransmitReceive(uint8_t* pTxData, uint8_t* pRxData, uint16_t size);
 static SX1280_Status_t SX1280_WaitForReady(uint32_t timeout);
 
 
@@ -207,37 +210,49 @@ SX1280_Status_t SX1280_SetRfFrequency(uint32_t frequency) {
 }
 
 SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t bw, SX1280_LoRa_CR_t cr) {
+    // This function is specific to LoRa packet type based on parameters
     uint8_t buf[3];
     buf[0] = (uint8_t)sf;
     buf[1] = (uint8_t)bw;
     buf[2] = (uint8_t)cr;
-    
+
+    // Send the SetModulationParams command
     SX1280_Status_t status = SX1280_SendCommand(SX1280_CMD_SET_MODULATION_PARAMS, buf, 3);
     if (status != SX1280_OK) {
         return status;
     }
-    // add register write based on SF
-    uint8_t reg_val = 0;
+
+    // Add required register write based on SF (Datasheet Rev 3.3, Section 14.4.1, Step 5)
+    uint8_t reg_val_sf; // FIX: Variable name matches switch
     switch(sf) {
         case LORA_SF5:
         case LORA_SF6:
-            reg_val = 0x1E;
+            reg_val_sf = 0x1E;
             break;
         case LORA_SF7:
         case LORA_SF8:
-            reg_val = 0x37;
+            reg_val_sf = 0x37;
             break;
         case LORA_SF9:
         case LORA_SF10:
         case LORA_SF11:
         case LORA_SF12:
-            reg_val = 0x32;
+            reg_val_sf = 0x32;
             break;
         default:
-            reg_val = 0x37; // Default to SF7/8 setting
+            reg_val_sf = 0x37; // Default defensively
             break;
     }
-    return SX1280_WriteRegister(SX1280_REG_LORA_SF_CONFIG, &reg_val, 1);
+    // Write the required value to the SF config register 0x0925
+    // FIX: Use correct variable name 'reg_val_sf'
+    status = SX1280_WriteRegister(SX1280_REG_LORA_SF_CONFIG, &reg_val_sf, 1);
+    if (status != SX1280_OK) {
+        return status;
+    }
+
+    // Add required write to Frequency Error Compensation register 0x093C (Datasheet Rev 3.3, Section 14.4.1, Step 5)
+    uint8_t freq_comp_val = 0x01;
+    return SX1280_WriteRegister(SX1280_REG_FREQ_ERROR_COMP, &freq_comp_val, 1);
 }
 
 SX1280_Status_t SX1280_SetPacketParams(uint16_t preambleLength, 
