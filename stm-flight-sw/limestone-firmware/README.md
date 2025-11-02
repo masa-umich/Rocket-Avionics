@@ -3,7 +3,7 @@ Author: Felixfb, Jackmh </br>
 Read Me last updated: 6/23/2025
 
 ## Note:
-This is the location for the flight computer firmware for Limelight. This README will be updated more as the firmware is written. Currently the firmware is just an empty project that is configured for the flight computer. All peripherals, Ethernet, clock configuration, RTOS, and LWIP are set up, along with a collection of hardware drivers that have virtual folders linked to the board-drivers directory of this repo.
+This is the location for the flight computer firmware for Limelight. This README will be updated more as the firmware is written. All peripherals, Ethernet, clock configuration, RTOS, and LWIP are set up, hardware drivers are set up using virtual folders linked to the board-drivers directory of this repo.
 
 ## Important Notes:
 Major STM32 bug: the EthIf task does not get enough stack by default, you must go into the ethernetif.c file and change the INTERFACE_THREAD_STACK_SIZE definition at the top from 350 to anything above 380 (I would pick 500 to be safe). If this is not done, the task will start corrupting memory as soon as it starts.

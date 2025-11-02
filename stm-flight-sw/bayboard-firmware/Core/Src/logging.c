@@ -1,10 +1,9 @@
 /*
  * logging.c
  *
- *  Created on: Oct 19, 2025
+ *  Created on: Oct 31, 2025
  *      Author: felix
  */
-
 
 #include "logging.h"
 
@@ -24,7 +23,7 @@ uint8_t perierrormsgtimers[PERI_ERROR_MSG_TYPES];
 struct netconn *errormsgudp = NULL;
 SemaphoreHandle_t errorudp_mutex;
 
-QueueHandle_t errorMsglist;
+QueueHandle_t errorMsgList = NULL;
 
 uint32_t lastflashfull = 0;
 
@@ -85,12 +84,155 @@ uint8_t init_flash_logging(SPI_HandleTypeDef * hspi, GPIO_TypeDef *CS_GPIO_Port,
 	return 0;
 }
 
+/*
+ * Log message to flash. This is the function to use throughout the rest of the code.
+ * msgtext - Message text. This should include an error code if the message is an error
+ * msgtype - Type of message, used for error message throttling. Pass -1 if this is a status message or if you don't want it to be throttled, otherwise pass the "category" of the error message
+ * Returns 0 on success, 1 if a message of this type was sent too recently, 2 on general error, and 3 if there isn't enough memory available
+ */
+uint8_t log_message(const char *msgtext, int msgtype) {
+	if(msgtype != -1) {
+		if(msgtype >= ERROR_MSG_TYPES) {
+			return 2;
+		}
+		if(xSemaphoreTake(errormsg_mutex, 2) == pdPASS) {
+			uint8_t val = (msgtype % 2) == 0 ? errormsgtimers[msgtype / 2] & 0x0F : errormsgtimers[msgtype / 2] >> 4;
+			if(val < ERROR_THROTTLE_MAX) {
+				val++;
+				if(msgtype % 2) {
+					errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0x0F) | (val << 4);
+				}
+				else {
+					errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0xF0) | val;
+				}
+			}
+			else {
+				xSemaphoreGive(errormsg_mutex);
+				return 1;
+			}
+			/*if(val) {
+				xSemaphoreGive(errormsg_mutex);
+				return 1;
+			}
+			if(msgtype % 2) {
+				errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0x0F) | (15 << 4);
+			}
+			else {
+				errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0xF0) | 15;
+			}*/
+			xSemaphoreGive(errormsg_mutex);
+		}
+		else {
+			return 2;
+		}
+	}
+	// Flash entry type + timestamp + space + error code board number + message text + newline
+	size_t msglen = 1 + 24 + 1 + 1 + strlen(msgtext) + 1;
+	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
+	if(rawmsgbuf) {
+		rawmsgbuf[0] = FLASH_MSG_MARK;
+		get_iso_time((char *) &rawmsgbuf[1]);
+		rawmsgbuf[25] = ' ';
+		// I don't want to use snprinf here - there are few enough options
+		switch(bb_num) {
+			case 1: {
+				rawmsgbuf[26] = '2';
+				break;
+			}
+			case 2: {
+				rawmsgbuf[26] = '3';
+				break;
+			}
+			case 3: {
+				rawmsgbuf[26] = '4';
+				break;
+			}
+			default: {
+				rawmsgbuf[26] = '9';
+				break;
+			}
+		}
+		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
+		rawmsgbuf[msglen - 1] = '\n';
+		errormsg_t fullmsg;
+		fullmsg.content = rawmsgbuf;
+		fullmsg.len = msglen;
+		if(xQueueSend(errorMsgList, (void *)&fullmsg, 1) != pdPASS) {
+			// No space for more messages
+			free(rawmsgbuf);
+			return 3;
+		}
+		return 0;
+	}
+	return 3;
+}
+
+// Same as log_message but intended for use with peripheral device errors
+// Only difference is the message type timers last a lot longer ~ 5 seconds
+// This is intended to reduce message spam in the case that we intentionally run boards with disconnected peripherals
+uint8_t log_peri_message(const char *msgtext, int msgtype) {
+	if(msgtype != -1) {
+		if(msgtype >= PERI_ERROR_MSG_TYPES) {
+			return 2;
+		}
+		if(xSemaphoreTake(perierrormsg_mutex, 2) == pdPASS) {
+			if(perierrormsgtimers[msgtype]) {
+				xSemaphoreGive(perierrormsg_mutex);
+				return 1;
+			}
+			perierrormsgtimers[msgtype] = 20; // 20 * 250 = ~5000ms
+			xSemaphoreGive(perierrormsg_mutex);
+		}
+		else {
+			return 2;
+		}
+	}
+	// Flash entry type + timestamp + space + error code board number + message text + newline
+	size_t msglen = 1 + 24 + 1 + 1 + strlen(msgtext) + 1;
+	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
+	if(rawmsgbuf) {
+		rawmsgbuf[0] = FLASH_MSG_MARK;
+		get_iso_time((char *) &rawmsgbuf[1]);
+		rawmsgbuf[25] = ' ';
+		switch(bb_num) {
+			case 1: {
+				rawmsgbuf[26] = '2';
+				break;
+			}
+			case 2: {
+				rawmsgbuf[26] = '3';
+				break;
+			}
+			case 3: {
+				rawmsgbuf[26] = '4';
+				break;
+			}
+			default: {
+				rawmsgbuf[26] = '9';
+				break;
+			}
+		}
+		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
+		rawmsgbuf[msglen - 1] = '\n';
+		errormsg_t fullmsg;
+		fullmsg.content = rawmsgbuf;
+		fullmsg.len = msglen;
+		if(xQueueSend(errorMsgList, (void *)&fullmsg, 1) != pdPASS) {
+			// No space for more messages
+			free(rawmsgbuf);
+			return 3;
+		}
+		return 0;
+	}
+	return 3;
+}
+
 void log_telemetry() {
 	Message telemsg = {0};
 	telemsg.type = MSG_TELEMETRY;
-	if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), get_rtc_time(), 5)) {
-		uint8_t tempbuffer[11 + (4 * FC_TELEMETRY_CHANNELS) + 5];
-		int buflen = serialize_message(&telemsg, tempbuffer, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5);
+	if(!pack_bb_telemetry_msg(&(telemsg.data.telemetry), get_rtc_time(), 5)) {
+		uint8_t tempbuffer[11 + (4 * BB1_TELEMETRY_CHANNELS) + 5];
+		int buflen = serialize_message(&telemsg, tempbuffer, 11 + (4 * BB1_TELEMETRY_CHANNELS) + 5);
 		if(buflen != -1) {
 			if(log_lmp_packet(tempbuffer, buflen) == 2) {
 				if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
@@ -103,36 +245,36 @@ void log_telemetry() {
 }
 
 void log_valve_states() {
-	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
-	  	Valve_State_t vstates[3];
-		for(int i = 0;i < 3;i++) {
-			vstates[i] = Rocket_h.fcValveStates[i];
-		}
-	  	xSemaphoreGive(Rocket_h.fcValve_access);
-		uint64_t valvetime = get_rtc_time();
-		for(int i = 0;i < 3;i++) {
-			Message statemsg = {0};
-			statemsg.type = MSG_VALVE_STATE;
-			statemsg.data.valve_state.timestamp = valvetime;
-			statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, i);
-			statemsg.data.valve_state.valve_state = vstates[i];
-			uint8_t tempbuffer[MAX_VALVE_STATE_MSG_SIZE + 5];
-			int buflen = serialize_message(&statemsg, tempbuffer, MAX_VALVE_STATE_MSG_SIZE + 5);
-			if(buflen != -1) {
-				if(log_lmp_packet(tempbuffer, buflen) == 2) {
-					if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
-						send_flash_full();
-						lastflashfull = HAL_GetTick();
-					}
-				}
-			}
-		}
+	if(xSemaphoreTake(Board_h.bbValve_access, 5) == pdPASS) {
+	  	Valve_State_t vstates[NUM_VALVE_CHS];
+	  	for(int i = 0;i < NUM_VALVE_CHS;i++) {
+	  		vstates[i] = Board_h.bbValveStates[i];
+	  	}
+	  	xSemaphoreGive(Board_h.bbValve_access);
+	  	uint64_t valvetime = get_rtc_time();
+	  	for(int i = 0;i < NUM_VALVE_CHS;i++) {
+	  		Message statemsg = {0};
+	  		statemsg.type = MSG_VALVE_STATE;
+	  		statemsg.data.valve_state.timestamp = valvetime;
+	  		statemsg.data.valve_state.valve_id = generate_valve_id(bb_num, i);
+	  		statemsg.data.valve_state.valve_state = vstates[i];
+	  		uint8_t tempbuffer[MAX_VALVE_STATE_MSG_SIZE + 5];
+	  		int buflen = serialize_message(&statemsg, tempbuffer, MAX_VALVE_STATE_MSG_SIZE + 5);
+	  		if(buflen != -1) {
+	  			if(log_lmp_packet(tempbuffer, buflen) == 2) {
+	  				if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
+	  					send_flash_full();
+	  					lastflashfull = HAL_GetTick();
+	  				}
+	  			}
+	  		}
+	  	}
 	}
 }
 
 void handle_logging() {
 	errormsg_t logmsg;
-	if(xQueueReceive(errorMsglist, (void *)&logmsg, 5) == pdPASS) {
+	if(xQueueReceive(errorMsgList, (void *)&logmsg, 5) == pdPASS) {
 		uint8_t flashstat = write_raw_to_flash(logmsg.content, logmsg.len);
 		if(flashstat == 2) {
 			// Flash is full, send UDP message every 5 seconds
@@ -280,114 +422,6 @@ uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
 	return 1;
 }
 
-/*
- * Log message to flash. This is the function to use throughout the rest of the code.
- * msgtext - Message text. This should include an error code if the message is an error
- * msgtype - Type of message, used for error message throttling. Pass -1 if this is a status message or if you don't want it to be throttled, otherwise pass the "category" of the error message
- * Returns 0 on success, 1 if a message of this type was sent too recently, 2 on general error, and 3 if there isn't enough memory available
- */
-uint8_t log_message(const char *msgtext, int msgtype) {
-	if(msgtype != -1) {
-		if(msgtype >= ERROR_MSG_TYPES) {
-			return 2;
-		}
-		if(xSemaphoreTake(errormsg_mutex, 2) == pdPASS) {
-			uint8_t val = (msgtype % 2) == 0 ? errormsgtimers[msgtype / 2] & 0x0F : errormsgtimers[msgtype / 2] >> 4;
-			if(val < ERROR_THROTTLE_MAX) {
-				val++;
-				if(msgtype % 2) {
-					errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0x0F) | (val << 4);
-				}
-				else {
-					errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0xF0) | val;
-				}
-			}
-			else {
-				xSemaphoreGive(errormsg_mutex);
-				return 1;
-			}
-			/*if(val) {
-				xSemaphoreGive(errormsg_mutex);
-				return 1;
-			}
-			if(msgtype % 2) {
-				errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0x0F) | (15 << 4);
-			}
-			else {
-				errormsgtimers[msgtype / 2] = (errormsgtimers[msgtype / 2] & 0xF0) | 15;
-			}*/
-			xSemaphoreGive(errormsg_mutex);
-		}
-		else {
-			return 2;
-		}
-	}
-	// Flash entry type + timestamp + space + error code board number + message text + newline
-	size_t msglen = 1 + 24 + 1 + 1 + strlen(msgtext) + 1;
-	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
-	if(rawmsgbuf) {
-		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time((char *) &rawmsgbuf[1]);
-		rawmsgbuf[25] = ' ';
-		rawmsgbuf[26] = '1';
-		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
-		rawmsgbuf[msglen - 1] = '\n';
-		errormsg_t fullmsg;
-		fullmsg.content = rawmsgbuf;
-		fullmsg.len = msglen;
-		if(xQueueSend(errorMsglist, (void *)&fullmsg, 1) != pdPASS) {
-			// No space for more messages
-			free(rawmsgbuf);
-			return 3;
-		}
-		return 0;
-	}
-	return 3;
-}
-
-// Same as log_message but intended for use with peripheral device errors
-// Only difference is the message type timers last a lot longer ~ 5 seconds
-// This is intended to reduce message spam in the case that we intentionally run boards with disconnected peripherals
-uint8_t log_peri_message(const char *msgtext, int msgtype) {
-	if(msgtype != -1) {
-		if(msgtype >= PERI_ERROR_MSG_TYPES) {
-			return 2;
-		}
-		if(xSemaphoreTake(perierrormsg_mutex, 2) == pdPASS) {
-			if(perierrormsgtimers[msgtype]) {
-				xSemaphoreGive(perierrormsg_mutex);
-				return 1;
-			}
-			perierrormsgtimers[msgtype] = 20; // 20 * 250 = ~5000ms
-			xSemaphoreGive(perierrormsg_mutex);
-		}
-		else {
-			return 2;
-		}
-	}
-	// Flash entry type + timestamp + space + error code board number + message text + newline
-	size_t msglen = 1 + 24 + 1 + 1 + strlen(msgtext) + 1;
-	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
-	if(rawmsgbuf) {
-		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time((char *) &rawmsgbuf[1]);
-		rawmsgbuf[25] = ' ';
-		rawmsgbuf[26] = '1';
-		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
-		rawmsgbuf[msglen - 1] = '\n';
-		errormsg_t fullmsg;
-		fullmsg.content = rawmsgbuf;
-		fullmsg.len = msglen;
-		if(xQueueSend(errorMsglist, (void *)&fullmsg, 1) != pdPASS) {
-			// No space for more messages
-			free(rawmsgbuf);
-			return 3;
-		}
-		return 0;
-	}
-	return 3;
-}
-
 void send_flash_full() {
 	if(xSemaphoreTake(errorudp_mutex, 5) == pdPASS) {
 		if(errormsgudp) {
@@ -397,7 +431,24 @@ void send_flash_full() {
 				if(pkt_buf) {
 					get_iso_time(pkt_buf);
 					pkt_buf[24] = ' ';
-					pkt_buf[25] = '1';
+					switch(bb_num) {
+						case 1: {
+							pkt_buf[25] = '2';
+							break;
+						}
+						case 2: {
+							pkt_buf[25] = '3';
+							break;
+						}
+						case 3: {
+							pkt_buf[25] = '4';
+							break;
+						}
+						default: {
+							pkt_buf[25] = '9';
+							break;
+						}
+					}
 					memcpy(&pkt_buf[26], ERR_FLASH_FULL, sizeof(ERR_FLASH_FULL) - 1);
 					netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
 				}
@@ -430,7 +481,24 @@ void send_udp_online(ip4_addr_t * ip) {
 		if(pkt_buf) {
 			get_iso_time((char *) pkt_buf);
 			pkt_buf[24] = ' ';
-			pkt_buf[25] = '1';
+			switch(bb_num) {
+				case 1: {
+					pkt_buf[25] = '2';
+					break;
+				}
+				case 2: {
+					pkt_buf[25] = '3';
+					break;
+				}
+				case 3: {
+					pkt_buf[25] = '4';
+					break;
+				}
+				default: {
+					pkt_buf[25] = '9';
+					break;
+				}
+			}
 			snprintf((char *) &pkt_buf[26], sizeof(STAT_NETWORK_LOG_ONLINE) + 15, STAT_NETWORK_LOG_ONLINE "%u.%u.%u.%u", ip4_addr1(ip), ip4_addr2(ip), ip4_addr3(ip), ip4_addr4(ip));
 			netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
 		}
