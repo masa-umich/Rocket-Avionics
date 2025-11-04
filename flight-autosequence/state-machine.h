@@ -4,24 +4,21 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-
+/*
 #define MAX_TRANSITIONS 4
 
-typedef struct State State;
-typedef struct StateTransition Transition;
-
-struct StateTransition {
+typedef struct {
     bool (*inputs_satisfied)(void);
     State* nextState;
-};
+} Transition;
 
-struct State {
+typedef struct {
     char* name;
     Transition transitions[MAX_TRANSITIONS];
-    int num_transitions;
+    uint8_t num_transitions;
 
     void (*perform_output)(void);
-};  
+} State;  
 
 void state_setName(State* s, char* n){
     s->name = (char*) malloc(strlen(n) + 1);
@@ -32,9 +29,14 @@ void state_setNumTransitions(State* s){
     s->num_transitions = 0;
 }
 
-void state_addTransition(State* s, bool (*function_ptr)(void)){
-    s->transitions[s->num_transitions].inputs_satisfied = function_ptr;
+void state_addTransition(State* s, bool (*transition_fcn)(void)){
+    s->transitions[s->num_transitions].inputs_satisfied = transition_fcn;
     s->num_transitions++;
 }
+
+void state_setOutput(State* s, void (*output_fcn)(void)){
+    s->perform_output = output_fcn;
+}
+*/
 
 #endif
