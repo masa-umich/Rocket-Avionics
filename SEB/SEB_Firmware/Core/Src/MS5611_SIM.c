@@ -68,7 +68,7 @@ void emulation_IRQHandler(SPI_HandleTypeDef *hspi) {
 
 void emulation_state_machine_update(uint8_t rx_byte) {
 
-	/*
+/*
 	switch(state) {
 		case WAITING_FOR_COMMAND:
 			switch (rx_byte & 0xF0) {
@@ -120,10 +120,10 @@ void emulation_state_machine_update(uint8_t rx_byte) {
             }
             break;
         case SENDING_PROM_DATA_LOW:
-            state = SENDING_PROM_DATA_HIGH;
+            //state = SENDING_PROM_DATA_HIGH;
             break;
         case SENDING_PROM_DATA_HIGH:
-            state = WAITING_FOR_COMMAND; // Finished sending PROM data
+            //state = WAITING_FOR_COMMAND; // Finished sending PROM data
             break;
         case RESETTING:
             state = WAITING_FOR_COMMAND; // Finished resetting
@@ -144,6 +144,7 @@ void emulation_state_machine_update(uint8_t rx_byte) {
         	break; // Should never happen
     }
 
+
 }
 
 uint8_t emulation_get_response() {
@@ -154,10 +155,12 @@ uint8_t emulation_get_response() {
     // Check the state machine for what we should respond with
     switch (state) {
         case SENDING_PROM_DATA_LOW: // these might be backwards
-            response = (fixed_prom_values[prom_address_index] >> 8) & 0xFF; // MSB
+        	response = (fixed_prom_values[prom_address_index] >> 8) & 0xFF;
+			state = SENDING_PROM_DATA_HIGH;   // Next TXE will send LSB
             break;
         case SENDING_PROM_DATA_HIGH:
-            response = (fixed_prom_values[prom_address_index] & 0xFF); // LSB
+        	response = fixed_prom_values[prom_address_index] & 0xFF;
+			state = WAITING_FOR_COMMAND;      // Done with this PROM transfer
             break;
         case SENDING_ADC_DATA_XL:
             response = 0xFE; // First byte is always 0xFE for some reason
