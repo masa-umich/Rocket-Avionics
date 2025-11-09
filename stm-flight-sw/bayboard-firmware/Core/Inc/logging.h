@@ -13,7 +13,7 @@
 #include "base64.h"
 #include "queue.h"
 #include "time-sync.h"
-#include "system-state.h"
+#include "board-state.h"
 #include "api.h"
 #include "lwip/udp.h"
 #include "ip4_addr.h"

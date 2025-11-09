@@ -1,7 +1,7 @@
 /*
  * time-sync.c
  *
- *  Created on: Oct 16, 2025
+ *  Created on: Nov 9, 2025
  *      Author: felix
  */
 
@@ -36,10 +36,7 @@ void set_system_time(uint32_t sec, uint32_t us) {
 	sDate.WeekDay = (tm_time->tm_wday == 0) ? 7 : tm_time->tm_wday;
 
 	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
-		// These constants have to do with the counters associated with the RTC
-		// 6250 is the 1hz counter, so every increment of that counter is 1/6250th of a second
 		uint32_t subsecond_shift = 6249 - ((us / 1000000.0) * 6250);
-
 		//uint32_t subsecond_shift = 6249ULL - ((((uint64_t) us) * ((uint64_t) 6250)) / 1000000ULL); // This works too but I think above is more memory efficient
 		taskENTER_CRITICAL();
 		HAL_RTC_SetDate(rtc, &sDate, RTC_FORMAT_BIN);
@@ -68,7 +65,6 @@ void set_system_time(uint32_t sec, uint32_t us) {
 		log_message(ERR_RTC_NOT_SET, -1);
 	}
 }
-
 
 /**
  * Get Unix timestamp in nanoseconds

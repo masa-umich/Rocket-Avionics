@@ -10,6 +10,7 @@
 #include "log_errors.h"
 #include "errno.h"
 #include "stdio.h"
+#include "logging.h"
 
 QueueHandle_t txbuffer = NULL;
 QueueHandle_t rxbuffer = NULL;

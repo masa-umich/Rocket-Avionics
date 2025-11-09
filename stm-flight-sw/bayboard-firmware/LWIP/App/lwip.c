@@ -30,7 +30,7 @@
 
 /* USER CODE BEGIN 0 */
 #include "sntp.h"
-#include "server.h"
+#include "client.h"
 #include "tftp_server.h"
 #include "lwip/udp.h"
 #include "log_errors.h"

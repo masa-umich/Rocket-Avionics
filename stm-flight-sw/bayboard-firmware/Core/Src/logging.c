@@ -71,7 +71,7 @@ void logging_setup() {
 
 	memset(errormsgtimers, 0, ERROR_MSG_TYPES / 2);
 	memset(perierrormsgtimers, 0, PERI_ERROR_MSG_TYPES);
-	errorMsglist = xQueueCreate(100, sizeof(errormsg_t));
+	errorMsgList = xQueueCreate(100, sizeof(errormsg_t));
 }
 
 uint8_t init_flash_logging(SPI_HandleTypeDef * hspi, GPIO_TypeDef *CS_GPIO_Port, uint16_t CS_GPIO_Pin) {

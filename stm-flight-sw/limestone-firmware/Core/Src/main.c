@@ -228,7 +228,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
-  timesync_setup();
+  timesync_setup(&hrtc);
   logging_setup();
   /* USER CODE END RTOS_MUTEX */
 
