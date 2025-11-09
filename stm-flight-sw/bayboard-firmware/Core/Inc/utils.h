@@ -10,6 +10,13 @@
 #define PTUTILS_H
 
 #include "main.h"
+#include "M24256E.h"
+#include "MS5611.h"
+#include "ADS1120.h"
+#include "MAX11128.h"
+#include "LSM6DSO32XTR.h"
+#include "logging.h"
+#include "client.h"
 
 #define PT_DIVIDER		(float)((5.0 + 3.3) / 5.0)
 
@@ -24,16 +31,21 @@ typedef struct {
 	float max_V;
 } PT_t;
 
-typedef enum {
-	Vlv1 = 0U,
-	Vlv2,
-	Vlv3,
-	Vlv4,
-	Vlv5,
-	Vlv6,
-	Vlv7
-} Valve_Channel;
+typedef struct {
+	IMU imu1_h;
+	IMU imu2_h;
 
+  	GPIO_MAX11128_Pinfo adc1_h;
+  	GPIO_MAX11128_Pinfo adc2_h;
+
+  	ADS_Main_t tc_main_h;
+  	ADS_TC_t TCs[6];
+
+  	MS5611 bar1_h;
+  	MS5611 bar2_h;
+  	MS5611_PROM_t prom1;
+  	MS5611_PROM_t prom2;
+} Sensors_t;
 
 // Calculate PT pressure from raw ADC value
 //This assumes the raw value is from a MAX11128 or other 12bit ADC, and the circuit uses a 3.3:5 voltage divider
@@ -56,5 +68,11 @@ float current_sense_calc(uint16_t raw, uint16_t res, uint8_t divider);
 // resA is the resistance between the bus and the ADC pin
 // resB is the resistance between the ADC pin and GND
 float bus_voltage_calc(uint16_t raw, uint32_t resA, uint32_t resB);
+
+void reset_board();
+
+int send_msg_to_device(Message *msg, TickType_t wait, size_t buffersize);
+
+int send_raw_msg_to_device(RawMessage *msg, TickType_t wait);
 
 #endif

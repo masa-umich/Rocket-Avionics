@@ -33,11 +33,16 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 //#include "LSM6DSO32XTR.h"
 //#include "semphr.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "stdlib.h"
+#include "string.h"
+#include "lmp_channels.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+extern uint8_t bb_num; // Program wide reference to the bay board number. Not valid until after main() runs
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -104,6 +109,7 @@ extern "C" {
 
 #define ERROR_THROTTLE_MAX		10 // Not more than 15
 
+extern void set_system_time(uint32_t sec, uint32_t us);
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 
 #define NUM_TCS				6
@@ -162,10 +168,6 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void set_system_time(uint32_t sec, uint32_t us);
-
-uint8_t log_message(const char *msgtext, int msgtype);
-uint8_t log_peri_message(const char *msgtext, int msgtype);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

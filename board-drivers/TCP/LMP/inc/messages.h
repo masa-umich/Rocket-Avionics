@@ -30,6 +30,16 @@ typedef enum {
 } BoardId;
 
 typedef enum {
+	Vlv1 = 0U,
+	Vlv2,
+	Vlv3,
+	Vlv4,
+	Vlv5,
+	Vlv6,
+	Vlv7
+} Valve_Channel;
+
+typedef enum {
 	DEVICE_CMD_RESET = 0x00,
 	DEVICE_CMD_CLEAR_FLASH = 0x01,
 	DEVICE_CMD_QUERY_FLASH = 0x02,
@@ -98,4 +108,13 @@ int serialize_message(const Message *message, uint8_t *buffer,
 					  uint32_t buffer_size);
 int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 						Message *msg);
+
+Valve_Channel get_valve(uint8_t valveId);
+
+BoardId get_valve_board(uint8_t valveId);
+
+uint8_t generate_valve_id(BoardId board, Valve_Channel valve);
+
+uint8_t check_valve_id(uint8_t valveId);
+
 #endif

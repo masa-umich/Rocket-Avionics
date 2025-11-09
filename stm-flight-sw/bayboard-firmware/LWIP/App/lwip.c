@@ -34,6 +34,10 @@
 #include "tftp_server.h"
 #include "lwip/udp.h"
 #include "log_errors.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "logging.h"
+#include "remote-config.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -41,12 +45,7 @@ static void ethernet_link_status_updated(struct netif *netif);
 void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
-extern const struct tftp_context my_tftp_ctx;
 extern ip4_addr_t bb_addr;
-extern struct netconn *errormsgudp;
-extern SemaphoreHandle_t errorudp_mutex;
-extern void send_udp_online(ip4_addr_t * ip);
-extern uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -124,22 +123,7 @@ void MX_LWIP_Init(void)
 	if(netif_is_link_up(&gnetif)) {
 		sntp_init();
 		tftp_init(&my_tftp_ctx);
-		if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-			errormsgudp = netconn_new(NETCONN_UDP);
-			if(errormsgudp) {
-				ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
-				send_udp_online(&ipaddr);
-			}
-			else {
-				// failed to create netconn
-				log_message(ERR_UDP_INIT_NNETCONN, -1);
-			}
-			xSemaphoreGive(errorudp_mutex);
-		}
-		else {
-			// failed to take mutex
-			log_message(ERR_UDP_INIT_MUTEX, -1);
-		}
+		init_network_logging(0, bb_addr);
 	}
 	else {
 		// ethernet link down
@@ -175,24 +159,7 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
-	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-		  if(!errormsgudp) {
-		  	  errormsgudp = netconn_new(NETCONN_UDP);
-		  	  if(errormsgudp) {
-		  		  ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
-		  	  }
-		  	  else {
-				  log_message(ERR_UDP_REINIT, -1);
-		  	  }
-		  }
-		  else {
-			  log_message(ERR_UDP_REINIT, -1);
-		  }
-	  	  xSemaphoreGive(errorudp_mutex);
-	  }
-	  else {
-		  log_message(ERR_UDP_REINIT, -1);
-	  }
+	  init_network_logging(1, bb_addr);
 	  sntp_init();
 	  client_reinit();
 	  tftp_init(&my_tftp_ctx);
@@ -204,12 +171,7 @@ static void ethernet_link_status_updated(struct netif *netif)
   else /* netif is down */
   {
 /* USER CODE BEGIN 6 */
-	  if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
-		  netconn_close(errormsgudp);
-		  netconn_delete(errormsgudp);
-		  errormsgudp = NULL;
-		  xSemaphoreGive(errorudp_mutex);
-	  }
+	  deinit_network_logging();
 	  sntp_stop();
 	  client_stop();
 	  tftp_cleanup();

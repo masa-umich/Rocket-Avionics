@@ -31,13 +31,17 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "stdlib.h"
+#include "string.h"
+#include "lmp_channels.h"
 //#include "LSM6DSO32XTR.h"
 //#include "semphr.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -110,6 +114,7 @@ extern "C" {
 
 #define ERROR_THROTTLE_MAX		10 // Not more than 15
 
+extern void set_system_time(uint32_t sec, uint32_t us);
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
 
 #define SHUNT_RES_20M		(uint16_t)20
@@ -155,9 +160,6 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void set_system_time(uint32_t sec, uint32_t us);
-
-uint8_t log_message(const char *msgtext, int msgtype);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
