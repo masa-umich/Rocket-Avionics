@@ -13,6 +13,7 @@
 #define INC_LOG_ERRORS_H_
 
 #include "main.h"
+#include "git-hash.h"
 
 // General error messages (all boards could have this happen)
 // To keep track of messages, I'm starting these at 200. This is not required, but it's easier to keep track of in this file
@@ -181,13 +182,14 @@
 #define STAT_STARTUP_DONE						"702 Program initialization complete"
 #define STAT_TELEM_TASK_STARTED					"703 Telemetry task started"
 #define STAT_PACKET_TASK_STARTED				"704 Packet processing task started"
-#define STAT_EEPROM_CONFIG_CHANGED				"705 New EEPROM config saved"
+#define STAT_EEPROM_CONFIG_CHANGED				"705 New EEPROM config saved, restarting in 500ms"
 #define STAT_LINK_UP							"706 Ethernet link back online"
 #define STAT_LINK_DOWN							"707 Ethernet link down"
 #define STAT_AVAILABLE_FLASH					"708 Used flash space: "
 #define STAT_CLEAR_FLASH						"709 Flash cleared"
 #define STAT_EEPROM_LOADED						"710 EEPROM config loaded successfully"
 #define STAT_EEPROM_DEFAULT_LOADED				"711 EEPROM defaults loaded, overridden by macro"
+#define STAT_VERSION_INFO						"712 Firmware build info: version " GIT_HASH ", branch " GIT_BRANCH ", type " BUILD_TYPE ", built on " BUILD_TIME
 
 // Flight Computer status messages
 #ifdef FLIGHT_COMPUTER

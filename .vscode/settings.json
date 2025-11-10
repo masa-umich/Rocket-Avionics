@@ -2,5 +2,6 @@
     "files.associations": {
         "*.bc": "ini",
         "fcbbadc.h": "c"
-    }
+    },
+    "cmake.sourceDirectory": "/Users/felix/Desktop/Rocket-Avionics/apogee-detection"
 }
