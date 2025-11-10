@@ -5,10 +5,11 @@
 # ]
 # ///
 import git
+import sys
 from datetime import datetime
 from pathlib import Path
 
-filename = "../Core/Inc/git-hash.h"
+filename = sys.argv[1]
 contents = """/*
  *  git-hash.h
  *
