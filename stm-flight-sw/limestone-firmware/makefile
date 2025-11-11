@@ -1,5 +1,3 @@
-## This is a template makefile, copy into your project directory and customize
-
 .PHONY: gen-version
 
 ifdef OS

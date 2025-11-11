@@ -2,15 +2,15 @@
  *  git-hash.h
  *
  *  Auto-generated during the STM32 pre-build steps
- *  Last generated: Nov 09 2025 10:22:30 PM EST
+ *  Last generated: Nov 11 2025 09:49:46 AM EST
  */
 
 #ifndef INC_GIT_HASH_H_
 #define INC_GIT_HASH_H_
 
-#define GIT_HASH        "1a22b75"
+#define GIT_HASH        "977306d"
 #define GIT_BRANCH      "morefeatures-dev"
-#define BUILD_TIME      "Nov 09 2025 10:22:30 PM EST"
-#define BUILD_TYPE      "Debug"
+#define BUILD_TIME      "Nov 11 2025 09:49:46 AM EST"
+#define BUILD_TYPE      "bayboard-firmware"
 
 #endif /* INC_GIT_HASH_H_ */
