@@ -80,7 +80,7 @@ UART_HandleTypeDef huart10;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 1024 * 4, // <-- FIX 1: Increased stack from 512*4 to 1024*4 (4096 bytes)
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
@@ -848,7 +848,6 @@ void StartDefaultTask(void *argument)
   {
     printf("Sending packet %d: '%s'\r\n", counter, tx_message);
 
-    // --- THIS IS THE FIX ---
     // We MUST set the packet parameters (especially length) RIGHT BEFORE sending
     // The length in Init() is just a default, this sets the *actual* length
     radio_status = SX1280_SetPacketParams(
@@ -861,7 +860,6 @@ void StartDefaultTask(void *argument)
     if (radio_status != SX1280_OK) {
       printf("Error setting packet params!\r\n");
     }
-    // --- END OF FIX ---
 
     // 1. Write the message to the radio's buffer
     radio_status = SX1280_WriteBuffer(tx_message, sizeof(tx_message));
@@ -877,7 +875,6 @@ void StartDefaultTask(void *argument)
     }
 
     // Note: In a real application, you'd wait for the TxDone interrupt.
-    // For this simple test, we just wait 1 second.
 
     counter++;
     vTaskDelay(1000); // Wait 1 second before sending again
@@ -915,10 +912,10 @@ void StartDefaultTask(void *argument)
         // 2. Check if the "RxDone" flag is set (Bit 1)
         if (irq_status & SX1280_IRQ_RX_DONE)
         {
-            // A NEW packet has been received!
+            // New packet is received
 
-            // We MUST read the buffer *before* clearing the IRQ.
-            // This empties the radio's FIFO.
+            // We MUST read the buffer before we clear the IRQ
+            // This empties the radio's FIFO
             int16_t packet_length = SX1280_ReadBuffer(rx_buffer, 255);
 
             // NOW, we clear the interrupt flags. This tells the radio
@@ -928,8 +925,7 @@ void StartDefaultTask(void *argument)
 	            printf("Error clearing IRQ status!\r\n");
 	        }
 
-            if (packet_length > 0) {
-                // We got a packet!
+            if (packet_length > 0) { // This means we got a packet
                 // Safely null-terminate the string.
                 if (packet_length < 255) {
                     rx_buffer[packet_length] = '\0';
@@ -943,10 +939,6 @@ void StartDefaultTask(void *argument)
                 // A driver error occurred
                 printf("Error reading buffer!\r\n");
             }
-
-            // 5. NOTE: We do NOT need to call SetRx again here,
-            //    because ClearIrqStatus in continuous mode is
-            //    enough to reset the state and look for the next packet.
 
         } // --- END OF if(irq_status & SX1280_IRQ_RX_DONE) ---
 	    // If packet_length == 0, no data was available.
