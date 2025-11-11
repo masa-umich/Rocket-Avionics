@@ -1,6 +1,6 @@
 # Bay Board Firmware
 Author: Felixfb </br>
-Read Me last updated: 8/15/2025
+Read Me last updated: 11/11/2025
 
 ## Important Notes:
 Major STM32 bug: the EthIf task does not get enough stack by default, you must go into the ethernetif.c file and change the INTERFACE_THREAD_STACK_SIZE definition at the top from 350 to anything above 380 (I would pick 500 to be safe). If this is not done, the task will start corrupting memory as soon as it starts.
@@ -14,9 +14,8 @@ information includes the short hash of the most recent git commit, the active br
 of build (Debug vs Release), and the timestamp of the build. This build info is logged in
 flash and over UDP
 when the firmware starts. The auto-generation script is a [uv
-script](../version-info/version-gen.py) that automatically runs before a build. This STM32
-project is set up to automatically run this script, however it requires that uv is
-installed in the correct location. The configuration assumes that uv is installed in
+script](../version-info/version-gen.py) that the STM32
+project is set up to automatically try to install uv and run the script before a build. The configuration assumes that uv is installed in
 ~/.local/bin/uv (this is the default install location), but if your uv is installed in a different location, you can go to
 Properties -> C/C++ Build -> Environment and add the location of your uv to the PATH variable.
 
