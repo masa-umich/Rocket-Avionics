@@ -103,7 +103,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
         return SX1280_ERROR;
     }
 
-    // this function correctly writes to 0x0925
+    // this function correctly writes to 0x0925 and 0x093C
     if (SX1280_SetModulationParams(LORA_SF8, LORA_BW_400, LORA_CR_4_5) != SX1280_OK) {
         return SX1280_ERROR;
     }
@@ -223,7 +223,7 @@ SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t
     }
 
     // Add required register write based on SF (Datasheet Rev 3.3, Section 14.4.1, Step 5)
-    uint8_t reg_val_sf; // FIX: Variable name matches switch
+    uint8_t reg_val_sf;
     switch(sf) {
         case LORA_SF5:
         case LORA_SF6:
@@ -244,7 +244,6 @@ SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t
             break;
     }
     // Write the required value to the SF config register 0x0925
-    // FIX: Use correct variable name 'reg_val_sf'
     status = SX1280_WriteRegister(SX1280_REG_LORA_SF_CONFIG, &reg_val_sf, 1);
     if (status != SX1280_OK) {
         return status;
@@ -459,4 +458,3 @@ static SX1280_Status_t SX1280_WaitForReady(uint32_t timeout)
     }
     return SX1280_OK;
 }
-

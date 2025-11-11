@@ -24,6 +24,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "MS5611.h"
+#include "sx1280.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,7 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+//CHANGE TRANSMIT/RECEIVE HERE
+#define IS_TRANSMITTER 1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -77,10 +80,27 @@ UART_HandleTypeDef huart10;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 512 * 4,
+  .stack_size = 1024 * 4, // <-- FIX 1: Increased stack from 512*4 to 1024*4 (4096 bytes)
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
+// Handle for radio driver
+SX1280_Hal_t radio_hal_config;
+
+// Status var for driver funcs
+SX1280_Status_t radio_status;
+
+
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+PUTCHAR_PROTOTYPE
+{
+  HAL_UART_Transmit(&huart10, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  return ch;
+}
 
 /* USER CODE END PV */
 
@@ -154,6 +174,8 @@ int main(void)
   MX_RTC_Init();
   MX_ETH_Init();
   /* USER CODE BEGIN 2 */
+  printf("LIMESTONE BOOTING--\r\n");
+
 
   /* USER CODE END 2 */
 
@@ -697,12 +719,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF7_SPI3;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : VLV_OLD2_Pin */
-  GPIO_InitStruct.Pin = VLV_OLD2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(VLV_OLD2_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PB10 PB14 PB15 */
   GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -746,8 +762,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PG12 PG14 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_14;
+  /*Configure GPIO pin : PG12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -791,23 +807,153 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-    MS5611 baro = {0};
-	baro.hspi = &hspi6;
-	baro.CS_GPIO_Pin = BAR2_CS_Pin;
-	baro.CS_GPIO_Port = BAR2_CS_GPIO_Port;
-	baro.SPI_TIMEOUT = 1000;
-	baro.pres_offset = 0;
-	baro.alt_offset = 0;
+	// Populate HAL Config struct for driver
+	// use handles/defines from CUBEMX
 
-	MS5611_PROM_t prom = {0};
-	float pres = 0;
+	radio_hal_config.spiHandle = &hspi5;
+	radio_hal_config.nssPort = SPI5_CS_GPIO_Port;   // this is PF6
+	radio_hal_config.nssPin = SPI5_CS_Pin;
+	radio_hal_config.resetPort = RF_NSRT_GPIO_Port;  // this is PC2
+	radio_hal_config.resetPin = RF_NSRT_Pin;
+	radio_hal_config.busyPort = RF_BUSY_GPIO_Port; // PF10
+	radio_hal_config.busyPin = RF_BUSY_Pin;
 
-	MS5611_Reset(&baro);
-	MS5611_readPROM(&baro, &prom);
+	//initialize the radio
+	  printf("Initializing SX1280...\r\n");
+	  radio_status = SX1280_Init(&radio_hal_config);
 
-	for (;;) {
-		MS5611_getPres(&baro, &pres, OSR_256);
-	}
+	  if (radio_status == SX1280_OK) {
+	    printf("SX1280 Init OK.\r\n");
+	  } else {
+	    printf("SX1280 Init FAILED! Status: %d\r\n", radio_status);
+	    // Loop forever if init fails
+	    while(1) {
+	      vTaskDelay(1000);
+	    }
+	  }
+
+	  printf("Setting LoRa SyncWord to 0x12...\r\n");
+	  radio_status = SX1280_SetLoRaSyncWord(0x12);
+	  if (radio_status != SX1280_OK) {
+	    printf("Failed to set SyncWord!\r\n");
+	  }
+
+#if IS_TRANSMITTER == 0
+  // --- "ROCKET" / TRANSMITTER CODE ---
+  printf("Board configured as TRANSMITTER.\r\n");
+  uint8_t tx_message[] = "Hello from MASA This is going to be a very long sentence and we are seeing when the cut off is so this is just going to keep rambling on and seeing how far this sentence can continue";
+  int counter = 0;
+
+  for(;;)
+  {
+    printf("Sending packet %d: '%s'\r\n", counter, tx_message);
+
+    // --- THIS IS THE FIX ---
+    // We MUST set the packet parameters (especially length) RIGHT BEFORE sending
+    // The length in Init() is just a default, this sets the *actual* length
+    radio_status = SX1280_SetPacketParams(
+        0x0C,                             // Preamble length
+        LORA_EXPLICIT_HEADER,           // Explicit header
+        sizeof(tx_message),             // <-- SETS THE CORRECT PAYLOAD LENGTH (16)
+        LORA_CRC_ON,                    // CRC On
+        LORA_IQ_STANDARD                // Standard IQ
+    );
+    if (radio_status != SX1280_OK) {
+      printf("Error setting packet params!\r\n");
+    }
+    // --- END OF FIX ---
+
+    // 1. Write the message to the radio's buffer
+    radio_status = SX1280_WriteBuffer(tx_message, sizeof(tx_message));
+    if (radio_status != SX1280_OK) {
+      printf("Error writing buffer!\r\n");
+    }
+
+    // 2. Set the radio to TX mode to send the packet
+    //    Timeout = 0 means "single mode" (send packet, then go to STDBY)
+    radio_status = SX1280_SetTx(0);
+    if (radio_status != SX1280_OK) {
+      printf("Error setting TX mode!\r\n");
+    }
+
+    // Note: In a real application, you'd wait for the TxDone interrupt.
+    // For this simple test, we just wait 1 second.
+
+    counter++;
+    vTaskDelay(1000); // Wait 1 second before sending again
+  }
+#else
+	  // GROUND/RECEIVER CODE
+
+	  printf("Board configured as receiver\r\n");
+	  uint8_t rx_buffer[255]; //buffer holds received data
+
+	  //put radio into continuous receive mode
+	  radio_status = SX1280_SetRx(SX1280_RX_TIMEOUT_CONTINUOUS);
+	  if (radio_status != SX1280_OK) {
+	    printf("Error setting RX mode!\r\n");
+	    // Loop forever
+	    while(1) { vTaskDelay(1000); }
+	  }
+
+	  printf("Waiting for messages...\r\n");
+
+	  for(;;)
+	  {
+        // We are now polling the IRQ status register instead of just reading the buffer.
+
+        uint16_t irq_status = 0;
+
+        // 1. Check the radio's interrupt status register
+        radio_status = SX1280_GetIrqStatus(&irq_status);
+        if (radio_status != SX1280_OK) {
+            printf("Error getting IRQ status!\r\n");
+            vTaskDelay(100);
+            continue;
+        }
+
+        // 2. Check if the "RxDone" flag is set (Bit 1)
+        if (irq_status & SX1280_IRQ_RX_DONE)
+        {
+            // A NEW packet has been received!
+
+            // We MUST read the buffer *before* clearing the IRQ.
+            // This empties the radio's FIFO.
+            int16_t packet_length = SX1280_ReadBuffer(rx_buffer, 255);
+
+            // NOW, we clear the interrupt flags. This tells the radio
+            // "I have received and read the packet, stop asserting the RxDone flag."
+            radio_status = SX1280_ClearIrqStatus(0xFFFF); // Clear all IRQs
+	        if (radio_status != SX1280_OK) {
+	            printf("Error clearing IRQ status!\r\n");
+	        }
+
+            if (packet_length > 0) {
+                // We got a packet!
+                // Safely null-terminate the string.
+                if (packet_length < 255) {
+                    rx_buffer[packet_length] = '\0';
+                } else {
+                    rx_buffer[254] = '\0'; // Maxed out our buffer
+                }
+
+                printf("Received Packet! Length: %d, Message: '%s'\r\n", packet_length, rx_buffer);
+
+            } else if (packet_length < 0) {
+                // A driver error occurred
+                printf("Error reading buffer!\r\n");
+            }
+
+            // 5. NOTE: We do NOT need to call SetRx again here,
+            //    because ClearIrqStatus in continuous mode is
+            //    enough to reset the state and look for the next packet.
+
+        } // --- END OF if(irq_status & SX1280_IRQ_RX_DONE) ---
+	    // If packet_length == 0, no data was available.
+
+	    vTaskDelay(100); // Poll for new packets every 100ms
+	  }
+	#endif
   /* USER CODE END 5 */
 }
 
