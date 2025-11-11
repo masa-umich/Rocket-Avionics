@@ -60,6 +60,8 @@ extern "C" {
 #define FC_EEPROM_LEN		(uint16_t)93
 //#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
 
+#define EEPROM_RESTART_DELAY_MS				500
+
 #define FC_EEPROM_PT_ZERO_DEFAULT			0.5
 #define FC_EEPROM_PT_RANGE_DEFAULT			5000
 #define FC_EEPROM_PT_MAX_DEFAULT			4.5

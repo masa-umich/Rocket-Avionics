@@ -262,8 +262,8 @@ int main(void)
 	  switch(load_eeprom_config(&loaded_config)) {
 	  	  case -1: {
 	  		  // eeprom load error, defaults loaded
-	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
 	  		  load_eeprom_defaults(&loaded_config);
+	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
 	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
 	  		  break;
 	  	  }
@@ -298,11 +298,12 @@ int main(void)
   }
   else {
 	  // eeprom init error, defaults loaded
-	  log_message(ERR_EEPROM_INIT, -1);
 	  load_eeprom_defaults(&loaded_config);
+	  log_message(ERR_EEPROM_INIT, -1);
 	  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
   }
   fc_addr = loaded_config.flightcomputerIP;
+  log_message(STAT_VERSION_INFO, -1);
 
   // Init flash
   if(init_flash_logging(&hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin)) {
@@ -1290,14 +1291,18 @@ void StartAndMonitor(void *argument)
 	uint8_t limewireconnected = 0;
 
 	uint32_t startTick = HAL_GetTick();
+	uint8_t logdelay = 0;
 	/* Infinite loop */
 	for(;;) {
 		// Log and send error/status messages
-		handle_logging();
+		if(logdelay) {
+			handle_logging();
+		}
 
 		// Send all valve states on connection with limewire
 		if(HAL_GetTick() - startTick > 250) {
 			startTick = HAL_GetTick();
+			logdelay = 1;
 			//size_t freemem = xPortGetFreeHeapSize();
 			refresh_log_timers();
 
