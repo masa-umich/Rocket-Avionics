@@ -18,33 +18,78 @@ static const uint16_t fixed_prom_values[8] = {
     0x1234
 };
 
-static emulation_state_t state = WAITING_FOR_COMMAND;
+volatile static emulation_state_t state = WAITING_FOR_COMMAND;
 static uint8_t prom_address_index = 0;
 static uint8_t MS5611_ADC_Buffer[4] = {0};
 static uint8_t UART_txBuffer[1] = {0};
 
 void emulation_init() {
-	SPI2->CR1 |= SPI_CR1_SPE | SPI_CR1_SSM; // enable SPI
+	// Disable SPI2 before reconfiguring
+	SPI2->CR1 &= ~SPI_CR1_SPE;
 	// IMPORTANT: Must enable hardware NSS in slave mode! Don't let the software option fool you
-	SPI2->CR2 |= SPI_CR2_RXNEIE | SPI_CR2_TXEIE;
+	SPI2->CR1 = 0
+	    | (0 << SPI_CR1_BIDIMODE_Pos)   // 2-line full duplex
+	    | (0 << SPI_CR1_BIDIOE_Pos)     // (ignored since BIDIMODE=0)
+	    | (0 << SPI_CR1_CRCEN_Pos)      // No CRC
+	    | (0 << SPI_CR1_CPOL_Pos)       // Clock polarity (0 = idle low, adjust if needed)
+	    | (0 << SPI_CR1_CPHA_Pos)       // Clock phase (0 = sample on 1st edge, adjust if needed)
+	    | (0 << SPI_CR1_MSTR_Pos)       // Slave mode
+	    | (0 << SPI_CR1_LSBFIRST_Pos)   // MSB first
+	    ;
+	SPI2->CR2 = 0
+	    | (7 << SPI_CR2_DS_Pos)         // Data size = 8-bit (DS=0b0111 = 8 bits)
+	    | (1 << SPI_CR2_FRXTH_Pos)      // RXNE flag when FIFO has 8-bit (not 16-bit)
+	    | (0 << SPI_CR2_NSSP_Pos)       // No NSS pulse mode (important!)
+	    | (0 << SPI_CR2_TXDMAEN_Pos)    // No DMA
+	    | (0 << SPI_CR2_RXDMAEN_Pos)    // No DMA
+	    | (1 << SPI_CR2_RXNEIE_Pos)     // RXNE interrupt enable
+	    | (1 << SPI_CR2_TXEIE_Pos)      // TXE interrupt enable
+	    ;
+	SPI2->CR1 |= SPI_CR1_SPE; // Enable SPI peripheral
+	//SPI2->CR2 |= SPI_CR2_RXNEIE;// | SPI_CR2_FRXTH;// | SPI_CR2_DS_2 | SPI_CR2_DS_1 | SPI_CR2_DS_0;// | SPI_CR2_TXEIE;
+	//SPI2->CR1 |= SPI_CR1_SPE;  // Enable SPI peripheral
+	*((__IO uint8_t*)&SPI2->DR) = 0x00; // preload with a dummy byte
 	NVIC_EnableIRQ(SPI2_IRQn);
 }
 
 void emulation_IRQHandler(SPI_HandleTypeDef *hspi) {
-    // RX: something arrived
-    if (SPI2->SR & SPI_SR_RXNE) {
+    //static uint8_t dummy = 0x01;
+	// RX: something arrived
+    if (SPI_SR_RXNE & SPI2->SR) {
         uint8_t rx = *((__IO uint8_t*)&SPI2->DR); // clears RXNE
         emulation_state_machine_update(rx); // Update the state machine based on received byte
     }
-
     // TX: need a new byte for next cycle
-    if (SPI2->SR & SPI_SR_TXE) {
+    if (SPI_SR_TXE & SPI2->SR) {
         uint8_t tx = emulation_get_response(); // maybe dummy if no response queued
         *((__IO uint8_t*)&SPI2->DR) = tx; // clears TXE
     }
 }
 
 void emulation_state_machine_update(uint8_t rx_byte) {
+
+/*
+	switch(state) {
+		case WAITING_FOR_COMMAND:
+			switch (rx_byte & 0xF0) {
+	                default:
+	                	prom_address_index = (rx_byte & 0x0E) >> 1;
+	                	state = SENDING_PROM_DATA_LOW;
+	                	break;
+			}
+			break;
+		case SENDING_PROM_DATA_LOW:
+			state = SENDING_PROM_DATA_HIGH;
+			break;
+		case SENDING_PROM_DATA_HIGH:
+			state = WAITING_FOR_COMMAND; // Finished sending PROM data
+			break;
+		default:
+			printf("idk what's going on either\n");
+			break;
+	}
+*/
+
     switch (state) {
         case WAITING_FOR_COMMAND:
             // Handle command decoding
@@ -75,10 +120,10 @@ void emulation_state_machine_update(uint8_t rx_byte) {
             }
             break;
         case SENDING_PROM_DATA_LOW:
-            state = SENDING_PROM_DATA_HIGH;
+            //state = SENDING_PROM_DATA_HIGH;
             break;
         case SENDING_PROM_DATA_HIGH:
-            state = WAITING_FOR_COMMAND; // Finished sending PROM data
+            //state = WAITING_FOR_COMMAND; // Finished sending PROM data
             break;
         case RESETTING:
             state = WAITING_FOR_COMMAND; // Finished resetting
@@ -98,17 +143,24 @@ void emulation_state_machine_update(uint8_t rx_byte) {
         default:
         	break; // Should never happen
     }
+
+
 }
 
 uint8_t emulation_get_response() {
-    uint8_t response = 0x00; // Default dummy byte
+//    static uint8_t pretend_state = 0x01;
+//    return pretend_state++;
+
+	uint8_t response = 0x00; // Default dummy byte
     // Check the state machine for what we should respond with
     switch (state) {
-        case SENDING_PROM_DATA_LOW: // these might be backwards 
-            response = (fixed_prom_values[prom_address_index] >> 8) & 0xFF; // MSB
+        case SENDING_PROM_DATA_LOW: // these might be backwards
+        	response = (fixed_prom_values[prom_address_index] >> 8) & 0xFF;
+			state = SENDING_PROM_DATA_HIGH;   // Next TXE will send LSB
             break;
         case SENDING_PROM_DATA_HIGH:
-            response = (fixed_prom_values[prom_address_index] & 0xFF); // LSB
+        	response = fixed_prom_values[prom_address_index] & 0xFF;
+			state = WAITING_FOR_COMMAND;      // Done with this PROM transfer
             break;
         case SENDING_ADC_DATA_XL:
             response = 0xFE; // First byte is always 0xFE for some reason

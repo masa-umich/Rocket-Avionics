@@ -1,7 +1,7 @@
 {
     "files.associations": {
         "*.bc": "ini",
-        "fcbbadc.h": "c"
-    },
-    "cmake.sourceDirectory": "/Users/felix/Desktop/Rocket-Avionics/apogee-detection"
+        "fcbbadc.h": "c",
+        "stm32h7xx_hal.h": "c"
+    }
 }
