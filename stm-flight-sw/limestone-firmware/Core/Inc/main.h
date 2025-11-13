@@ -36,17 +36,25 @@ extern "C" {
 #include "stdlib.h"
 #include "string.h"
 #include "lmp_channels.h"
+#include "timers.h"
 //#include "LSM6DSO32XTR.h"
 //#include "semphr.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct {
+	TimerHandle_t buzzTimer;
+	TimerHandle_t ledTimer;
+} inittimers_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+extern inittimers_t timers;
 
+void startLEDtimer(TickType_t delay);
+void stopLEDtimer();
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

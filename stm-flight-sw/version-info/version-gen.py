@@ -31,7 +31,7 @@ repo = git.Repo(search_parent_directories=True)
 branch_name = repo.active_branch
 short_hash = repo.git.rev_parse('--short', 'HEAD')
 
-build = Path.cwd().name
+build = Path(sys.argv[2]).name
 
 time_pretty = datetime.now().astimezone().strftime("%b %d %Y %I:%M:%S %p %Z")
 

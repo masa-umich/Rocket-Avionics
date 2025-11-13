@@ -15,6 +15,9 @@
 #include "main.h"
 #include "git-hash.h"
 
+#define TO_STRING(x) #x
+#define EXPAND_AND_STRINGIFY(x) TO_STRING(x)
+
 #ifdef FLIGHT_COMPUTER
 #define FIRMWARE_NAME		"Limelight Flight Computer Firmware"
 #elif defined(BAY_BOARD)
@@ -190,7 +193,7 @@
 #define STAT_STARTUP_DONE						"702 Program initialization complete"
 #define STAT_TELEM_TASK_STARTED					"703 Telemetry task started"
 #define STAT_PACKET_TASK_STARTED				"704 Packet processing task started"
-#define STAT_EEPROM_CONFIG_CHANGED				"705 New EEPROM config saved, restarting in 500ms"
+#define STAT_EEPROM_CONFIG_CHANGED				"705 New EEPROM config saved, restarting in " EXPAND_AND_STRINGIFY(EEPROM_RESTART_DELAY_MS) "ms"
 #define STAT_LINK_UP							"706 Ethernet link back online"
 #define STAT_LINK_DOWN							"707 Ethernet link down"
 #define STAT_AVAILABLE_FLASH					"708 Used flash space: "

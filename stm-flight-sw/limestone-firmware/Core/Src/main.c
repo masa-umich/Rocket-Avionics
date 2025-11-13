@@ -26,7 +26,6 @@
 #include "api.h"
 #include "server.h"
 #include "math.h"
-#include "timers.h"
 #include "semphr.h"
 #include "time-sync.h"
 #include "logging.h"
@@ -47,10 +46,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct {
-	TimerHandle_t buzzTimer;
-	TimerHandle_t ledTimer;
-} inittimers_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -92,6 +87,8 @@ const osThreadAttr_t startTask_attributes = {
 extern struct netif gnetif;
 
 ip4_addr_t fc_addr;
+
+inittimers_t timers = {0};
 
 EEPROM_conf_t loaded_config = {0};
 PT_t PT1_h = {0.5f, 5000.0f, 4.5f}; // Default
@@ -162,6 +159,26 @@ void toggleLEDPins(TimerHandle_t xTimer) {
 
 void buzzerOff(TimerHandle_t xTimer) {
 	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 0);
+}
+
+void stopLEDtimer() {
+	if(timers.ledTimer) {
+		xTimerStop(timers.ledTimer, 0);
+	    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, 1);
+	    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, 1);
+	    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, 1);
+	}
+}
+
+void startLEDtimer(TickType_t delay) {
+	if(timers.ledTimer) {
+		xTimerChangePeriod(timers.ledTimer, delay, 0);
+		xTimerStart(timers.ledTimer, 0);
+	}
+	else {
+		timers.ledTimer = xTimerCreate("led", delay, pdTRUE, NULL, toggleLEDPins);
+		xTimerStart(timers.ledTimer, 0);
+	}
 }
 /* USER CODE END 0 */
 
@@ -246,8 +263,6 @@ int main(void)
   // This next section is considered the "critical" portion of initialization. This portion has no access to logging and therefore needs to communicate status other ways. The section ends on the return of the MX_LWIP_Init function
   // The end of this section is marked by a UDP message and/or the on-board LED becoming solid and/or a short buzzer beep
 
-  inittimers_t timers = {0};
-
   // Load EEPROM config
   loaded_config.pt1 = &PT1_h;
   loaded_config.pt2 = &PT2_h;
@@ -322,7 +337,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of startTask */
-  startTaskHandle = osThreadNew(StartAndMonitor, (void *) &timers, &startTask_attributes);
+  startTaskHandle = osThreadNew(StartAndMonitor, NULL, &startTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1099,11 +1114,10 @@ void StartAndMonitor(void *argument)
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
   	// Signal end of critical section
-    inittimers_t * timers = (inittimers_t *) argument;
 
 	if(is_net_logging_up()) {
 		// No UDP error
-		if(!timers->ledTimer) {
+		if(!timers.ledTimer) {
 		    // No flash error, led constant on indicates end of critical section
 		    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, 1);
 		    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, 1);
@@ -1112,22 +1126,22 @@ void StartAndMonitor(void *argument)
 	}
 	else {
 		// UDP error
-		if(timers->ledTimer) {
+		if(timers.ledTimer) {
 		    // Flash error, change delay since UDP error is more critical to address
-		    xTimerChangePeriod(timers->ledTimer, 250, 0);
+		    xTimerChangePeriod(timers.ledTimer, 250, 0);
 		}
 		else {
 		    // No flash error, start led flashing
-		    timers->ledTimer = xTimerCreate("led", 250, pdTRUE, NULL, toggleLEDPins);
-		    xTimerStart(timers->ledTimer, 0);
+		    timers.ledTimer = xTimerCreate("led", 250, pdTRUE, NULL, toggleLEDPins);
+		    xTimerStart(timers.ledTimer, 0);
 		}
 	}
 
-    if(!timers->buzzTimer) {
+    if(!timers.buzzTimer) {
     	// No eeprom error, short buzz indicates the end of the critical section
     	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
-    	timers->buzzTimer = xTimerCreate("sbuzz", 1000, pdFALSE, NULL, buzzerOff);
-    	xTimerStart(timers->buzzTimer, 0);
+    	timers.buzzTimer = xTimerCreate("sbuzz", 1000, pdFALSE, NULL, buzzerOff);
+    	xTimerStart(timers.buzzTimer, 0);
     }
 
 	// Setup TCP server
@@ -1295,14 +1309,16 @@ void StartAndMonitor(void *argument)
 	/* Infinite loop */
 	for(;;) {
 		// Log and send error/status messages
-		if(logdelay) {
+		if(logdelay > 4) {
 			handle_logging();
 		}
 
 		// Send all valve states on connection with limewire
 		if(HAL_GetTick() - startTick > 250) {
 			startTick = HAL_GetTick();
-			logdelay = 1;
+			if(logdelay < 5) {
+				logdelay++;
+			}
 			//size_t freemem = xPortGetFreeHeapSize();
 			refresh_log_timers();
 

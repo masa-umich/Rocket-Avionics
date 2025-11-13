@@ -17,7 +17,8 @@ typedef enum {
 	MSG_VALVE_COMMAND = 0x01,
 	MSG_VALVE_STATE = 0x02,
 	MSG_HEARTBEAT = 0x03,
-	MSG_DEVICE_COMMAND = 0x04
+	MSG_DEVICE_COMMAND = 0x04,
+	MSG_DEVICE_ACK= 0x05
 } MessageType;
 
 // Board identifiers for TelemetryMessages and DeviceCommandMessages (values are corresponding bytes)
@@ -80,6 +81,12 @@ typedef struct {
 	DeviceCMDId cmd_id;
 } DeviceCommandMessage;
 
+typedef struct {
+	BoardId board_id;
+	DeviceCMDId cmd_id;
+	uint32_t payload;
+} DeviceCommandACK;
+
 // Message Length + Message Type + Board ID + Timestamp + Channels (float)
 #define MAX_TELEMETRY_MSG_SIZE (1 + 1 + 1 + 8 + (4 * MAX_TELEMETRY_CHANNELS))
 // Message Length + Message Type + Valve ID + Valve State
@@ -90,6 +97,8 @@ typedef struct {
 #define MAX_HEARTBEAT_MSG_SIZE 2
 // Message Length + Message Type + Board ID + Command ID
 #define MAX_DEVICE_COMMAND_MSG_SIZE (1 + 1 + 1 + 1)
+// Message Length + Message Type + Board ID + Command ID + payload
+#define MAX_DEVICE_COMMAND_ACK_MSG_SIZE (1 + 1 + 1 + 1 + 4)
 // Telemetry is the largest message in all cases
 #define MAX_MESSAGE_SIZE MAX_TELEMETRY_MSG_SIZE
 
@@ -101,6 +110,7 @@ typedef struct {
 		ValveStateMessage valve_state;
 		HeartbeatMessage heartbeat;
 		DeviceCommandMessage device_command;
+		DeviceCommandACK device_ack;
 	} data;
 } Message;
 
