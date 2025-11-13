@@ -13,7 +13,7 @@ UV_INSTALL := curl -LsSf https://astral.sh/uv/install.sh | sh
 endif
 
 GIT_ROOT := $(shell git rev-parse --show-toplevel)
-UV_CMD := $(HOMEDIR)/.local/bin/uv run $(GIT_ROOT)/stm-flight-sw/version-info/version-gen.py ./Core/Inc/git-hash.h $(PWD)
+UV_CMD := $(HOMEDIR)/.local/bin/uv run '$(GIT_ROOT)/stm-flight-sw/version-info/version-gen.py' ./Core/Inc/git-hash.h '$(PWD)'
 
 gen-version:
 	-$(UV_INSTALL) 
