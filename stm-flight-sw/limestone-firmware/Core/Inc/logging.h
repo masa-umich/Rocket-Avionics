@@ -60,7 +60,7 @@ int log_lmp_packet(uint8_t *buf, size_t buflen);
 
 void send_udp_online(ip4_addr_t * ip);
 
-void log_flash_storage();
+void log_flash_storage(char *logstring, int numbytes);
 
 void clear_flash();
 

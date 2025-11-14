@@ -1,20 +1,28 @@
-## This is a template makefile, copy into your project directory and customize
-
 .PHONY: gen-version
 
-ifdef OS
-# This is Windows (native CMD or PowerShell environment)
-HOMEDIR = $(HOMEPATH)
-UV_INSTALL := powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-else
-# Otherwise assume Linux/macOS Unix-like
-HOMEDIR = $(HOME)
-UV_INSTALL := curl -LsSf https://astral.sh/uv/install.sh | sh
-endif
+BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+GIT_HASH := $(shell git rev-parse --short HEAD)
+BUILD_TIME := $(shell date -R)
+BUILD_TYPE := $(shell basename "$(PWD)")
 
-GIT_ROOT := $(shell git rev-parse --show-toplevel)
-UV_CMD := $(HOMEDIR)/.local/bin/uv run '$(GIT_ROOT)/stm-flight-sw/version-info/version-gen.py' ./Core/Inc/git-hash.h '$(PWD)'
+define HFILE
+/* 
+ *  git-hash.h
+ *
+ *  Auto-generated during the STM32 pre-build steps
+ *  Last generated: $(BUILD_TIME)
+ */
+
+#ifndef INC_GIT_HASH_H_
+#define INC_GIT_HASH_H_
+
+#define GIT_HASH        "$(GIT_HASH)"
+#define GIT_BRANCH      "$(BRANCH)"
+#define BUILD_TIME      "$(BUILD_TIME)"
+#define BUILD_TYPE      "$(BUILD_TYPE)"
+
+#endif /* INC_GIT_HASH_H_ */
+endef
 
 gen-version:
-	-$(UV_INSTALL) 
-	$(UV_CMD)
+	printf '%s\n' '$(HFILE)'

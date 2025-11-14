@@ -69,6 +69,7 @@ void stopLEDtimer();
 
 #define BB_EEPROM_LEN		(uint16_t)145
 //#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
+#define RESTART_AFTER_CONFIG
 
 #define EEPROM_RESTART_DELAY_MS				500
 
