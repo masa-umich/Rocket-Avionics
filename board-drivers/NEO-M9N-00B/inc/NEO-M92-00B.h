@@ -9,10 +9,15 @@
 #ifndef NEO_M92_00B_H
 #define NEO_M92_00B_H
 
-#include "stm32h7xx_hal.h"
+#include <stdint.h>        // Required for uint8_t, uint32_t
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "FreeRTOS.h"      // Required for SemaphoreHandle_t
 #include "semphr.h"
 
-#include "minmea.h"
+#include "minmea.h"        // Include AFTER stdint.h!!!
+#include "stm32h7xx_hal.h" // HAL types
 
 #define BUFFER_SIZE 100
 

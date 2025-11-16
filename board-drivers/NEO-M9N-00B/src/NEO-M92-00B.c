@@ -5,6 +5,7 @@
  *      Author: Evan Eidt
  */
 
+#include <string.h>
 #include "../inc/NEO-M92-00B.h"
 
 int init_gps(gps_handler* hgps) {
@@ -48,7 +49,7 @@ int init_gps(gps_handler* hgps) {
         return -1;
     }
 
-    HAL_UART_Receive_IT(hgps->huart, hgps->uart_rx_byte, 1); // Setup UART for interrupt-based rx
+    HAL_UART_Receive_IT(hgps->huart, &hgps->uart_rx_byte, 1); // Setup UART for interrupt-based rx
 
     return 0;
 }
@@ -88,7 +89,7 @@ void irq_gps_callback(gps_handler* hgps) { // TODO make better
 		}
 	}
     
-	HAL_UART_Receive_IT(hgps->huart, hgps->uart_rx_byte, 1); // Setup UART for interrupt-based rx
+	HAL_UART_Receive_IT(hgps->huart, &hgps->uart_rx_byte, 1); // Setup UART for interrupt-based rx
 
     /* Yield if xHigherPriorityTaskWoken is pdTrue.  The 
     actual macro used here is port specific. Initiates a context-switch */
@@ -120,7 +121,7 @@ void parse_gps_sentence(const char* sentence, gps_data* gps) {
 			float alt_temp = (float) parsed.altitude.value;
 			gps->altitude = alt_temp / parsed.altitude.scale;
 
-			GPS_Log = 1;
+			// GPS_Log = 1;
 		}
 	}
 }
