@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/adhikunju/Rocket-Avionics/board-drivers/NEO-M9N-00B/src",
+      "program": "/Users/adhikunju/Rocket-Avionics/board-drivers/NEO-M9N-00B/src/build/Debug/outDebug"
+    }
+  ]
+}
