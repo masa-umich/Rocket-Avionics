@@ -329,7 +329,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time((char *) &rawmsgbuf[1]);
 		rawmsgbuf[25] = ' ';
-		rawmsgbuf[26] = '1';
+		rawmsgbuf[26] = '0';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;
@@ -372,7 +372,7 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time((char *) &rawmsgbuf[1]);
 		rawmsgbuf[25] = ' ';
-		rawmsgbuf[26] = '1';
+		rawmsgbuf[26] = '0';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;

@@ -136,15 +136,15 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		// I don't want to use snprinf here - there are few enough options
 		switch(bb_num) {
 			case 1: {
-				rawmsgbuf[26] = '2';
+				rawmsgbuf[26] = '1';
 				break;
 			}
 			case 2: {
-				rawmsgbuf[26] = '3';
+				rawmsgbuf[26] = '2';
 				break;
 			}
 			case 3: {
-				rawmsgbuf[26] = '4';
+				rawmsgbuf[26] = '3';
 				break;
 			}
 			default: {
@@ -196,15 +196,15 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 		rawmsgbuf[25] = ' ';
 		switch(bb_num) {
 			case 1: {
-				rawmsgbuf[26] = '2';
+				rawmsgbuf[26] = '1';
 				break;
 			}
 			case 2: {
-				rawmsgbuf[26] = '3';
+				rawmsgbuf[26] = '2';
 				break;
 			}
 			case 3: {
-				rawmsgbuf[26] = '4';
+				rawmsgbuf[26] = '3';
 				break;
 			}
 			default: {

@@ -157,6 +157,16 @@ void ProcessPackets(void *argument) {
 				    				COTS_supply(1);
 				    				break;
 				    			}
+				    			case DEVICE_CMD_BUILD_INFO: {
+				    				Message dev_cmd_ack = {0};
+				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
+				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
+				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_BUILD_INFO;
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+					      				// Server not up, target device not connected, or txbuffer is full
+					      			}
+				    				break;
+				    			}
 				    			default: {
 				    				break;
 				    			}
