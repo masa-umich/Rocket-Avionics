@@ -299,6 +299,7 @@ int deserialize_device_ack(const uint8_t *buffer, uint32_t buffer_size,
 	msg->board_id = buffer[2];
 	msg->cmd_id = buffer[3];
 	memcpy(msg->payload, &buffer[4], payload_size);
+	msg->payload[payload_size] = '\0';
 
 	return num_bytes;
 }

@@ -7,6 +7,7 @@
 
 
 #include "logging.h"
+#include "utils.h"
 
 W25N04KV_Flash flash_h = {0};
 SemaphoreHandle_t flash_mutex;
@@ -449,8 +450,8 @@ void log_flash_storage(char *logstring, int numbytes) {
 	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 23];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", available, percent);
 	    	log_message(logmsg, -1);
-	    	if(numbytes >= sizeof(logmsg)) {
-	    		memcpy(logstring, logmsg, sizeof(logmsg));
+	    	if(numbytes >= sizeof(logmsg) - 4) {
+	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
 	    		return;
 	    	}
 		}
@@ -458,8 +459,8 @@ void log_flash_storage(char *logstring, int numbytes) {
 	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", available, available >> 10, percent);
 	    	log_message(logmsg, -1);
-	    	if(numbytes >= sizeof(logmsg)) {
-	    		memcpy(logstring, logmsg, sizeof(logmsg));
+	    	if(numbytes >= sizeof(logmsg) - 4) {
+	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
 	    		return;
 	    	}
 
@@ -468,8 +469,8 @@ void log_flash_storage(char *logstring, int numbytes) {
 	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 32];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu16 "MB/512MB %u%%", available, (uint16_t) (available >> 20), percent);
 	    	log_message(logmsg, -1);
-	    	if(numbytes >= sizeof(logmsg)) {
-	    		memcpy(logstring, logmsg, sizeof(logmsg));
+	    	if(numbytes >= sizeof(logmsg) - 4) {
+	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
 	    		return;
 	    	}
 		}
@@ -492,6 +493,14 @@ void handle_flash_clearing() {
         	fc_erase_flash(&flash_h); // Clear
     		xSemaphoreGive(flash_mutex);
     		log_message(STAT_CLEAR_FLASH, -1);
+			Message dev_cmd_ack = {0};
+			dev_cmd_ack.type = MSG_DEVICE_ACK;
+			dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
+			dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_CLEAR_FLASH;
+			memcpy(dev_cmd_ack.data.device_ack.payload, STAT_CLEAR_FLASH + 4, sizeof(STAT_CLEAR_FLASH) - 4);
+  			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+  				// Server not up, target device not connected, or txbuffer is full
+  			}
     	}
     }
 }

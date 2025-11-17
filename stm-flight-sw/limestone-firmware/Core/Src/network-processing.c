@@ -163,7 +163,7 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_BUILD_INFO;
 				    				log_message(STAT_VERSION_INFO, -1);
-				    				memcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO, sizeof(STAT_VERSION_INFO));
+				    				memcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO + 4, sizeof(STAT_VERSION_INFO) - 4);
 					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
