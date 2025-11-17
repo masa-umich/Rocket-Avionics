@@ -506,7 +506,7 @@ void send_udp_online(ip4_addr_t * ip) {
 	}
 }
 
-void log_flash_storage() {
+void log_flash_storage(char *logstring, int numbytes) {
 	if(xSemaphoreTake(flash_mutex, 1) == pdPASS) {
 		//uint32_t used = 536870912UL - fc_get_bytes_remaining(&flash_h);
 		uint32_t available = fc_get_bytes_remaining(&flash_h);
@@ -514,20 +514,37 @@ void log_flash_storage() {
 
 		uint8_t percent = (available * 100) / 536870912.0f;
 		if(available < 1024) {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 22];
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 23];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", available, percent);
 	    	log_message(logmsg, -1);
+	    	if(numbytes >= sizeof(logmsg)) {
+	    		memcpy(logstring, logmsg, sizeof(logmsg));
+	    		return;
+	    	}
 		}
 		else if(available < 1048576UL) {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 36];
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", available, available >> 10, percent);
 	    	log_message(logmsg, -1);
+	    	if(numbytes >= sizeof(logmsg)) {
+	    		memcpy(logstring, logmsg, sizeof(logmsg));
+	    		return;
+	    	}
+
 		}
 		else {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 31];
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 32];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu16 "MB/512MB %u%%", available, (uint16_t) (available >> 20), percent);
 	    	log_message(logmsg, -1);
+	    	if(numbytes >= sizeof(logmsg)) {
+	    		memcpy(logstring, logmsg, sizeof(logmsg));
+	    		return;
+	    	}
 		}
+	}
+
+	if(numbytes > 0) {
+		memcpy(logstring, "", 1);
 	}
 }
 

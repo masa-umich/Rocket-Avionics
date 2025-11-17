@@ -131,7 +131,14 @@ void ProcessPackets(void *argument) {
 				    				break;
 				    			}
 				    			case DEVICE_CMD_QUERY_FLASH: {
-				    				log_flash_storage();
+				    				Message dev_cmd_ack = {0};
+				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
+				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
+				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_QUERY_FLASH;
+				    				log_flash_storage(dev_cmd_ack.data.device_ack.payload, MAX_ACK_PAYLOAD_SIZE);
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+					      				// Server not up, target device not connected, or txbuffer is full
+					      			}
 				    				break;
 				    			}
 				    			case DEVICE_CMD_PDB_SRC_GSE: {
@@ -165,6 +172,13 @@ void ProcessPackets(void *argument) {
 			    				// Server not up, target device not connected, or txbuffer is full
 			    			}
 				    	}
+				    	break;
+				    }
+				    case MSG_DEVICE_ACK: {
+		    			if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
+				    		// Continue to prevent freeing memory we're still using
+				    		continue;
+		    			}
 				    	break;
 				    }
 				    default: {

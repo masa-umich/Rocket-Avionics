@@ -160,7 +160,7 @@ int serialize_device_command(const DeviceCommandMessage *message, uint8_t *buffe
 
 int serialize_device_ack(const DeviceCommandACK *message, uint8_t *buffer,
 							uint32_t buffer_size) {
-	int num_bytes = MAX_DEVICE_COMMAND_ACK_MSG_SIZE;
+	int num_bytes = DEVICE_COMMAND_ACK_HEADER_SIZE + strlen(message->payload);
 	if (buffer_size < num_bytes) {
 		return -1;
 	}
@@ -168,7 +168,7 @@ int serialize_device_ack(const DeviceCommandACK *message, uint8_t *buffer,
 	buffer[0] = (uint8_t) (num_bytes - 1);
 	buffer[2] = message->board_id;
 	buffer[3] = message->cmd_id;
-	pack_uint32_be(&buffer[4], message->payload);
+	memcpy(&buffer[4], message->payload, strlen(message->payload));
 
 	return num_bytes;
 }
@@ -288,14 +288,17 @@ int deserialize_device_command(const uint8_t *buffer, uint32_t buffer_size,
 
 int deserialize_device_ack(const uint8_t *buffer, uint32_t buffer_size,
 							DeviceCommandACK *msg) {
-	int num_bytes = MAX_DEVICE_COMMAND_ACK_MSG_SIZE;
-	if (buffer_size < num_bytes) {
+	if (buffer_size < DEVICE_COMMAND_ACK_HEADER_SIZE + MAX_ACK_PAYLOAD_SIZE) {
 		return 0;
 	}
 
+	int num_bytes = buffer[0] + 1;
+	int payload_size = num_bytes - DEVICE_COMMAND_ACK_HEADER_SIZE;
+
+
 	msg->board_id = buffer[2];
 	msg->cmd_id = buffer[3];
-	msg->payload = parse_uint32_be(&buffer[4]);
+	memcpy(msg->payload, &buffer[4], payload_size);
 
 	return num_bytes;
 }

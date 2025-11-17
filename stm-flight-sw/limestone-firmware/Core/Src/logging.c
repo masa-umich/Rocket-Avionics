@@ -446,7 +446,7 @@ void log_flash_storage(char *logstring, int numbytes) {
 
 		uint8_t percent = (available * 100) / 536870912.0f;
 		if(available < 1024) {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 22];
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 23];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", available, percent);
 	    	log_message(logmsg, -1);
 	    	if(numbytes >= sizeof(logmsg)) {
@@ -455,7 +455,7 @@ void log_flash_storage(char *logstring, int numbytes) {
 	    	}
 		}
 		else if(available < 1048576UL) {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 36];
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", available, available >> 10, percent);
 	    	log_message(logmsg, -1);
 	    	if(numbytes >= sizeof(logmsg)) {
@@ -465,7 +465,7 @@ void log_flash_storage(char *logstring, int numbytes) {
 
 		}
 		else {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 31];
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 32];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu16 "MB/512MB %u%%", available, (uint16_t) (available >> 20), percent);
 	    	log_message(logmsg, -1);
 	    	if(numbytes >= sizeof(logmsg)) {
