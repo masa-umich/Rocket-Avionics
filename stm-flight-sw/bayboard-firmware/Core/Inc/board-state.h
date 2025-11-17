@@ -59,6 +59,7 @@ typedef struct {
 	VLV_OpenLoad vlv6_old;
 	float vlv7_current;
 	VLV_OpenLoad vlv7_old;
+	float board_temp;
 
 	uint64_t timestamp;
 } Bay_Board_State_t;

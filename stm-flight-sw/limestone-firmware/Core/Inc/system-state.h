@@ -46,6 +46,7 @@ typedef struct {
 	VLV_OpenLoad vlv2_old;
 	float vlv3_current;
 	VLV_OpenLoad vlv3_old;
+	float board_temp;
 
 	uint64_t timestamp; // Only used to monitor how "fresh" the data is
 } Flight_Computer_State_t;
@@ -95,6 +96,7 @@ typedef struct {
 	VLV_OpenLoad vlv6_old;
 	float vlv7_current;
 	VLV_OpenLoad vlv7_old;
+	float board_temp;
 
 	uint64_t timestamp;
 } Bay_Board_State_t;
@@ -106,6 +108,7 @@ typedef struct {
 	AngRate imu2_W;
 	float bar1;
 	float bar2;
+	float board_temp;
 
 	uint64_t timestamp;
 } Flight_Recorder_State_t;
