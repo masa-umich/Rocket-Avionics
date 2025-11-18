@@ -17,10 +17,7 @@
 #define SX1280_H_
 
 
-// SX1280 command opcodes, etc can be defined here or in the .c file
-
-
-//from SX1280 datasheet table 12-1
+// SX1280 command opcodes (Datasheet Table 12-1)
 #define SX1280_CMD_GET_STATUS 0xC0
 #define SX1280_CMD_WRITE_REGISTER 0x18
 #define SX1280_CMD_READ_REGISTER 0x19
@@ -38,6 +35,9 @@
 #define SX1280_CMD_SET_PACKET_PARAMS 0x8C
 #define SX1280_CMD_SET_BUFFER_BASE_ADDRESS 0x8F
 #define SX1280_CMD_GET_RX_BUFFER_STATUS 0x17
+#define SX1280_CMD_GET_IRQ_STATUS 0x15
+#define SX1280_CMD_CLEAR_IRQ_STATUS 0x97
+#define SX1280_CMD_SET_DIO_IRQ_PARAMS 0x8D
 
 // Ramp time definitions for SetTxParams (Table 11-49)
 #define SX1280_RAMP_02_US  0x00  // 2 us
@@ -50,7 +50,6 @@
 #define SX1280_RAMP_20_US  0xE0  // 20 us
 
 // PeriodBase definitions for SetTx/SetRx timeout (Table 11-24)
-// These define the time step used for timeout calculations
 #define SX1280_PERIODBASE_15_625_US  0x00  // 15.625 us steps
 #define SX1280_PERIODBASE_62_5_US    0x01  // 62.5 us steps
 #define SX1280_PERIODBASE_1_MS       0x02  // 1 ms steps
@@ -60,6 +59,10 @@
 #define SX1280_TX_TIMEOUT_NONE       0x0000  // No timeout, Tx single mode
 #define SX1280_RX_TIMEOUT_NONE       0x0000  // No timeout, Rx single mode
 #define SX1280_RX_TIMEOUT_CONTINUOUS 0xFFFF  // Continuous RX mode
+
+// Standby modes for SET_STANDBY command
+#define STDBY_RC 0x00
+#define STDBY_XOSC 0x01
 
 #define SX1280_SPI_TIMEOUT_MS 100
 
@@ -195,7 +198,22 @@ typedef struct {
  * @return SX1280_Status_t status of initialization
  */
 SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config);
+
+/**
+* @brief Writes a buffer of data to the radio's TX FIFO.
+* @param data Pointer to the data to write.
+* @param length Number of bytes to write.
+* @return SX1280_Status_t Status of operation.
+*/
 SX1280_Status_t SX1280_WriteBuffer(uint8_t* data, uint8_t length);
+
+/**
+* @brief Reads a received packet from the radio's RX FIFO.
+* @note This function MUST be called after an RxDone IRQ.
+* @param data Pointer to a buffer to store the received data.
+* @param maxLength Max number of bytes to read into the buffer.
+* @return int16_t Number of bytes read, or -1 on error.
+*/
 int16_t SX1280_ReadBuffer(uint8_t* data, uint8_t maxLength);
 
 
@@ -225,13 +243,13 @@ SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t
 
 /**
 * @brief set packet params for current packet type
-* @param preambleLength length of preamble in symbols
+* @param preambleLengthVal The 8-bit *encoded* preamble length (see Table 14-50)
 * @param headerType explicit or implicit header (LoRa only)
 * @param payloadLength length of payload in bytes
-* @param crcOn crc on or off (LoRa only)
+* @param crc crc on or off (LoRa only)
 * @param invertIQ standard or inverted IQ (LoRa only)
 */
-SX1280_Status_t SX1280_SetPacketParams(uint16_t preambleLength, SX1280_LoRa_Header_Type_t headerType, uint8_t payloadLength, SX1280_LoRa_CRC_t crc, SX1280_LoRa_IQ_t invertIQ);
+SX1280_Status_t SX1280_SetPacketParams(uint8_t preambleLengthVal, SX1280_LoRa_Header_Type_t headerType, uint8_t payloadLength, SX1280_LoRa_CRC_t crc, SX1280_LoRa_IQ_t invertIQ);
 
 
 /**
@@ -264,12 +282,23 @@ SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime);
 SX1280_Status_t SX1280_SetHighSensitivityMode(void);
 
 
+/**
+ * @brief Configures which interrupts are enabled and how they are routed to DIO pins.
+ * @param irqMask 16-bit mask of interrupts to *enable*. (e.g., 0xFFFF to enable all)
+ * @param dio1Mask 16-bit mask of interrupts to *route* to DIO1.
+ * @param dio2Mask 16-bit mask of interrupts to *route* to DIO2.
+ * @param dio3Mask 16-bit mask of interrupts to *route* to DIO3.
+ * @return SX1280_Status_t Status of operation.
+ */
+SX1280_Status_t SX1280_SetDioIrqParams(uint16_t irqMask, uint16_t dio1Mask, uint16_t dio2Mask, uint16_t dio3Mask);
+
+
 
 /**
 * @brief Put radio in TX mode to transmit packet
 * @param timeout Timeout in milliseconds (uses 1ms steps)
-*                0 = no timeout (single mode, returns to STDBY_RC after packet sent)
-*                >0 = timeout active (returns to STDBY_RC on timeout or after packet sent)
+* 0 = no timeout (single mode, returns to STDBY_RC after packet sent)
+* >0 = timeout active (returns to STDBY_RC on timeout or after packet sent)
 * @return SX1280_Status_t Status of operation
 */
 SX1280_Status_t SX1280_SetTx(uint16_t timeout);
@@ -277,18 +306,44 @@ SX1280_Status_t SX1280_SetTx(uint16_t timeout);
 /**
 * @brief Put radio in RX mode to receive packets
 * @param timeout Timeout in milliseconds (uses 1ms steps)
-*                0x0000 = no timeout (single mode, returns to STDBY_RC after packet received)
-*                0xFFFF = continuous mode (stays in RX, can receive multiple packets)
-*                other = timeout active (returns to STDBY_RC on timeout or after packet received)
+* 0x0000 = no timeout (single mode, returns to STDBY_RC after packet received)
+* 0xFFFF = continuous mode (stays in RX, can receive multiple packets)
+* other = timeout active (returns to STDBY_RC on timeout or after packet received)
 * @return SX1280_Status_t Status of operation
 */
 SX1280_Status_t SX1280_SetRx(uint16_t timeout);
 
+/**
+* @brief Put radio in a standby mode (STDBY_RC or STDBY_XOSC).
+* @param standbyConfig The standby mode to enter (STDBY_RC or STDBY_XOSC).
+* @return SX1280_Status_t Status of operation
+*/
+SX1280_Status_t SX1280_SetStandby(uint8_t standbyConfig);
 
 
+/**
+* @brief Sets the LoRa SyncWord.
+* @note From datasheet 14.4.1 (page 133). The 8-bit word 0xXY is split.
+* X (high nibble) is written to 0x944 [7:4]
+* Y (low nibble) is written to 0x945 [7:4]
+* @param syncWord 8-bit sync word to use (e.g., 0x12)
+* @return SX1280_Status_t Status of operation
+*/
+SX1280_Status_t SX1280_SetLoRaSyncWord(uint8_t syncWord);
 
+/**
+* @brief Clears pending radio interrupts.
+* @param irqMask 16-bit mask of interrupts to clear. 0xFFFF clears all.
+* @return SX1280_Status_t Status of operation
+*/
+SX1280_Status_t SX1280_ClearIrqStatus(uint16_t irqMask);
 
-
+/**
+* @brief Gets the 16-bit interrupt status register.
+* @param irqStatus Pointer to a uint16_t to store the status.
+* @return SX1280_Status_t Status of operation
+*/
+SX1280_Status_t SX1280_GetIrqStatus(uint16_t* irqStatus);
 
 
 // low level API prototypes --------------------//
@@ -300,7 +355,23 @@ SX1280_Status_t SX1280_SetRx(uint16_t timeout);
 * @param size number of param bytes
 */
 SX1280_Status_t SX1280_SendCommand(uint8_t opcode, uint8_t* buffer, uint16_t size);
+
+/**
+* @brief Writes data to one or more registers.
+* @param address 16-bit register start address.
+* @param buffer Pointer to the data to write.
+* @param size Number of bytes to write.
+* @return SX1280_Status_t Status of operation.
+*/
 SX1280_Status_t SX1280_WriteRegister(uint16_t address, uint8_t* buffer, uint16_t size);
+
+/**
+* @brief Reads data from one or more registers.
+* @param address 16-bit register start address.
+* @param buffer Pointer to a buffer to store the read data.
+* @param size Number of bytes to read.
+* @return SX1280_Status_t Status of operation.
+*/
 SX1280_Status_t SX1280_ReadRegister(uint16_t address, uint8_t* buffer, uint16_t size);
 
 
@@ -310,4 +381,3 @@ SX1280_Status_t SX1280_ReadRegister(uint16_t address, uint8_t* buffer, uint16_t 
 
 // this marks the end of the header file, additional function prototypes can be added above this line
 #endif // SX1280_H_
-

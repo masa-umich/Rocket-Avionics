@@ -36,12 +36,25 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 //CHANGE TRANSMIT/RECEIVE HERE
-#define IS_TRANSMITTER 1
+#define IS_TRANSMITTER 0
+
+// Packet Defines
+#define TARGET_PAYLOAD_SIZE 375
+#define MAX_LORA_PAYLOAD 255
+#define HEADER_SIZE 1 // 1 byte for Packet Sequence Number
+#define CHUNK_SIZE (MAX_LORA_PAYLOAD - HEADER_SIZE)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define SX1280_IRQ_TX_DONE              (1 << 0)
+#define SX1280_IRQ_RX_DONE              (1 << 1)
+#define SX1280_IRQ_SYNC_WORD_VALID      (1 << 2)
+#define SX1280_IRQ_SYNC_WORD_ERROR      (1 << 3)
+#define SX1280_IRQ_HEADER_VALID         (1 << 4)
+#define SX1280_IRQ_HEADER_ERROR         (1 << 5)
+#define SX1280_IRQ_CRC_ERROR            (1 << 6)
+#define SX1280_IRQ_RX_TX_TIMEOUT        (1 << 14)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -838,114 +851,161 @@ void StartDefaultTask(void *argument)
 	    printf("Failed to set SyncWord!\r\n");
 	  }
 
-#if IS_TRANSMITTER == 0
-  // --- "ROCKET" / TRANSMITTER CODE ---
-  printf("Board configured as TRANSMITTER.\r\n");
-  uint8_t tx_message[] = "Hello from MASA This is going to be a very long sentence and we are seeing when the cut off is so this is just going to keep rambling on and seeing how far this sentence can continue";
-  int counter = 0;
+  // Define states for our state machine
+  typedef enum {
+      RADIO_MODE_UNKNOWN,
+      RADIO_MODE_TX,
+      RADIO_MODE_RX
+  } RadioMode_t;
+
+  RadioMode_t current_mode = RADIO_MODE_UNKNOWN;
+  RadioMode_t desired_mode = RADIO_MODE_UNKNOWN;
+
+  // --- Transmitter-specific variables ---
+  uint8_t full_payload[TARGET_PAYLOAD_SIZE];
+  for (int i = 0; i < TARGET_PAYLOAD_SIZE; i++)
+  {
+	  full_payload[i] = (uint8_t)(i % 256); // filling with dummy numbers 0-255
+  }
+
+  // temp buff LoRa packet
+  uint8_t tx_packet_buffer[MAX_LORA_PAYLOAD];
+
+  int packet_counter = 0;
+
+  // --- Receiver-specific variables ---
+  uint8_t rx_buffer[255]; //buffer holds received data
+
+  // important, because there is a possibility we send two packets we must reassemble buffer
+  uint8_t reassembled_data[TARGET_PAYLOAD_SIZE];
+
+  uint8_t chunks_received_mask = 0; // bitmask, bit 0 for chunk 1, bit 1 for chunk 2
 
   for(;;)
   {
-    printf("Sending packet %d: '%s'\r\n", counter, tx_message);
+	  // READ RF SWITCH STATE. NO CONNECTIONS = RECEIVE. JUMPER = TRANSMIT
+	  GPIO_PinState rf_switch_state = HAL_GPIO_ReadPin(RF_MODE_SW_GPIO_Port, RF_MODE_SW_Pin);
 
-    // We MUST set the packet parameters (especially length) RIGHT BEFORE sending
-    // The length in Init() is just a default, this sets the *actual* length
-    radio_status = SX1280_SetPacketParams(
-        0x0C,                             // Preamble length
-        LORA_EXPLICIT_HEADER,           // Explicit header
-        sizeof(tx_message),             // <-- SETS THE CORRECT PAYLOAD LENGTH (16)
-        LORA_CRC_ON,                    // CRC On
-        LORA_IQ_STANDARD                // Standard IQ
-    );
-    if (radio_status != SX1280_OK) {
-      printf("Error setting packet params!\r\n");
-    }
-
-    // 1. Write the message to the radio's buffer
-    radio_status = SX1280_WriteBuffer(tx_message, sizeof(tx_message));
-    if (radio_status != SX1280_OK) {
-      printf("Error writing buffer!\r\n");
-    }
-
-    // 2. Set the radio to TX mode to send the packet
-    //    Timeout = 0 means "single mode" (send packet, then go to STDBY)
-    radio_status = SX1280_SetTx(0);
-    if (radio_status != SX1280_OK) {
-      printf("Error setting TX mode!\r\n");
-    }
-
-    // Note: In a real application, you'd wait for the TxDone interrupt.
-
-    counter++;
-    vTaskDelay(1000); // Wait 1 second before sending again
-  }
-#else
-	  // GROUND/RECEIVER CODE
-
-	  printf("Board configured as receiver\r\n");
-	  uint8_t rx_buffer[255]; //buffer holds received data
-
-	  //put radio into continuous receive mode
-	  radio_status = SX1280_SetRx(SX1280_RX_TIMEOUT_CONTINUOUS);
-	  if (radio_status != SX1280_OK) {
-	    printf("Error setting RX mode!\r\n");
-	    // Loop forever
-	    while(1) { vTaskDelay(1000); }
+	  if (rf_switch_state == GPIO_PIN_SET) {
+		  // Jumper is ON (HIGH). Set desired mode to TRANSMIT
+		  desired_mode = RADIO_MODE_TX;
+	  } else {
+		  // Jumper is OFF (LOW). Set desired mode to RECEIVE
+		  desired_mode = RADIO_MODE_RX;
 	  }
 
-	  printf("Waiting for messages...\r\n");
+	  // check to make change to radio's state
+	  if (current_mode != desired_mode) {
+		  printf("Switch state changed! Desired mode: %s\r\n", (desired_mode == RADIO_MODE_TX) ? "TRANSMIT" : "RECEIVE");
 
-	  for(;;)
+		  // Put radio in STDBY before changing modes
+		  SX1280_SetStandby(STDBY_RC);
+
+		  if (desired_mode == RADIO_MODE_RX) {
+			  // --- INITIALIZE RECEIVE MODE ---
+			  printf("Entering Receive Mode (SAFE)...\r\n");
+			  radio_status = SX1280_SetRx(SX1280_RX_TIMEOUT_CONTINUOUS);
+			  if (radio_status != SX1280_OK) {
+				  printf("Error setting RX mode!\r\n");
+				  current_mode = RADIO_MODE_UNKNOWN; // Stay unknown to retry
+			  } else {
+				  current_mode = RADIO_MODE_RX; // Lock the new mode
+				  chunks_received_mask = 0; // Rset reassembly logic
+			  }
+		  } else { // desired_mode == RADIO_MODE_TX
+			  // --- INITIALIZE TRANSMIT MODE ---
+			  printf("Entering Transmit Mode (CHECK ANTENNA!)...\r\n");
+			  // No special setup needed, TX is set in the loop.
+			  current_mode = RADIO_MODE_TX;
+		  }
+	  }
+
+	  // 3. Run the logic for the current mode
+	  if (current_mode == RADIO_MODE_RX) {
+		  // --- Run one iteration of RECEIVER logic ---
+		  uint16_t irq_status = 0;
+		  radio_status = SX1280_GetIrqStatus(&irq_status);
+
+		  if (irq_status & SX1280_IRQ_RX_DONE)
+		  {
+			  int16_t packet_length = SX1280_ReadBuffer(rx_buffer, 255);
+			  SX1280_ClearIrqStatus(0xFFFF); // Clear all IRQs
+
+			  if (packet_length > 0)
+			  {
+                  uint8_t chunk_id = rx_buffer[0];
+
+                  if (chunk_id == 0x01) {
+                      printf("Received Chunk 1 (%d bytes)\r\n", packet_length-1);
+                      memcpy(&reassembled_data[0], &rx_buffer[1], packet_length-1);
+                      chunks_received_mask |= 1;
+                  }
+                  else if (chunk_id == 0x02) {
+                      printf("Received Chunk 2 (%d bytes)\r\n", packet_length-1);
+                      memcpy(&reassembled_data[CHUNK_SIZE], &rx_buffer[1], packet_length-1);
+                      chunks_received_mask |= 2;
+                  }
+
+                  // full payload check
+                  if (chunks_received_mask == 3) {
+                      printf("FULL PAYLOAD RECEIVED! Processing...\r\n");
+                      // Process data here (r
+                      chunks_received_mask = 0; // Next frame incoming, reset
+                  }
+			  } else if (packet_length < 0) {
+				  printf("Error reading buffer!\r\n");
+			  }
+		  }
+		  vTaskDelay(10); // Poll frequently
+
+	  } else if (current_mode == RADIO_MODE_TX) {
+		  // --- Run one iteration of TRANSMITTER logic ---
+		  printf("Sending frmae %d \r\n", packet_counter);
+
+		  // sending chunk 1
+		  tx_packet_buffer[0] = 0x01; // header ID 1
+          memcpy(&tx_packet_buffer[1], &full_payload[0], CHUNK_SIZE); // 254 bytes data
+
+          SX1280_SetPacketParams(0x0C, LORA_EXPLICIT_HEADER, CHUNK_SIZE+1, LORA_CRC_ON, LORA_IQ_STANDARD);
+          SX1280_WriteBuffer(tx_packet_buffer, CHUNK_SIZE+1);
+          SX1280_SetTx(5000); // 5 seconds
+
+          // Wait for TX DONE (Busy wait or polling IRQ)
+          uint16_t irq;
+
+          do {
+              vTaskDelay(100);
+              SX1280_GetIrqStatus(&irq);
+          } while (!(irq & (SX1280_IRQ_TX_DONE | SX1280_IRQ_RX_TX_TIMEOUT)));
+          SX1280_ClearIrqStatus(0xFFFF);
+
+          // --- SEND CHUNK 2 ---
+          int remaining_bytes = TARGET_PAYLOAD_SIZE - CHUNK_SIZE;
+          tx_packet_buffer[0] = 0x02; // Header ID 2
+          memcpy(&tx_packet_buffer[1], &full_payload[CHUNK_SIZE], remaining_bytes);
+
+          SX1280_SetPacketParams(0x0C, LORA_EXPLICIT_HEADER, remaining_bytes+1, LORA_CRC_ON, LORA_IQ_STANDARD);
+          SX1280_WriteBuffer(tx_packet_buffer, remaining_bytes+1);
+          SX1280_SetTx(5000); // 5 seconds
+
+          // Wait for TX DONE
+          do {
+              vTaskDelay(100);
+              SX1280_GetIrqStatus(&irq);
+          } while (!(irq & (SX1280_IRQ_TX_DONE | SX1280_IRQ_RX_TX_TIMEOUT)));
+          SX1280_ClearIrqStatus(0xFFFF);
+
+          printf("Frame %d Sent (Split in 2)\r\n", packet_counter);
+		  packet_counter++;
+
+		  // next full frame update
+		  vTaskDelay(5000);
+	  }
+	  else
 	  {
-        // We are now polling the IRQ status register instead of just reading the buffer.
-
-        uint16_t irq_status = 0;
-
-        // 1. Check the radio's interrupt status register
-        radio_status = SX1280_GetIrqStatus(&irq_status);
-        if (radio_status != SX1280_OK) {
-            printf("Error getting IRQ status!\r\n");
-            vTaskDelay(100);
-            continue;
-        }
-
-        // 2. Check if the "RxDone" flag is set (Bit 1)
-        if (irq_status & SX1280_IRQ_RX_DONE)
-        {
-            // New packet is received
-
-            // We MUST read the buffer before we clear the IRQ
-            // This empties the radio's FIFO
-            int16_t packet_length = SX1280_ReadBuffer(rx_buffer, 255);
-
-            // NOW, we clear the interrupt flags. This tells the radio
-            // "I have received and read the packet, stop asserting the RxDone flag."
-            radio_status = SX1280_ClearIrqStatus(0xFFFF); // Clear all IRQs
-	        if (radio_status != SX1280_OK) {
-	            printf("Error clearing IRQ status!\r\n");
-	        }
-
-            if (packet_length > 0) { // This means we got a packet
-                // Safely null-terminate the string.
-                if (packet_length < 255) {
-                    rx_buffer[packet_length] = '\0';
-                } else {
-                    rx_buffer[254] = '\0'; // Maxed out our buffer
-                }
-
-                printf("Received Packet! Length: %d, Message: '%s'\r\n", packet_length, rx_buffer);
-
-            } else if (packet_length < 0) {
-                // A driver error occurred
-                printf("Error reading buffer!\r\n");
-            }
-
-        } // --- END OF if(irq_status & SX1280_IRQ_RX_DONE) ---
-	    // If packet_length == 0, no data was available.
-
-	    vTaskDelay(100); // Poll for new packets every 100ms
+		  vTaskDelay(1000);
 	  }
-	#endif
+  }
   /* USER CODE END 5 */
 }
 
