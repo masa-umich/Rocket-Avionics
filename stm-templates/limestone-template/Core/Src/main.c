@@ -896,7 +896,7 @@ void StartDefaultTask(void *argument)
 
 	  // check to make change to radio's state
 	  if (current_mode != desired_mode) {
-		  printf("Switch state changed! Desired mode: %s\r\n", (desired_mode == RADIO_MODE_TX) ? "TRANSMIT" : "RECEIVE");
+		  printf("Switch state changed, Desired mode: %s\r\n", (desired_mode == RADIO_MODE_TX) ? "TRANSMIT" : "RECEIVE");
 
 		  // Put radio in STDBY before changing modes
 		  SX1280_SetStandby(STDBY_RC);
@@ -914,8 +914,7 @@ void StartDefaultTask(void *argument)
 			  }
 		  } else { // desired_mode == RADIO_MODE_TX
 			  // --- INITIALIZE TRANSMIT MODE ---
-			  printf("Entering Transmit Mode (CHECK ANTENNA!)...\r\n");
-			  // No special setup needed, TX is set in the loop.
+			  printf("Entering Transmit Mode (CHECK ANTENNA)...\r\n");
 			  current_mode = RADIO_MODE_TX;
 		  }
 	  }

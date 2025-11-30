@@ -101,8 +101,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
         return SX1280_ERROR;
     }
 
-    // UPDATED: Modulation Params for ~0.5 kbps (High Range / Low Data Rate)
-    // SF12, BW 200kHz = ~0.476 kbps (Datasheet Table 3-5)
+    // SF12, BW 400kHz (Datasheet Table 3-5)
     // CR 4/8 = Maximum Error Correction (Overhead is high, but link budget is poor)
     if (SX1280_SetModulationParams(LORA_SF8, LORA_BW_400, LORA_CR_4_5) != SX1280_OK) {
         return SX1280_ERROR;
@@ -246,7 +245,7 @@ SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t
         return status;
     }
 
-    // Add required register write based on SF (Datasheet Rev 3.3, Section 14.4.1, Step 5)
+    // Add required register write based on SF (Datasheet Rev 3.3, Section 14.4.1)
     uint8_t reg_val_sf;
     switch(sf) {
         case LORA_SF5:
@@ -273,7 +272,7 @@ SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t
         return status;
     }
 
-    // Add required write to Frequency Error Compensation register 0x093C (Datasheet Rev 3.3, Section 14.4.1, Step 5)
+    // Add required write to Frequency Error Compensation register 0x093C (Datasheet Rev 3.3, Section 14.4.1)
     uint8_t freq_comp_val = 0x01;
     return SX1280_WriteRegister(SX1280_REG_FREQ_ERROR_COMP, &freq_comp_val, 1);
 }
