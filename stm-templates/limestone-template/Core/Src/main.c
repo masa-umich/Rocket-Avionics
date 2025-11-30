@@ -832,23 +832,23 @@ void StartDefaultTask(void *argument)
 	radio_hal_config.busyPin = RF_BUSY_Pin;
 
 	//initialize the radio
-	  printf("Initializing SX1280...\r\n");
+	  printf("Initializing SX1280\r\n");
 	  radio_status = SX1280_Init(&radio_hal_config);
 
 	  if (radio_status == SX1280_OK) {
-	    printf("SX1280 Init OK.\r\n");
+	    printf("SX1280 Init OK\r\n");
 	  } else {
-	    printf("SX1280 Init FAILED! Status: %d\r\n", radio_status);
+	    printf("SX1280 Init FAILED Status: %d\r\n", radio_status);
 	    // Loop forever if init fails
 	    while(1) {
 	      vTaskDelay(1000);
 	    }
 	  }
 
-	  printf("Setting LoRa SyncWord to 0x12...\r\n");
+	  printf("Setting LoRa SyncWord to 0x12\r\n");
 	  radio_status = SX1280_SetLoRaSyncWord(0x12);
 	  if (radio_status != SX1280_OK) {
-	    printf("Failed to set SyncWord!\r\n");
+	    printf("Failed to set SyncWord\r\n");
 	  }
 
   // Define states for our state machine
@@ -903,10 +903,10 @@ void StartDefaultTask(void *argument)
 
 		  if (desired_mode == RADIO_MODE_RX) {
 			  // --- INITIALIZE RECEIVE MODE ---
-			  printf("Entering Receive Mode (SAFE)...\r\n");
+			  printf("Entering Receive Mode(SAFE)...\r\n");
 			  radio_status = SX1280_SetRx(SX1280_RX_TIMEOUT_CONTINUOUS);
 			  if (radio_status != SX1280_OK) {
-				  printf("Error setting RX mode!\r\n");
+				  printf("Error setting RX mode\r\n");
 				  current_mode = RADIO_MODE_UNKNOWN; // Stay unknown to retry
 			  } else {
 				  current_mode = RADIO_MODE_RX; // Lock the new mode
@@ -914,7 +914,7 @@ void StartDefaultTask(void *argument)
 			  }
 		  } else { // desired_mode == RADIO_MODE_TX
 			  // --- INITIALIZE TRANSMIT MODE ---
-			  printf("Entering Transmit Mode (CHECK ANTENNA)...\r\n");
+			  printf("Entering Transmit Mode(CHECK ANTENNA)...\r\n");
 			  current_mode = RADIO_MODE_TX;
 		  }
 	  }
@@ -947,12 +947,12 @@ void StartDefaultTask(void *argument)
 
                   // full payload check
                   if (chunks_received_mask == 3) {
-                      printf("FULL PAYLOAD RECEIVED! Processing...\r\n");
+                      printf("FULL PAYLOAD RECEIVED, Processing\r\n");
                       // Process data here (r
                       chunks_received_mask = 0; // Next frame incoming, reset
                   }
 			  } else if (packet_length < 0) {
-				  printf("Error reading buffer!\r\n");
+				  printf("Error reading buffer\r\n");
 			  }
 		  }
 		  vTaskDelay(10); // Poll frequently
