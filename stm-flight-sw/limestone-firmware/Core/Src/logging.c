@@ -445,7 +445,7 @@ void log_flash_storage(char *logstring, int numbytes) {
 		uint32_t available = fc_get_bytes_remaining(&flash_h);
 		xSemaphoreGive(flash_mutex);
 
-		uint8_t percent = (available * 100) / 536870912.0f;
+		uint8_t percent = (((uint64_t) available) * 100) / 536870912;
 		if(available < 1024) {
 	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 23];
 	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", available, percent);

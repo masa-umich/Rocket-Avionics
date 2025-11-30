@@ -121,7 +121,7 @@ const osThreadAttr_t packet_task_attr = {
 osThreadId_t flashClearTaskHandle;
 const osThreadAttr_t flash_clear_task_attr = {
   .name = "flashCTask",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE END PV */
