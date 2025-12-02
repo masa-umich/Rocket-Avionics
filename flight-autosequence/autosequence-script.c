@@ -2,6 +2,7 @@
 #include "limestone-interface.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include "autosequence-script.h"
 
 
 #define STATE0_NAME "Open MPV1"
@@ -85,7 +86,6 @@ State* create_states(){
 
 void execute_flight_autosequence(){
     uint8_t current_state = STATE0; // starts at state0
-    log_message(STARTUP_MESSAGE);
 
     for (;;){
         switch (current_state) {
@@ -94,7 +94,6 @@ void execute_flight_autosequence(){
 
                 if (state0_transition()){
                     current_state = STATE1;
-                    log_message(STATE01_TRANSITION_MESSAGE);
                 } 
                 break;
             
@@ -103,7 +102,6 @@ void execute_flight_autosequence(){
 
                 if (state1_transition()){
                     current_state = STATE2;
-                    log_message();
                 }
                 break;
 
