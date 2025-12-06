@@ -68,6 +68,9 @@ void FlashClearTask(void *argument);
 
 void flush_flash_log();
 
+// This is only for use during the resetting of the board. It never gives back the flash mutex so this will cause major issues if used anywhere else in the program.
+void flush_flash_log_for_reset();
+
 void refresh_log_timers();
 
 #endif /* INC_LOGGING_H_ */

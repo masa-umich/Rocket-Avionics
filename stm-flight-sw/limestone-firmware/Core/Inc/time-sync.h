@@ -17,7 +17,7 @@
 
 void timesync_setup();
 
-void get_iso_time(char *outbuf);
+void get_iso_time(char *outbuf, int buf_size);
 
 uint64_t get_rtc_time();
 

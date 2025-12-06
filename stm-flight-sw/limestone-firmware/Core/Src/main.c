@@ -1319,7 +1319,7 @@ void StartAndMonitor(void *argument)
 			if(logdelay < 5) {
 				logdelay++;
 			}
-			//size_t freemem = xPortGetFreeHeapSize();
+			size_t freemem = xPortGetFreeHeapSize();
 			refresh_log_timers();
 
 			int limefd = get_device_fd(LimeWire_d);

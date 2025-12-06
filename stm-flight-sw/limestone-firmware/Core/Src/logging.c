@@ -328,7 +328,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time((char *) &rawmsgbuf[1]);
+		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
 		rawmsgbuf[25] = ' ';
 		rawmsgbuf[26] = '0';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
@@ -371,7 +371,7 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time((char *) &rawmsgbuf[1]);
+		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
 		rawmsgbuf[25] = ' ';
 		rawmsgbuf[26] = '0';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
@@ -396,7 +396,7 @@ void send_flash_full() {
 			if(outbuf) {
 				char *pkt_buf = (char *) netbuf_alloc(outbuf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
 				if(pkt_buf) {
-					get_iso_time(pkt_buf);
+					get_iso_time(pkt_buf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
 					pkt_buf[24] = ' ';
 					pkt_buf[25] = '1';
 					memcpy(&pkt_buf[26], ERR_FLASH_FULL, sizeof(ERR_FLASH_FULL) - 1);
@@ -429,7 +429,7 @@ void send_udp_online(ip4_addr_t * ip) {
 	if(outbuf) {
 		uint8_t *pkt_buf = (uint8_t *) netbuf_alloc(outbuf, msglen);
 		if(pkt_buf) {
-			get_iso_time((char *) pkt_buf);
+			get_iso_time((char *) pkt_buf, msglen);
 			pkt_buf[24] = ' ';
 			pkt_buf[25] = '1';
 			snprintf((char *) &pkt_buf[26], sizeof(STAT_NETWORK_LOG_ONLINE) + 15, STAT_NETWORK_LOG_ONLINE "%u.%u.%u.%u", ip4_addr1(ip), ip4_addr2(ip), ip4_addr3(ip), ip4_addr4(ip));
@@ -527,6 +527,12 @@ void flush_flash_log() {
 	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
 		fc_finish_flash_write(&flash_h);
 		xSemaphoreGive(flash_mutex);
+	}
+}
+
+void flush_flash_log_for_reset() {
+	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
+		fc_finish_flash_write(&flash_h);
 	}
 }
 

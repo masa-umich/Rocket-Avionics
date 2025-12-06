@@ -58,8 +58,8 @@ vlv3_enable = 1
 limewire_IP = ipaddress.IPv4Address("141.212.192.160")
 flight_computer_IP = ipaddress.IPv4Address("141.212.192.170")
 bay_board_1_IP = ipaddress.IPv4Address("141.212.192.180")
-bay_board_2_IP = ipaddress.IPv4Address("0.0.0.0")
-bay_board_3_IP = ipaddress.IPv4Address("0.0.0.0")
+bay_board_2_IP = ipaddress.IPv4Address("141.212.192.190")
+bay_board_3_IP = ipaddress.IPv4Address("141.212.192.200")
 flight_recorder_IP = ipaddress.IPv4Address("0.0.0.0")
 
 raw_out = struct.pack('<f', pt1_offset) + struct.pack('<f', pt1_range) + struct.pack('<f', pt1_max)

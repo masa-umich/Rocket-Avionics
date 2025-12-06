@@ -320,7 +320,7 @@ int main(void)
 	  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
   }
   bb_addr = loaded_config.bayboardIP;
-  char logmsg[sizeof(BB_STAT_STARTING_IDENTIFY) + 1];
+  char logmsg[sizeof(BB_STAT_STARTING_IDENTIFY) + 3];
   snprintf(logmsg, sizeof(logmsg), BB_STAT_STARTING_IDENTIFY "%d", bb_num);
   log_message(logmsg, -1);
 

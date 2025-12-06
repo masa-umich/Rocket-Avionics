@@ -19,7 +19,7 @@ void set_system_time(uint32_t sec, uint32_t us);
 
 uint64_t get_rtc_time();
 
-void get_iso_time(char *outbuf);
+void get_iso_time(char *outbuf, int buf_size);
 
 void timesync_setup(RTC_HandleTypeDef *rtc_handle);
 

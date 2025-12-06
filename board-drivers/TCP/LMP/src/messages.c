@@ -288,7 +288,7 @@ int deserialize_device_command(const uint8_t *buffer, uint32_t buffer_size,
 
 int deserialize_device_ack(const uint8_t *buffer, uint32_t buffer_size,
 							DeviceCommandACK *msg) {
-	if (buffer_size < DEVICE_COMMAND_ACK_HEADER_SIZE + MAX_ACK_PAYLOAD_SIZE) {
+	if (buffer_size < DEVICE_COMMAND_ACK_HEADER_SIZE) {
 		return 0;
 	}
 

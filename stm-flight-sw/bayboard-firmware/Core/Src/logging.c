@@ -132,7 +132,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time((char *) &rawmsgbuf[1]);
+		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
 		rawmsgbuf[25] = ' ';
 		// I don't want to use snprinf here - there are few enough options
 		switch(bb_num) {
@@ -193,7 +193,7 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time((char *) &rawmsgbuf[1]);
+		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
 		rawmsgbuf[25] = ' ';
 		switch(bb_num) {
 			case 1: {
@@ -430,7 +430,7 @@ void send_flash_full() {
 			if(outbuf) {
 				char *pkt_buf = (char *) netbuf_alloc(outbuf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
 				if(pkt_buf) {
-					get_iso_time(pkt_buf);
+					get_iso_time(pkt_buf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
 					pkt_buf[24] = ' ';
 					switch(bb_num) {
 						case 1: {
@@ -480,7 +480,7 @@ void send_udp_online(ip4_addr_t * ip) {
 	if(outbuf) {
 		uint8_t *pkt_buf = (uint8_t *) netbuf_alloc(outbuf, msglen);
 		if(pkt_buf) {
-			get_iso_time((char *) pkt_buf);
+			get_iso_time((char *) pkt_buf, msglen);
 			pkt_buf[24] = ' ';
 			switch(bb_num) {
 				case 1: {
@@ -595,6 +595,12 @@ void flush_flash_log() {
 	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
 		fc_finish_flash_write(&flash_h);
 		xSemaphoreGive(flash_mutex);
+	}
+}
+
+void flush_flash_log_for_reset() {
+	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
+		fc_finish_flash_write(&flash_h);
 	}
 }
 

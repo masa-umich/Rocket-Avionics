@@ -30,7 +30,7 @@ float PT_calc(PT_t PT_info, uint16_t raw) {
 }
 
 void reset_board() {
-	flush_flash_log();
+	flush_flash_log_for_reset();
 
 	NVIC_SystemReset(); // This should never return
 }

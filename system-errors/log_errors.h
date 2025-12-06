@@ -273,4 +273,9 @@
 
 #endif
 
+#define FC_PDB_SRC_GSE_ACK_MSG					"PDB source switched to GSE power"
+#define FC_PDB_SRC_BAT_ACK_MSG					"PDB source switched to battery power"
+#define FC_PDB_COTS_ON_ACK_MSG					"PDB COTS supply turned on"
+#define FC_PDB_COTS_OFF_ACK_MSG					"PDB COTS supply turned off"
+
 #endif /* INC_LOG_ERRORS_H_ */
