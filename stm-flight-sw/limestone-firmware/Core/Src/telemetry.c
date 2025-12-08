@@ -150,7 +150,7 @@ void TelemetryTask(void *argument) {
   		Message telemsg = {0};
   		telemsg.type = MSG_TELEMETRY;
   		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
-  			if(send_msg_to_device(LimeWire_d, &telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) == -2) {
+  			if(broadcast_telem_msg(&telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) == -2) {
   				// txbuffer full or memory error
   	  			log_message(ERR_TELEM_MEM_ERR, FC_ERR_TYPE_TELEM_MEM_ERR);
   			}

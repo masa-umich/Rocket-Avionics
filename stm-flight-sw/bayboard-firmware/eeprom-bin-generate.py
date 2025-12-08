@@ -23,43 +23,43 @@ class TCGain(Enum):
     Gain_128x = 7
 
 pt1_offset = 0.5
-pt1_range = 5000
+pt1_range = 1000
 pt1_max = 4.5
 
 pt2_offset = 0.5
-pt2_range = 5000
+pt2_range = 1000
 pt2_max = 4.5
 
 pt3_offset = 0.5
-pt3_range = 5000
+pt3_range = 5
 pt3_max = 4.5
 
 pt4_offset = 0.5
-pt4_range = 5000
+pt4_range = 1000
 pt4_max = 4.5
 
 pt5_offset = 0.5
-pt5_range = 5000
+pt5_range = 1000
 pt5_max = 4.5
 
 pt6_offset = 0.5
-pt6_range = 5000
+pt6_range = 500
 pt6_max = 4.5
 
 pt7_offset = 0.5
-pt7_range = 5000
+pt7_range = 500
 pt7_max = 4.5
 
 pt8_offset = 0.5
-pt8_range = 5000
+pt8_range = 500
 pt8_max = 4.5
 
 pt9_offset = 0.5
-pt9_range = 5000
+pt9_range = 1000
 pt9_max = 4.5
 
 pt10_offset = 0.5
-pt10_range = 5000
+pt10_range = 1000
 pt10_max = 4.5
 
 tc1_gain = TCGain.Gain_64x
@@ -75,10 +75,10 @@ vlv1_enable = 1
 vlv2_voltage = ValveVoltage.Valve_24V
 vlv2_enable = 1
 
-vlv3_voltage = ValveVoltage.Valve_24V
+vlv3_voltage = ValveVoltage.Valve_12V
 vlv3_enable = 1
 
-vlv4_voltage = ValveVoltage.Valve_24V
+vlv4_voltage = ValveVoltage.Valve_12V
 vlv4_enable = 1
 
 vlv5_voltage = ValveVoltage.Valve_24V

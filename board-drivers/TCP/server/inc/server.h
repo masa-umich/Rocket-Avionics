@@ -82,7 +82,9 @@ int shutdown_server();
 int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_t bb3, ip4_addr_t fr);
 
 // Get the fd of a connected device. Returns the fd if the device is connected, -1 if the device is not connected
-int get_device_fd(Target_Device dev);
+int get_device_fd(Target_Device dev, uint8_t index);
+
+int num_devices(Target_Device dev);
 
 void remove_bad_fds(void);
 void drain_lists();

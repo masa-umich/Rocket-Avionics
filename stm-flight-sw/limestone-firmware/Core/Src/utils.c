@@ -67,44 +67,71 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size
 	if(is_server_running() <= 0) {
 		return -1; // Server not running
 	}
-	int devicefd = get_device_fd(device);
-	if(devicefd < 0) {
+	int num_connected = num_devices(device);
+	if(num_connected <= 0) {
 		return -3; // Device not connected
 	}
-	uint8_t tempbuffer[buffersize];
-	int buflen = serialize_message(msg, tempbuffer, buffersize);
-	if(buflen == -1) {
-		return -4; // Serialization error
+	for(int i = 0;i < num_connected;i++) {
+		uint8_t tempbuffer[buffersize];
+		int buflen = serialize_message(msg, tempbuffer, buffersize);
+		if(buflen == -1) {
+			continue; // Serialization error
+		}
+		int device_fd = get_device_fd(device, i);
+		if(device_fd < 0) {
+			continue;
+		}
+	    uint8_t *buffer = malloc(buflen);
+	    if(buffer) {
+	        memcpy(buffer, tempbuffer, buflen);
+	    	Raw_message rawmsg = {0};
+	    	rawmsg.bufferptr = buffer;
+	    	rawmsg.packet_len = buflen;
+	    	rawmsg.connection_fd = device_fd;
+	    	int result = server_send(&rawmsg, wait);
+	    	if(result != 0) {
+	    		free(buffer);
+	    	}
+	    }
 	}
-    uint8_t *buffer = malloc(buflen);
-    if(buffer) {
-        memcpy(buffer, tempbuffer, buflen);
-    	Raw_message rawmsg = {0};
-    	rawmsg.bufferptr = buffer;
-    	rawmsg.packet_len = buflen;
-    	rawmsg.connection_fd = devicefd;
-    	int result = server_send(&rawmsg, wait);
-    	if(result != 0) {
-    		free(buffer);
-    	}
-    	return result;
-    }
-    return -2;
+	return 0;
 }
 
 // Send a message over TCP
 // wait is the number of ticks to wait for room in the txbuffer
 // returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer, -3 if the target device is not connected
-// IMPORTANT: you are responsible for freeing the buffer in msg if this function returns something other than 0. This function does not
-// take "ownership" of the message object
-int send_raw_msg_to_device(Target_Device device, Raw_message *msg, TickType_t wait) {
+int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType_t wait) {
 	if(is_server_running() <= 0) {
 		return -1; // Server not running
 	}
-	int devicefd = get_device_fd(device);
-	if(devicefd < 0) {
+	int num_connected = num_devices(device);
+	if(num_connected <= 0) {
 		return -3; // Device not connected
 	}
-	msg->connection_fd = devicefd;
+	if(num_connected > 1) {
+		for(int i = 1;i < num_connected;i++) {
+			int device_fd = get_device_fd(device, i);
+			if(device_fd < 0) {
+				continue;
+			}
+		    uint8_t *buffer = malloc(msg->packet_len);
+		    if(buffer) {
+		        memcpy(buffer, msg->bufferptr, msg->packet_len);
+		    	Raw_message rawmsg = {0};
+		    	rawmsg.bufferptr = buffer;
+		    	rawmsg.packet_len = msg->packet_len;
+		    	rawmsg.connection_fd = device_fd;
+		    	int result = server_send(&rawmsg, wait);
+		    	if(result != 0) {
+		    		free(buffer);
+		    	}
+		    }
+		}
+	}
+	int device_fd = get_device_fd(device, 0);
+	if(device_fd < 0) {
+		return -3;
+	}
+	msg->connection_fd = device_fd;
 	return server_send(msg, wait);
 }

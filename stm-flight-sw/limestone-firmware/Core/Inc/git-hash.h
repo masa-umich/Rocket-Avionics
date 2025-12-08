@@ -2,15 +2,15 @@
  *  git-hash.h
  *
  *  Auto-generated during the STM32 pre-build steps
- *  Last generated: Fri, 05 Dec 2025 23:55:00 -0500
+ *  Last generated: Sat, 06 Dec 2025 17:48:02 -0500
  */
 
 #ifndef INC_GIT_HASH_H_
 #define INC_GIT_HASH_H_
 
-#define GIT_HASH        "fc91b0a"
-#define GIT_BRANCH      "lmpchanges-dev"
-#define BUILD_TIME      "Fri, 05 Dec 2025 23:55:00 -0500"
+#define GIT_HASH        "70e2e6b"
+#define GIT_BRANCH      "udptelemetry-dev"
+#define BUILD_TIME      "Sat, 06 Dec 2025 17:48:02 -0500"
 #define BUILD_TYPE      "Debug"
 
 #endif /* INC_GIT_HASH_H_ */

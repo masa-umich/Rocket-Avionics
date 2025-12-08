@@ -76,6 +76,6 @@ void COTS_supply(uint8_t enabled);
 
 int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size_t buffersize);
 
-int send_raw_msg_to_device(Target_Device device, Raw_message *msg, TickType_t wait);
+int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType_t wait);
 
 #endif

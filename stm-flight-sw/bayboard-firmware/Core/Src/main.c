@@ -44,6 +44,7 @@
 #include "board-state.h"
 #include "logging.h"
 #include "time-sync.h"
+#include "udptelemetry.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -107,6 +108,13 @@ Sensors_t sensors_h = {0};
 osThreadId_t telemetryTaskHandle;
 const osThreadAttr_t telemetry_task_attr = {
   .name = "telemetryTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t telemetrySendTaskHandle;
+const osThreadAttr_t telemetry_send_task_attr = {
+  .name = "telemSendTask",
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
@@ -247,6 +255,7 @@ int main(void)
   // Create RTC mutex
   timesync_setup(&hrtc);
   logging_setup();
+  telemetry_setup();
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -1118,6 +1127,9 @@ void StartAndMonitor(void *argument)
   	MS5611_readPROM(&(sensors_h.bar2_h), &(sensors_h.prom2));
 
 	// Start tasks
+
+  	// Start telemetry sending over UDP
+  	telemetrySendTaskHandle = osThreadNew(TelemetrySend, NULL, &telemetry_send_task_attr);
 
   	// Start telemetry task
   	telemetryTaskHandle = osThreadNew(TelemetryTask, NULL, &telemetry_task_attr);
