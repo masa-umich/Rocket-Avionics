@@ -56,6 +56,7 @@
 #define ERR_EEPROM_LOAD_COMM_ERR				"226 EEPROM config loading failed, loading defaults"
 #define ERR_EEPROM_LOAD_TC_ERR					"227 EEPROM config invalid TC gains, loading default gains"
 #define ERR_EEPROM_LOAD_VLV_ERR					"228 EEPROM config invalid valve config, loading default settings"
+#define ERR_TELEM_UDP_INIT						"229 Telemetry UDP broadcasting init failed"
 
 
 // Flight Computer error messages

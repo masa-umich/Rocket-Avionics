@@ -81,12 +81,17 @@ int shutdown_server();
 // Create server semaphores and mutexes. Should only be called once and be called before anything else in this file
 int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_t bb3, ip4_addr_t fr);
 
-// Get the fd of a connected device. Returns the fd if the device is connected, -1 if the device is not connected
+// Get the fd of a connected device. Since the server can only differentiate by IP address
+// there could be multiple connections from the same device. Pick which device you want by index.
+// Indexs start at 0. For example, if there are two connections from the DAQ PC and you want to get the fd for the second connection,
+// you would pass index 1.
+// Returns the fd if the device is connected, -1 if there is no device at the index
 int get_device_fd(Target_Device dev, uint8_t index);
 
+// Get the number of connections from a specific device (IP address)
 int num_devices(Target_Device dev);
 
 void remove_bad_fds(void);
 void drain_lists();
-#endif
 
+#endif

@@ -56,10 +56,7 @@ void COTS_supply(uint8_t enabled) {
 	}
 }
 
-// Send a LMP message over TCP
-// wait is the number of ticks to wait for room in the txbuffer
-// buffersize is the maximum size that it will take to serialize the LMP message, if this is 0, it will use the maximum possible message size to ensure proper serialization
-// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer or space to allocate a buffer, -3 if the target device is not connected, and -4 on a LMP serialization error
+
 int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size_t buffersize) {
 	if(buffersize == 0) {
 		buffersize = MAX_MSG_LEN;
@@ -97,9 +94,6 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size
 	return 0;
 }
 
-// Send a message over TCP
-// wait is the number of ticks to wait for room in the txbuffer
-// returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer, -3 if the target device is not connected
 int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType_t wait) {
 	if(is_server_running() <= 0) {
 		return -1; // Server not running

@@ -28,11 +28,11 @@ void init_udp_telem() {
 			}
 			else {
 				// failed to create netconn
-				log_message(ERR_UDP_REINIT, -1); // TODO
+				log_message(ERR_TELEM_UDP_INIT, -1);
 			}
 		}
 		else {
-			log_message(ERR_UDP_REINIT, -1); // TODO
+			log_message(ERR_TELEM_UDP_INIT, -1);
 		}
 		xSemaphoreGive(telemudp_mutex);
 	}
