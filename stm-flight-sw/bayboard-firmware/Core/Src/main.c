@@ -309,6 +309,8 @@ int main(void)
   snprintf(logmsg, sizeof(logmsg), BB_STAT_STARTING_IDENTIFY "%d", bb_num);
   log_message(logmsg, -1);
 
+  log_message(STAT_VERSION_INFO, -1);
+
   // Init flash
   if(init_flash_logging(&hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin)) {
   	  timers.ledTimer = xTimerCreate("led", 500, pdTRUE, NULL, toggleLEDPins);

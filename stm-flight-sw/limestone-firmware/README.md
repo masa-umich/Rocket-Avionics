@@ -1,6 +1,6 @@
 # Limestone Firmware
 Author: Felixfb, Jackmh </br>
-Read Me last updated: 6/23/2025
+Read Me last updated: 11/11/2025
 
 ## Note:
 This is the location for the flight computer firmware for Limelight. This README will be updated more as the firmware is written. All peripherals, Ethernet, clock configuration, RTOS, and LWIP are set up, hardware drivers are set up using virtual folders linked to the board-drivers directory of this repo.
@@ -8,8 +8,23 @@ This is the location for the flight computer firmware for Limelight. This README
 ## Important Notes:
 Major STM32 bug: the EthIf task does not get enough stack by default, you must go into the ethernetif.c file and change the INTERFACE_THREAD_STACK_SIZE definition at the top from 350 to anything above 380 (I would pick 500 to be safe). If this is not done, the task will start corrupting memory as soon as it starts.
 
-Major STM32 LAN8742 driver bug: The Ethernet link output does not free sent TX packets until the TX descriptors have run out of space. One fix is to add a task that waits on the tx buffer semaphore and clears the descriptors of sent packets every time the LAN chip triggers a TX complete. See ethernetif.c ethernet_patch(), along with the initialization of the task in low_level_init() for an example.
+Major STM32 LAN8742 driver bug: The Ethernet link output does not free sent TX packets
+until the TX descriptors have run out of space. One fix is to add a task that waits on the
+tx buffer semaphore and clears the descriptors of sent packets every time the LAN chip
+triggers a TX complete. See ethernetif.c ethernet_patch(), along with the initialization
+of the task in low_level_init() for an example.
 
+## Versioning
+To keep track of the firmware version, a header file with build information is
+auto-generated before each build. This build
+information includes the short hash of the most recent git commit, the active branch, type
+of build (Debug vs Release), and the timestamp of the build. This build info is logged in
+flash and over UDP
+when the firmware starts. The auto-generation script is a [uv
+script](../version-info/version-gen.py) that the STM32
+project is set up to automatically try to install uv and run the script before a build. The configuration assumes that uv is installed in
+~/.local/bin/uv (this is the default install location), but if your uv is installed in a different location, you can go to
+Properties -> C/C++ Build -> Environment and add the location of your uv to the PATH variable.
 
 ## EEPROM Data Ordering
 

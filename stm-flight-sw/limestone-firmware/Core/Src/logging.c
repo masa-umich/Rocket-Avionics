@@ -34,7 +34,7 @@ void init_network_logging(uint8_t reinit, ip4_addr_t ipaddr) {
 			errormsgudp = netconn_new(NETCONN_UDP);
 			if(errormsgudp) {
 				ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
-				if(!reinit) send_udp_online(&ipaddr);
+				send_udp_online(&ipaddr);
 			}
 			else {
 				// failed to create netconn

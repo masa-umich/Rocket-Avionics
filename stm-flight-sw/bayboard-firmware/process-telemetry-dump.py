@@ -1,3 +1,5 @@
+# NOT DONE YET
+
 import base64
 
 with open("telemetry.bin", "r") as f:
