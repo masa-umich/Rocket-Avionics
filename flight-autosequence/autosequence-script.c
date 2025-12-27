@@ -1,29 +1,9 @@
-#include "state-machine.h"
-#include "limestone-interface.h"
-#include <stdlib.h>
-#include <stdint.h>
 #include "autosequence-script.h"
-#include "apogee-functions.h"
-#include "main.h"
-#include "temp-header.h"
-
-#define STATE0_NAME "Open MPV1"
-#define STATE1_NAME "Open both MPVs"
-
-#define STARTUP_MESSAGE "Opening Ox MPV"
-#define STATE01_TRANSITION_MESSAGE "Opening Ox MPV"
-//#define STATE01_TRANSITION_MESSAGE "Opening Ox MPV"   
-
-
-const int MPV_DELAY = 0.5 * 1000; // in milliseconds
-const int BURN_DURATION = 22 * 1000; // in milliseconds
-const int MAX_MECO_WAIT = 30 * 1000; // millis
-
 
 void execute_flight_autosequence(){
     FlightPhase phase = ST_OPEN_MPV1; // starts at state0
 
-    const uint32_t period = pdMS_TO_TICKS(50); // 20 Hz should be good
+    //const uint32_t period = pdMS_TO_TICKS(50); // 20 Hz should be good
     uint32_t last = xTaskGetTickCount();
 
     Detector baro_detector = {0};
