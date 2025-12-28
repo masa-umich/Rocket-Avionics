@@ -1,4 +1,5 @@
 #include "autosequence-script.h"
+#include "complementary-filter.h"
 
 void execute_flight_autosequence(){
     FlightPhase phase = ST_OPEN_MPV1; // starts at state0
@@ -9,6 +10,9 @@ void execute_flight_autosequence(){
     Detector baro_detector = {0};
     Detector imu_detector = {0};
     Detector temp_C_detector = {0};
+
+    ComplementaryFilter imu_cf;
+    cf_init(&imu_cf, 0.5f); // tau = 0.5 seconds
 
     // For subsonic flights just set 'phase' to ST_WAIT_APOGEE
     // Doing so will bypass the MECO phase and immediately arm/monitor the barometers
@@ -23,7 +27,9 @@ void execute_flight_autosequence(){
     uint32_t handoff_timestamp = 0; // time (in ms) when handoff occurs
     uint32_t ignition_timestamp = 0;// approximate time (in ms) when igntion occurs
     uint32_t meco_timestamp = 0;         // time (in ms) when MECO is detected
-    // uint32_t lockout_tick = 0; // will be computed when MECO_flag is set --> Relevance of lockout?
+    uint32_t lockout_timestamp = 0; // will be computed when MECO_flag is set
+
+    // need to create a 5 or 7 elt buffer to store the pitch and roll after MECO
 
     for (;;){
 
@@ -89,7 +95,7 @@ void execute_flight_autosequence(){
                         // TODO: SEND EVENT
                         phase = ST_WAIT_APOGEE;
 
-                        /*
+                        
                         //COMPUTE LOCKOUT/WAIT-TIME
                         {
                             float avg_pressure;
@@ -118,23 +124,34 @@ void execute_flight_autosequence(){
                             else
                             {
                                 //MUST be Celsius coming in from Rocket_h
-                                avg_temp = 0.5f * ((bar1_temp_C) + (bar2_temp_C));
+                                avg_temp = 0.5f * ((bar1_temp_K) + (bar2_temp_K));
                             }
 
-                                int meco_time_ms = (int)(meco_tick * portTICK_PERIOD_MS);
+                                int meco_time_ms = (int)(meco_timestamp * portTICK_PERIOD_MS);
 
                                 int wait_time_ms = compute_wait_time(meco_time_ms, avg_pressure, avg_temp);
-
-                                //lockout_tick = pdMS_TO_TICKS(wait_time_ms);
+                                lockout_timestamp = pdMS_TO_TICKS(wait_time_ms);
                         }
 
-                        */
+                        
                     }
                 }
 
                 break;
             } 
 
+            case ST_MACH_LOCKOUT:
+            {   
+                insert(&baro_detector,bar1, bar2, phase);
+
+                if ((xTaskGetTickCount() - meco_timestamp) >= lockout_timestamp)
+                {
+                    phase = ST_WAIT_APOGEE;
+                }
+                
+                break;
+
+            } 
 
             case ST_WAIT_APOGEE: {
                 insert(&baro_detector, bar1, bar2, phase);
