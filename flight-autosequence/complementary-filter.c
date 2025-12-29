@@ -1,10 +1,6 @@
 
 #include "complementary-filter.h"
 
-extern const uint32_t period;
-const float PI = 3.14159265f;
-const float dt = period / 1000.0f; // convert to seconds
-
 void cf_init(ComplementaryFilter* cf, float tau){
     cf->accel_angle_hpf[0] = 0.0f;
     cf->accel_angle_hpf[1] = 0.0f;
@@ -12,20 +8,26 @@ void cf_init(ComplementaryFilter* cf, float tau){
 
     cf->gyro_angle_lpf[0] = 0.0f;
     cf->gyro_angle_lpf[1] = 0.0f;
-    
+
     cf->prev_gyro.XL_x = 0.0f;
     cf->prev_gyro.XL_y = 0.0f;
 
     cf->alpha = tau / (tau + dt); 
 }
 
-void cf_update(ComplementaryFilter* cf, float* pitch, float* roll){
+void cf_update(ComplementaryFilter* cf, float* pitch, float* yaw){
     // Average accelerometer and gyroscope data from both IMUs
-    float accel_x = (sensors_h.imu1.XL_x + sensors_h.imu2.XL_x) / 2.0f;
-    float accel_y = (sensors_h.imu1.XL_y + sensors_h.imu2.XL_y) / 2.0f;
-    float accel_z = (sensors_h.imu1.XL_z + sensors_h.imu2.XL_z) / 2.0f;
-    float gyro_x = (sensors_h.imu1.W_X + sensors_h.imu2.W_X) / 2.0f;
-    float gyro_y = (sensors_h.imu1.W_Y + sensors_h.imu2.W_Y) / 2.0f;
+    float accel_x, accel_y, accel_z;
+    float gyro_x, gyro_y;
+    if (xSemaphoreTake(Rocket_h.fcState_access, pdMS_TO_TICKS(5)) == pdPASS) {
+        accel_x = (Rocket_h.fcstate.imu1.XL_x + Rocket_h.fcstate.imu2.XL_x) / 2.0f;
+        accel_y = (Rocket_h.fcstate.imu1.XL_y + Rocket_h.fcstate.imu2.XL_y) / 2.0f;
+        accel_z = (Rocket_h.fcstate.imu1.XL_z + Rocket_h.fcstate.imu2.XL_z) / 2.0f;
+        gyro_x = (Rocket_h.fcstate.imu1.W_X + Rocket_h.fcstate.imu2.W_X) / 2.0f;
+        gyro_y = (Rocket_h.fcstate.imu1.W_Y + Rocket_h.fcstate.imu2.W_Y) / 2.0f;
+
+        xSemaphoreGive(Rocket_h.fcState_access);
+    }
     // may not want to take average for data depending on noise characteristics
     
     // Extract accelerometer and gyroscope data
@@ -45,7 +47,7 @@ void cf_update(ComplementaryFilter* cf, float* pitch, float* roll){
 
     // Combine the two filtered angles
     *pitch = cf->accel_angle_lpf[0] + cf->gyro_angle_hpf[0];
-    *roll  = cf->accel_angle_lpf[1] + cf->gyro_angle_hpf[1];
+    *yaw   = cf->accel_angle_lpf[1] + cf->gyro_angle_hpf[1];
 
     // Update previous gyroscope readings
     cf->prev_gyro[0] = cf->gyro_angle_hpf[0];

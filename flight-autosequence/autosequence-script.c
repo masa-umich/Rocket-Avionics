@@ -1,6 +1,10 @@
 #include "autosequence-script.h"
 #include "complementary-filter.h"
 
+extern const uint32_t dt;
+
+
+
 void execute_flight_autosequence(){
     FlightPhase phase = ST_OPEN_MPV1; // starts at state0
 
@@ -24,12 +28,18 @@ void execute_flight_autosequence(){
     int drogue_flag = 0;
     int main_flag = 0;
 
-    uint32_t handoff_timestamp = 0; // time (in ms) when handoff occurs
+    uint32_t handoff_timestamp = 0; // time (in ms) when handoff occursy
     uint32_t ignition_timestamp = 0;// approximate time (in ms) when igntion occurs
     uint32_t meco_timestamp = 0;         // time (in ms) when MECO is detected
     uint32_t lockout_timestamp = 0; // will be computed when MECO_flag is set
 
-    // need to create a 5 or 7 elt buffer to store the pitch and roll after MECO
+    float post_lockout_height = 0.0f;
+    float previous_height = 0.0f;
+    float avg_velocity = 0.0f;
+    float velocity_buf[5] = {0};
+
+    float pitch_buf[7] = {0}; // need to create a 5 or 7 elt buffer to store the pitch and yaw after MECO
+    float yaw_buf[7] = {0};
 
     for (;;){
 
@@ -142,6 +152,15 @@ void execute_flight_autosequence(){
 
             case ST_MACH_LOCKOUT:
             {   
+                float pitch, yaw;
+                cf_update(&imu_cf, &pitch, &yaw);
+                for (int i = 6; i > 0; --i) {
+                    pitch_buf[i] = pitch_buf[i - 1];
+                    yaw_buf[i] = yaw_buf[i - 1];
+                }
+                pitch_buf[0] = pitch;
+                yaw_buf[0] = yaw;
+
                 insert(&baro_detector,bar1, bar2, phase);
 
                 if ((xTaskGetTickCount() - meco_timestamp) >= lockout_timestamp)
@@ -154,6 +173,21 @@ void execute_flight_autosequence(){
             } 
 
             case ST_WAIT_APOGEE: {
+                if (avg_velocity == 0.0f) {
+                    post_lockout_height = compute_height((bar1 + bar2) / 2.0f);
+                    if (previous_height != 0.0f) {
+                        float current_velocity = compute_velocity(previous_height, post_lockout_height, dt);
+                        for (int i = 4; i > 0; --i) {
+                            avg_velocity += velocity_buf[i];
+                            velocity_buf[i] = velocity_buf[i - 1];
+                        }
+                        velocity_buf[0] = current_velocity;
+                        avg_velocity += velocity_buf[0];
+                        avg_velocity /= 5.0f;
+                    }
+                    previous_height = post_lockout_height;
+                }
+
                 insert(&baro_detector, bar1, bar2, phase);
 
                 if(baro_detector.slope_size >= AD_CAPACITY) {
