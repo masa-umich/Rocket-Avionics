@@ -434,15 +434,15 @@ void send_flash_full() {
 					pkt_buf[24] = ' ';
 					switch(bb_num) {
 						case 1: {
-							pkt_buf[25] = '2';
+							pkt_buf[25] = '1';
 							break;
 						}
 						case 2: {
-							pkt_buf[25] = '3';
+							pkt_buf[25] = '2';
 							break;
 						}
 						case 3: {
-							pkt_buf[25] = '4';
+							pkt_buf[25] = '3';
 							break;
 						}
 						default: {
@@ -484,15 +484,15 @@ void send_udp_online(ip4_addr_t * ip) {
 			pkt_buf[24] = ' ';
 			switch(bb_num) {
 				case 1: {
-					pkt_buf[25] = '2';
+					pkt_buf[25] = '1';
 					break;
 				}
 				case 2: {
-					pkt_buf[25] = '3';
+					pkt_buf[25] = '2';
 					break;
 				}
 				case 3: {
-					pkt_buf[25] = '4';
+					pkt_buf[25] = '3';
 					break;
 				}
 				default: {

@@ -398,7 +398,7 @@ void send_flash_full() {
 				if(pkt_buf) {
 					get_iso_time(pkt_buf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
 					pkt_buf[24] = ' ';
-					pkt_buf[25] = '1';
+					pkt_buf[25] = '0';
 					memcpy(&pkt_buf[26], ERR_FLASH_FULL, sizeof(ERR_FLASH_FULL) - 1);
 					netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
 				}
@@ -431,7 +431,7 @@ void send_udp_online(ip4_addr_t * ip) {
 		if(pkt_buf) {
 			get_iso_time((char *) pkt_buf, msglen);
 			pkt_buf[24] = ' ';
-			pkt_buf[25] = '1';
+			pkt_buf[25] = '0';
 			snprintf((char *) &pkt_buf[26], sizeof(STAT_NETWORK_LOG_ONLINE) + 15, STAT_NETWORK_LOG_ONLINE "%u.%u.%u.%u", ip4_addr1(ip), ip4_addr2(ip), ip4_addr3(ip), ip4_addr4(ip));
 			netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
 		}

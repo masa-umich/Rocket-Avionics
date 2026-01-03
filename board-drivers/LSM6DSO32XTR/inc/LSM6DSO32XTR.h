@@ -153,7 +153,7 @@ typedef struct {
 } IMU;
 
 typedef struct {
-    //Acceleration in g
+    //Acceleration in m/s/s
     float XL_x;
     float XL_y;
     float XL_z;
