@@ -100,16 +100,24 @@ void TelemetryUDPProcess(void *argument) {
 		// Receive
 		struct netbuf *buf = NULL;
 		if(xSemaphoreTake(telemudp_mutex, 5) == pdPASS) {
-			err_t recv_err = netconn_recv(telemudp_h, &buf);
-			if(recv_err == ERR_OK) {
-				if(buf) {
-					uint8_t *msgbuf = NULL;
-					uint16_t msg_len = 0;
-					if(netbuf_data(buf, (void**) &msgbuf, &msg_len) == ERR_OK) {
-						unpack_udp_telemetry(msgbuf, msg_len);
+			if(telemudp_h) {
+				err_t recv_err = netconn_recv(telemudp_h, &buf);
+				if(recv_err == ERR_OK) {
+					if(buf) {
+						uint8_t *msgbuf = NULL;
+						uint16_t msg_len = 0;
+						if(netbuf_data(buf, (void**) &msgbuf, &msg_len) == ERR_OK) {
+							unpack_udp_telemetry(msgbuf, msg_len);
+						}
+						netbuf_delete(buf);
 					}
-					netbuf_delete(buf);
 				}
+			}
+			else {
+				// If not connected, delay to give cpu to other tasks
+				xSemaphoreGive(telemudp_mutex);
+				osDelay(500);
+				continue;
 			}
 			xSemaphoreGive(telemudp_mutex);
 		}
