@@ -31,7 +31,7 @@ class NetworkAddress(click.ParamType):
         return ip_network
 
 @click.command(context_settings={"help_option_names": ["--help", "-h"]})
-@click.option("--network", type=NetworkAddress(), default="141.212.192.0/24")
+@click.option("--network", type=NetworkAddress(), default="0.0.0.0/0")
 @click.option("--interval", default=2, type=click.FLOAT)
 @click.option("--use-iface", is_flag=True)
 @click.option("--all-iface", is_flag=True)
