@@ -93,5 +93,6 @@ void TelemetrySend(void *argument) {
 			}
 			free(msg.bufferptr);
 		}
+		osDelay(1);
 	}
 }

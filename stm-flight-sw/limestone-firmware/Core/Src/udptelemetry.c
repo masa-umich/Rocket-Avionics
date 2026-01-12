@@ -121,6 +121,7 @@ void TelemetryUDPProcess(void *argument) {
 			}
 			xSemaphoreGive(telemudp_mutex);
 		}
+		osDelay(1);
 	}
 }
 
