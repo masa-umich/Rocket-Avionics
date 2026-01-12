@@ -1316,7 +1316,8 @@ void StartAndMonitor(void *argument)
 
 	uint8_t num_limewires = 0;
 
-	uint32_t startTick = HAL_GetTick();
+	uint32_t onlineTick = HAL_GetTick();
+	uint32_t heartTick = HAL_GetTick();
 	uint8_t logdelay = 0;
 	/* Infinite loop */
 	for(;;) {
@@ -1326,8 +1327,8 @@ void StartAndMonitor(void *argument)
 		}
 
 		// Send all valve states on connection with limewire
-		if(HAL_GetTick() - startTick > 250) {
-			startTick = HAL_GetTick();
+		if(HAL_GetTick() - onlineTick > 250) {
+			onlineTick = HAL_GetTick();
 			if(logdelay < 5) {
 				logdelay++;
 			}
@@ -1417,6 +1418,16 @@ void StartAndMonitor(void *argument)
 			}
 			else {
 				statecounter--;
+			}
+		}
+
+		// Send heartbeat
+		if(HAL_GetTick() - heartTick > 1000) {
+			heartTick = HAL_GetTick();
+			if(is_server_running() && num_devices(LimeWire_d) > 0) {
+				Message heartbeat = {0};
+				heartbeat.type = MSG_HEARTBEAT;
+				send_msg_to_device(LimeWire_d, &heartbeat, 5, MAX_HEARTBEAT_MSG_SIZE + 5);
 			}
 		}
 

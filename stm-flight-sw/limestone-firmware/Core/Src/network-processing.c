@@ -10,6 +10,7 @@
 void ProcessPackets(void *argument) {
 	// Started processing thread
 	log_message(STAT_PACKET_TASK_STARTED, -1);
+	uint32_t stateTick = HAL_GetTick();
 	for(;;) {
 		Raw_message msg = {0};
 		int read_stat = server_read(&msg, 50);
@@ -246,6 +247,29 @@ void ProcessPackets(void *argument) {
 		}
 		else {
 			// Timeout on waiting for messages
+		}
+
+		// This goes here to avoid a race condition that could result in stale valve states being sent to limewire
+		if(HAL_GetTick() - stateTick > 1000) {
+			stateTick = HAL_GetTick();
+			if(is_server_running() && num_devices(LimeWire_d) > 0) {
+				uint64_t valvetime = get_rtc_time();
+				if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
+					Valve_State_t vstates[3];
+					for(int i = 0;i < 3;i++) {
+						vstates[i] = Rocket_h.fcValveStates[i];
+					}
+					xSemaphoreGive(Rocket_h.fcValve_access);
+					for(int i = 0;i < 3;i++) {
+						Message statemsg = {0};
+						statemsg.type = MSG_VALVE_STATE;
+						statemsg.data.valve_state.timestamp = valvetime;
+						statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, i);
+						statemsg.data.valve_state.valve_state = vstates[i];
+						send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+					}
+				}
+			}
 		}
 	}
 }

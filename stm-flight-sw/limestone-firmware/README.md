@@ -98,8 +98,8 @@ Refer to [eeprom-bin-generate.py](eeprom-bin-generate.py) for an example or to a
 
 ## TCP Keep-Alive
 
-Idle timeout - 5 seconds
+Idle timeout - 3 seconds
 
-Probe interval - 3 seconds
+Probe interval - 1 seconds
 
 Probe count - 3

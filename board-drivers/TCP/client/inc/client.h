@@ -13,8 +13,8 @@
 #include "main.h"
 #include "semphr.h"
 
-#define TCP_KEEP_ALIVE_IDLE	5
-#define TCP_KEEP_ALIVE_INTERVAL	3
+#define TCP_KEEP_ALIVE_IDLE	3
+#define TCP_KEEP_ALIVE_INTERVAL	1
 #define TCP_KEEP_ALIVE_COUNT 3
 #define MAX_MSG_LEN 300
 #define RETRY_DELAY_MS 100

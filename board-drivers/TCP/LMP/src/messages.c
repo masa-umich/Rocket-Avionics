@@ -173,6 +173,18 @@ int serialize_device_ack(const DeviceCommandACK *message, uint8_t *buffer,
 	return num_bytes;
 }
 
+int serialize_heartbeat(const HeartbeatMessage *message, uint8_t *buffer,
+							uint32_t buffer_size) {
+	int num_bytes = MAX_HEARTBEAT_MSG_SIZE;
+	if (buffer_size < num_bytes) {
+		return -1;
+	}
+
+	buffer[0] = (uint8_t) (num_bytes - 1);
+
+	return num_bytes;
+}
+
 int serialize_message(const Message *message, uint8_t *buffer,
 					  uint32_t buffer_size) {
 	if (buffer_size < 2)
@@ -190,8 +202,8 @@ int serialize_message(const Message *message, uint8_t *buffer,
 			return serialize_valve_state(&message->data.valve_state, buffer,
 										 buffer_size);
 		case MSG_HEARTBEAT:
-			return 1; // No data to serialize
-
+			return serialize_heartbeat(&message->data.heartbeat, buffer,
+										buffer_size);
 		case MSG_DEVICE_COMMAND:
 			return serialize_device_command(&message->data.device_command, buffer,
 					 	 	 	 	 	 buffer_size);

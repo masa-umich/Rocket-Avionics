@@ -173,6 +173,9 @@ void server_listener_thread(void *arg) {
         timeout.tv_usec = SERVER_ACCEPT_TIMEOUT_US;
         setsockopt(listen_sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
+        int reuse = 1;
+        setsockopt(listen_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+
         // Bind socket to port
         struct sockaddr_in server_socket;
         server_socket.sin_family = AF_INET; // IPv4
@@ -844,6 +847,11 @@ int shutdown_server() {
 	    		connections[i] = -1;
 	    	}
 	    }
+	    if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
+	    	memset(devices, -1, MAX_CONN_NUM * sizeof(int));
+	    	xSemaphoreGive(deviceMutex);
+	    }
+
 
 	    // Get rid of stale messages
 	    drain_lists();
