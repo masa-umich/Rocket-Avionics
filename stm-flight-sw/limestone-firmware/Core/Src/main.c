@@ -117,7 +117,7 @@ const osThreadAttr_t telemetry_udp_task_attr = {
 osThreadId_t packetTaskHandle;
 const osThreadAttr_t packet_task_attr = {
   .name = "packetTask",
-  .stack_size = 384 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
