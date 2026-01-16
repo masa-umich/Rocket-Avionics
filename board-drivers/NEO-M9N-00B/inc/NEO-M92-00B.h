@@ -3,6 +3,9 @@
  *
  *  Created on: Dec 1, 2023
  *      Author: Evan Eidt
+ * 
+ *  Updated on: Jan 16, 2026
+ *      Author: Felix Foreman-Braunschweig, Adhitya Kunju
  */
 
 #pragma once
@@ -45,6 +48,12 @@ typedef struct gps_handler {
     uint8_t active_rx_buffer;
 } gps_handler;
 
+typedef enum {
+	NORMAL = 0,
+	NOT_PARSED,
+	NOT_VALID_SCALING
+} ParseStatus;
+
 // Initializes the gps module, returns 0 if okay and -1 on error
 int init_gps(gps_handler* hgps);
 
@@ -52,7 +61,7 @@ int init_gps(gps_handler* hgps);
 void irq_gps_callback(gps_handler* hgps);
 
 // Returns a struct with parsed GPS data
-void parse_gps_sentence(const char* sentence, gps_data* gps);
+ParseStatus parse_gps_sentence(const char* sentence, gps_data* gps);
 
 /*
  * UBLOX stuff
@@ -79,3 +88,4 @@ typedef enum UBLOXCFG_CFG_NAVSPG_DYNMODEL_e
 } UBLOXCFG_CFG_NAVSPG_DYNMODEL_t;
 
 #endif
+

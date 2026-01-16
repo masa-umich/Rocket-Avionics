@@ -3,13 +3,15 @@
  *
  *  Created on: Dec 1, 2023
  *      Author: Evan Eidt
+ *
+ *  Updated on: Jan 16, 2026
+ *  	Author: Felix Foreman-Braunschweig, Adhitya Kunju
  */
 
 #include <string.h>
 #include "../inc/NEO-M92-00B.h"
 
 int init_gps(gps_handler* hgps) {
-
     hgps->rx_buffer_1_pos = 0;
     hgps->rx_buffer_2_pos = 0;
     hgps->active_rx_buffer = 1;
@@ -19,29 +21,66 @@ int init_gps(gps_handler* hgps) {
 
     // Set CFG-NAVSPG-DYNMODEL-AIR4 (<4g) config item to RAM
         // Preamble + Class/ID of command 
-    memcpy(tx_buffer, &(uint32_t){0xB562068A}, 4); // Header (2B) + Class [1B] + ID [1B] for VALSET 
+    // Old: memcpy(tx_buffer, &(uint32_t){0xB562068A}, 4); Header (2B) + Class [1B] + ID [1B] for VALSET
+    memcpy(tx_buffer, &(uint32_t){0x8A0662B5}, 4);
+
         // Length
     tx_buffer[4] = 9; // Length of payload = 4 + (Key-Value pair lengths)
+    tx_buffer[5] = 0;
         // Start of payload
-    memcpy(tx_buffer + 5, &(uint32_t){0x00010000}, 4); // Version [1B] + RAM layer [1B] + Reserved [2B] for VALSET;
+    // Old memcpy(tx_buffer + 5, &(uint32_t){0x00010000}, 4); // Version [1B] + RAM layer [1B] + Reserved [2B] for VALSET;
+    memcpy(tx_buffer + 6, &(uint32_t){0x00000100}, 4);
+
         // Key for config item
-    memcpy(tx_buffer + 9, &(uint32_t){UBLOXCFG_CFG_NAVSPG_DYNMODEL_ID}, 4); // copy key to buffer at index 9
+    memcpy(tx_buffer + 10, &(uint32_t){UBLOXCFG_CFG_NAVSPG_DYNMODEL_ID}, 4); // copy key to buffer at index 9
         // Value for config item
-    tx_buffer[13] = UBLOXCFG_CFG_NAVSPG_DYNMODEL_AIR4; // copy value to index 13
+    tx_buffer[14] = UBLOXCFG_CFG_NAVSPG_DYNMODEL_AIR4; // copy value to index 13
+
         // Calculate checksum starting from Class field according to 8-bit Fletcher algorithm
-    uint8_t CK_A, CK_B = 0;
-    for (int i = 2; i < 14; ++i) {
+    uint8_t CK_A = 0;
+    uint8_t CK_B = 0;
+
+    for (int i = 2; i < 15; ++i) {
         CK_A += tx_buffer[i]; 
         CK_B += CK_A;
     }
         // Add checksum to tx_buffer
-    tx_buffer[14] = CK_A;
-    tx_buffer[15] = CK_B;
+    tx_buffer[15] = CK_A;
+    tx_buffer[16] = CK_B;
 
-    HAL_UART_Transmit(hgps->huart, tx_buffer, 16, HAL_MAX_DELAY); // send VALSET command to GPS chip
+    HAL_UART_Transmit(hgps->huart, tx_buffer, 17, HAL_MAX_DELAY); // send VALSET command to GPS chip
+    uint32_t second = HAL_GetTick();
 
-    // Check for ACK
-    HAL_UART_Receive(hgps->huart, rx_buffer, 8, HAL_MAX_DELAY); // receive GPS chip response to VALSET command
+    while (HAL_GetTick() - second < 3000) {
+    	uint8_t buf;
+    	HAL_UART_Receive(hgps->huart, &buf, 1, HAL_MAX_DELAY);
+    	if (buf == 0xB5) {
+    		HAL_UART_Receive(hgps->huart, &buf, 1, HAL_MAX_DELAY);
+    		if (buf == 0x62) {
+    			// Check for ACK
+    			uint32_t latency = HAL_GetTick() - second;
+
+    			rx_buffer[0] = 0xB5;
+    			rx_buffer[1] = 0x62;
+
+
+    			HAL_UART_Receive(hgps->huart, rx_buffer + 2, 8, HAL_MAX_DELAY); // receive GPS chip response to VALSET command
+    			const uint8_t VALSET_ACK[10] = {0xB5, 0x62, 0x05, 0x01, 0x02, 0x00, 0x06, 0x8A, 0x98, 0xC1}; // 0x98 0xC1 result from calculating checksum
+    			if (memcmp(rx_buffer, VALSET_ACK, 8)) { // memcmp returns 0 if ACK received for VALSET as expected, returning a truthy value is a failed ACK check
+    			    // Did not receive ACK
+    			    return -1;
+    			}
+
+    			HAL_UART_Receive_IT(hgps->huart, &hgps->uart_rx_byte, 1); // Setup UART for interrupt-based rx
+    			return 0;
+
+    		}
+    	}
+    }
+
+    /*
+    	// Check for ACK
+    HAL_UART_Receive(hgps->huart, rx_buffer, 8, HAL_MAX_DELAY);
 
     const uint8_t VALSET_ACK[8] = {0xB5, 0x62, 0x05, 0x01, 0x06, 0x8A, 0x96, 0xAD}; // 0x96 0xAD result from calculating checksum
     if (memcmp(rx_buffer, VALSET_ACK, 8)) { // memcmp returns 0 if ACK received for VALSET as expected, returning a truthy value is a failed ACK check
@@ -51,7 +90,9 @@ int init_gps(gps_handler* hgps) {
 
     HAL_UART_Receive_IT(hgps->huart, &hgps->uart_rx_byte, 1); // Setup UART for interrupt-based rx
 
-    return 0;
+    */
+
+    return -1;
 }
 
 void irq_gps_callback(gps_handler* hgps) { // TODO make better
@@ -97,7 +138,7 @@ void irq_gps_callback(gps_handler* hgps) { // TODO make better
 
 }
 
-void parse_gps_sentence(const char* sentence, gps_data* gps) {
+ParseStatus parse_gps_sentence(const char* sentence, gps_data* gps) {
 	struct minmea_sentence_gga parsed;
 	
 	if (minmea_parse_gga(&parsed, sentence)) { // Check for valid GGA format sentence
@@ -122,6 +163,13 @@ void parse_gps_sentence(const char* sentence, gps_data* gps) {
 			gps->altitude = alt_temp / parsed.altitude.scale;
 
 			// GPS_Log = 1;
+			return NORMAL;
 		}
+		else {
+			return NOT_VALID_SCALING;
+		}
+	}
+	else {
+		return NOT_PARSED;
 	}
 }
