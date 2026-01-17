@@ -21,13 +21,13 @@ void MS5611_chipRelease(MS5611* BAR) {
 HAL_StatusTypeDef MS5611_transmit(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	MS5611_chipSelect(BAR);
 	status = HAL_SPI_Transmit(BAR->hspi, tx_buffer, 1, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
 	return status;
 }
@@ -36,13 +36,13 @@ HAL_StatusTypeDef MS5611_transmit(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_b
 HAL_StatusTypeDef MS5611_receive(MS5611* BAR, uint8_t* rx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	MS5611_chipSelect(BAR);
 	status = HAL_SPI_Receive(BAR->hspi, rx_buffer, num_bytes, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
 	return status;
 }
@@ -52,13 +52,13 @@ HAL_StatusTypeDef MS5611_receive(MS5611* BAR, uint8_t* rx_buffer, uint8_t num_by
 int MS5611_read(MS5611* BAR, uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	MS5611_chipSelect(BAR);
 	status = HAL_SPI_TransmitReceive(BAR->hspi, tx_buffer, rx_buffer, num_bytes, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
 	if (status != HAL_OK) {
 		return 1;

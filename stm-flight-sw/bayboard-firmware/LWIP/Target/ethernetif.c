@@ -338,7 +338,7 @@ static void low_level_init(struct netif *netif)
   attributes1.name = "EthClr";
   attributes1.stack_size = INTERFACE_THREAD_STACK_SIZE;
   attributes1.priority = osPriorityRealtime;
-  osThreadNew(ethernetif_patch, NULL, &attributes1);
+  //osThreadNew(ethernetif_patch, NULL, &attributes1);
 /* USER CODE END PHY_PRE_CONFIG */
   /* Set PHY IO functions */
   LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);

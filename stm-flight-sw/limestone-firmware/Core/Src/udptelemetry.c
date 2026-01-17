@@ -23,7 +23,8 @@ void init_udp_telem() {
 			telemudp_h = netconn_new(NETCONN_UDP);
 			if(telemudp_h) {
 				ip_set_option(telemudp_h->pcb.udp, SOF_BROADCAST);
-				netconn_set_recvtimeout(telemudp_h, 10);
+				//netconn_set_recvtimeout(telemudp_h, 10);
+				netconn_set_nonblocking(telemudp_h, 1);
 				netconn_bind(telemudp_h, IP4_ADDR_ANY, TELEM_UDP_PORT);
 			}
 			else {

@@ -126,7 +126,6 @@ int ADS_init(ADS_Main_t *ADSMain, ADS_TC_t *TCs, uint8_t num_TCs) {
 	xSemaphoreGive(ADSMain->temp_semaphore);
 
 	ADSMain->tc_task = NULL;
-	return 0;
 	BaseType_t state = xTaskCreate(vTCTask, "TCMeasure", 512, (void *)ADSMain, TC_TASK_PRIORITY, &(ADSMain->tc_task));
 	return state != pdPASS;
 }
@@ -275,7 +274,7 @@ void vTCTask(void *pvParameters) {
 			uint8_t timer = ADS_timerStatus(&(connected_chips[k]), 10);
 			if(timer == 1) {
 				ADS_chipSelect(&(connected_chips[k]));
-				delay_us(10);
+				//delay_us(10);
 				if(!HAL_GPIO_ReadPin(connected_chips[k].DOUT_GPIO_Port, connected_chips[k].DOUT_GPIO_Pin)) {
 					read_and_switch = 1;
 				}
@@ -305,7 +304,7 @@ void vTCTask(void *pvParameters) {
 				}
 
 				ADS_chipSelect(&(connected_chips[k]));
-				delay_us(50);
+				//delay_us(50);
 
 				uint8_t MSB = 0x00;
 				uint8_t LSB = 0x00;
@@ -327,9 +326,9 @@ void vTCTask(void *pvParameters) {
 					//uint8_t txbuffer[4] = {0x00, 0x00, 0x00, 0x00};
 					//uint8_t rxbuffer[4] = {0x00, 0x00, 0x00, 0x00};
 
-					taskENTER_CRITICAL();
+					//taskENTER_CRITICAL();
 					HAL_SPI_TransmitReceive(connected_chips[k].hspi, txbuffer, rxbuffer, 4, connected_chips[k].SPI_TIMEOUT);
-					taskEXIT_CRITICAL();
+					//taskEXIT_CRITICAL();
 
 					MSB = rxbuffer[0];
 					LSB = rxbuffer[1];
@@ -370,17 +369,17 @@ void vTCTask(void *pvParameters) {
 					uint8_t read_txbuffer[3] = {0x10, 0x00, 0x00};
 					uint8_t rxbuffer[3] = {0x00, 0x00, 0x00};
 
-					taskENTER_CRITICAL();
+					//taskENTER_CRITICAL();
 					HAL_SPI_TransmitReceive(connected_chips[k].hspi, read_txbuffer, rxbuffer, 3, connected_chips[k].SPI_TIMEOUT);
-					taskEXIT_CRITICAL();
+					//taskEXIT_CRITICAL();
 
-					delay_us(1);
+					//delay_us(1);
 
 					uint8_t txbuffer[3] = {0x41, conf_byte_1, conf_byte_2};
 
-					taskENTER_CRITICAL();
+					//taskENTER_CRITICAL();
 					HAL_SPI_Transmit(connected_chips[k].hspi, txbuffer, 3, connected_chips[k].SPI_TIMEOUT);
-					taskEXIT_CRITICAL();
+					//taskEXIT_CRITICAL();
 
 					MSB = rxbuffer[1];
 					LSB = rxbuffer[2];
@@ -388,11 +387,11 @@ void vTCTask(void *pvParameters) {
 
 				uint8_t startcmd[1] = {0x08};
 
-				taskENTER_CRITICAL();
+				//taskENTER_CRITICAL();
 				HAL_SPI_Transmit(connected_chips[k].hspi, startcmd, 1, connected_chips[k].SPI_TIMEOUT);
-				taskEXIT_CRITICAL();
+				//taskEXIT_CRITICAL();
 
-				delay_us(25);
+				//delay_us(25);
 				ADS_chipRelease(&(connected_chips[k]));
 
 				if(connected_chips[k].current_mux == 2) {
@@ -427,26 +426,26 @@ void vTCTask(void *pvParameters) {
 HAL_StatusTypeDef ADS_write(ADS_Chip *ADS, uint8_t *tx_buffer, uint8_t num_bytes) {
 	ADS_chipSelect(ADS);
 
-	delay_us(50);
-	taskENTER_CRITICAL();
+	//delay_us(50);
+	//taskENTER_CRITICAL();
 	HAL_StatusTypeDef status = HAL_SPI_Transmit(ADS->hspi, tx_buffer, num_bytes, ADS->SPI_TIMEOUT);
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
-	delay_us(25);
+	//delay_us(25);
 	ADS_chipRelease(ADS);
 
 	return status;
 }
 
 HAL_StatusTypeDef ADS_read(ADS_Chip *ADS, uint8_t reg_addr, uint8_t *rx_buffer, uint8_t num_bytes) {
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	ADS_chipSelect(ADS);
 	HAL_SPI_Transmit(ADS->hspi, &reg_addr, 1, ADS->SPI_TIMEOUT);
 	HAL_StatusTypeDef status = HAL_SPI_Receive(ADS->hspi, rx_buffer, num_bytes, ADS->SPI_TIMEOUT);
 	ADS_chipRelease(ADS);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
 	return status;
 }

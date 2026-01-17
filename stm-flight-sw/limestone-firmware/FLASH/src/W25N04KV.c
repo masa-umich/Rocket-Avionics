@@ -41,12 +41,12 @@
 void select_die(W25N04KV_Flash *fc_flash, uint8_t die_id) {
     uint8_t tx[2] = { W25N04KV_DIE_SELECT, die_id };
     
-    __disable_irq();
+    //__disable_irq();
     HAL_GPIO_WritePin(fc_flash->cs_base, fc_flash->cs_pin, W25N04KV_CS_ACTIVE); // Select chip
     // Transmit/receive, and store the status code
     fc_flash->last_HAL_status = HAL_SPI_Transmit(fc_flash->SPI_bus, tx, 2, W25N04KV_SPI_TIMEOUT);
     HAL_GPIO_WritePin(fc_flash->cs_base, fc_flash->cs_pin, W25N04KV_CS_INACTIVE); // Release chip
-    __enable_irq();
+    //__enable_irq();
 }
 
 /**
@@ -107,13 +107,13 @@ uint8_t fc_ping_flash(W25N04KV_Flash *fc_flash) {
     uint8_t tx[2] = { W25N04KV_READ_JEDEC_ID, 0 }; // Second byte unused
     uint8_t rx[3];
     
-    __disable_irq();
+    //__disable_irq();
     HAL_GPIO_WritePin(fc_flash->cs_base, fc_flash->cs_pin, W25N04KV_CS_ACTIVE); // Select chip
     // Transmit/receive, and store the status code
     fc_flash->last_HAL_status = HAL_SPI_Transmit(fc_flash->SPI_bus, tx, 2, W25N04KV_SPI_TIMEOUT);
     fc_flash->last_HAL_status = HAL_SPI_Receive(fc_flash->SPI_bus, rx, 3, W25N04KV_SPI_TIMEOUT);
     HAL_GPIO_WritePin(fc_flash->cs_base, fc_flash->cs_pin, W25N04KV_CS_INACTIVE); // Release chip
-    __enable_irq();
+    //__enable_irq();
     
     uint8_t manufacturer_ID = rx[0];
     uint16_t device_ID = (rx[1] << 8) + rx[2];

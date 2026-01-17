@@ -21,6 +21,7 @@ void TelemetryTask(void *argument) {
 	for(;;) {
 		uint32_t startTime = HAL_GetTick();
 		// Read from sensors
+
 		uint16_t adc_values[16] = {0};
 		read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
 		if(adc_values[ADC_3V3_BUS_I] == 0) {

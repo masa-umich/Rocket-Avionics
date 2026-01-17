@@ -41,10 +41,10 @@ void set_system_time(uint32_t sec, uint32_t us) {
 		uint32_t subsecond_shift = 6249 - ((us / 1000000.0) * 6250);
 
 		//uint32_t subsecond_shift = 6249ULL - ((((uint64_t) us) * ((uint64_t) 6250)) / 1000000ULL); // This works too but I think above is more memory efficient
-		taskENTER_CRITICAL();
+		//taskENTER_CRITICAL();
 		HAL_RTC_SetDate(rtc, &sDate, RTC_FORMAT_BIN);
 		HAL_RTC_SetTime(rtc, &sTime, RTC_FORMAT_BIN);
-		taskEXIT_CRITICAL();
+		//taskEXIT_CRITICAL();
 
 		HAL_RTCEx_SetSynchroShift(rtc, RTC_SHIFTADD1S_SET, subsecond_shift); // Shift sub-seconds register to do fine grain time sync
 
@@ -78,7 +78,7 @@ uint64_t get_rtc_time() {
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
-	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
+	if(xSemaphoreTake(RTC_mutex, 2) == pdPASS) {
 		if(__HAL_RTC_IS_CALENDAR_INITIALIZED(rtc) == 0) {
 			xSemaphoreGive(RTC_mutex);
 			// RTC not set yet
@@ -116,7 +116,7 @@ void get_iso_time(char *outbuf, int buf_size) {
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
-	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
+	if(xSemaphoreTake(RTC_mutex, 2) == pdPASS) {
 		if(__HAL_RTC_IS_CALENDAR_INITIALIZED(rtc) == 0) {
 			xSemaphoreGive(RTC_mutex);
 			// RTC not set yet

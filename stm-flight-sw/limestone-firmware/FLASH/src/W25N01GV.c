@@ -132,12 +132,12 @@
  */
 static void spi_transmit(W25N01GV_Flash *flash, uint8_t *tx, uint16_t size) {
 
-	__disable_irq();
+	//__disable_irq();
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);  // Select chip
 	// Transmit data and store the status code
 	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, size, W25N01GV_SPI_TIMEOUT);
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);  // Release chip
-	__enable_irq();
+	//__enable_irq();
 
 }
 
@@ -156,14 +156,14 @@ static void spi_transmit(W25N01GV_Flash *flash, uint8_t *tx, uint16_t size) {
 static void spi_transmit_receive(W25N01GV_Flash *flash, uint8_t *tx,
 		uint16_t tx_size,	uint8_t *rx, uint16_t rx_size) {
 
-	__disable_irq();
+	//__disable_irq();
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);  // Select chip
 	// Transmit/receive, and store the status code
 	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, tx_size, W25N01GV_SPI_TIMEOUT);
 	flash->last_HAL_status = HAL_SPI_Receive(flash->SPI_bus, rx, rx_size, W25N01GV_SPI_TIMEOUT);
 	// TODO the Transmit status will get lost, should it still be stored like this?
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);  // Release chip
-	__enable_irq();
+	//__enable_irq();
 
 }
 
@@ -435,12 +435,12 @@ static void write_page_to_buffer(W25N01GV_Flash *flash, uint8_t *data,
 		num_bytes = W25N01GV_BYTES_PER_PAGE;
 
 	// Not using spi_transmit() because I didn't want to mess with combining the tx arrays
-	__disable_irq();
+	//__disable_irq();
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);
 	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx1, 3, W25N01GV_SPI_TIMEOUT);
 	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, data, num_bytes, W25N01GV_SPI_TIMEOUT);
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);
-	__enable_irq();
+	//__enable_irq();
 }
 
 /**
