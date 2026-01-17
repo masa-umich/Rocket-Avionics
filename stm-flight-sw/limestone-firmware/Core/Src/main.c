@@ -75,6 +75,8 @@ SPI_HandleTypeDef hspi4;
 SPI_HandleTypeDef hspi5;
 SPI_HandleTypeDef hspi6;
 
+TIM_HandleTypeDef htim14;
+
 UART_HandleTypeDef huart10;
 
 /* Definitions for startTask */
@@ -144,6 +146,7 @@ static void MX_SPI2_Init(void);
 static void MX_SPI6_Init(void);
 static void MX_CRC_Init(void);
 static void MX_SPI3_Init(void);
+static void MX_TIM14_Init(void);
 void StartAndMonitor(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -245,6 +248,7 @@ int main(void)
   MX_SPI6_Init();
   MX_CRC_Init();
   MX_SPI3_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
@@ -911,6 +915,37 @@ static void MX_SPI6_Init(void)
 }
 
 /**
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM14_Init(void)
+{
+
+  /* USER CODE BEGIN TIM14_Init 0 */
+
+  /* USER CODE END TIM14_Init 0 */
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 0;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 65535;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
+
+}
+
+/**
   * @brief USART10 Initialization Function
   * @param None
   * @retval None
@@ -1321,6 +1356,7 @@ void StartAndMonitor(void *argument)
 	uint8_t logdelay = 0;
 	/* Infinite loop */
 	for(;;) {
+		size_t freemem = xPortGetFreeHeapSize();
 		// Log and send error/status messages
 		if(logdelay > 4) {
 			handle_logging();
@@ -1332,7 +1368,6 @@ void StartAndMonitor(void *argument)
 			if(logdelay < 5) {
 				logdelay++;
 			}
-			size_t freemem = xPortGetFreeHeapSize();
 			refresh_log_timers();
 
 			int num_limes = num_devices(LimeWire_d);

@@ -126,6 +126,7 @@ int ADS_init(ADS_Main_t *ADSMain, ADS_TC_t *TCs, uint8_t num_TCs) {
 	xSemaphoreGive(ADSMain->temp_semaphore);
 
 	ADSMain->tc_task = NULL;
+	return 0;
 	BaseType_t state = xTaskCreate(vTCTask, "TCMeasure", 512, (void *)ADSMain, TC_TASK_PRIORITY, &(ADSMain->tc_task));
 	return state != pdPASS;
 }

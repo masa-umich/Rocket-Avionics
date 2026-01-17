@@ -51,6 +51,8 @@
 /* Parameters set in STM32CubeMX LwIP Configuration GUI -*/
 /*----- Default value in ETH configuration GUI in CubeMx: 1524 -----*/
 #define ETH_RX_BUFFER_SIZE 1536
+/*----- Default Value for MEMP_NUM_UDP_PCB: 4 ---*/
+#define MEMP_NUM_UDP_PCB 6
 /*----- Default Value for MEMP_NUM_TCP_PCB: 5 ---*/
 #define MEMP_NUM_TCP_PCB 9
 /*----- Value in opt.h for MEM_ALIGNMENT: 1 -----*/
@@ -64,11 +66,11 @@
 /*----- Default Value for MEMP_NUM_SYS_TIMEOUT: 3 ---*/
 #define MEMP_NUM_SYS_TIMEOUT 16
 /*----- Default Value for MEMP_NUM_NETBUF: 2 ---*/
-#define MEMP_NUM_NETBUF 10
+#define MEMP_NUM_NETBUF 64
 /*----- Default Value for MEMP_NUM_NETCONN: 4 ---*/
 #define MEMP_NUM_NETCONN 10
 /*----- Default Value for MEMP_NUM_TCPIP_MSG_INPKT: 8 ---*/
-#define MEMP_NUM_TCPIP_MSG_INPKT 16
+#define MEMP_NUM_TCPIP_MSG_INPKT 32
 /*----- Default Value for MEMP_NUM_NETDB: 1 ---*/
 #define MEMP_NUM_NETDB 4
 /*----- Default Value for MEMP_NUM_API_MSG: 8 ---*/
@@ -96,7 +98,7 @@
 /*----- Value in opt.h for TCPIP_THREAD_PRIO: 1 -----*/
 #define TCPIP_THREAD_PRIO 24
 /*----- Value in opt.h for TCPIP_MBOX_SIZE: 0 -----*/
-#define TCPIP_MBOX_SIZE 16
+#define TCPIP_MBOX_SIZE 64
 /*----- Value in opt.h for SLIPIF_THREAD_STACKSIZE: 0 -----*/
 #define SLIPIF_THREAD_STACKSIZE 1024
 /*----- Value in opt.h for SLIPIF_THREAD_PRIO: 1 -----*/
@@ -106,11 +108,13 @@
 /*----- Value in opt.h for DEFAULT_THREAD_PRIO: 1 -----*/
 #define DEFAULT_THREAD_PRIO 3
 /*----- Value in opt.h for DEFAULT_UDP_RECVMBOX_SIZE: 0 -----*/
-#define DEFAULT_UDP_RECVMBOX_SIZE 6
+#define DEFAULT_UDP_RECVMBOX_SIZE 32
 /*----- Value in opt.h for DEFAULT_TCP_RECVMBOX_SIZE: 0 -----*/
-#define DEFAULT_TCP_RECVMBOX_SIZE 32
+#define DEFAULT_TCP_RECVMBOX_SIZE 64
 /*----- Value in opt.h for DEFAULT_ACCEPTMBOX_SIZE: 0 -----*/
-#define DEFAULT_ACCEPTMBOX_SIZE 16
+#define DEFAULT_ACCEPTMBOX_SIZE 32
+/*----- Default Value for LWIP_TCPIP_TIMEOUT: 0 ---*/
+#define LWIP_TCPIP_TIMEOUT 1
 /*----- Default Value for LWIP_TCP_KEEPALIVE: 0 ---*/
 #define LWIP_TCP_KEEPALIVE 1
 /*----- Default Value for LWIP_SO_SNDTIMEO: 0 ---*/
