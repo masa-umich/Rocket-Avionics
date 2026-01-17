@@ -57,7 +57,7 @@ uint8_t IP_ADDRESS[4];
 uint8_t NETMASK_ADDRESS[4];
 uint8_t GATEWAY_ADDRESS[4];
 /* USER CODE BEGIN OS_THREAD_ATTR_CMSIS_RTOS_V2 */
-#define INTERFACE_THREAD_STACK_SIZE ( 1024 )
+#define INTERFACE_THREAD_STACK_SIZE ( 2048 )
 osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
@@ -159,6 +159,7 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
+	  stopLEDtimer();
 	  init_network_logging(1, bb_addr);
 	  sntp_init();
 	  client_reinit();
@@ -171,6 +172,7 @@ static void ethernet_link_status_updated(struct netif *netif)
   else /* netif is down */
   {
 /* USER CODE BEGIN 6 */
+	  startLEDtimer(250);
 	  deinit_network_logging();
 	  sntp_stop();
 	  client_stop();

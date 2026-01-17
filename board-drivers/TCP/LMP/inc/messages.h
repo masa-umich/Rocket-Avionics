@@ -17,7 +17,8 @@ typedef enum {
 	MSG_VALVE_COMMAND = 0x01,
 	MSG_VALVE_STATE = 0x02,
 	MSG_HEARTBEAT = 0x03,
-	MSG_DEVICE_COMMAND = 0x04
+	MSG_DEVICE_COMMAND = 0x04,
+	MSG_DEVICE_ACK= 0x05
 } MessageType;
 
 // Board identifiers for TelemetryMessages and DeviceCommandMessages (values are corresponding bytes)
@@ -46,13 +47,15 @@ typedef enum {
 	DEVICE_CMD_PDB_SRC_GSE = 0x03,
 	DEVICE_CMD_PDB_SRC_BAT = 0x04,
 	DEVICE_CMD_PDB_COTS_OFF = 0x05,
-	DEVICE_CMD_PDB_COTS_ON = 0x06
+	DEVICE_CMD_PDB_COTS_ON = 0x06,
+	DEVICE_CMD_BUILD_INFO = 0x07
 } DeviceCMDId;
 
 #define MAX_TELEMETRY_CHANNELS MAX_TELEM_CHANNELS
 #define NUM_FC_CHANNELS FC_TELEMETRY_CHANNELS
 #define NUM_BAY_CHANNELS BB1_TELEMETRY_CHANNELS
 #define NUM_FR_CHANNELS FR_TELEMETRY_CHANNELS
+#define MAX_ACK_PAYLOAD_SIZE 200
 typedef struct {
 	BoardId board_id;
 	uint64_t timestamp;
@@ -80,6 +83,12 @@ typedef struct {
 	DeviceCMDId cmd_id;
 } DeviceCommandMessage;
 
+typedef struct {
+	BoardId board_id;
+	DeviceCMDId cmd_id;
+	char payload[MAX_ACK_PAYLOAD_SIZE];
+} DeviceCommandACK;
+
 // Message Length + Message Type + Board ID + Timestamp + Channels (float)
 #define MAX_TELEMETRY_MSG_SIZE (1 + 1 + 1 + 8 + (4 * MAX_TELEMETRY_CHANNELS))
 // Message Length + Message Type + Valve ID + Valve State
@@ -90,6 +99,8 @@ typedef struct {
 #define MAX_HEARTBEAT_MSG_SIZE 2
 // Message Length + Message Type + Board ID + Command ID
 #define MAX_DEVICE_COMMAND_MSG_SIZE (1 + 1 + 1 + 1)
+// Message Length + Message Type + Board ID + Command ID + payload
+#define DEVICE_COMMAND_ACK_HEADER_SIZE (1 + 1 + 1 + 1) // without payload size
 // Telemetry is the largest message in all cases
 #define MAX_MESSAGE_SIZE MAX_TELEMETRY_MSG_SIZE
 
@@ -101,6 +112,7 @@ typedef struct {
 		ValveStateMessage valve_state;
 		HeartbeatMessage heartbeat;
 		DeviceCommandMessage device_command;
+		DeviceCommandACK device_ack;
 	} data;
 } Message;
 

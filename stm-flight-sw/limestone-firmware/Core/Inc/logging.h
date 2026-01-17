@@ -60,7 +60,7 @@ int log_lmp_packet(uint8_t *buf, size_t buflen);
 
 void send_udp_online(ip4_addr_t * ip);
 
-void log_flash_storage();
+void log_flash_storage(char *logstring, int numbytes);
 
 void clear_flash();
 
@@ -73,5 +73,8 @@ void FlashClearTask(void *argument);
 void refresh_log_timers();
 
 void flush_flash_log();
+
+// This is only for use during the resetting of the board. It never gives back the flash mutex so this will cause major issues if used anywhere else in the program.
+void flush_flash_log_for_reset();
 
 #endif /* INC_LOGGING_H_ */

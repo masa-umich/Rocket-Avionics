@@ -15,6 +15,9 @@
 #include "main.h"
 #include "git-hash.h"
 
+#define TO_STRING(x) #x
+#define EXPAND_AND_STRINGIFY(x) TO_STRING(x)
+
 #ifdef FLIGHT_COMPUTER
 #define FIRMWARE_NAME		"Limelight Flight Computer Firmware"
 #elif defined(BAY_BOARD)
@@ -190,10 +193,11 @@
 #define STAT_STARTUP_DONE						"702 Program initialization complete"
 #define STAT_TELEM_TASK_STARTED					"703 Telemetry task started"
 #define STAT_PACKET_TASK_STARTED				"704 Packet processing task started"
-#define STAT_EEPROM_CONFIG_CHANGED				"705 New EEPROM config saved, restarting in 500ms"
+#define STAT_EEPROM_CONFIG_CHANGED				"705 New EEPROM config saved"
+#define EEPROM_CONFIG_RESTART					", restarting in " EXPAND_AND_STRINGIFY(EEPROM_RESTART_DELAY_MS) "ms"
 #define STAT_LINK_UP							"706 Ethernet link back online"
 #define STAT_LINK_DOWN							"707 Ethernet link down"
-#define STAT_AVAILABLE_FLASH					"708 Used flash space: "
+#define STAT_AVAILABLE_FLASH					"708 Available flash space: "
 #define STAT_CLEAR_FLASH						"709 Flash cleared"
 #define STAT_EEPROM_LOADED						"710 EEPROM config loaded successfully"
 #define STAT_EEPROM_DEFAULT_LOADED				"711 EEPROM defaults loaded, overridden by macro"
@@ -268,5 +272,10 @@
 #define BB_ERR_PERI_TYPE_CONNECT				7
 
 #endif
+
+#define FC_PDB_SRC_GSE_ACK_MSG					"PDB source switched to GSE power"
+#define FC_PDB_SRC_BAT_ACK_MSG					"PDB source switched to battery power"
+#define FC_PDB_COTS_ON_ACK_MSG					"PDB COTS supply turned on"
+#define FC_PDB_COTS_OFF_ACK_MSG					"PDB COTS supply turned off"
 
 #endif /* INC_LOG_ERRORS_H_ */

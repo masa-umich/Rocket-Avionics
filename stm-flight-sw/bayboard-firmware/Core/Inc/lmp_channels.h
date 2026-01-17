@@ -10,9 +10,9 @@
 #ifndef INC_LMP_CHANNELS_H_
 #define INC_LMP_CHANNELS_H_
 
-#define MAX_TELEM_CHANNELS              52
+#define MAX_TELEM_CHANNELS              53
 
-#define FC_TELEMETRY_CHANNELS           39
+#define FC_TELEMETRY_CHANNELS           40
 #define FC_VLV1_CURRENT_I               0
 #define FC_VLV1_OLD_I                   1
 #define FC_VLV2_CURRENT_I               2
@@ -52,8 +52,9 @@
 #define FC_5V_CURRENT_I                 36
 #define FC_3V3_VOLTAGE_I                37
 #define FC_3V3_CURRENT_I                38
+#define FC_BOARD_TEMP_I                 39
 
-#define BB1_TELEMETRY_CHANNELS          52
+#define BB1_TELEMETRY_CHANNELS          53
 #define BB1_VLV1_CURRENT_I              0
 #define BB1_VLV1_OLD_I                  1
 #define BB1_VLV2_CURRENT_I              2
@@ -106,8 +107,9 @@
 #define BB1_5V_CURRENT_I                49
 #define BB1_3V3_VOLTAGE_I               50
 #define BB1_3V3_CURRENT_I               51
+#define BB1_BOARD_TEMP_I                52
 
-#define BB2_TELEMETRY_CHANNELS          52
+#define BB2_TELEMETRY_CHANNELS          53
 #define BB2_VLV1_CURRENT_I              0
 #define BB2_VLV1_OLD_I                  1
 #define BB2_VLV2_CURRENT_I              2
@@ -160,8 +162,9 @@
 #define BB2_5V_CURRENT_I                49
 #define BB2_3V3_VOLTAGE_I               50
 #define BB2_3V3_CURRENT_I               51
+#define BB2_BOARD_TEMP_I                52
 
-#define BB3_TELEMETRY_CHANNELS          52
+#define BB3_TELEMETRY_CHANNELS          53
 #define BB3_VLV1_CURRENT_I              0
 #define BB3_VLV1_OLD_I                  1
 #define BB3_VLV2_CURRENT_I              2
@@ -214,8 +217,9 @@
 #define BB3_5V_CURRENT_I                49
 #define BB3_3V3_VOLTAGE_I               50
 #define BB3_3V3_CURRENT_I               51
+#define BB3_BOARD_TEMP_I                52
 
-#define FR_TELEMETRY_CHANNELS           14
+#define FR_TELEMETRY_CHANNELS           15
 #define FR_IMU1_X_I                     0
 #define FR_IMU1_Y_I                     1
 #define FR_IMU1_Z_I                     2
@@ -230,5 +234,6 @@
 #define FR_IMU2_WY_I                    11
 #define FR_BAR_1_I                      12
 #define FR_BAR_2_I                      13
+#define FR_BOARD_TEMP_I                 14
 
 #endif /* INC_LMP_CHANNELS_H_ */

@@ -26,9 +26,9 @@ pt1_offset = 0.5
 pt1_range = 5000
 pt1_max = 4.5
 
-pt2_offset = 1
-pt2_range = 2000
-pt2_max = 3
+pt2_offset = 0.5
+pt2_range = 5000
+pt2_max = 4.5
 
 pt3_offset = 0.5
 pt3_range = 5000
@@ -36,19 +36,19 @@ pt3_max = 4.5
 
 pt4_offset = 0.5
 pt4_range = 5000
-pt4_max = 5
+pt4_max = 4.5
 
 pt5_offset = 0.5
-pt5_range = 6000
+pt5_range = 5000
 pt5_max = 4.5
 
 pt6_offset = 0.5
 pt6_range = 5000
 pt6_max = 4.5
 
-pt7_offset = 1
-pt7_range = 2000
-pt7_max = 3
+pt7_offset = 0.5
+pt7_range = 5000
+pt7_max = 4.5
 
 pt8_offset = 0.5
 pt8_range = 5000
@@ -56,10 +56,10 @@ pt8_max = 4.5
 
 pt9_offset = 0.5
 pt9_range = 5000
-pt9_max = 5
+pt9_max = 4.5
 
 pt10_offset = 0.5
-pt10_range = 6000
+pt10_range = 5000
 pt10_max = 4.5
 
 tc1_gain = TCGain.Gain_64x
@@ -84,9 +84,9 @@ vlv4_enable = 1
 vlv5_voltage = ValveVoltage.Valve_24V
 vlv5_enable = 1
 
-bay_board_number = 1
+bay_board_number = 3
 flight_computer_IP = ipaddress.IPv4Address("141.212.192.170")
-bay_board_IP = ipaddress.IPv4Address("141.212.192.180")
+bay_board_IP = ipaddress.IPv4Address("141.212.192.200")
 
 raw_out = struct.pack('<B', bay_board_number)
 raw_out += struct.pack('<f', pt1_offset) + struct.pack('<f', pt1_range) + struct.pack('<f', pt1_max)

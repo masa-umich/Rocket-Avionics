@@ -72,8 +72,13 @@ void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
 			cursor += read_bytes;
 		} while(eeprom_cursor - cursor > 0);
 		// eeprom successfully updated! restart board for new config to take effect
+#ifdef RESTART_AFTER_CONFIG
+		log_message(STAT_EEPROM_CONFIG_CHANGED EEPROM_CONFIG_RESTART, -1);
+		TimerHandle_t resetTimer = xTimerCreate("restart", EEPROM_RESTART_DELAY_MS, pdFALSE, NULL, timerRestart);
+		if(resetTimer) xTimerStart(resetTimer, 0);
+#else
 		log_message(STAT_EEPROM_CONFIG_CHANGED, -1);
-		xTimerCreate("restart", EEPROM_RESTART_DELAY_MS, pdFALSE, NULL, timerRestart);
+#endif
 	}
 	else {
 		// Mismatched CRC

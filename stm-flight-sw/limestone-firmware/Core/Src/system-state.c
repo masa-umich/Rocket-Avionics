@@ -78,6 +78,7 @@ int pack_fc_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t tim
 		msg->telemetry_data[FC_5V_CURRENT_I] = Rocket_h.fcState.bus5v_current;
 		msg->telemetry_data[FC_3V3_VOLTAGE_I] = Rocket_h.fcState.bus3v3_voltage;
 		msg->telemetry_data[FC_3V3_CURRENT_I] = Rocket_h.fcState.bus3v3_current;
+		msg->telemetry_data[FC_BOARD_TEMP_I] = Rocket_h.fcState.board_temp;
 		xSemaphoreGive(Rocket_h.fcState_access);
 	}
 	else {
@@ -146,6 +147,7 @@ int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	    		Rocket_h.bb1State.bus5v_current = msg->telemetry_data[BB1_5V_CURRENT_I];
 	    		Rocket_h.bb1State.bus3v3_voltage = msg->telemetry_data[BB1_3V3_VOLTAGE_I];
 	    		Rocket_h.bb1State.bus3v3_current = msg->telemetry_data[BB1_3V3_CURRENT_I];
+	    		Rocket_h.bb1State.board_temp = msg->telemetry_data[BB1_BOARD_TEMP_I];
 	    		Rocket_h.bb1State.timestamp = msg->timestamp;
 	    		xSemaphoreGive(Rocket_h.bb1State_access);
 	    	}
@@ -207,6 +209,7 @@ int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	    		Rocket_h.bb2State.bus5v_current = msg->telemetry_data[BB2_5V_CURRENT_I];
 	    		Rocket_h.bb2State.bus3v3_voltage = msg->telemetry_data[BB2_3V3_VOLTAGE_I];
 	    		Rocket_h.bb2State.bus3v3_current = msg->telemetry_data[BB2_3V3_CURRENT_I];
+	    		Rocket_h.bb2State.board_temp = msg->telemetry_data[BB2_BOARD_TEMP_I];
 	    		Rocket_h.bb2State.timestamp = msg->timestamp;
 	    		xSemaphoreGive(Rocket_h.bb2State_access);
 	    	}
@@ -268,6 +271,7 @@ int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 	    		Rocket_h.bb3State.bus5v_current = msg->telemetry_data[BB3_5V_CURRENT_I];
 	    		Rocket_h.bb3State.bus3v3_voltage = msg->telemetry_data[BB3_3V3_VOLTAGE_I];
 	    		Rocket_h.bb3State.bus3v3_current = msg->telemetry_data[BB3_3V3_CURRENT_I];
+	    		Rocket_h.bb3State.board_temp = msg->telemetry_data[BB3_BOARD_TEMP_I];
 	    		Rocket_h.bb3State.timestamp = msg->timestamp;
 	    		xSemaphoreGive(Rocket_h.bb3State_access);
 	    	}
@@ -302,6 +306,7 @@ int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks) {
 		Rocket_h.frState.imu2_W.G_z = msg->telemetry_data[FR_IMU2_WY_I];
 		Rocket_h.frState.bar1 = msg->telemetry_data[FR_BAR_1_I];
 		Rocket_h.frState.bar2 = msg->telemetry_data[FR_BAR_2_I];
+		Rocket_h.frState.board_temp = msg->telemetry_data[FR_BOARD_TEMP_I];
 		Rocket_h.frState.timestamp = msg->timestamp;
 		xSemaphoreGive(Rocket_h.frState_access);
 	}

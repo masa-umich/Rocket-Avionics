@@ -72,6 +72,9 @@ void TelemetryTask(void *argument) {
 			log_peri_message(ERR_ADS_READ, BB_ERR_PERI_TYPE_ADS);
   	  	}
 
+  	  	float TC_board_temp;
+  	  	ADS_readInternalTemp(&(sensors_h.tc_main_h), &TC_board_temp);
+
   	  	VLV_OpenLoad vlv1_old = 0;
   	  	VLV_OpenLoad vlv2_old = 0;
   	  	VLV_OpenLoad vlv3_old = 0;
@@ -154,6 +157,8 @@ void TelemetryTask(void *argument) {
   					Board_h.bbState.tc6 = TCvalues[5];
   				}
   			}
+
+  			Board_h.bbState.board_temp = TC_board_temp;
 
   			if(!old_stat) {
   				Board_h.bbState.vlv1_old = vlv1_old;

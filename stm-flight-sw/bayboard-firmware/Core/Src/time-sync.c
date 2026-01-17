@@ -104,7 +104,11 @@ uint64_t get_rtc_time() {
 }
 
 // outbuf MUST have at least 24 bytes of space. It will not be null terminated
-void get_iso_time(char *outbuf) {
+void get_iso_time(char *outbuf, int buf_size) {
+	if(buf_size < 24) {
+		return;
+	}
+
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
@@ -125,21 +129,8 @@ void get_iso_time(char *outbuf) {
 		return;
 	}
 	int16_t ms = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) * 1e3) / 6250;
-	// I wrote this before I discovered snprintf could do this in one line lol
-	// This section will throw a lot of compiler warnings, but it's okay
-	snprintf(outbuf, 5, "%04u", 2000 + (uint16_t) sDate.Year);
-	outbuf[4] = '-';
-	snprintf(&outbuf[5], 3, "%02u", sDate.Month);
-	outbuf[7] = '-';
-	snprintf(&outbuf[8], 3, "%02u", sDate.Date);
-	outbuf[10] = 'T';
-	snprintf(&outbuf[11], 3, "%02u", sTime.Hours);
-	outbuf[13] = ':';
-	snprintf(&outbuf[14], 3, "%02u", sTime.Minutes);
-	outbuf[16] = ':';
-	snprintf(&outbuf[17], 3, "%02u", sTime.Seconds);
-	outbuf[19] = '.';
-	snprintf(&outbuf[20], 4, "%03u", ms);
+
+	snprintf(outbuf, buf_size, "%04u-%02u-%02uT%02u:%02u:%02u.%03u", 2000 + (uint16_t) sDate.Year, sDate.Month, sDate.Date, sTime.Hours, sTime.Minutes, sTime.Seconds, ms);
 	outbuf[23] = 'Z';
 }
 

@@ -30,14 +30,14 @@ float PT_calc(PT_t PT_info, uint16_t raw) {
 }
 
 void reset_board() {
-	flush_flash_log();
+	flush_flash_log_for_reset();
 
 	NVIC_SystemReset(); // This should never return
 }
 
 // use_bat 1 to use battery source, 0 to use GSE
 void PDB_source(uint8_t use_bat) {
-	HAL_GPIO_WritePin(PDB_DIO1_GPIO_Port, PDB_DIO1_Pin, use_bat);
+	HAL_GPIO_WritePin(PDB_DIO2_GPIO_Port, PDB_DIO2_Pin, use_bat);
 	if(use_bat) {
 		log_message(FC_STAT_PDB_SWITCH_BAT, -1);
 	}
@@ -47,7 +47,7 @@ void PDB_source(uint8_t use_bat) {
 }
 
 void COTS_supply(uint8_t enabled) {
-	HAL_GPIO_WritePin(PDB_DIO2_GPIO_Port, PDB_DIO2_Pin, enabled);
+	HAL_GPIO_WritePin(PDB_DIO1_GPIO_Port, PDB_DIO1_Pin, enabled);
 	if(enabled) {
 		log_message(FC_STAT_PDB_COTS_SUPPLY_ON, -1);
 	}

@@ -38,16 +38,25 @@ extern "C" {
 #include "stdlib.h"
 #include "string.h"
 #include "lmp_channels.h"
+#include "timers.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct {
+	TimerHandle_t buzzTimer;
+	TimerHandle_t ledTimer;
+} inittimers_t;
+
 extern uint8_t bb_num; // Program wide reference to the bay board number. Not valid until after main() runs
+extern inittimers_t timers;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+void startLEDtimer(TickType_t delay);
 
+void stopLEDtimer();
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -60,6 +69,7 @@ extern uint8_t bb_num; // Program wide reference to the bay board number. Not va
 
 #define BB_EEPROM_LEN		(uint16_t)145
 //#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
+#define RESTART_AFTER_CONFIG
 
 #define EEPROM_RESTART_DELAY_MS				500
 

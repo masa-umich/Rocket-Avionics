@@ -158,6 +158,21 @@ int serialize_device_command(const DeviceCommandMessage *message, uint8_t *buffe
 	return num_bytes;
 }
 
+int serialize_device_ack(const DeviceCommandACK *message, uint8_t *buffer,
+							uint32_t buffer_size) {
+	int num_bytes = DEVICE_COMMAND_ACK_HEADER_SIZE + strlen(message->payload);
+	if (buffer_size < num_bytes) {
+		return -1;
+	}
+
+	buffer[0] = (uint8_t) (num_bytes - 1);
+	buffer[2] = message->board_id;
+	buffer[3] = message->cmd_id;
+	memcpy(&buffer[4], message->payload, strlen(message->payload));
+
+	return num_bytes;
+}
+
 int serialize_message(const Message *message, uint8_t *buffer,
 					  uint32_t buffer_size) {
 	if (buffer_size < 2)
@@ -180,6 +195,9 @@ int serialize_message(const Message *message, uint8_t *buffer,
 		case MSG_DEVICE_COMMAND:
 			return serialize_device_command(&message->data.device_command, buffer,
 					 	 	 	 	 	 buffer_size);
+		case MSG_DEVICE_ACK:
+			return serialize_device_ack(&message->data.device_ack, buffer,
+							 	 	 	 	 	 buffer_size);
 		default:
 			return -1; // Unknown message type
 	}
@@ -268,6 +286,24 @@ int deserialize_device_command(const uint8_t *buffer, uint32_t buffer_size,
 	return num_bytes;
 }
 
+int deserialize_device_ack(const uint8_t *buffer, uint32_t buffer_size,
+							DeviceCommandACK *msg) {
+	if (buffer_size < DEVICE_COMMAND_ACK_HEADER_SIZE) {
+		return 0;
+	}
+
+	int num_bytes = buffer[0] + 1;
+	int payload_size = num_bytes - DEVICE_COMMAND_ACK_HEADER_SIZE;
+
+
+	msg->board_id = buffer[2];
+	msg->cmd_id = buffer[3];
+	memcpy(msg->payload, &buffer[4], payload_size);
+	msg->payload[payload_size] = '\0';
+
+	return num_bytes;
+}
+
 int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 						Message *msg) {
 	if (buffer_size < 2)
@@ -290,6 +326,9 @@ int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 		case MSG_DEVICE_COMMAND:
 			return deserialize_device_command(buffer, buffer_size,
 					   	   	   	   	   	   &msg->data.device_command);
+		case MSG_DEVICE_ACK:
+			return deserialize_device_ack(buffer, buffer_size,
+							   	   	   	   &msg->data.device_ack);
 		default:
 			return -1; // Unknown message type
 	}

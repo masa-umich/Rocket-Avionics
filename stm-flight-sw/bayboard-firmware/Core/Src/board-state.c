@@ -84,6 +84,7 @@ int pack_bb_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t tim
 		msg->telemetry_data[BB1_5V_CURRENT_I] 		= Board_h.bbState.bus5v_current;
 		msg->telemetry_data[BB1_3V3_VOLTAGE_I] 		= Board_h.bbState.bus3v3_voltage;
 		msg->telemetry_data[BB1_3V3_CURRENT_I] 		= Board_h.bbState.bus3v3_current;
+		msg->telemetry_data[BB1_BOARD_TEMP_I]		= Board_h.bbState.board_temp;
 		xSemaphoreGive(Board_h.bbState_access);
 	}
 	else {

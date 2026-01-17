@@ -7,6 +7,7 @@
 
 
 #include "logging.h"
+#include "utils.h"
 
 W25N04KV_Flash flash_h = {0};
 SemaphoreHandle_t flash_mutex;
@@ -327,9 +328,9 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time((char *) &rawmsgbuf[1]);
+		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
 		rawmsgbuf[25] = ' ';
-		rawmsgbuf[26] = '1';
+		rawmsgbuf[26] = '0';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;
@@ -370,9 +371,9 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
-		get_iso_time((char *) &rawmsgbuf[1]);
+		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
 		rawmsgbuf[25] = ' ';
-		rawmsgbuf[26] = '1';
+		rawmsgbuf[26] = '0';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;
@@ -395,7 +396,7 @@ void send_flash_full() {
 			if(outbuf) {
 				char *pkt_buf = (char *) netbuf_alloc(outbuf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
 				if(pkt_buf) {
-					get_iso_time(pkt_buf);
+					get_iso_time(pkt_buf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
 					pkt_buf[24] = ' ';
 					pkt_buf[25] = '1';
 					memcpy(&pkt_buf[26], ERR_FLASH_FULL, sizeof(ERR_FLASH_FULL) - 1);
@@ -428,7 +429,7 @@ void send_udp_online(ip4_addr_t * ip) {
 	if(outbuf) {
 		uint8_t *pkt_buf = (uint8_t *) netbuf_alloc(outbuf, msglen);
 		if(pkt_buf) {
-			get_iso_time((char *) pkt_buf);
+			get_iso_time((char *) pkt_buf, msglen);
 			pkt_buf[24] = ' ';
 			pkt_buf[25] = '1';
 			snprintf((char *) &pkt_buf[26], sizeof(STAT_NETWORK_LOG_ONLINE) + 15, STAT_NETWORK_LOG_ONLINE "%u.%u.%u.%u", ip4_addr1(ip), ip4_addr2(ip), ip4_addr3(ip), ip4_addr4(ip));
@@ -438,27 +439,45 @@ void send_udp_online(ip4_addr_t * ip) {
 	}
 }
 
-void log_flash_storage() {
+void log_flash_storage(char *logstring, int numbytes) {
 	if(xSemaphoreTake(flash_mutex, 1) == pdPASS) {
-		uint32_t used = 536870912UL - fc_get_bytes_remaining(&flash_h);
+		//uint32_t used = 536870912UL - fc_get_bytes_remaining(&flash_h);
+		uint32_t available = fc_get_bytes_remaining(&flash_h);
 		xSemaphoreGive(flash_mutex);
 
-		uint8_t percent = (used / 536870912.0f) * 100;
-		if(used < 1024) {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 22];
-	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", used, percent);
+		uint8_t percent = (((uint64_t) available) * 100) / 536870912;
+		if(available < 1024) {
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 23];
+	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", available, percent);
 	    	log_message(logmsg, -1);
+	    	if(numbytes >= sizeof(logmsg) - 4) {
+	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
+	    		return;
+	    	}
 		}
-		else if(used < 1048576UL) {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 36];
-	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", used, used >> 10, percent);
+		else if(available < 1048576UL) {
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
+	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", available, available >> 10, percent);
 	    	log_message(logmsg, -1);
+	    	if(numbytes >= sizeof(logmsg) - 4) {
+	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
+	    		return;
+	    	}
+
 		}
 		else {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 31];
-	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu16 "MB/512MB %u%%", used, (uint16_t) (used >> 20), percent);
+	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 32];
+	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu16 "MB/512MB %u%%", available, (uint16_t) (available >> 20), percent);
 	    	log_message(logmsg, -1);
+	    	if(numbytes >= sizeof(logmsg) - 4) {
+	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
+	    		return;
+	    	}
 		}
+	}
+
+	if(numbytes > 0) {
+		memcpy(logstring, "", 1);
 	}
 }
 
@@ -474,6 +493,14 @@ void handle_flash_clearing() {
         	fc_erase_flash(&flash_h); // Clear
     		xSemaphoreGive(flash_mutex);
     		log_message(STAT_CLEAR_FLASH, -1);
+			Message dev_cmd_ack = {0};
+			dev_cmd_ack.type = MSG_DEVICE_ACK;
+			dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
+			dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_CLEAR_FLASH;
+			memcpy(dev_cmd_ack.data.device_ack.payload, STAT_CLEAR_FLASH + 4, sizeof(STAT_CLEAR_FLASH) - 4);
+  			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+  				// Server not up, target device not connected, or txbuffer is full
+  			}
     	}
     }
 }
@@ -500,6 +527,12 @@ void flush_flash_log() {
 	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
 		fc_finish_flash_write(&flash_h);
 		xSemaphoreGive(flash_mutex);
+	}
+}
+
+void flush_flash_log_for_reset() {
+	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
+		fc_finish_flash_write(&flash_h);
 	}
 }
 
