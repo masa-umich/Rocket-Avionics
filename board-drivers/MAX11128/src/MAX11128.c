@@ -96,14 +96,14 @@ void init_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo) {
 		package_cmd(ADC_CONFIG_REG, tx);
 		//taskENTER_CRITICAL();
 		set_adc(pinfo, GPIO_PIN_RESET);
-		if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+		if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
 		set_adc(pinfo, GPIO_PIN_SET);
 		//taskEXIT_CRITICAL();
 
 		package_cmd(ADC_MODE_CNTL_REG, tx);
 		//taskENTER_CRITICAL();
 		set_adc(pinfo, GPIO_PIN_RESET);
-		if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+		if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
 		set_adc(pinfo, GPIO_PIN_SET);
 		//taskEXIT_CRITICAL();
     }
@@ -148,7 +148,7 @@ void read_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo,
 		//Transmit chan_id of 0 to ADC for next frame to transmit and set
 		 //taskENTER_CRITICAL();
 		set_adc(pinfo, GPIO_PIN_RESET);
-		if(HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, 1) ==  HAL_TIMEOUT){
+		if(HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, MAX11128_SPI_TIMEOUT) ==  HAL_TIMEOUT){
 		}
 		set_adc(pinfo, GPIO_PIN_SET);
 		//taskEXIT_CRITICAL();
@@ -169,7 +169,7 @@ void read_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo,
 
 			//taskENTER_CRITICAL();
 			set_adc(pinfo, GPIO_PIN_RESET);
-			if(HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, 1) == HAL_TIMEOUT){
+			if(HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT){
 			}
 			set_adc(pinfo, GPIO_PIN_SET);
 			//taskEXIT_CRITICAL();
@@ -193,7 +193,7 @@ void read_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo,
 			package_cmd(ADC_MODE_CNTL_REG, tx);
 			//taskENTER_CRITICAL();
 			set_adc(pinfo, GPIO_PIN_RESET);
-			if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+			if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
 			set_adc(pinfo, GPIO_PIN_SET);
 			//taskEXIT_CRITICAL();
 
@@ -260,14 +260,14 @@ void set_read_adc_range(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo) 
     package_cmd(SET_SCAN_REGISTER_0, tx);
     //taskENTER_CRITICAL();
     set_adc(pinfo, GPIO_PIN_RESET);
-    if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+    if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
     set_adc(pinfo, GPIO_PIN_SET);
     //taskEXIT_CRITICAL();
 
     package_cmd(SET_SCAN_REGISTER_1, tx);
     //taskENTER_CRITICAL();
     set_adc(pinfo, GPIO_PIN_RESET);
-    if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+    if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
     set_adc(pinfo, GPIO_PIN_SET);
     //taskEXIT_CRITICAL();
 }
@@ -285,7 +285,7 @@ void configure_read_adc_all(GPIO_MAX11128_Pinfo *pinfo) {
 }
 
 static inline void write_adc_reg(SPI_HandleTypeDef *SPI_BUS, uint8_t *tx, uint8_t *rx) {
-    if (HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, 1) == HAL_TIMEOUT) {
+    if (HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {
     }
 }
 

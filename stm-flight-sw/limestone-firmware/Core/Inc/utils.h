@@ -17,6 +17,7 @@
 #include "MAX11128.h"
 #include "LSM6DSO32XTR.h"
 #include "logging.h"
+#include "NEO-M92-00B.h"
 
 #define PT_DIVIDER		(float)((5.0 + 3.3) / 5.0)
 
@@ -44,6 +45,8 @@ typedef struct {
   	MS5611 bar2_h;
   	MS5611_PROM_t prom1;
   	MS5611_PROM_t prom2;
+
+  	gps_handler gps_h;
 } Sensors_t;
 
 // Calculate PT pressure from raw ADC value

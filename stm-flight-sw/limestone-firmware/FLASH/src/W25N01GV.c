@@ -32,7 +32,7 @@
 #define W25N01GV_CS_INACTIVE                      (uint8_t)  GPIO_PIN_SET
 
 // Arbitrary timeout value
-#define W25N01GV_SPI_TIMEOUT                      (uint8_t)  0x02
+#define W25N01GV_SPI_TIMEOUT                      (uint8_t)  0x10
 
 // 1024 blocks with 64 pages each = 65536 pages
 #define W25N01GV_PAGES_PER_BLOCK                  (uint16_t) 64
@@ -156,14 +156,33 @@ static void spi_transmit(W25N01GV_Flash *flash, uint8_t *tx, uint16_t size) {
 static void spi_transmit_receive(W25N01GV_Flash *flash, uint8_t *tx,
 		uint16_t tx_size,	uint8_t *rx, uint16_t rx_size) {
 
+	uint8_t temptx[tx_size + rx_size];
+	uint8_t temprx[tx_size + rx_size];
+	memset(temptx, 0, tx_size + rx_size);
+	memcpy(temptx, tx, tx_size);
+
 	//__disable_irq();
+	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);  // Select chip
+	// Transmit/receive, and store the status code
+	//flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, tx_size, W25N01GV_SPI_TIMEOUT);
+	//flash->last_HAL_status = HAL_SPI_Receive(flash->SPI_bus, rx, rx_size, W25N01GV_SPI_TIMEOUT);
+	flash->last_HAL_status = HAL_SPI_TransmitReceive(flash->SPI_bus, temptx, temprx, rx_size + tx_size, W25N01GV_SPI_TIMEOUT);
+	// TODO the Transmit status will get lost, should it still be stored like this?
+	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);  // Release chip
+	//__enable_irq();
+	memcpy(rx, temprx + tx_size, rx_size);
+
+}
+
+static void spi_transmit_receive_large(W25N01GV_Flash *flash, uint8_t *tx,
+		uint16_t tx_size,	uint8_t *rx, uint16_t rx_size) {
+
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);  // Select chip
 	// Transmit/receive, and store the status code
 	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, tx_size, W25N01GV_SPI_TIMEOUT);
 	flash->last_HAL_status = HAL_SPI_Receive(flash->SPI_bus, rx, rx_size, W25N01GV_SPI_TIMEOUT);
 	// TODO the Transmit status will get lost, should it still be stored like this?
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);  // Release chip
-	//__enable_irq();
 
 }
 
@@ -426,7 +445,12 @@ static void write_page_to_buffer(W25N01GV_Flash *flash, uint8_t *data,
 		uint16_t num_bytes, uint16_t column_adr) {
 
 	uint8_t column_adr_8bit_array[2] = W25N01GV_UNPACK_UINT16_TO_2_BYTES(column_adr);
-	uint8_t tx1[3] = {W25N01GV_LOAD_PROGRAM_DATA, column_adr_8bit_array[0], column_adr_8bit_array[1]};
+	//uint8_t tx1[3] = {W25N01GV_LOAD_PROGRAM_DATA, column_adr_8bit_array[0], column_adr_8bit_array[1]};
+	uint8_t tx[3 + num_bytes];
+	tx[0] = W25N01GV_LOAD_PROGRAM_DATA;
+	tx[1] = column_adr_8bit_array[0];
+	tx[2] = column_adr_8bit_array[1];
+	memcpy(tx + 3, data, num_bytes);
 
 	// Ignore all data that would be written to column 2048 and after.
 	// You don't want to overwrite the extra memory at the end of the page.
@@ -437,8 +461,9 @@ static void write_page_to_buffer(W25N01GV_Flash *flash, uint8_t *data,
 	// Not using spi_transmit() because I didn't want to mess with combining the tx arrays
 	//__disable_irq();
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);
-	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx1, 3, W25N01GV_SPI_TIMEOUT);
-	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, data, num_bytes, W25N01GV_SPI_TIMEOUT);
+	//flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx1, 3, W25N01GV_SPI_TIMEOUT);
+	//flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, data, num_bytes, W25N01GV_SPI_TIMEOUT);
+	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, num_bytes + 3, W25N01GV_SPI_TIMEOUT);
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);
 	//__enable_irq();
 }

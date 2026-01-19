@@ -267,6 +267,11 @@ void client_receive_thread(void *arg) {
 			        	    	log_message(BB_ERR_TCP_CLIENT_READ_NOBUF, BB_ERR_TYPE_TCP_CLIENT_RECV);
 				    	        break;
 				    	    }
+				    	    case ECONNABORTED: {
+				    	    	// Aborted
+				    	    	log_message(BB_ERR_TCP_CLIENT_READ_ABORT, BB_ERR_TYPE_TCP_CLIENT_RECV);
+				    	    	break;
+				    	    }
 				    	    default: {
 				    	    	// unknown error when receiving data, use errno in message
 			        	    	char logmsg[sizeof(BB_ERR_TCP_CLIENT_READ_UNKNOWN) + 3];
@@ -335,6 +340,11 @@ void client_receive_thread(void *arg) {
                         	case ENOTCONN: {
                         		// socket not connected
                     	    	log_message(BB_ERR_TCP_CLIENT_ERROR_NOTCONN, BB_ERR_TYPE_TCP_CLIENT_RECV);
+                        		break;
+                        	}
+                        	case ECONNABORTED: {
+                        		// Aborted
+                        		log_message(BB_ERR_TCP_CLIENT_ERROR_ABORT, BB_ERR_TYPE_TCP_CLIENT_RECV);
                         		break;
                         	}
                         	default: {
@@ -438,6 +448,11 @@ void client_send_thread(void *arg) {
 			    	    }
 			    	    case ECONNRESET: {
 			    	    	// do nothing since the receive thread will handle this
+			    	    	break;
+			    	    }
+			    	    case ECONNABORTED: {
+			    	    	// Aborted
+			    	    	log_message(BB_ERR_TCP_CLIENT_SEND_ABORT, BB_ERR_TYPE_TCP_CLIENT_SEND);
 			    	    	break;
 			    	    }
 			    	    default: {

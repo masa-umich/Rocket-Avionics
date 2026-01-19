@@ -55,6 +55,7 @@ void DebugMon_Handler(void);
 void TIM8_TRG_COM_TIM14_IRQHandler(void);
 void TIM6_DAC_IRQHandler(void);
 void ETH_IRQHandler(void);
+void USART10_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

@@ -144,6 +144,7 @@
 #define MAX11128_MAX_CHANNELS       (uint8_t)   0x0010  // 15 Channels(0-13, 15)
 #define MAX11128_EOC_WAIT_TIME      (uint16_t)  0x0014  // Max wait time for EOC
                                                         // to finish conversions
+#define MAX11128_SPI_TIMEOUT		(uint16_t) 	0x000A
 
 // GPIO pinout memory addresses
 typedef struct GPIO_MAX11128_Pinfo {

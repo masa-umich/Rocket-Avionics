@@ -42,6 +42,7 @@
 #include "eeprom-config.h"
 #include "log_errors.h"
 #include "udptelemetry.h"
+#include "NEO-M92-00B.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -983,7 +984,7 @@ static void MX_USART10_UART_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_UARTEx_DisableFifoMode(&huart10) != HAL_OK)
+  if (HAL_UARTEx_EnableFifoMode(&huart10) != HAL_OK)
   {
     Error_Handler();
   }
@@ -1143,6 +1144,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if(huart->Instance == USART10) {
+        irq_gps_callback(&(sensors_h.gps_h));
+    }
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartAndMonitor */
@@ -1293,6 +1299,15 @@ void StartAndMonitor(void *argument)
   		log_message(ERR_BAR_INIT "2", -1);
   	}
   	MS5611_readPROM(&(sensors_h.bar2_h), &(sensors_h.prom2));
+
+  	// Init GPS
+  	SemaphoreHandle_t gpsSemaphore = xSemaphoreCreateBinary();
+  	xSemaphoreTake(gpsSemaphore, 0);
+  	sensors_h.gps_h.semaphore = gpsSemaphore;
+  	sensors_h.gps_h.huart = &huart10;
+    if(init_gps(&(sensors_h.gps_h), 500) != 0) {
+        log_message(FC_ERR_INIT_GPS, -1);
+    }
 
 	// Start tasks
 

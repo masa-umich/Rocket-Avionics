@@ -450,6 +450,23 @@ HAL_StatusTypeDef ADS_read(ADS_Chip *ADS, uint8_t reg_addr, uint8_t *rx_buffer, 
 	return status;
 }
 
+HAL_StatusTypeDef ADS_readwrite(ADS_Chip *ADS, uint8_t reg_addr, uint8_t *rx_buffer, uint8_t num_bytes) {
+	//taskENTER_CRITICAL();
+	uint8_t temprx[num_bytes + 1];
+	uint8_t temptx[num_bytes + 1];
+	memset(temptx, 0, num_bytes + 1);
+	temptx[0] = reg_addr;
+
+	ADS_chipSelect(ADS);
+	HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(ADS->hspi, temptx, temprx, num_bytes + 1, ADS->SPI_TIMEOUT);
+	ADS_chipRelease(ADS);
+	memcpy(rx_buffer, temprx + 1, num_bytes);
+
+	//taskEXIT_CRITICAL();
+
+	return status;
+}
+
 void ADS_chipSelect(ADS_Chip *ADS) {
 	HAL_GPIO_WritePin(ADS->CS_GPIO_Port, ADS->CS_GPIO_Pin, 0);
 }
@@ -484,7 +501,7 @@ int ADS_configure(ADS_Chip *ADS, uint8_t TC_index, int check) {
 	if(check) {
 		uint8_t rxbuffer[4] = {0, 0, 0, 0};
 
-		ADS_read(ADS, 0x23, rxbuffer, 4);
+		ADS_readwrite(ADS, 0x23, rxbuffer, 4);
 
 		return !(rxbuffer[0] == conf_byte_1 && rxbuffer[1] == conf_byte_2 && rxbuffer[2] == conf_byte_3 && rxbuffer[3] == conf_byte_4);
 	}
@@ -497,16 +514,16 @@ int ADS_configureChip(ADS_Chip *ADS, int check) {
 	uint8_t conf_byte_3 = ADS_VOLT_REF_INT | ADS_FILTER_DISABLED | ADS_PSW_DISABLED | ADS_IDAC_DISABLED;
 	uint8_t conf_byte_4 = ADS_l1MUX_DISABLED | ADS_l2MUX_DISABLED | ADS_DRDY_MODE_BOTH;
 
-	uint8_t txbuffer[3] = {0x49, conf_byte_3, conf_byte_4};
+	uint8_t txbuffer[4] = {0x49, conf_byte_3, conf_byte_4, 0x00};
 
-	ADS_write(ADS, txbuffer, 3);
+	ADS_write(ADS, txbuffer, 4);
 
 	if(check) {
-		uint8_t rxbuffer[2] = {0, 0};
+		uint8_t rxbuffer[4] = {0, 0, 0, 0};
 
-		ADS_read(ADS, 0x29, rxbuffer, 2);
+		ADS_readwrite(ADS, 0x29, rxbuffer, 4);
 
-		return !(rxbuffer[2] == conf_byte_3 && rxbuffer[3] == conf_byte_4);
+		return !(rxbuffer[0] == conf_byte_3 && rxbuffer[1] == conf_byte_4);
 	}
 	else {
 		return 0;

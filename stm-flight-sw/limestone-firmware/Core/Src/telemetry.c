@@ -81,6 +81,27 @@ void TelemetryTask(void *argument) {
   	  		old_stat = 0;
   	  		xSemaphoreGive(Rocket_h.fcValve_access);
   	  	}
+  	  	gps_data gps_values = {0};
+  	  	uint8_t gps_good = 0;
+  	  	if(xSemaphoreTake(sensors_h.gps_h.semaphore, 0) == pdTRUE) {
+  	  		char nmea_sen[100];
+  	  		memset(nmea_sen, 0, 100);
+  	  		if(sensors_h.gps_h.active_rx_buffer == 2) {
+  	  			strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_1);
+  	  			sensors_h.gps_h.rx_buffer_1_pos = 0;
+  	  	    }
+  	  	    else {
+  	  	        strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_2);
+  	  	        sensors_h.gps_h.rx_buffer_2_pos = 0;
+  	  	    }
+  	  		enum minmea_sentence_id id = minmea_sentence_id(nmea_sen, false);
+  	  		if(id == MINMEA_SENTENCE_GGA) {
+  	  			ParseStatus status = parse_gps_sentence(nmea_sen, &gps_values);
+  	  			if(status == NORMAL) {
+  	  				gps_good = 1;
+  	  			}
+  	  	    }
+  	  	}
 
   	  	uint64_t recordtime = get_rtc_time();
 
@@ -119,6 +140,12 @@ void TelemetryTask(void *argument) {
   			Rocket_h.fcState.vlv1_current = current_sense_calc(adc_values[ADC_VLV1_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
   			Rocket_h.fcState.vlv2_current = current_sense_calc(adc_values[ADC_VLV2_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
   			Rocket_h.fcState.vlv3_current = current_sense_calc(adc_values[ADC_VLV3_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+
+  			if(gps_good) {
+  				Rocket_h.fcState.gps_lat = gps_values.latitude;
+  				Rocket_h.fcState.gps_long = gps_values.longitude;
+  				Rocket_h.fcState.gps_alt = gps_values.altitude;
+  			}
 
   			if(!TC_stat) {
   				if(!isnan(TCvalues[0])) {

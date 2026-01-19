@@ -132,6 +132,8 @@
 #define FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN		"059 Unknown errno - TCP server socket flagged as error, fd/errno "
 #define FC_ERR_TCP_SERV_ACCEPT_NO_ROOM			"060 TCP server connection list full"
 
+#define FC_ERR_INIT_GPS							"061 GPS Init failed"
+
 #elif defined(BAY_BOARD)
 // Bay Board error messages
 #define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"
@@ -185,6 +187,9 @@
 #define BB_ERR_TCP_CLIENT_INIT_MEM_ERR			"040 TCP client memory issue on init"
 
 #define BB_ERR_ADC1_READ						"041 ADC 1 read error"
+#define BB_ERR_TCP_CLIENT_READ_ABORT			"042 TCP client connection aborted"
+#define BB_ERR_TCP_CLIENT_ERROR_ABORT			"043 TCP client connection aborted"
+#define BB_ERR_TCP_CLIENT_SEND_ABORT			"044 TCP client connection aborted"
 
 #endif
 
