@@ -82,9 +82,9 @@
 /*----- Value in opt.h for LWIP_DNS_SECURE: (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT) -*/
 #define LWIP_DNS_SECURE 7
 /*----- Default Value for TCP_MSS: 536 ---*/
-#define TCP_MSS 1436
-/*----- Default Value for TCP_SND_BUF: 2872 ---*/
-#define TCP_SND_BUF 5744
+#define TCP_MSS 1460
+/*----- Default Value for TCP_SND_BUF: 2920 ---*/
+#define TCP_SND_BUF 5840
 /*----- Default Value for TCP_SND_QUEUELEN: 17 ---*/
 #define TCP_SND_QUEUELEN 16
 /*----- Value in opt.h for LWIP_NETIF_LINK_CALLBACK: 0 -----*/

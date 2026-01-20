@@ -23,6 +23,7 @@ void init_udp_telem() {
 			telemudp_h = netconn_new(NETCONN_UDP);
 			if(telemudp_h) {
 				ip_set_option(telemudp_h->pcb.udp, SOF_BROADCAST);
+				netconn_set_nonblocking(telemudp_h, 1);
 			}
 			else {
 				// failed to create netconn

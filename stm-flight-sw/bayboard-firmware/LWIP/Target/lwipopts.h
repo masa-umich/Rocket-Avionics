@@ -62,7 +62,7 @@
 /*----- Default Value for H7 devices: 0x30004000 -----*/
 #define LWIP_RAM_HEAP_POINTER 0x30000200
 /*----- Default Value for MEMP_NUM_TCP_SEG: 16 ---*/
-#define MEMP_NUM_TCP_SEG 17
+#define MEMP_NUM_TCP_SEG 32
 /*----- Default Value for MEMP_NUM_SYS_TIMEOUT: 3 ---*/
 #define MEMP_NUM_SYS_TIMEOUT 16
 /*----- Default Value for MEMP_NUM_NETBUF: 2 ---*/
@@ -84,12 +84,12 @@
 /*----- Default Value for TCP_SYNMAXRTX: 6 ---*/
 #define TCP_SYNMAXRTX 0
 /*----- Default Value for TCP_MSS: 536 ---*/
-#define TCP_MSS 1436
-/*----- Default Value for TCP_SND_BUF: 2872 ---*/
-#define TCP_SND_BUF 5744
+#define TCP_MSS 1460
+/*----- Default Value for TCP_SND_BUF: 2920 ---*/
+#define TCP_SND_BUF 5840
 /*----- Default Value for TCP_SND_QUEUELEN: 17 ---*/
 #define TCP_SND_QUEUELEN 16
-/*----- Default Value for TCP_WND_UPDATE_THRESHOLD: 1436 ---*/
+/*----- Default Value for TCP_WND_UPDATE_THRESHOLD: 1460 ---*/
 #define TCP_WND_UPDATE_THRESHOLD 5840
 /*----- Value in opt.h for LWIP_NETIF_LINK_CALLBACK: 0 -----*/
 #define LWIP_NETIF_LINK_CALLBACK 1

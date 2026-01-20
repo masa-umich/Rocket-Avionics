@@ -95,7 +95,7 @@ typedef struct
 } RxBuff_t;
 
 /* Memory Pool Declaration */
-#define ETH_RX_BUFFER_CNT             128U
+#define ETH_RX_BUFFER_CNT             12U
 LWIP_MEMPOOL_DECLARE(RX_POOL, ETH_RX_BUFFER_CNT, sizeof(RxBuff_t), "Zero-copy RX PBUF pool");
 
 /* Variable Definitions */
@@ -120,7 +120,7 @@ ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT] __attribute__((section(".TxDecr
 #endif
 
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
-#pragma location = 0x30000100
+#pragma location = 0x30000200
 extern u8_t memp_memory_RX_POOL_base[];
 
 #elif defined ( __CC_ARM ) /* MDK ARM Compiler */
