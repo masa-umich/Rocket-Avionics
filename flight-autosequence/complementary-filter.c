@@ -15,20 +15,9 @@ void cf_init(ComplementaryFilter* cf, float tau){
     cf->alpha = tau / (tau + dt); 
 }
 
-void cf_update(ComplementaryFilter* cf, float* pitch, float* yaw){
-    // Average accelerometer and gyroscope data from both IMUs
-    float accel_x, accel_y, accel_z;
-    float gyro_x, gyro_y;
-    if (xSemaphoreTake(Rocket_h.fcState_access, pdMS_TO_TICKS(5)) == pdPASS) {
-        accel_x = (Rocket_h.fcstate.imu1.XL_x + Rocket_h.fcstate.imu2.XL_x) / 2.0f;
-        accel_y = (Rocket_h.fcstate.imu1.XL_y + Rocket_h.fcstate.imu2.XL_y) / 2.0f;
-        accel_z = (Rocket_h.fcstate.imu1.XL_z + Rocket_h.fcstate.imu2.XL_z) / 2.0f;
-        gyro_x = (Rocket_h.fcstate.imu1.W_X + Rocket_h.fcstate.imu2.W_X) / 2.0f;
-        gyro_y = (Rocket_h.fcstate.imu1.W_Y + Rocket_h.fcstate.imu2.W_Y) / 2.0f;
-
-        xSemaphoreGive(Rocket_h.fcState_access);
-    }
-    // may not want to take average for data depending on noise characteristics
+void cf_update(ComplementaryFilter* cf, float* pitch, float* yaw, 
+                      float accel_x, float accel_y, float accel_z,
+                      float gyro_x, float gyro_y){
     
     // Extract accelerometer and gyroscope data
     float accel_pitch, accel_yaw;

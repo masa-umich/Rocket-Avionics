@@ -16,4 +16,16 @@ void energizeMPV2(){
     return;
 }   // energizes whichever valve opens second
 
+void blowoutPanel(){
+    return;
+}   // function to blowout the panel
+
+void deployDrogue(){
+    return;
+} // function to deploy drogue chute
+
+void deployMain(){
+    return;
+}  // function to deploy main chute
+
 #endif

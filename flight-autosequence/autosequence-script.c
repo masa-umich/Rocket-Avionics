@@ -1,9 +1,17 @@
 #include "autosequence-script.h"
 #include "complementary-filter.h"
+#include "simplified-curve-fit.h"
 
 extern const uint32_t dt;
+const ALTITUDE_BUFFER_SIZE = 11;
 
-
+void fill_altitude_buffer(float* altitude_buffer, float* time_buffer, float bar1, float bar2) {
+    for (int i = 0; i < ALTITUDE_BUFFER_SIZE; ++i) {
+        altitude_buffer[i] = compute_height((bar1 + bar2) / 2.0f);
+        time_buffer[i] = getTime() / 1000.0f; // convert ms to seconds
+        vTaskDelay(pdMS_TO_TICKS(dt)); //FIX THE DELAY ON THIS LINE
+    }
+}
 
 void execute_flight_autosequence(){
     FlightPhase phase = ST_OPEN_MPV1; // starts at state0
@@ -33,10 +41,9 @@ void execute_flight_autosequence(){
     uint32_t meco_timestamp = 0;         // time (in ms) when MECO is detected
     uint32_t lockout_timestamp = 0; // will be computed when MECO_flag is set
 
-    float post_lockout_height = 0.0f;
-    float previous_height = 0.0f;
-    float avg_velocity = 0.0f;
-    float velocity_buf[5] = {0};
+    float alttitude_readings[ALTITUDE_BUFFER_SIZE] = {0}; // in meters
+    float time_readings[ALTITUDE_BUFFER_SIZE] = {0};      // in seconds
+    bool heights_recorded = false;
 
     float pitch_buf[7] = {0}; // need to create a 5 or 7 elt buffer to store the pitch and yaw after MECO
     float yaw_buf[7] = {0};
@@ -53,12 +60,23 @@ void execute_flight_autosequence(){
         float bar1_temp_K = 0.0f;
         float bar2_temp_K = 0.0f;
 
+        float accel_x, accel_y, accel_z;
+        float gyro_x, gyro_y;
+
+        float post_lockout_accel, post_lockout_vel, post_lockout_alt;
+
         if (xSemaphoreTake(Rocket_h.fcState_access, pdMS_TO_TICKS(5)) == pdPASS)
         {
             bar1 = Rocket_h.fcState.bar1; // convert to needed units if necessary
             bar2 = Rocket_h.fcState.bar2;
             imu1 = Rocket_h.fcState.imu1_A.XL_x;
             imu2 = Rocket_h.fcState.imu2_A.XL_x;
+
+            accel_x = (Rocket_h.fcstate.imu1.XL_x + Rocket_h.fcstate.imu2.XL_x) / 2.0f;
+            accel_y = (Rocket_h.fcstate.imu1.XL_y + Rocket_h.fcstate.imu2.XL_y) / 2.0f;
+            accel_z = (Rocket_h.fcstate.imu1.XL_z + Rocket_h.fcstate.imu2.XL_z) / 2.0f;
+            gyro_x = (Rocket_h.fcstate.imu1.W_X + Rocket_h.fcstate.imu2.W_X) / 2.0f;
+            gyro_y = (Rocket_h.fcstate.imu1.W_Y + Rocket_h.fcstate.imu2.W_Y) / 2.0f;
 
             //Temp from barometers would be useful here too 
             //immediately convert to Kelvin
@@ -71,7 +89,7 @@ void execute_flight_autosequence(){
 
 
         switch (phase) {
-            case ST_OPEN_MPV1:
+            case ST_OPEN_MPV1: // This state currently works as intended
                 energizeMPV1();
 
                 if (getTime() - handoff_timestamp > MPV_DELAY){
@@ -82,7 +100,7 @@ void execute_flight_autosequence(){
                 break;
 
             
-            case ST_OPEN_BOTH_MPVS:
+            case ST_OPEN_BOTH_MPVS: // This state currently works as intended
                 energizeMPV1();
                 energizeMPV2();
                 
@@ -153,7 +171,7 @@ void execute_flight_autosequence(){
             case ST_MACH_LOCKOUT:
             {   
                 float pitch, yaw;
-                cf_update(&imu_cf, &pitch, &yaw);
+                cf_update(&imu_cf, &pitch, &yaw, accel_x, accel_y, accel_z, gyro_x, gyro_y);
                 for (int i = 6; i > 0; --i) {
                     pitch_buf[i] = pitch_buf[i - 1];
                     yaw_buf[i] = yaw_buf[i - 1];
@@ -163,7 +181,7 @@ void execute_flight_autosequence(){
 
                 insert(&baro_detector,bar1, bar2, phase);
 
-                if ((xTaskGetTickCount() - meco_timestamp) >= lockout_timestamp)
+                if ((getTime() - meco_timestamp) >= lockout_timestamp)
                 {
                     phase = ST_WAIT_APOGEE;
                 }
@@ -173,27 +191,18 @@ void execute_flight_autosequence(){
             } 
 
             case ST_WAIT_APOGEE: {
-                if (avg_velocity == 0.0f) {
-                    post_lockout_height = compute_height((bar1 + bar2) / 2.0f);
-                    if (previous_height != 0.0f) {
-                        float current_velocity = compute_velocity(previous_height, post_lockout_height, dt);
-                        for (int i = 4; i > 0; --i) {
-                            avg_velocity += velocity_buf[i];
-                            velocity_buf[i] = velocity_buf[i - 1];
-                        }
-                        velocity_buf[0] = current_velocity;
-                        avg_velocity += velocity_buf[0];
-                        avg_velocity /= 5.0f;
-                    }
-                    previous_height = post_lockout_height;
+                if (!heights_recorded) {
+                    fill_altitude_buffer(alttitude_readings, bar1, bar2);
+                    quadr_curve_fit(alttitude_readings, time_readings, &post_lockout_accel, &post_lockout_vel, &post_lockout_alt);
+                    heights_recorded = true;
                 }
-
+                
                 insert(&baro_detector, bar1, bar2, phase);
 
                 if(baro_detector.slope_size >= AD_CAPACITY) {
                     if (detect_apogee(&baro_detector)) {
                         apogee_flag = 1;
-                        // TODO: SEND EVENT
+                        blowoutPanel();
                         phase = ST_WAIT_DROGUE;
                     }
                 }
@@ -209,7 +218,7 @@ void execute_flight_autosequence(){
                     if (detect_altitude(&baro_detector, phase))
                     {
                         drogue_flag = 1;
-                        // TODO: SEND EVENT
+                        deployDrogue();
                         phase = ST_WAIT_MAIN;
                     }
                 }
@@ -225,7 +234,7 @@ void execute_flight_autosequence(){
                     if (detect_altitude(&baro_detector, phase))
                     {
                         main_flag = 1;
-                        // TODO: SEND EVENT
+                        deployMain();
                         phase = ST_DONE;
                     }
                 }
@@ -234,7 +243,7 @@ void execute_flight_autosequence(){
             } 
 
             case ST_DONE: {
-                vTaskSuspend(NULL);
+                return;
             } break;
             
         }//end switch(phase)
