@@ -67,8 +67,6 @@
 #define SX1280_SPI_TIMEOUT_MS 100
 
 
-
-
 /**
 * @brief status enum for driver functions
 */
@@ -79,13 +77,10 @@ typedef enum {
    SX1280_TIMEOUT
 } SX1280_Status_t;
 
-
 /**
 * @brief structure to handle all necessary hardware handles/pins for the SX1280
 * instance of this struct should be passed to Initialize function
 */
-
-
 typedef struct {
    SPI_HandleTypeDef* spiHandle;
    GPIO_TypeDef* nssPort;
@@ -96,13 +91,10 @@ typedef struct {
    uint16_t busyPin;
 } SX1280_Hal_t;
 
-
 /**
  * @brief packet types supported by sx1280 (Table 11-42)
  *
  */
-
-
  typedef enum {
    PACKET_TYPE_GFSK = 0x00,
    PACKET_TYPE_LORA = 0x01,
@@ -110,9 +102,6 @@ typedef struct {
    PACKET_TYPE_FLRC = 0x03,
    PACKET_TYPE_BLE = 0x04
  } SX1280_PacketType_t;
-
-
-
 
  /**
   * @brief LoRa spreading factor (table 14-47)
@@ -128,7 +117,6 @@ typedef struct {
    LORA_SF12 = 0xC0
  } SX1280_LoRa_SF_t;
 
-
  /**
   * @brief LoRa bandwidth settings (table 14-48)
   */
@@ -139,12 +127,9 @@ typedef struct {
    LORA_BW_200 = 0x34, // 203.125
  } SX1280_LoRa_BW_t;
 
-
  /**
   * @brief LoRa coding rate settings (table 14-49)
   */
-
-
  typedef enum {
    LORA_CR_4_5 = 0x01,
    LORA_CR_4_6 = 0x02,
@@ -155,7 +140,6 @@ typedef struct {
    LORA_CR_LI_4_8 = 0x07
   } SX1280_LoRa_CR_t;
 
-
  /**
   * @brief LoRa packet header types (table 14-51)
   */
@@ -164,7 +148,6 @@ typedef struct {
    LORA_IMPLICIT_HEADER = 0x80
  } SX1280_LoRa_Header_Type_t;
 
-
  /**
   * @brief LoRa crc settings (table 14-53)
   */
@@ -172,7 +155,6 @@ typedef struct {
    LORA_CRC_OFF = 0x00,
    LORA_CRC_ON = 0x20
  } SX1280_LoRa_CRC_t;
-
 
  /**
   * @brief LoRa IQ setting (table 14-54)
@@ -184,8 +166,6 @@ typedef struct {
 
 
  // PUBLIC API FUNCTION PROTOTYPES ------------------//
-
-
 /**
  * @brief initialize SX1280 radio transceiver
  *
@@ -216,7 +196,6 @@ SX1280_Status_t SX1280_WriteBuffer(uint8_t* data, uint8_t length);
 */
 int16_t SX1280_ReadBuffer(uint8_t* data, uint8_t maxLength);
 
-
 // config prototypes
 /**
 * @brief set radio packet type (ex. LORA, GFSK).
@@ -224,13 +203,11 @@ int16_t SX1280_ReadBuffer(uint8_t* data, uint8_t maxLength);
 */
 SX1280_Status_t SX1280_SetPacketType(SX1280_PacketType_t packetType);
 
-
 /**
 * @brief set radio carrier freq
 * @param frequency the frequency in Hz (ex. 2400000000 for 2.4 GHz)
 */
 SX1280_Status_t SX1280_SetRfFrequency(uint32_t frequency);
-
 
 /**
 * @brief set modulation param for current packet type
@@ -251,7 +228,6 @@ SX1280_Status_t SX1280_SetModulationParams(SX1280_LoRa_SF_t sf, SX1280_LoRa_BW_t
 */
 SX1280_Status_t SX1280_SetPacketParams(uint8_t preambleLengthVal, SX1280_LoRa_Header_Type_t headerType, uint8_t payloadLength, SX1280_LoRa_CRC_t crc, SX1280_LoRa_IQ_t invertIQ);
 
-
 /**
 * @brief set base address for TX and RX buffers
 * @param txBaseAddress start address for the TX buffer (0-255)
@@ -259,14 +235,12 @@ SX1280_Status_t SX1280_SetPacketParams(uint8_t preambleLengthVal, SX1280_LoRa_He
 */
 SX1280_Status_t SX1280_SetBufferBaseAddress(uint8_t txBaseAddress, uint8_t rxBaseAddress);
 
-
 /**
 * @brief sets transmit output power and ramp time
 * @param power output power in dBm (-18 to +13 dBm)
 * @param rampTime Ramp time constant.
 */
 SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime);
-
 
 /**
 * @brief Enables the High Sensitivity Mode (LNA boost).
@@ -281,7 +255,6 @@ SX1280_Status_t SX1280_SetTxParams(int8_t power, uint8_t rampTime);
 */
 SX1280_Status_t SX1280_SetHighSensitivityMode(void);
 
-
 /**
  * @brief Configures which interrupts are enabled and how they are routed to DIO pins.
  * @param irqMask 16-bit mask of interrupts to *enable*. (e.g., 0xFFFF to enable all)
@@ -291,8 +264,6 @@ SX1280_Status_t SX1280_SetHighSensitivityMode(void);
  * @return SX1280_Status_t Status of operation.
  */
 SX1280_Status_t SX1280_SetDioIrqParams(uint16_t irqMask, uint16_t dio1Mask, uint16_t dio2Mask, uint16_t dio3Mask);
-
-
 
 /**
 * @brief Put radio in TX mode to transmit packet

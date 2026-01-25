@@ -28,9 +28,6 @@
 // 255 (max payload) + 5 (max command overhead) = 260
 #define SX1280_MAX_SPI_BUFFER 260
 
-//standby modes for SET_STANDBY command
-#define STDBY_RC 0x00
-#define STDBY_XOSC 0x01
 
 // buffer offset for write operations
 #define TX_BUFFER_OFFSET 0x00
@@ -515,7 +512,7 @@ SX1280_Status_t SX1280_GetIrqStatus(uint16_t* irqStatus) {
     uint8_t cmd[4];
     uint8_t response[4];
 
-    cmd[0] = 0x15;
+    cmd[0] = SX1280_CMD_GET_IRQ_STATUS;
     cmd[1] = SX1280_NOP;
     cmd[2] = SX1280_NOP;
     cmd[3] = SX1280_NOP;
