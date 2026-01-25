@@ -20,19 +20,21 @@
  */
 
 #include "../inc/W25N01GV.h"
+#include "cmsis_os.h"
 
 #ifdef HAL_SPI_MODULE_ENABLED  // Begin SPI include protection
 
 // Device ID information, used to check if flash is working
 #define	W25N01GV_MANUFACTURER_ID                  (uint8_t)  0xEF
 #define W25N01GV_DEVICE_ID                        (uint16_t) 0xAA21
+#define W25N04KV_DEVICE_ID 						  (uint16_t) 0xAA23
 
 // Chip is active low
 #define W25N01GV_CS_ACTIVE                        (uint8_t)  GPIO_PIN_RESET
 #define W25N01GV_CS_INACTIVE                      (uint8_t)  GPIO_PIN_SET
 
 // Arbitrary timeout value
-#define W25N01GV_SPI_TIMEOUT                      (uint8_t)  0x10
+#define W25N01GV_SPI_TIMEOUT                      (uint8_t)  0x0A
 
 // 1024 blocks with 64 pages each = 65536 pages
 #define W25N01GV_PAGES_PER_BLOCK                  (uint16_t) 64
@@ -156,33 +158,14 @@ static void spi_transmit(W25N01GV_Flash *flash, uint8_t *tx, uint16_t size) {
 static void spi_transmit_receive(W25N01GV_Flash *flash, uint8_t *tx,
 		uint16_t tx_size,	uint8_t *rx, uint16_t rx_size) {
 
-	uint8_t temptx[tx_size + rx_size];
-	uint8_t temprx[tx_size + rx_size];
-	memset(temptx, 0, tx_size + rx_size);
-	memcpy(temptx, tx, tx_size);
-
 	//__disable_irq();
-	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);  // Select chip
-	// Transmit/receive, and store the status code
-	//flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, tx_size, W25N01GV_SPI_TIMEOUT);
-	//flash->last_HAL_status = HAL_SPI_Receive(flash->SPI_bus, rx, rx_size, W25N01GV_SPI_TIMEOUT);
-	flash->last_HAL_status = HAL_SPI_TransmitReceive(flash->SPI_bus, temptx, temprx, rx_size + tx_size, W25N01GV_SPI_TIMEOUT);
-	// TODO the Transmit status will get lost, should it still be stored like this?
-	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);  // Release chip
-	//__enable_irq();
-	memcpy(rx, temprx + tx_size, rx_size);
-
-}
-
-static void spi_transmit_receive_large(W25N01GV_Flash *flash, uint8_t *tx,
-		uint16_t tx_size,	uint8_t *rx, uint16_t rx_size) {
-
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);  // Select chip
 	// Transmit/receive, and store the status code
 	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, tx_size, W25N01GV_SPI_TIMEOUT);
 	flash->last_HAL_status = HAL_SPI_Receive(flash->SPI_bus, rx, rx_size, W25N01GV_SPI_TIMEOUT);
 	// TODO the Transmit status will get lost, should it still be stored like this?
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);  // Release chip
+	//__enable_irq();
 
 }
 
@@ -248,7 +231,7 @@ static uint8_t flash_is_busy(W25N01GV_Flash *flash) {
  */
 static void wait_for_operation(W25N01GV_Flash *flash, uint32_t timeout) {
 	uint32_t count = 0;
-	while (flash_is_busy(flash) && count < 6*timeout) {
+	while (flash_is_busy(flash) && count < timeout/3) {
 		++count;
 	}
 }
@@ -292,7 +275,7 @@ static uint8_t BBM_look_up_table_is_full(W25N01GV_Flash *flash) {
 }
 
 /**
- * Read the bad block management look up table. The manufacturer marks some of
+ * Read the  block management look up table. The manufacturer marks some of
  * the bad memory blocks and writes them into a look up table. The datasheet
  * says to scan all blocks before writing or erasing on a new flash chip
  * so you don't delete the bad block information that's loaded at the factory.
@@ -336,7 +319,7 @@ static void load_page(W25N01GV_Flash *flash, uint16_t page_num) {
 	spi_transmit(flash, tx, 4);
 
 	// TODO currently assumes ECC is always on, but needs to be more flexible
-  wait_for_operation(flash, W25N01GV_READ_PAGE_DATA_ECC_ON_MAX_TIME_US * 1000);  // Wait for the page to load
+	wait_for_operation(flash, W25N01GV_READ_PAGE_DATA_ECC_ON_MAX_TIME_US * 1000);  // Wait for the page to load
 }
 
 /**
@@ -445,12 +428,7 @@ static void write_page_to_buffer(W25N01GV_Flash *flash, uint8_t *data,
 		uint16_t num_bytes, uint16_t column_adr) {
 
 	uint8_t column_adr_8bit_array[2] = W25N01GV_UNPACK_UINT16_TO_2_BYTES(column_adr);
-	//uint8_t tx1[3] = {W25N01GV_LOAD_PROGRAM_DATA, column_adr_8bit_array[0], column_adr_8bit_array[1]};
-	uint8_t tx[3 + num_bytes];
-	tx[0] = W25N01GV_LOAD_PROGRAM_DATA;
-	tx[1] = column_adr_8bit_array[0];
-	tx[2] = column_adr_8bit_array[1];
-	memcpy(tx + 3, data, num_bytes);
+	uint8_t tx1[3] = {W25N01GV_LOAD_PROGRAM_DATA, column_adr_8bit_array[0], column_adr_8bit_array[1]};
 
 	// Ignore all data that would be written to column 2048 and after.
 	// You don't want to overwrite the extra memory at the end of the page.
@@ -461,9 +439,8 @@ static void write_page_to_buffer(W25N01GV_Flash *flash, uint8_t *data,
 	// Not using spi_transmit() because I didn't want to mess with combining the tx arrays
 	//__disable_irq();
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_ACTIVE);
-	//flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx1, 3, W25N01GV_SPI_TIMEOUT);
-	//flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, data, num_bytes, W25N01GV_SPI_TIMEOUT);
-	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, num_bytes + 3, W25N01GV_SPI_TIMEOUT);
+	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx1, 3, W25N01GV_SPI_TIMEOUT);
+	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, data, num_bytes, W25N01GV_SPI_TIMEOUT);
 	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N01GV_CS_INACTIVE);
 	//__enable_irq();
 }
@@ -485,7 +462,7 @@ static void program_buffer_to_memory(W25N01GV_Flash *flash, uint16_t page_adr) {
 	uint8_t tx[4] = {W25N01GV_PROGRAM_EXECUTE, 0, page_adr_8bit_array[0], page_adr_8bit_array[1]};  // 2nd byte unused
 
 	spi_transmit(flash, tx, 4);
-	wait_for_operation(flash, W25N01GV_PAGE_PROGRAM_MAX_TIME_US * 1000);	 // Wait for the data to be written to memory
+	osDelay(1);
 }
 
 /**
@@ -577,7 +554,7 @@ static void erase_block(W25N01GV_Flash *flash, uint16_t page_adr) {
 
 	disable_write(flash);	// Disable WEL just in case the erase block command doens't execute
 
-	wait_for_operation(flash, W25N01GV_BLOCK_ERASE_MAX_TIME_MS * 1000000);  // Wait for it to finish erasing
+	osDelay(5);
 
 	get_erase_failure_status(flash);
 }
@@ -920,7 +897,7 @@ uint8_t ping_flash(W25N01GV_Flash *flash) {
 	uint8_t manufacturer_ID = rx[0];
 	uint16_t device_ID = W25N01GV_PACK_2_BYTES_TO_UINT16(rx+1);
 
-	if (manufacturer_ID == W25N01GV_MANUFACTURER_ID && device_ID == W25N01GV_DEVICE_ID)
+	if (manufacturer_ID == W25N01GV_MANUFACTURER_ID && (device_ID == W25N01GV_DEVICE_ID || device_ID == W25N04KV_DEVICE_ID))
 		return 1;
 	else
 		return 0;
@@ -1026,7 +1003,6 @@ static uint16_t write_to_flash_contiguous(W25N01GV_Flash *flash, uint8_t *data, 
 		asm("nop");
 	}
 	*/
-
 	return write_failures;
 }
 

@@ -25,6 +25,8 @@ void TelemetryTask(void *argument) {
 	log_message(STAT_TELEM_TASK_STARTED, -1);
 	for(;;) {
 		uint32_t startTime = HAL_GetTick();
+
+		LOCK_FLASH(portMAX_DELAY);
 		// Read from sensors
 		uint16_t adc1_values[16] = {0};
 		uint16_t adc2_values[16] = {0};
@@ -64,6 +66,7 @@ void TelemetryTask(void *argument) {
   	  		// BAR 2 read error
 			log_peri_message(ERR_BAR_READ "2", BB_ERR_PERI_TYPE_BAR2);
   	  	}
+  	  	UNLOCK_FLASH();
 
   	  	float TCvalues[NUM_TCS];
   	  	int TC_stat = ADS_readAll(&(sensors_h.tc_main_h), TCvalues);

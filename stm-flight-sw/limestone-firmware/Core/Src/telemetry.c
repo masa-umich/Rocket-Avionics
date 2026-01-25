@@ -22,6 +22,7 @@ void TelemetryTask(void *argument) {
 		uint32_t startTime = HAL_GetTick();
 		// Read from sensors
 
+		LOCK_FLASH(portMAX_DELAY);
 		uint16_t adc_values[16] = {0};
 		read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
 		if(adc_values[ADC_3V3_BUS_I] == 0) {
@@ -58,6 +59,7 @@ void TelemetryTask(void *argument) {
   	  		// BAR 2 read error
 			log_peri_message(ERR_BAR_READ "2", FC_ERR_PERI_TYPE_BAR2);
   	  	}
+  	  	UNLOCK_FLASH();
 
   	  	float TCvalues[3];
   	  	int TC_stat = ADS_readAll(&(sensors_h.tc_main_h), TCvalues);
@@ -180,7 +182,6 @@ void TelemetryTask(void *argument) {
   		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
   			if(broadcast_telem_msg(&telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) == -2) {
   				// txbuffer full or memory error
-  				__BKPT(0);
   	  			log_message(ERR_TELEM_MEM_ERR, FC_ERR_TYPE_TELEM_MEM_ERR);
   			}
   		}

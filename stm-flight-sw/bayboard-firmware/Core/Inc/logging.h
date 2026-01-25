@@ -24,6 +24,10 @@ typedef struct {
 	size_t len;
 } errormsg_t;
 
+BaseType_t LOCK_FLASH(TickType_t timeout);
+
+void UNLOCK_FLASH();
+
 void init_network_logging(uint8_t reinit, ip4_addr_t ipaddr);
 
 void deinit_network_logging();

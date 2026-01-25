@@ -1,0 +1,3277 @@
+0000-00-00T00:00:00.000Z 0709 Flash cleared
+0000-00-00T00:00:00.000Z 0708 Available flash space: 536343779B: 511MB/512MB 99%
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0031 Not connected - TCP server reading from conn, fd 1
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0031 Not connected - TCP server reading from conn, fd 1
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0031 Not connected - TCP server reading from conn, fd 1
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0031 Not connected - TCP server reading from conn, fd 1
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0031 Not connected - TCP server reading from conn, fd 1
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0034 Unknown errno - TCP server reading from conn, fd/errno 1/103
+0000-00-00T00:00:00.000Z 0031 Not connected - TCP server reading from conn, fd 1
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 531279381B: 506MB/512MB 98%
+0000-00-00T00:00:00.000Z 0502 TCP connection closed gracefully, fd 1
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0502 TCP connection closed gracefully, fd 1
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Wed, 21 Jan 2026 23:16:59 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 515147394B: 491MB/512MB 95%
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Wed, 21 Jan 2026 23:18:53 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 514854830B: 491MB/512MB 95%
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Wed, 21 Jan 2026 23:21:50 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 514210454B: 490MB/512MB 95%
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Wed, 21 Jan 2026 23:24:23 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Wed, 21 Jan 2026 23:26:41 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Wed, 21 Jan 2026 23:28:07 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Wed, 21 Jan 2026 23:31:12 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Wed, 21 Jan 2026 23:59:41 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 511928934B: 488MB/512MB 95%
+0000-00-00T00:00:00.000Z 0708 Available flash space: 511922968B: 488MB/512MB 95%
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0502 TCP connection closed gracefully, fd 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Thu, 22 Jan 2026 00:03:39 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 511566486B: 487MB/512MB 95%
+0000-00-00T00:00:00.000Z 0708 Available flash space: 511562292B: 487MB/512MB 95%
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 1
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0209 IMU read failed, IMU 2
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Thu, 22 Jan 2026 00:03:39 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Thu, 22 Jan 2026 00:12:26 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 509312412B: 485MB/512MB 94%
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Thu, 22 Jan 2026 00:15:34 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 508701334B: 485MB/512MB 94%
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Thu, 22 Jan 2026 00:15:34 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Thu, 22 Jan 2026 00:15:34 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Thu, 22 Jan 2026 00:31:36 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 505876912B: 482MB/512MB 94%
+0000-00-00T00:00:00.000Z 0214 Telemetry loop ran overtime
+0000-00-00T00:00:00.000Z 0710 EEPROM config loaded successfully
+0000-00-00T00:00:00.000Z 0712 Limelight Flight Computer Firmware build info: version 4220388, branch handoff-dev, type Debug, built on Thu, 22 Jan 2026 00:46:57 -0500
+0000-00-00T00:00:00.000Z 0703 Telemetry task started
+0000-00-00T00:00:00.000Z 0704 Packet processing task started
+0000-00-00T00:00:00.000Z 0505 TCP server initialized and running
+0000-00-00T00:00:00.000Z 0702 Program initialization complete
+0000-00-00T00:00:00.000Z 0501 TCP server accepting new connection, fd/addr 1/141.212.192.154
+0000-00-00T00:00:00.000Z 0708 Available flash space: 502392750B: 479MB/512MB 93%

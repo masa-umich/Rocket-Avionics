@@ -11,6 +11,7 @@
 W25N04KV_Flash flash_h = {0};
 SemaphoreHandle_t flash_mutex;
 SemaphoreHandle_t flash_clear_mutex;
+SemaphoreHandle_t flash_spi_mutex;
 uint8_t flashreadbuffer[2048 + 512];
 uint16_t validflashbytes = 0;
 uint8_t flashmsgtype = 0;
@@ -27,6 +28,14 @@ SemaphoreHandle_t errorudp_mutex;
 QueueHandle_t errorMsgList = NULL;
 
 uint32_t lastflashfull = 0;
+
+BaseType_t LOCK_FLASH(TickType_t timeout) {
+	return xSemaphoreTake(flash_spi_mutex, timeout);
+}
+
+void UNLOCK_FLASH() {
+	xSemaphoreGive(flash_spi_mutex);
+}
 
 void init_network_logging(uint8_t reinit, ip4_addr_t ipaddr) {
 	if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
@@ -62,8 +71,13 @@ void deinit_network_logging() {
 }
 
 void logging_setup() {
-	flash_mutex = xSemaphoreCreateMutex();
+	flash_mutex = xSemaphoreCreateBinary();
+	xSemaphoreGive(flash_mutex);
+
 	flash_clear_mutex = xSemaphoreCreateBinary();
+	flash_spi_mutex = xSemaphoreCreateBinary();
+	xSemaphoreGive(flash_spi_mutex);
+
 	errormsg_mutex = xSemaphoreCreateMutex();
 	perierrormsg_mutex = xSemaphoreCreateMutex();
 	errorudp_mutex = xSemaphoreCreateMutex();
@@ -309,9 +323,11 @@ void prepare_flash_dump() {
 	fc_reset_flash_read_pointer(&flash_h);
 	validflashbytes = 0;
 	flashmsgtype = 0;
+	LOCK_FLASH(portMAX_DELAY);
 }
 
 void finish_flash_dump() {
+	UNLOCK_FLASH();
 	xSemaphoreGive(flash_mutex);
 }
 
