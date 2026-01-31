@@ -90,8 +90,8 @@ void logging_setup() {
 }
 
 uint8_t init_flash_logging(SPI_HandleTypeDef * hspi, GPIO_TypeDef *CS_GPIO_Port, uint16_t CS_GPIO_Pin) {
-	fc_init_flash(&flash_h, hspi, CS_GPIO_Port, CS_GPIO_Pin);
-	if(!fc_ping_flash(&flash_h)) {
+	init_flash(&flash_h, hspi, CS_GPIO_Port, CS_GPIO_Pin);
+	if(!ping_flash(&flash_h)) {
 		// flash not connected
 		log_message(ERR_FLASH_INIT, -1);
 		return 1;
@@ -319,8 +319,8 @@ void handle_logging() {
 
 void prepare_flash_dump() {
 	xSemaphoreTake(flash_mutex, portMAX_DELAY);
-	fc_finish_flash_write(&flash_h);
-	fc_reset_flash_read_pointer(&flash_h);
+	finish_flash_write(&flash_h);
+	reset_flash_read_pointer(&flash_h);
 	validflashbytes = 0;
 	flashmsgtype = 0;
 	LOCK_FLASH(portMAX_DELAY);
@@ -337,12 +337,12 @@ int dump_flash(uint32_t fd, void *buf, int bytes) {
 		return -1;
 	}
 	while(bytes > validflashbytes) {
-		if(fc_flash_current_page(&flash_h) >= 4 * W25N01GV_NUM_PAGES) {
+		if(next_read_page(&flash_h) >= W25N04KV_NUM_PAGES) {
 			break;
 		}
 		uint16_t cursor = 0;
 		uint8_t empty = 1;
-		fc_read_next_2KB_from_flash(&flash_h, flashbuf);
+		read_next_2KB_from_flash(&flash_h, flashbuf);
 		if(flashbuf[0] != FLASH_MSG_MARK && flashbuf[0] != FLASH_TELEM_MARK) {
 			// Load or "discard" partial message, be careful if the entire 2048 bytes are part of the partial message
 			for(cursor = 0;cursor < 2048;cursor++) {
@@ -409,7 +409,7 @@ int dump_flash(uint32_t fd, void *buf, int bytes) {
 // returns 0 on success, 1 if there is not enough space or the flash could not be accessed
 uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
 	if(xSemaphoreTake(flash_mutex, 0) == pdPASS) {
-		if(fc_get_bytes_remaining(&flash_h) < msglen + 2) {
+		if(get_bytes_remaining(&flash_h) < msglen + 2) {
 			xSemaphoreGive(flash_mutex);
 			return 1;
 		}
@@ -417,7 +417,7 @@ uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
 		writebuf[0] = type;
 		memcpy(&writebuf[1], msgtext, msglen);
 		writebuf[msglen + 1] = '\n';
-		fc_write_to_flash(&flash_h, writebuf, msglen + 2);
+		write_to_flash(&flash_h, writebuf, msglen + 2);
 		free(writebuf);
 		xSemaphoreGive(flash_mutex);
 		return 0;
@@ -428,11 +428,11 @@ uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
 // Returns 0 on success, 1 on access error, 2 if the flash is full
 uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
 	if(xSemaphoreTake(flash_mutex, 0) == pdPASS) {
-		if(fc_get_bytes_remaining(&flash_h) < msglen) {
+		if(get_bytes_remaining(&flash_h) < msglen) {
 			xSemaphoreGive(flash_mutex);
 			return 2;
 		}
-		fc_write_to_flash(&flash_h, writebuf, msglen);
+		write_to_flash(&flash_h, writebuf, msglen);
 		xSemaphoreGive(flash_mutex);
 		return 0;
 	}
@@ -526,7 +526,7 @@ void send_udp_online(ip4_addr_t * ip) {
 void log_flash_storage(char *logstring, int numbytes) {
 	if(xSemaphoreTake(flash_mutex, 1) == pdPASS) {
 		//uint32_t used = 536870912UL - fc_get_bytes_remaining(&flash_h);
-		uint32_t available = fc_get_bytes_remaining(&flash_h);
+		uint32_t available = get_bytes_remaining(&flash_h);
 		xSemaphoreGive(flash_mutex);
 
 		uint8_t percent = (((uint64_t) available) * 100) / 536870912;
@@ -573,8 +573,8 @@ void clear_flash() {
 void handle_flash_clearing() {
     if(xSemaphoreTake(flash_clear_mutex, portMAX_DELAY) == pdPASS) {
     	if(xSemaphoreTake(flash_mutex, 100) == pdPASS) {
-    		fc_finish_flash_write(&flash_h); // Flush write buffer
-        	fc_erase_flash(&flash_h); // Clear
+    		finish_flash_write(&flash_h); // Flush write buffer
+        	erase_flash(&flash_h); // Clear
     		xSemaphoreGive(flash_mutex);
     		log_message(STAT_CLEAR_FLASH, -1);
 			Message dev_cmd_ack = {0};
@@ -609,14 +609,14 @@ void FlashClearTask(void *argument) {
 
 void flush_flash_log() {
 	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
-		fc_finish_flash_write(&flash_h);
+		finish_flash_write(&flash_h);
 		xSemaphoreGive(flash_mutex);
 	}
 }
 
 void flush_flash_log_for_reset() {
 	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
-		fc_finish_flash_write(&flash_h);
+		finish_flash_write(&flash_h);
 	}
 }
 
