@@ -19,6 +19,15 @@ void ProcessPackets(void *argument) {
 			Message parsedmsg = {0};
 			if(deserialize_message(msg.bufferptr, msg.packet_len, &parsedmsg) > 0) {
 				switch(parsedmsg.type) {
+					case MSG_HANDOFF: {
+						if(parsedmsg.data.handoff_msg.checksum_valid){
+							// TODO handle handoff
+						}
+						else {
+							// TODO log_message
+						}
+						break;
+					}
 				    case MSG_TELEMETRY: {
 				        // Save and relay to Limewire
 				    	if(parsedmsg.data.telemetry.board_id == BOARD_FR) {

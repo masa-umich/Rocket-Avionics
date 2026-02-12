@@ -110,7 +110,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		if(msgtype >= ERROR_MSG_TYPES) {
 			return 2;
 		}
-		if(xSemaphoreTake(errormsg_mutex, 2) == pdPASS) {
+		if(xSemaphoreTake(errormsg_mutex, 1) == pdPASS) {
 			uint8_t val = (msgtype % 2) == 0 ? errormsgtimers[msgtype / 2] & 0x0F : errormsgtimers[msgtype / 2] >> 4;
 			if(val < ERROR_THROTTLE_MAX) {
 				val++;
@@ -172,7 +172,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		errormsg_t fullmsg;
 		fullmsg.content = rawmsgbuf;
 		fullmsg.len = msglen;
-		if(xQueueSend(errorMsgList, (void *)&fullmsg, 1) != pdPASS) {
+		if(xQueueSend(errorMsgList, (void *)&fullmsg, 0) != pdPASS) {
 			// No space for more messages
 			free(rawmsgbuf);
 			return 3;

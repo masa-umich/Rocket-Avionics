@@ -43,6 +43,7 @@
 #include "log_errors.h"
 #include "udptelemetry.h"
 #include "NEO-M92-00B.h"
+#include "flight-autosequence.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -113,7 +114,7 @@ const osThreadAttr_t telemetry_task_attr = {
 osThreadId_t telemetryUDPTaskHandle;
 const osThreadAttr_t telemetry_udp_task_attr = {
   .name = "telemetryUDPTask",
-  .stack_size = 512 * 4,
+  .stack_size = 576 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -128,6 +129,13 @@ osThreadId_t flashClearTaskHandle;
 const osThreadAttr_t flash_clear_task_attr = {
   .name = "flashCTask",
   .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t autosequenceTaskHandle;
+const osThreadAttr_t autosequence_task_attr = {
+  .name = "autosequence",
+  .stack_size = AUTOSEQUENCE_TASK_STACK,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE END PV */
@@ -261,6 +269,7 @@ int main(void)
   timesync_setup(&hrtc);
   logging_setup();
   telemetry_setup();
+  setup_autosequence();
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -1319,6 +1328,9 @@ void StartAndMonitor(void *argument)
 
   	// Start packet handler
   	packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
+
+  	// Start autosequence task
+  	autosequenceTaskHandle = osThreadNew(AutosequenceTask, NULL, &autosequence_task_attr);
 
   	// Start TCP server only if the ethernet link is up
 

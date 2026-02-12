@@ -143,13 +143,13 @@ void unpack_udp_telemetry(uint8_t *message, uint16_t msg_len) {
 		    case MSG_TELEMETRY: {
 		        // Save
 		    	if(parsedmsg.data.telemetry.board_id == BOARD_FR) {
-		    		if(unpack_fr_telemetry(&(parsedmsg.data.telemetry), 5)) {
+		    		if(unpack_fr_telemetry(&(parsedmsg.data.telemetry), 2)) {
 		    			// Failed to save data
 		    			log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
 		    		}
 		    	}
 		    	else {
-			    	if(unpack_bb_telemetry(&(parsedmsg.data.telemetry), 5)) {
+			    	if(unpack_bb_telemetry(&(parsedmsg.data.telemetry), 2)) {
 			    		// Failed to save data
 			    		log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
 			    	}

@@ -10,6 +10,12 @@
 #include <stdint.h>
 #include <string.h>
 
+uint8_t check_handoff_checksum(const uint8_t * buf) {
+	return (buf[0] == HANDOFF_CHECKSUM_BYTE1) &&
+			(buf[1] == HANDOFF_CHECKSUM_BYTE2) &&
+			(buf[2] == HANDOFF_CHECKSUM_BYTE3) &&
+			(buf[3] == HANDOFF_CHECKSUM_BYTE4);
+}
 
 // Gets the valve index from the LMP valve id
 // Be careful since the integer value of the Valve_Channel enum starts at 0
@@ -379,11 +385,4 @@ int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 		default:
 			return -1; // Unknown message type
 	}
-}
-
-uint8_t check_handoff_checksum(uint8_t * buf) {
-	return (buf[0] == HANDOFF_CHECKSUM_BYTE1) &&
-			(buf[1] == HANDOFF_CHECKSUM_BYTE2) &&
-			(buf[2] == HANDOFF_CHECKSUM_BYTE3) &&
-			(buf[3] == HANDOFF_CHECKSUM_BYTE4);
 }
