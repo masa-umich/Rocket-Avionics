@@ -18,8 +18,14 @@ typedef enum {
 	MSG_VALVE_STATE = 0x02,
 	MSG_HEARTBEAT = 0x03,
 	MSG_DEVICE_COMMAND = 0x04,
-	MSG_DEVICE_ACK= 0x05
+	MSG_DEVICE_ACK = 0x05,
+	MSG_HANDOFF = 0x06
 } MessageType;
+
+typedef enum {
+	HANDOFF_ABORT = 0x00,
+	HANDOFF_ARM = 0x01
+} HandoffType;
 
 // Board identifiers for TelemetryMessages and DeviceCommandMessages (values are corresponding bytes)
 typedef enum {
@@ -89,6 +95,16 @@ typedef struct {
 	char payload[MAX_ACK_PAYLOAD_SIZE];
 } DeviceCommandACK;
 
+typedef struct {
+	HandoffType h_type;
+	uint8_t checksum_valid;
+} HandoffMessage;
+
+#define HANDOFF_CHECKSUM_BYTE1		0x4D
+#define HANDOFF_CHECKSUM_BYTE2		0x41
+#define HANDOFF_CHECKSUM_BYTE3		0x53
+#define HANDOFF_CHECKSUM_BYTE4		0x41
+
 // Message Length + Message Type + Board ID + Timestamp + Channels (float)
 #define MAX_TELEMETRY_MSG_SIZE (1 + 1 + 1 + 8 + (4 * MAX_TELEMETRY_CHANNELS))
 // Message Length + Message Type + Valve ID + Valve State
@@ -101,6 +117,8 @@ typedef struct {
 #define MAX_DEVICE_COMMAND_MSG_SIZE (1 + 1 + 1 + 1)
 // Message Length + Message Type + Board ID + Command ID + payload
 #define DEVICE_COMMAND_ACK_HEADER_SIZE (1 + 1 + 1 + 1) // without payload size
+// Message Length + Message Type + Handoff Type + Checksum
+#define MAX_HANDOFF_MSG_SIZE (1 + 1 + 1 + 4)
 // Telemetry is the largest message in all cases
 #define MAX_MESSAGE_SIZE MAX_TELEMETRY_MSG_SIZE
 
@@ -113,6 +131,7 @@ typedef struct {
 		HeartbeatMessage heartbeat;
 		DeviceCommandMessage device_command;
 		DeviceCommandACK device_ack;
+		HandoffMessage handoff_msg;
 	} data;
 } Message;
 
