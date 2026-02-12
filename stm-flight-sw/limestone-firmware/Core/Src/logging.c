@@ -26,7 +26,7 @@ uint8_t perierrormsgtimers[PERI_ERROR_MSG_TYPES];
 struct netconn *errormsgudp = NULL;
 SemaphoreHandle_t errorudp_mutex;
 
-QueueHandle_t errorMsglist;
+QueueHandle_t errorMsglist = NULL;
 
 uint32_t lastflashfull = 0;
 
@@ -197,58 +197,64 @@ int dump_flash(uint32_t fd, void *buf, int bytes) {
 		if(next_read_page(&flash_h) >= W25N04KV_NUM_PAGES) {
 			break;
 		}
-		uint16_t cursor = 0;
-		uint8_t empty = 1;
 		read_next_2KB_from_flash(&flash_h, flashbuf);
-		if(flashbuf[0] != FLASH_MSG_MARK && flashbuf[0] != FLASH_TELEM_MARK) {
-			// Load or "discard" partial message, be careful if the entire 2048 bytes are part of the partial message
-			for(cursor = 0;cursor < 2048;cursor++) {
-				if(flashbuf[cursor] != 0xFF) {
-					empty = 0;
-				}
-				if(flashbuf[cursor] == '\n') {
-					break;
-				}
-			}
-			cursor += 1;
-			if(cursor > 2047) {
-				if(empty) {
-					break;
-				}
-				// Load entire or none, then continue
-				if(fd == flashmsgtype) {
-					memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
-					validflashbytes += 2048;
-				}
-				continue;
-			}
-			else {
-				if(fd == flashmsgtype) {
-					memcpy(&flashreadbuffer[validflashbytes], flashbuf, cursor);
-					validflashbytes += cursor;
-				}
-			}
+		if(fd == FLASH_BOTH_MARK) {
+			memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
+			validflashbytes += 2048;
 		}
-		int start = -1;
-		for(;cursor < 2048;cursor++) {
-			if(flashbuf[cursor] == FLASH_MSG_MARK || flashbuf[cursor] == FLASH_TELEM_MARK) {
-				flashmsgtype = flashbuf[cursor];
-				start = cursor + 1;
-			}
-			else if(flashbuf[cursor] == '\n') {
-				if(fd == flashmsgtype) {
-					if(start != -1) {
-						memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (cursor - start) + 1);
-						validflashbytes += (cursor - start) + 1;
+		else {
+			uint16_t cursor = 0;
+			uint8_t empty = 1;
+			if(flashbuf[0] != FLASH_MSG_MARK && flashbuf[0] != FLASH_TELEM_MARK) {
+				// Load or "discard" partial message, be careful if the entire 2048 bytes are part of the partial message
+				for(cursor = 0;cursor < 2048;cursor++) {
+					if(flashbuf[cursor] != 0xFF) {
+						empty = 0;
+					}
+					if(flashbuf[cursor] == '\n') {
+						break;
 					}
 				}
-				start = -1;
+				cursor += 1;
+				if(cursor > 2047) {
+					if(empty) {
+						break;
+					}
+					// Load entire or none, then continue
+					if(fd == flashmsgtype) {
+						memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
+						validflashbytes += 2048;
+					}
+					continue;
+				}
+				else {
+					if(fd == flashmsgtype) {
+						memcpy(&flashreadbuffer[validflashbytes], flashbuf, cursor);
+						validflashbytes += cursor;
+					}
+				}
 			}
-		}
-		if(start != -1) {
-			if(fd == flashmsgtype) {
-				memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (2047 - start) + 1);
-				validflashbytes += (2047 - start) + 1;
+			int start = -1;
+			for(;cursor < 2048;cursor++) {
+				if(flashbuf[cursor] == FLASH_MSG_MARK || flashbuf[cursor] == FLASH_TELEM_MARK) {
+					flashmsgtype = flashbuf[cursor];
+					start = cursor + 1;
+				}
+				else if(flashbuf[cursor] == '\n') {
+					if(fd == flashmsgtype) {
+						if(start != -1) {
+							memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (cursor - start) + 1);
+							validflashbytes += (cursor - start) + 1;
+						}
+					}
+					start = -1;
+				}
+			}
+			if(start != -1) {
+				if(fd == flashmsgtype) {
+					memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (2047 - start) + 1);
+					validflashbytes += (2047 - start) + 1;
+				}
 			}
 		}
 	}

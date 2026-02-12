@@ -1096,9 +1096,9 @@ uint16_t erase_flash(W25N04KV_Flash *flash) {
 
 	lock_flash(flash);
 
-	// Reset the address pointer after erasing
-	find_write_ptr(flash);  // Don't manually set addr pointers to ensure it actually erases
+	osDelay(500);
 	flash->write_buffer_size = 0;
+	init_flash(flash, flash->SPI_bus, flash->cs_base, flash->cs_pin);
 
 	return erase_failures;
 }

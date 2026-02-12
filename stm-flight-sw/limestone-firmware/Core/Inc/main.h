@@ -117,6 +117,7 @@ void stopLEDtimer();
 
 #define FLASH_TELEM_MARK	(uint8_t)0x1D
 #define FLASH_MSG_MARK		(uint8_t)0x1E
+#define FLASH_BOTH_MARK		(uint8_t)0x1F
 
 #define ERROR_UDP_PORT		(uint16_t)1234
 #define TELEM_UDP_PORT		(uint16_t)6767
