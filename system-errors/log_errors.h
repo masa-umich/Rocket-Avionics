@@ -133,6 +133,8 @@
 #define FC_ERR_TCP_SERV_ACCEPT_NO_ROOM			"060 TCP server connection list full"
 
 #define FC_ERR_INIT_GPS							"061 GPS Init failed"
+#define FC_ERR_UDP_TELEM_RECV_SIZE_ERR			"062 UDP Telemetry receive size error"
+#define FC_ERR_UDP_TELEM_RECV_SIZE_MISMATCH		"063 UDP Telemetry receive size mismatch"
 
 #elif defined(BAY_BOARD)
 // Bay Board error messages
@@ -245,6 +247,7 @@
 #define FC_ERR_TYPE_UNKNOWN_LMP					10
 #define FC_ERR_TYPE_TFTP_EEPROM_READ			11
 #define FC_ERR_TYPE_TFTP_EEPROM_WRITE			12
+#define FC_ERR_TYPE_UDP_TELEM					13
 
 // Flight Computer peripheral error message types
 #define FC_ERR_PERI_TYPE_ADC					0

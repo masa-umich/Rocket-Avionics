@@ -105,10 +105,16 @@ void TelemetryUDPProcess(void *argument) {
 				err_t recv_err = netconn_recv(telemudp_h, &buf);
 				if(recv_err == ERR_OK) {
 					if(buf) {
-						uint8_t *msgbuf = NULL;
-						uint16_t msg_len = 0;
-						if(netbuf_data(buf, (void**) &msgbuf, &msg_len) == ERR_OK) {
-							unpack_udp_telemetry(msgbuf, msg_len);
+						uint8_t msgbuf[256];
+						uint16_t msg_len = netbuf_len(buf);
+						if(msg_len > 256 || msg_len == 0) {
+							log_message(FC_ERR_UDP_TELEM_RECV_SIZE_ERR, FC_ERR_TYPE_UDP_TELEM);
+						}
+						else {
+							uint16_t ret = netbuf_copy(buf, msgbuf, msg_len);
+							if(ret != 0 && ret == msg_len) {
+								unpack_udp_telemetry(msgbuf, msg_len);
+							}
 						}
 						netbuf_delete(buf);
 					}
@@ -127,6 +133,10 @@ void TelemetryUDPProcess(void *argument) {
 }
 
 void unpack_udp_telemetry(uint8_t *message, uint16_t msg_len) {
+	if(message[0] + 1 != msg_len) {
+		log_message(FC_ERR_UDP_TELEM_RECV_SIZE_MISMATCH, FC_ERR_TYPE_UDP_TELEM);
+		return;
+	}
 	Message parsedmsg = {0};
 	if(deserialize_message(message, msg_len, &parsedmsg) > 0) {
 		switch(parsedmsg.type) {
