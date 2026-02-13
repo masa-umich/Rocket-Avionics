@@ -58,7 +58,7 @@
 /*----- Value in opt.h for MEM_ALIGNMENT: 1 -----*/
 #define MEM_ALIGNMENT 4
 /*----- Default Value for MEM_SIZE: 1600 ---*/
-#define MEM_SIZE 65536
+#define MEM_SIZE 32232
 /*----- Default Value for H7 devices: 0x30004000 -----*/
 #define LWIP_RAM_HEAP_POINTER 0x30000200
 /*----- Default Value for MEMP_NUM_TCP_SEG: 16 ---*/

@@ -1174,7 +1174,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 void StartAndMonitor(void *argument)
 {
   /* init code for LWIP */
-	size_t freemem = xPortGetFreeHeapSize();
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
   	// Signal end of critical section
