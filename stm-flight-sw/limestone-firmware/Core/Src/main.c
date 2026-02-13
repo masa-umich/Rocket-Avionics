@@ -53,7 +53,19 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// Fuck stm32 and their support for half of something and not the rest
+// These make malloc() and free() thread safe
+void __malloc_lock(struct _reent *r) {
+    if(xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        vTaskSuspendAll();
+    }
+}
 
+void __malloc_unlock(struct _reent *r) {
+    if(xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        (void)xTaskResumeAll();
+    }
+}
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/

@@ -59,7 +59,17 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+void __malloc_lock(struct _reent *r) {
+    if(xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        vTaskSuspendAll();
+    }
+}
 
+void __malloc_unlock(struct _reent *r) {
+    if(xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        (void)xTaskResumeAll();
+    }
+}
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
