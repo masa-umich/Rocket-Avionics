@@ -267,8 +267,12 @@ int main(void)
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   timesync_setup(&hrtc);
-  logging_setup();
-  telemetry_setup();
+  if(logging_setup()) {
+	  for(;;) {}
+  }
+  if(telemetry_setup()) {
+	  for(;;) {}
+  }
   setup_autosequence();
   /* USER CODE END RTOS_MUTEX */
 
@@ -1170,6 +1174,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 void StartAndMonitor(void *argument)
 {
   /* init code for LWIP */
+	size_t freemem = xPortGetFreeHeapSize();
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
   	// Signal end of critical section
@@ -1414,7 +1419,7 @@ void StartAndMonitor(void *argument)
 							statemsg.data.valve_state.timestamp = valvetime;
 							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, i);
 							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+							send_msg_to_device(LimeWire_d, &statemsg, 5);
 						}
 			  	  	}
 			  	  	if(xSemaphoreTake(Rocket_h.bb1Valve_access, 5) == pdPASS) {
@@ -1429,7 +1434,7 @@ void StartAndMonitor(void *argument)
 							statemsg.data.valve_state.timestamp = valvetime;
 							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_1, i);
 							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+							send_msg_to_device(LimeWire_d, &statemsg, 5);
 						}
 			  	  	}
 			  	  	if(xSemaphoreTake(Rocket_h.bb2Valve_access, 5) == pdPASS) {
@@ -1444,7 +1449,7 @@ void StartAndMonitor(void *argument)
 							statemsg.data.valve_state.timestamp = valvetime;
 							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_2, i);
 							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+							send_msg_to_device(LimeWire_d, &statemsg, 5);
 						}
 			  	  	}
 			  	  	if(xSemaphoreTake(Rocket_h.bb3Valve_access, 5) == pdPASS) {
@@ -1459,7 +1464,7 @@ void StartAndMonitor(void *argument)
 							statemsg.data.valve_state.timestamp = valvetime;
 							statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_BAY_3, i);
 							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(LimeWire_d, &statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+							send_msg_to_device(LimeWire_d, &statemsg, 5);
 						}
 			  	  	}
 				}
@@ -1489,7 +1494,7 @@ void StartAndMonitor(void *argument)
 			if(is_server_running() && num_devices(LimeWire_d) > 0) {
 				Message heartbeat = {0};
 				heartbeat.type = MSG_HEARTBEAT;
-				send_msg_to_device(LimeWire_d, &heartbeat, 5, MAX_HEARTBEAT_MSG_SIZE + 5);
+				send_msg_to_device(LimeWire_d, &heartbeat, 5);
 			}
 		}
 

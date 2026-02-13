@@ -12,9 +12,17 @@ SemaphoreHandle_t telemudp_mutex;
 
 QueueHandle_t telemetrymsgs = NULL;
 
-void telemetry_setup() {
+osMemoryPoolId_t udpPool;
+
+uint8_t telemetry_setup() {
 	telemudp_mutex = xSemaphoreCreateMutex();
-	telemetrymsgs = xQueueCreate(100, sizeof(Raw_message));
+	telemetrymsgs = xQueueCreate(50, sizeof(Raw_message));
+
+    udpPool = osMemoryPoolNew(50, MAX_MSG_LEN, NULL);
+    if(!udpPool) {
+    	return 1;
+    }
+    return 0;
 }
 
 void init_udp_telem() {
@@ -48,19 +56,16 @@ void deinit_udp_telem() {
 	}
 }
 
-int broadcast_telem_msg(Message *msg, TickType_t wait, size_t buffersize) {
-	if(buffersize == 0) {
-		buffersize = MAX_MSG_LEN;
-	}
+int broadcast_telem_msg(Message *msg, TickType_t wait) {
 	if(!telemudp_h) {
 		return -1;
 	}
-	uint8_t tempbuffer[buffersize];
-	int buflen = serialize_message(msg, tempbuffer, buffersize);
+	uint8_t tempbuffer[MAX_MSG_LEN];
+	int buflen = serialize_message(msg, tempbuffer, MAX_MSG_LEN);
 	if(buflen == -1) {
 		return -3; // Serialization error
 	}
-    uint8_t *buffer = malloc(buflen);
+    uint8_t *buffer = (uint8_t *) osMemoryPoolAlloc(udpPool, 0);
     if(buffer) {
         memcpy(buffer, tempbuffer, buflen);
         Raw_message rawmsg = {0};
@@ -68,7 +73,7 @@ int broadcast_telem_msg(Message *msg, TickType_t wait, size_t buffersize) {
     	rawmsg.packet_len = buflen;
 
     	if(xQueueSend(telemetrymsgs, (void *)&rawmsg, wait) != pdPASS) {
-    		free(buffer);
+    		osMemoryPoolFree(udpPool, buffer);
     		return -2;
     	}
     	return 0;
@@ -95,7 +100,7 @@ void TelemetryUDPProcess(void *argument) {
 				}
 				xSemaphoreGive(telemudp_mutex);
 			}
-			free(msg.bufferptr);
+			osMemoryPoolFree(udpPool, msg.bufferptr);
 		}
 
 		// Receive

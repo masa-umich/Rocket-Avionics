@@ -92,6 +92,11 @@ int get_device_fd(Target_Device dev, uint8_t index);
 int num_devices(Target_Device dev);
 
 void remove_bad_fds(void);
+
 void drain_lists();
+
+void freeFromPool(uint8_t * buf);
+
+uint8_t * allocFromPool();
 
 #endif

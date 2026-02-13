@@ -82,7 +82,7 @@ void COTS_supply(uint8_t enabled);
 // buffersize is the maximum size that it will take to serialize the LMP message, if this is 0, it will use the maximum possible message size to ensure proper serialization
 // Note that this function will send the message to ALL active connections to the specified device.
 // returns 0 on success, -1 if the server is not up, -2 if there is no room in the txbuffer or space to allocate a buffer, -3 if the target device is not connected, and -4 on a LMP serialization error
-int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size_t buffersize);
+int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait);
 
 // Send a message over TCP
 // wait is the number of ticks to wait for room in the txbuffer

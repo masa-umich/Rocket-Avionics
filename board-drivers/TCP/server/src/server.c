@@ -32,6 +32,8 @@ SemaphoreHandle_t deviceMutex;
 ip4_addr_t deviceIPs[5];
 SemaphoreHandle_t closeMutex;
 
+osMemoryPoolId_t tcpPool;
+
 // initialize semaphores/mutexes
 int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_t bb3, ip4_addr_t fr) {
 	deviceIPs[LimeWire_d] = limewire;
@@ -55,12 +57,17 @@ int server_create(ip4_addr_t limewire, ip4_addr_t bb1, ip4_addr_t bb2, ip4_addr_
         return 1;
     }
 
+    tcpPool = osMemoryPoolNew(50, MAX_MSG_LEN, NULL);
+    if(!tcpPool) {
+    	return 1;
+    }
+
     // make thread-safe queues for incoming and outgoing messages
-	rxbuffer = xQueueCreate(100, sizeof(Raw_message));
+	rxbuffer = xQueueCreate(50, sizeof(Raw_message));
     if(!rxbuffer) {
     	return 1;
     }
-	txbuffer = xQueueCreate(100, sizeof(Raw_message));
+	txbuffer = xQueueCreate(50, sizeof(Raw_message));
     if(!txbuffer) {
     	return 1;
     }
@@ -529,26 +536,28 @@ void server_reader_thread(void *arg) {
 				    	lmpmsgbufferlens[i]++;
 				    	if(lmpmsgbufferlens[i] - 1 == lmpmsgbuffers[i][0]) {
 				    		//process packet
-						    Raw_message msg = {0};
-						    uint8_t *buffer = malloc(lmpmsgbufferlens[i]);
-						    if(buffer) {
-							    memcpy(buffer, lmpmsgbuffers[i], lmpmsgbufferlens[i]);
-							    msg.bufferptr = buffer;
-							    msg.connection_fd = connection_fd;
-							    msg.packet_len = lmpmsgbufferlens[i];
+				    		if(lmpmsgbufferlens[i] <= MAX_MSG_LEN) {
+							    Raw_message msg = {0};
+							    uint8_t *buffer = (uint8_t *) osMemoryPoolAlloc(tcpPool, 0);
+							    if(buffer) {
+								    memcpy(buffer, lmpmsgbuffers[i], lmpmsgbufferlens[i]);
+								    msg.bufferptr = buffer;
+								    msg.connection_fd = connection_fd;
+								    msg.packet_len = lmpmsgbufferlens[i];
 
-							    // add the message to the RX Message Buffer to be parsed
-							    if(xQueueSend(rxbuffer, (void *)&msg, 5) != pdPASS) {
-			                    	// JUST in case
-			                    	free(buffer);
-			                    }
-						    }
-						    else {
-						    	// no memory creating receiving buffer
-			        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_STORE_NOMEM) + 6];
-			        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_STORE_NOMEM "%d", (int16_t) connection_fd);
-			        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
-						    }
+								    // add the message to the RX Message Buffer to be parsed
+								    if(xQueueSend(rxbuffer, (void *)&msg, 5) != pdPASS) {
+				                    	// JUST in case
+								    	freeFromPool(buffer);
+				                    }
+							    }
+							    else {
+							    	// no memory creating receiving buffer
+				        	    	char logmsg[sizeof(FC_ERR_TCP_SERV_RECV_STORE_NOMEM) + 6];
+				        	    	snprintf(logmsg, sizeof(logmsg), FC_ERR_TCP_SERV_RECV_STORE_NOMEM "%d", (int16_t) connection_fd);
+				        	    	log_message(logmsg, FC_ERR_TYPE_TCP_SERV_RECV_READ);
+							    }
+				    		}
 				    		lmpmsgbufferlens[i] = 0;
 				    	}
 				    }
@@ -667,7 +676,7 @@ void server_writer_thread(void *arg) {
 
         if (msg.connection_fd == -1) {
             // messages with -1 connfd are not valid
-        	free(msg.bufferptr);
+        	freeFromPool(msg.bufferptr);
             continue;
         }
 
@@ -719,7 +728,7 @@ void server_writer_thread(void *arg) {
 	    	}
 		}
 		xSemaphoreGive(closeMutex);
-		free(msg.bufferptr);
+		freeFromPool(msg.bufferptr);
 
 	}
     // Log exiting writer thread due to a shutdown
@@ -807,10 +816,10 @@ int is_server_running() {
 void drain_lists() {
 	Raw_message msg = {0};
 	while(xQueueReceive(txbuffer, (void *)&msg, 0) == pdPASS) {
-		free(msg.bufferptr);
+		freeFromPool(msg.bufferptr);
 	}
 	while(xQueueReceive(rxbuffer, (void *)&msg, 0) == pdPASS) {
-		free(msg.bufferptr);
+		freeFromPool(msg.bufferptr);
 	}
 }
 
@@ -938,4 +947,12 @@ void remove_bad_fds(void) {
 		}
     }
 	sys_mutex_unlock(&conn_mu);
+}
+
+void freeFromPool(uint8_t * buf) {
+	osMemoryPoolFree(tcpPool, buf);
+}
+
+uint8_t * allocFromPool() {
+	return (uint8_t *) osMemoryPoolAlloc(tcpPool, 0);
 }
