@@ -53,8 +53,15 @@ typedef struct {
 /* USER CODE BEGIN EC */
 extern inittimers_t timers;
 
-void startLEDtimer(TickType_t delay);
+void buzzerOff();
+
+void buzzerOn();
+
 void stopLEDtimer();
+
+void start_led_timer(TickType_t delay, uint32_t reload, uint8_t force);
+
+void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force);
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

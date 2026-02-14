@@ -100,6 +100,7 @@ ip4_addr_t bb_addr;
 uint8_t bb_num;
 
 inittimers_t timers = {0};
+SemaphoreHandle_t timer_mutex = NULL;
 
 EEPROM_conf_t loaded_config = {0};
 PT_t PT1_h = {0.5f, 5000.0f, 4.5f}; // Default
@@ -132,7 +133,7 @@ const osThreadAttr_t telemetry_send_task_attr = {
 osThreadId_t packetTaskHandle;
 const osThreadAttr_t packet_task_attr = {
   .name = "packetTask",
-  .stack_size = 384 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -177,28 +178,84 @@ void toggleLEDPins(TimerHandle_t xTimer) {
 	HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
 }
 
-void buzzerOff(TimerHandle_t xTimer) {
+void buzzerOff() {
 	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 0);
 }
 
+void buzzerOn() {
+	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
+}
+
 void stopLEDtimer() {
-	if(timers.ledTimer) {
-		xTimerStop(timers.ledTimer, 0);
-	    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, 1);
-	    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, 1);
-	    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, 1);
+	if(xSemaphoreTake(timer_mutex, 1) == pdPASS) {
+		if(timers.ledTimer) {
+			xTimerStop(timers.ledTimer, 0);
+			HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, 1);
+			HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, 1);
+			HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, 1);
+		}
+		xSemaphoreGive(timer_mutex);
 	}
 }
 
-void startLEDtimer(TickType_t delay) {
-	if(timers.ledTimer) {
-		xTimerChangePeriod(timers.ledTimer, delay, 0);
-		xTimerStart(timers.ledTimer, 0);
+void start_led_timer(TickType_t delay, uint32_t reload, uint8_t force) {
+	if(xSemaphoreTake(timer_mutex, 0) == pdPASS) {
+		if(timers.ledTimer) {
+			if(force || xTimerIsTimerActive(timers.ledTimer) != pdPASS) {
+				vTimerSetTimerID(timers.ledTimer, (void *)reload);
+				xTimerChangePeriod(timers.ledTimer, delay, 0);
+			}
+		}
+		xSemaphoreGive(timer_mutex);
 	}
-	else {
-		timers.ledTimer = xTimerCreate("led", delay, pdTRUE, NULL, toggleLEDPins);
-		xTimerStart(timers.ledTimer, 0);
+}
+
+void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force) {
+	if(xSemaphoreTake(timer_mutex, 0) == pdPASS) {
+		if(timers.buzzTimer) {
+			if(force || xTimerIsTimerActive(timers.buzzTimer) != pdPASS) {
+				vTimerSetTimerID(timers.buzzTimer, (void *)reload);
+				xTimerChangePeriod(timers.buzzTimer, delay, 0);
+			}
+		}
+		xSemaphoreGive(timer_mutex);
 	}
+}
+
+void BuzzTimer(TimerHandle_t xTimer) {
+    uint32_t toggleCount = (uint32_t) pvTimerGetTimerID(xTimer);
+
+    HAL_GPIO_TogglePin(BUZZ_GPIO_Port, BUZZ_Pin);
+
+    if(toggleCount == 0) {
+    	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 0);
+        xTimerStop(xTimer, 0);
+        return;
+    }
+
+    toggleCount--;
+
+    vTimerSetTimerID(xTimer, (void *)toggleCount);
+}
+
+void LEDTimer(TimerHandle_t xTimer) {
+    uint32_t toggleCount = (uint32_t) pvTimerGetTimerID(xTimer);
+
+	HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+	HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+	HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+
+    if(toggleCount == 0) {
+		HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, 1);
+		HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, 1);
+		HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, 1);
+        xTimerStop(xTimer, 0);
+        return;
+    }
+
+    toggleCount--;
+
+    vTimerSetTimerID(xTimer, (void *)toggleCount);
 }
 /* USER CODE END 0 */
 
@@ -262,10 +319,16 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
-  // Create RTC mutex
+  timer_mutex = xSemaphoreCreateMutex();
+  timers.buzzTimer = xTimerCreate("buzz", 1000, pdTRUE, (void *)0, BuzzTimer);
+  timers.ledTimer = xTimerCreate("led", 1000, pdTRUE, (void *)0, LEDTimer);
   timesync_setup(&hrtc);
-  logging_setup();
-  telemetry_setup();
+  if(logging_setup()) {
+	  for(;;) {}
+  }
+  if(telemetry_setup()) {
+	  for(;;) {}
+  }
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -303,25 +366,25 @@ int main(void)
 	  		  // eeprom load error, defaults loaded
 	  		  load_eeprom_defaults(&loaded_config, &bb_num);
 	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
-	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
+	  		  start_buzz_timer(500, UINT32_MAX, 1);
 	  		  break;
 	  	  }
 	  	  case -2: {
 	  		  // eeprom tc gain value error
 	  		  log_message(ERR_EEPROM_LOAD_TC_ERR, -1);
-	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
+	  		  start_buzz_timer(500, UINT32_MAX, 1);
 	  		  break;
 	  	  }
 	  	  case -3: {
 	  		  // eeprom valve conf error
 	  		  log_message(ERR_EEPROM_LOAD_VLV_ERR, -1);
-	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
+	  		  start_buzz_timer(500, UINT32_MAX, 1);
 	  		  break;
 	  	  }
 	  	  case -4: {
 	  		  // invalid bb number
 	  		  log_message(BB_ERR_EEPROM_LOAD_BB_NUM_ERR, -1);
-	  		  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
+	  		  start_buzz_timer(500, UINT32_MAX, 1);
 	  		  break;
 	  	  }
 	  	  default: {
@@ -336,7 +399,7 @@ int main(void)
 	  // eeprom init error, defaults loaded
 	  load_eeprom_defaults(&loaded_config, &bb_num);
 	  log_message(ERR_EEPROM_INIT, -1);
-	  timers.buzzTimer = xTimerCreate("buzz", 500, pdTRUE, NULL, toggleBuzzer);
+	  start_buzz_timer(500, UINT32_MAX, 1);
   }
   bb_addr = loaded_config.bayboardIP;
   char logmsg[sizeof(BB_STAT_STARTING_IDENTIFY) + 3];
@@ -347,15 +410,7 @@ int main(void)
 
   // Init flash
   if(init_flash_logging(&hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin)) {
-  	  timers.ledTimer = xTimerCreate("led", 500, pdTRUE, NULL, toggleLEDPins);
-  }
-  //fc_erase_flash(&flash_h);
-
-  if(timers.buzzTimer) {
-	  xTimerStart(timers.buzzTimer, 0);
-  }
-  if(timers.ledTimer) {
-	  xTimerStart(timers.ledTimer, 0);
+	  start_led_timer(500, UINT32_MAX, 1);
   }
 
   /* USER CODE END RTOS_QUEUES */
@@ -994,32 +1049,15 @@ void StartAndMonitor(void *argument)
 
 	if(is_net_logging_up()) {
 		// No UDP error
-		if(!timers.ledTimer) {
-		    // No flash error, led constant on indicates end of critical section
-		    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, 1);
-		    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, 1);
-		    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, 1);
-		}
+		start_led_timer(1, 0, 0);
 	}
 	else {
 		// UDP error
-		if(timers.ledTimer) {
-		    // Flash error, change delay since UDP error is more critical to address
-		    xTimerChangePeriod(timers.ledTimer, 250, 0);
-		}
-		else {
-		    // No flash error, start led flashing
-		    timers.ledTimer = xTimerCreate("led", 250, pdTRUE, NULL, toggleLEDPins);
-		    xTimerStart(timers.ledTimer, 0);
-		}
+		start_led_timer(250, UINT32_MAX, 1);
 	}
 
-    if(!timers.buzzTimer) {
-    	// No eeprom error, short buzz indicates the end of the critical section
-    	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
-    	timers.buzzTimer = xTimerCreate("sbuzz", 1000, pdFALSE, NULL, buzzerOff);
-    	xTimerStart(timers.buzzTimer, 0);
-    }
+	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
+	start_buzz_timer(1000, 0, 0);
 
     setup_system_state();
 
@@ -1192,6 +1230,7 @@ void StartAndMonitor(void *argument)
 
 	/* Infinite loop */
 	for(;;) {
+		//size_t freemem = xPortGetFreeHeapSize();
 		if(logdelay > 4) {
 			handle_logging(); // Log to UDP and flash
 		}
@@ -1220,7 +1259,7 @@ void StartAndMonitor(void *argument)
 							statemsg.data.valve_state.timestamp = valvetime;
 							statemsg.data.valve_state.valve_id = generate_valve_id(bb_num, i);
 							statemsg.data.valve_state.valve_state = vstates[i];
-							send_msg_to_device(&statemsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5);
+							send_msg_to_device(&statemsg, 5);
 						}
 			  	  	}
 				}

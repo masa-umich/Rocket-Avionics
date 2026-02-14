@@ -40,4 +40,8 @@ void client_send_thread(void *arg);
 
 int is_client_connected();
 
+void freeFromPool(uint8_t * buf);
+
+uint8_t * allocFromPool();
+
 #endif /* INC_CLIENT_H_ */

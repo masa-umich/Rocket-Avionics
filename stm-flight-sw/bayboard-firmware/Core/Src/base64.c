@@ -25,10 +25,10 @@ static const unsigned char base64_table[65] =
  * nul terminated to make it easier to use as a C string. The nul terminator is
  * not included in out_len.
  */
-unsigned char * base64_encode(const unsigned char *src, size_t len,
-			      size_t *out_len, int padding)
+uint8_t base64_encode(const unsigned char *src, size_t len,
+				unsigned char * out, size_t buflen, int padding)
 {
-	unsigned char *out, *pos;
+	unsigned char *pos;
 	const unsigned char *end, *in;
 	size_t olen;
 
@@ -36,10 +36,10 @@ unsigned char * base64_encode(const unsigned char *src, size_t len,
 	olen++; /* nul termination */
 	olen += padding;
 	if (olen < len)
-		return NULL; /* integer overflow */
-	out = malloc(olen);
-	if (out == NULL)
-		return NULL;
+		return 0; /* integer overflow */
+	if(buflen < olen) {
+		return 0;
+	}
 
 	end = src + len;
 	in = src;
@@ -66,12 +66,16 @@ unsigned char * base64_encode(const unsigned char *src, size_t len,
 	}
 
 	*pos = '\0';
-	if (out_len)
-		*out_len = pos - out;
-	return out;
+	return pos - out;
 }
 
-
+size_t b64_size(size_t len, int padding) {
+	size_t olen;
+	olen = len * 4 / 3 + 4;
+	olen++;
+	olen += padding;
+	return olen;
+}
 /**
  * base64_decode - Base64 decode
  * @src: Data to be decoded

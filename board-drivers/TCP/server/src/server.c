@@ -538,7 +538,7 @@ void server_reader_thread(void *arg) {
 				    		//process packet
 				    		if(lmpmsgbufferlens[i] <= MAX_MSG_LEN) {
 							    Raw_message msg = {0};
-							    uint8_t *buffer = (uint8_t *) osMemoryPoolAlloc(tcpPool, 0);
+							    uint8_t *buffer = allocFromPool();
 							    if(buffer) {
 								    memcpy(buffer, lmpmsgbuffers[i], lmpmsgbufferlens[i]);
 								    msg.bufferptr = buffer;

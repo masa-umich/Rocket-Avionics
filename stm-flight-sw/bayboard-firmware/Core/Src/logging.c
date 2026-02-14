@@ -29,6 +29,8 @@ QueueHandle_t errorMsgList = NULL;
 
 uint32_t lastflashfull = 0;
 
+osMemoryPoolId_t logPool;
+
 BaseType_t LOCK_FLASH(TickType_t timeout) {
 	return xSemaphoreTake(flash_spi_mutex, timeout);
 }
@@ -70,7 +72,7 @@ void deinit_network_logging() {
 	}
 }
 
-void logging_setup() {
+uint8_t logging_setup() {
 	flash_mutex = xSemaphoreCreateBinary();
 	xSemaphoreGive(flash_mutex);
 
@@ -86,7 +88,13 @@ void logging_setup() {
 
 	memset(errormsgtimers, 0, ERROR_MSG_TYPES / 2);
 	memset(perierrormsgtimers, 0, PERI_ERROR_MSG_TYPES);
-	errorMsgList = xQueueCreate(100, sizeof(errormsg_t));
+	errorMsgList = xQueueCreate(25, sizeof(errormsg_t));
+
+	logPool = osMemoryPoolNew(25, MAX_LOG_LEN, NULL);
+	if(!logPool) {
+		return 1;
+	}
+	return 0;
 }
 
 uint8_t init_flash_logging(SPI_HandleTypeDef * hspi, GPIO_TypeDef *CS_GPIO_Port, uint16_t CS_GPIO_Pin) {
@@ -143,7 +151,10 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 	}
 	// Flash entry type + timestamp + space + error code board number + message text + newline
 	size_t msglen = 1 + 24 + 1 + 1 + strlen(msgtext) + 1;
-	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
+	if(msglen > MAX_LOG_LEN) {
+		return 3;
+	}
+	uint8_t *rawmsgbuf = (uint8_t *) osMemoryPoolAlloc(logPool, 0);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
@@ -174,7 +185,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		fullmsg.len = msglen;
 		if(xQueueSend(errorMsgList, (void *)&fullmsg, 0) != pdPASS) {
 			// No space for more messages
-			free(rawmsgbuf);
+			osMemoryPoolFree(logPool, rawmsgbuf);
 			return 3;
 		}
 		return 0;
@@ -204,7 +215,10 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 	}
 	// Flash entry type + timestamp + space + error code board number + message text + newline
 	size_t msglen = 1 + 24 + 1 + 1 + strlen(msgtext) + 1;
-	uint8_t *rawmsgbuf = (uint8_t *) malloc(msglen);
+	if(msglen > MAX_LOG_LEN) {
+		return 3;
+	}
+	uint8_t *rawmsgbuf = (uint8_t *) osMemoryPoolAlloc(logPool, 0);
 	if(rawmsgbuf) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
@@ -234,7 +248,7 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 		fullmsg.len = msglen;
 		if(xQueueSend(errorMsgList, (void *)&fullmsg, 1) != pdPASS) {
 			// No space for more messages
-			free(rawmsgbuf);
+			osMemoryPoolFree(logPool, rawmsgbuf);
 			return 3;
 		}
 		return 0;
@@ -313,7 +327,7 @@ void handle_logging() {
 			xSemaphoreGive(errorudp_mutex);
 		}
 
-		free(logmsg.content); // No memory leaks here hehe
+		osMemoryPoolFree(logPool, logmsg.content); // No memory leaks here hehe
 	}
 }
 
@@ -332,18 +346,27 @@ void finish_flash_dump() {
 }
 
 int dump_flash(uint32_t fd, void *buf, int bytes) {
-	uint8_t *flashbuf = (uint8_t *) malloc(2048);
-	if(!flashbuf) {
-		return -1;
-	}
+	uint8_t flashbuf[2048];
 	while(bytes > validflashbytes) {
 		if(next_read_page(&flash_h) >= W25N04KV_NUM_PAGES) {
 			break;
 		}
 		read_next_2KB_from_flash(&flash_h, flashbuf);
 		if(fd == FLASH_BOTH_MARK) {
-			memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
-			validflashbytes += 2048;
+			uint8_t empty = 1;
+			for(uint16_t i = 0;i < 2048;i++) {
+				if(flashbuf[i] != 0xFF) {
+					empty = 0;
+					break;
+				}
+			}
+			if(!empty) {
+				memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
+				validflashbytes += 2048;
+			}
+			else {
+				break;
+			}
 		}
 		else {
 			uint16_t cursor = 0;
@@ -406,7 +429,6 @@ int dump_flash(uint32_t fd, void *buf, int bytes) {
 	memcpy(buf, flashreadbuffer, readbytes);
 	memmove(&flashreadbuffer, &flashreadbuffer[readbytes], validflashbytes - readbytes);
 	validflashbytes -= readbytes;
-	free(flashbuf);
 	return readbytes;
 }
 
@@ -484,13 +506,12 @@ void send_flash_full() {
 
 // 0 success, 1 semaphore timeout, 2 flash full, 3 memory error
 int log_lmp_packet(uint8_t *buf, size_t buflen) {
-	size_t outlen;
-	uint8_t *encoded = base64_encode(buf, buflen, &outlen, 1);
-	if(encoded) {
-		encoded[0] = FLASH_TELEM_MARK;
-		encoded[outlen] = '\n';
-		uint8_t stat = write_raw_to_flash(encoded, outlen + 1);
-		free(encoded);
+	uint8_t outbuf[MAX_TELEMETRY_B64_SIZE];
+	uint8_t outlen = base64_encode(buf, buflen, outbuf, MAX_TELEMETRY_B64_SIZE, 1);
+	if(outlen > 0) {
+		outbuf[0] = FLASH_TELEM_MARK;
+		outbuf[outlen] = '\n';
+		uint8_t stat = write_raw_to_flash(outbuf, outlen + 1);
 		return stat;
 	}
 	return 3;
@@ -567,7 +588,7 @@ void log_flash_storage(char *logstring, int numbytes) {
 	}
 
 	if(numbytes > 0) {
-		memcpy(logstring, "", 1);
+		memcpy(logstring, "\0", 1);
 	}
 }
 
@@ -587,8 +608,8 @@ void handle_flash_clearing() {
 			dev_cmd_ack.type = MSG_DEVICE_ACK;
 			dev_cmd_ack.data.device_ack.board_id = bb_num;
 			dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_CLEAR_FLASH;
-			memcpy(dev_cmd_ack.data.device_ack.payload, STAT_CLEAR_FLASH + 4, sizeof(STAT_CLEAR_FLASH) - 4);
-  			if(send_msg_to_device(&dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+			strlcpy(dev_cmd_ack.data.device_ack.payload, STAT_CLEAR_FLASH + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
+  			if(send_msg_to_device(&dev_cmd_ack, 5) != 0) {
   				// Server not up, target device not connected, or txbuffer is full
   			}
     	}

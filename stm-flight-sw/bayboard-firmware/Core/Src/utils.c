@@ -39,19 +39,16 @@ void reset_board() {
 // wait is the number of ticks to wait for room in the txbuffer
 // buffersize is the maximum size that it will take to serialize the LMP message, if this is 0, it will use the maximum possible message size to ensure proper serialization
 // returns 0 on success, -1 if the client is not connected, -2 if there is no room in the txbuffer or space to allocate a buffer and -3 on a LMP serialization error
-int send_msg_to_device(Message *msg, TickType_t wait, size_t buffersize) {
-	if(buffersize == 0) {
-		buffersize = MAX_MSG_LEN;
-	}
+int send_msg_to_device(Message *msg, TickType_t wait) {
 	if(is_client_connected() <= 0) {
 		return -1; // Client not connected
 	}
-	uint8_t tempbuffer[buffersize];
-	int buflen = serialize_message(msg, tempbuffer, buffersize);
+	uint8_t tempbuffer[MAX_MSG_LEN];
+	int buflen = serialize_message(msg, tempbuffer, MAX_MSG_LEN);
 	if(buflen == -1) {
 		return -3; // Serialization error
 	}
-    uint8_t *buffer = malloc(buflen);
+    uint8_t *buffer = allocFromPool();
     if(buffer) {
         memcpy(buffer, tempbuffer, buflen);
     	RawMessage rawmsg = {0};
@@ -59,7 +56,7 @@ int send_msg_to_device(Message *msg, TickType_t wait, size_t buffersize) {
     	rawmsg.packet_len = buflen;
     	int result = client_send(&rawmsg, wait);
     	if(result != 0) {
-    		free(buffer);
+    		freeFromPool(buffer);
     	}
     	return result;
     }

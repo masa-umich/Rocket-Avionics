@@ -88,7 +88,7 @@ uint8_t logging_setup() {
 
 	memset(errormsgtimers, 0, ERROR_MSG_TYPES / 2);
 	memset(perierrormsgtimers, 0, PERI_ERROR_MSG_TYPES);
-	errorMsglist = xQueueCreate(100, sizeof(errormsg_t));
+	errorMsglist = xQueueCreate(25, sizeof(errormsg_t));
 
 	logPool = osMemoryPoolNew(25, MAX_LOG_LEN, NULL);
 	if(!logPool) {
@@ -204,8 +204,20 @@ int dump_flash(uint32_t fd, void *buf, int bytes) {
 		}
 		read_next_2KB_from_flash(&flash_h, flashbuf);
 		if(fd == FLASH_BOTH_MARK) {
-			memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
-			validflashbytes += 2048;
+			uint8_t empty = 1;
+			for(uint16_t i = 0;i < 2048;i++) {
+				if(flashbuf[i] != 0xFF) {
+					empty = 0;
+					break;
+				}
+			}
+			if(!empty) {
+				memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
+				validflashbytes += 2048;
+			}
+			else {
+				break;
+			}
 		}
 		else {
 			uint16_t cursor = 0;
@@ -511,7 +523,7 @@ void log_flash_storage(char *logstring, int numbytes) {
 	}
 
 	if(numbytes > 0) {
-		memcpy(logstring, "", 1);
+		memcpy(logstring, "\0", 1);
 	}
 }
 
@@ -531,7 +543,7 @@ void handle_flash_clearing() {
 			dev_cmd_ack.type = MSG_DEVICE_ACK;
 			dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 			dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_CLEAR_FLASH;
-			memcpy(dev_cmd_ack.data.device_ack.payload, STAT_CLEAR_FLASH + 4, sizeof(STAT_CLEAR_FLASH) - 4);
+			strlcpy(dev_cmd_ack.data.device_ack.payload, STAT_CLEAR_FLASH + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
   			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
   				// Server not up, target device not connected, or txbuffer is full
   			}

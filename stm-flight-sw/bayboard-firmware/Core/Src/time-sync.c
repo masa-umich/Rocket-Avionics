@@ -18,22 +18,22 @@ void set_system_time(uint32_t sec, uint32_t us) {
 
 	RTC_TimeTypeDef sTime = {0};
 	RTC_DateTypeDef sDate = {0};
-	struct tm *tm_time;
+	struct tm tm_time;
 
 	time_t epoch = sec;
-	tm_time = gmtime(&epoch);
+	gmtime_r(&epoch, &tm_time);
 
-	sTime.Hours = tm_time->tm_hour;
-	sTime.Minutes = tm_time->tm_min;
-	sTime.Seconds = tm_time->tm_sec;
+	sTime.Hours = tm_time.tm_hour;
+	sTime.Minutes = tm_time.tm_min;
+	sTime.Seconds = tm_time.tm_sec;
 	sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
 	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
 	//sTime.SubSeconds = 6249 - ((us / 1000000.0) * 6250);
 
-	sDate.Year = tm_time->tm_year - 100;
-	sDate.Month = tm_time->tm_mon + 1;
-	sDate.Date = tm_time->tm_mday;
-	sDate.WeekDay = (tm_time->tm_wday == 0) ? 7 : tm_time->tm_wday;
+	sDate.Year = tm_time.tm_year - 100;
+	sDate.Month = tm_time.tm_mon + 1;
+	sDate.Date = tm_time.tm_mday;
+	sDate.WeekDay = (tm_time.tm_wday == 0) ? 7 : tm_time.tm_wday;
 
 	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
 		uint32_t subsecond_shift = 6249 - ((us / 1000000.0) * 6250);

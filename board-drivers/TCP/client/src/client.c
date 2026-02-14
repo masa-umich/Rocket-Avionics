@@ -33,13 +33,20 @@ SemaphoreHandle_t client_stopped = NULL;
 
 struct sockaddr_in fc_addr = {0};
 
+osMemoryPoolId_t tcpPool;
+
 int client_init(ip4_addr_t *fcaddr, int start) {
 	fc_addr.sin_family = AF_INET;
 	fc_addr.sin_port = htons(TCP_PORT);
 	inet_addr_from_ip4addr(&fc_addr.sin_addr, fcaddr);
 
-	txbuffer = xQueueCreate(100, sizeof(RawMessage));
-	rxbuffer = xQueueCreate(100, sizeof(RawMessage));
+	txbuffer = xQueueCreate(50, sizeof(RawMessage));
+	rxbuffer = xQueueCreate(50, sizeof(RawMessage));
+
+	tcpPool = osMemoryPoolNew(50, MAX_MSG_LEN, NULL);
+	if(!tcpPool) {
+		return 1;
+	}
 
 	conn_use = xSemaphoreCreateBinary();
 	conn_hold = xSemaphoreCreateBinary();
@@ -195,10 +202,10 @@ void client_receive_thread(void *arg) {
 
 		RawMessage msg = {0};
 		while(xQueueReceive(txbuffer, (void *)&msg, 0) == pdPASS) {
-			free(msg.bufferptr);
+			freeFromPool(msg.bufferptr);
 		}
 		while(xQueueReceive(rxbuffer, (void *)&msg, 0) == pdPASS) {
-			free(msg.bufferptr);
+			freeFromPool(msg.bufferptr);
 		}
 
 		xSemaphoreGive(conn_use);
@@ -295,23 +302,25 @@ void client_receive_thread(void *arg) {
 					    	lmpmsgbufferlen++;
 					    	if(lmpmsgbufferlen - 1 == lmpmsgbuffer[0]) {
 					    		//process packet
-						    	RawMessage msg = {0};
-							    uint8_t *buffer = malloc(lmpmsgbufferlen);
-							    if(buffer) {
-								    memcpy(buffer, lmpmsgbuffer, lmpmsgbufferlen);
-								    msg.bufferptr = buffer;
-								    msg.packet_len = lmpmsgbufferlen;
+					    		if(lmpmsgbufferlen <= MAX_MSG_LEN) {
+							    	RawMessage msg = {0};
+								    uint8_t *buffer = allocFromPool();
+								    if(buffer) {
+									    memcpy(buffer, lmpmsgbuffer, lmpmsgbufferlen);
+									    msg.bufferptr = buffer;
+									    msg.packet_len = lmpmsgbufferlen;
 
-				                    if(xQueueSend(rxbuffer, (void *)&msg, 5) != pdPASS) {
-				                    	// rxbuffer full
-				            	    	log_message(BB_ERR_TCP_CLIENT_SAVE_BUFFULL, BB_ERR_TYPE_TCP_CLIENT_RECV);
-				                    	free(buffer);
-				                    }
-							    }
-							    else {
-							    	// no memory creating receiving buffer
-				        	    	log_message(BB_ERR_TCP_CLIENT_SAVE_NOMEM, BB_ERR_TYPE_TCP_CLIENT_RECV);
-							    }
+					                    if(xQueueSend(rxbuffer, (void *)&msg, 5) != pdPASS) {
+					                    	// rxbuffer full
+					            	    	log_message(BB_ERR_TCP_CLIENT_SAVE_BUFFULL, BB_ERR_TYPE_TCP_CLIENT_RECV);
+					            	    	freeFromPool(buffer);
+					                    }
+								    }
+								    else {
+								    	// no memory creating receiving buffer
+					        	    	log_message(BB_ERR_TCP_CLIENT_SAVE_NOMEM, BB_ERR_TYPE_TCP_CLIENT_RECV);
+								    }
+					    		}
 					    		lmpmsgbufferlen = 0;
 					    	}
 					    }
@@ -464,7 +473,7 @@ void client_send_thread(void *arg) {
 			    	    }
 			    	}
 				}
-				free(msg.bufferptr);
+				freeFromPool(msg.bufferptr);
 			}
 		}
 		// stopped by receive thread
@@ -549,4 +558,12 @@ int client_reinit() {
 		xSemaphoreGive(runningMutex);
 	}
 	return 0;
+}
+
+void freeFromPool(uint8_t * buf) {
+	osMemoryPoolFree(tcpPool, buf);
+}
+
+uint8_t * allocFromPool() {
+	return (uint8_t *) osMemoryPoolAlloc(tcpPool, 0);
 }

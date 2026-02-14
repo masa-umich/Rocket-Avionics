@@ -157,7 +157,7 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_PDB_SRC_GSE;
-				    				strncpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_SRC_GSE_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_SRC_GSE_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
 				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
 					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
@@ -170,7 +170,7 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_PDB_SRC_BAT;
-				    				strncpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_SRC_BAT_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_SRC_BAT_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
 				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
 					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
@@ -183,7 +183,7 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_PDB_COTS_OFF;
-				    				strncpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_COTS_OFF_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_COTS_OFF_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
 				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
 					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
@@ -196,7 +196,7 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_PDB_COTS_ON;
-				    				strncpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_COTS_ON_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_COTS_ON_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
 				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
 					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
@@ -209,7 +209,7 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_BUILD_INFO;
 				    				log_message(STAT_VERSION_INFO, -1);
-				    				memcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO + 4, sizeof(STAT_VERSION_INFO) - 4);
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
 					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
