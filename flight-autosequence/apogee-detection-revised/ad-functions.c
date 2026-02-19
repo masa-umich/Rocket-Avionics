@@ -29,7 +29,7 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
     detector->avg_index = detector->avg_index % AD_CAPACITY;
     detector->avg_size = min(detector->avg_size + 1, AD_CAPACITY);
 
-    if (phase == ST_MACH_LOCKOUT || phase == ST_WAIT_APOGEE)
+    if (phase == ST_MACH_LOCKOUT || phase == ST_WAIT_APOGEE || phase == ST_WAIT_GROUND)
     {
         if (detector->avg_size >= AD_CAPACITY)
         {
@@ -56,7 +56,10 @@ int detect_event(Detector * detector, FlightPhase phase) {
 
     if (phase == ST_WAIT_MAIN)               //aproximate pressure in hPa at 300 m       
         return buffer_gt(detector->average, detector->avg_size, MAIN_DEPLOY_PRESSURE);  
-    
+
+    if (phase == ST_WAIT_GROUND)
+        return buffer_eq(detector->slope, detector->slope_size, 0);
+
     return 0;
 }
 
@@ -134,7 +137,7 @@ float advance_chunk(float *h, float *v, float chunk_dt, float press, float temp)
 //wait-time helper 
 float wait_time_piecewise(float h0, float v0, float pressure, float temp, float chunk_dt, float max_time) {
     float t_tot = 0.0, h = h0, v = v0;
-    if (fabsf(v) <= speed_of_sound(temp))
+    if (fabsf(v) <= speed_of_sound(temp)) // TO-DO CHECK SKIN TC ON NOSECONE
         return 0.0f;
 
     for (int i = 0 ; i < (int)ceilf(max_time/chunk_dt); ++i)

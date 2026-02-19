@@ -2,36 +2,38 @@
 #include "helpers/simplified-curve-fit.c"
 #include "apogee-detection-revised/ad-functions.h"
 
-extern const uint32_t dt;
-const int ALTITUDE_BUFFER_SIZE = 11;
-const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000; // 15 seconds
-
  
 void execute_flight_autosequence(){
-    FlightPhase phase = ST_DETECT_VALVES_OPEN; // starts at state1
+    // starts by waiting for valves to open
+    FlightPhase phase = ST_DETECT_VALVES_OPEN; 
 
     //const uint32_t period = pdMS_TO_TICKS(50); // 20 Hz should be good
     uint32_t last = getTime();
 
+    // initialize detectors for pressure, accleration, and temperature
     Detector baro_detector = {0};
     Detector imu_detector = {0};
     Detector temp_C_detector = {0};
 
+    // flags for recovery deployment events, to be set when events are detected
     int MECO_flag = 0;
     int apogee_flag = 0;
     int drogue_flag = 0;
     int main_flag = 0;
+    int landed_flag = 0;
 
-    uint32_t handoff_timestamp = 0; // time (in ms) when handoff occursy
-    uint32_t ignition_timestamp = 0;// approximate time (in ms) when igntion occurs
-    uint32_t meco_timestamp = 0;         // time (in ms) when MECO is detected
-    uint32_t lockout_timestamp = 0; // will be computed when MECO_flag is set
+    // timestamps of key events, to be set when events are detected
+    uint32_t handoff_timestamp = 0;
+    uint32_t ignition_timestamp = 0;
+    uint32_t meco_timestamp = 0;         
+    uint32_t lockout_timestamp = 0; 
 
-    // ALL CALCULATED WITH KINEMATICS!
-    uint32_t fallback_apogee_time = 0; // fallback time estimate
+    // fallback time estimates -- ALL CALCULATED WITH KINEMATICS!
+    uint32_t fallback_apogee_time = 0; 
     uint32_t fallback_5k_time = 0;
     uint32_t fallback_1k_time = 0;
 
+    // for velocity/acceleration estimation post lockout
     int altitude_buf_size = 0;
     float altitude_readings[ALTITUDE_BUFFER_SIZE] = {0}; // in meters
     float time_readings[ALTITUDE_BUFFER_SIZE] = {0};      // in seconds
@@ -41,65 +43,75 @@ void execute_flight_autosequence(){
 
     handoff_timestamp = getTime();
 
+    // initialize baro and imu values 
+    float bar1 = 0.0f;
+    float bar2 = 0.0f;
+    float imu1 = 0.0f;
+    float imu2 = 0.0f;
+
+    // initilize temperature values
+    float bar1_temp_C = 0.0f;
+    float bar2_temp_C = 0.0f;
+    float bar1_temp_K = 0.0f;
+    float bar2_temp_K = 0.0f;
+
+    // initialize accel, velocity, and altitude for kinematics-based fallback time estimates
+    float post_lockout_accel = 0.0f;
+    float post_lockout_vel = 0.0f;
+    float post_lockout_alt = 0.0f;
+
+    // flags TODO
+    int apogee_detection_worked = 0;
+    int fallback_timers_worked = 0;
+
+    // infinite loop to run the sequence, broken by RTOS interrupts
     for (;;){
 
-        float bar1 = 0.0f;
-        float bar2 = 0.0f;
-        float imu1 = 0.0f;
-        float imu2 = 0.0f;
-
-        //temp from barometers not yet implemented in barometer driver
-        //but would be helpful here, otherwise will need to estimate it
-        float bar1_temp_C = 0.0f;
-        float bar2_temp_C = 0.0f;
-        float bar1_temp_K = 0.0f;
-        float bar2_temp_K = 0.0f;
-
-        float accel_x = 0.0f;
-        float accel_y = 0.0f;
-        float accel_z = 0.0f;
-        float gyro_x = 0.0f;
-        float gyro_y = 0.0f;
-
-        float post_lockout_accel = 0.0f;
-        float post_lockout_vel = 0.0f;
-        float post_lockout_alt = 0.0f;
-
+        // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
                         &imu1, &imu2,
                         &bar1_temp_C, &bar2_temp_C,
-                        &bar1_temp_K, &bar2_temp_K,
-                        &accel_x, &accel_y, &accel_z,
-                        &gyro_x, &gyro_y);
+                        &bar1_temp_K, &bar2_temp_K);
+        
 
+        // execute different code depending on which phase of flight we're in
         switch (phase) {
             case ST_DETECT_VALVES_OPEN: {
+                // insert temperature reading into temp detector
                 insert(&temp_C_detector, bar1_temp_C, bar2_temp_C, phase, TEMP_DTR); // insert temp in K or C?
 
+                // check if valves are open to transition to next phase
                 if (valves_open()) {
                     phase = ST_WAIT_MECO;
-                    ignition_timestamp = getTime(); // approximate ignition time
+                    ignition_timestamp = getTime();
 
+                    // set ground temp at handoff for calculating altitude for non-standard atmosphere conditions
                     int idx = (temp_C_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                     ground_temp_C = temp_C_detector.average[idx];
                 }
 
+                // if we wait too long without valves opening, ABORT!
                 else if (getTime() - handoff_timestamp > MAX_HANDOFF_TO_VALVE_OPEN_MS) {
                     abort();
                     //return;
                 }
             }
             
+            // enters at launch, waiting for main engine cutoff
             case ST_WAIT_MECO: {
+                // energize MPVs while in this phase
                 energizeMPV1();
                 energizeMPV2();
                 
+                // insert accel, pressure, and temp readings here
                 insert(&imu_detector, imu1, imu2, phase, IMU_DTR);
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
                 insert(&temp_C_detector, bar1_temp_C, bar2_temp_C, phase, TEMP_DTR);
 
+                // check if imu detector is full of readings
                 if(imu_detector.avg_size >= AD_CAPACITY) {
 
+                    // check if MECO detected - when accel becomes negative
                     if (detect_event(&imu_detector, phase)) {
                         MECO_flag = 1;
                         meco_timestamp = getTime();
@@ -127,7 +139,7 @@ void execute_flight_autosequence(){
                         }
                         //emergency fallback, avg the two most recent temperature readings
                         else {
-                            avg_temp = 0.5f * ((bar1_temp_C) + (bar2_temp_C)); //MUST be Celsius coming in from Rocket_h
+                            avg_temp = 0.5f * ((bar1_temp_K) + (bar2_temp_K)); // compute_wait_time expects temp in K
                         }
 
                         lockout_timestamp = pdMS_TO_TICKS(compute_wait_time(meco_timestamp, avg_pressure, avg_temp)) + meco_timestamp;
@@ -138,9 +150,12 @@ void execute_flight_autosequence(){
                 break;
             } 
 
+            // cannot take pressure readings while above mach 1
             case ST_MACH_LOCKOUT:{   
-                insert(&baro_detector,bar1, bar2, phase, BARO_DTR);
+                // insert accel reading
+                insert(&imu_detector, imu1, imu2, phase, IMU_DTR);
 
+                // check if current time is greater than the estimated lockout timestamp
                 if (getTime() >= lockout_timestamp){
                     phase = ST_WAIT_APOGEE;
                 }
@@ -171,6 +186,18 @@ void execute_flight_autosequence(){
                     if (detect_event(&baro_detector, phase)) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
+                        apogee_detection_worked = 1;
+                    }
+
+                    else if (getTime() >= fallback_apogee_time) {
+                        apogee_flag = 1;
+                        phase = ST_WAIT_DROGUE;
+                        fallback_timers_worked = 1;
+                    }
+
+                    else if (getTime() >= APOGEE_CONSTANT_TIMER) {
+                        apogee_flag = 1;
+                        phase = ST_WAIT_DROGUE;
                     }
                 }
 
@@ -182,7 +209,17 @@ void execute_flight_autosequence(){
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
             
                 if(baro_detector.avg_size >= AD_CAPACITY) {
-                    if (detect_event(&baro_detector, phase)){
+                    if (apogee_detection_worked && detect_event(&baro_detector, phase)) {
+                        drogue_flag = 1;
+                        phase = ST_WAIT_MAIN;
+                    }
+
+                    else if (fallback_timers_worked && getTime() >= fallback_5k_time) {
+                        drogue_flag = 1;
+                        phase = ST_WAIT_MAIN;
+                    }
+
+                    else if (getTime() >= DROGUE_CONSTANT_TIMER) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
                     }
@@ -197,7 +234,17 @@ void execute_flight_autosequence(){
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
 
                 if(baro_detector.avg_size >= AD_CAPACITY) {
-                    if (detect_event(&baro_detector, phase)) {
+                    if (apogee_detection_worked && detect_event(&baro_detector, phase)) {
+                        main_flag = 1;
+                        phase = ST_DONE;
+                    }
+
+                    else if (fallback_timers_worked && getTime() >= fallback_1k_time) {
+                        main_flag = 1;
+                        phase = ST_DONE;
+                    }
+
+                    else if (getTime() >= MAIN_CONSTANT_TIMER) {
                         main_flag = 1;
                         phase = ST_DONE;
                     }
@@ -207,8 +254,14 @@ void execute_flight_autosequence(){
             } 
 
             case ST_WAIT_GROUND: {
+                insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
+                
+                if (detect_event(&baro_detector, phase)) {
+                    phase = ST_DONE;
+                    landed_flag = 1;
+                }
+
                 deployMain();
-                low_power_mode();
                 break;
             } 
 

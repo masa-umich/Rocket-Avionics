@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include <stdint.h>
+#include "temp-header.h"
 
 uint32_t getTime(){
     return HAL_GetTick();
@@ -39,9 +40,7 @@ void wait_until(uint32_t target_time_ms){
 void get_sensor_data(float* bar1, float* bar2,
                      float* imu1, float* imu2,
                      float* bar1_temp_C, float* bar2_temp_C,
-                     float* bar1_temp_K, float* bar2_temp_K,
-                     float* accel_x, float* accel_y, float* accel_z,
-                     float* gyro_x, float* gyro_y){
+                     float* bar1_temp_K, float* bar2_temp_K){
 
     if (xSemaphoreTake(Rocket_h.fcState_access, pdMS_TO_TICKS(5)) == pdPASS) {
         *bar1 = Rocket_h.fcState.bar1; // convert to needed units if necessary
