@@ -4,7 +4,6 @@
 #include "limestone-interface.h"
 #include <stdlib.h>
 #include <stdint.h>
-#include "apogee-functions.h"
 #include "main.h"
 
 #define STATE0_NAME "Open MPV1"

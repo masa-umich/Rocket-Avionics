@@ -49,3 +49,17 @@ void accel_to_angle(float accel_x, float accel_y, float accel_z,
     *pitch = atan2f(-accel_x, sqrtf(accel_y * accel_y + accel_z * accel_z)) * (180.0f / PI);
     *yaw   = atan2f(accel_y, accel_z) * (180.0f / PI);
 }
+
+
+
+// ORIENTATION FILTER UPDATE - NOT USED YET
+                //float pitch, yaw;
+                //cf_update(&imu_cf, &pitch, &yaw, accel_x, accel_y, accel_z, gyro_x, gyro_y);
+                /*
+                for (int i = 6; i > 0; --i) {
+                    pitch_buf[i] = pitch_buf[i - 1];
+                    yaw_buf[i] = yaw_buf[i - 1];
+                }
+                pitch_buf[0] = pitch;
+                yaw_buf[0] = yaw;
+                */
