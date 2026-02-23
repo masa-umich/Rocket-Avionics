@@ -27,6 +27,9 @@ void execute_flight_autosequence(){
     uint32_t ignition_timestamp = 0;
     uint32_t meco_timestamp = 0;         
     uint32_t lockout_timestamp = 0; 
+    uint32_t apogee_timestamp = 0;
+    uint32_t drogue_timestamp = 0;
+    uint32_t main_timestamp = 0;
 
     // fallback time estimates -- ALL CALCULATED WITH KINEMATICS!
     uint32_t fallback_apogee_time = 0; 
@@ -66,6 +69,8 @@ void execute_flight_autosequence(){
 
     // infinite loop to run the sequence, broken by RTOS interrupts
     for (;;){
+
+        // ABORT CHECK 
 
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
@@ -163,16 +168,22 @@ void execute_flight_autosequence(){
                 break;
 
             } 
-
+            
+            // after lockout, waiting for apogee detection
             case ST_WAIT_APOGEE: {
+                // insert pressure reading
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
 
+                // insert altitude readings into buffer once 
                 if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) {
                     altitude_readings[altitude_buf_size] = compute_height((bar1 + bar2) / 2.0f);
                     time_readings[altitude_buf_size] = getTime() / 1000.0f; // convert ms to seconds
                     wait(50); // wait 50 ms for next reading
                     altitude_buf_size++;
                 }
+
+                // if buffer is full -> fit a quadratic curve to get estimate of velocity 
+                // and acceleration, then compute fallback times
                 else if (!heights_recorded) {
                     quadr_curve_fit(altitude_readings, time_readings,
                          &post_lockout_accel, &post_lockout_vel, &post_lockout_alt);
@@ -182,19 +193,23 @@ void execute_flight_autosequence(){
                                         &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time);
                 }
 
+                // check if apogee detected with barometer detector, if we have enough barometer readings
                 if(baro_detector.slope_size >= AD_CAPACITY) {
+                    // if we detect apogee with our detector, set a flag and move to next phase
                     if (detect_event(&baro_detector, phase)) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         apogee_detection_worked = 1;
                     }
 
+                    // if our fallback timers predict apogee, set flag and move to next phase
                     else if (getTime() >= fallback_apogee_time) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         fallback_timers_worked = 1;
                     }
 
+                    // if neither work, set constant timer flag
                     else if (getTime() >= APOGEE_CONSTANT_TIMER) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
@@ -204,21 +219,28 @@ void execute_flight_autosequence(){
                 break;
             } 
 
+            // after apogee, waiting for drogue deployment detection
             case ST_WAIT_DROGUE: {
                 deployPilot();
+
+                // insert pressure reading 
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
-            
+                
+                // check if drogue deployment detected, if we have enough barometer readings
                 if(baro_detector.avg_size >= AD_CAPACITY) {
+                    // if we detected apogee with apogee detection, detect with barometers
                     if (apogee_detection_worked && detect_event(&baro_detector, phase)) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
                     }
 
+                    // if we detected apogee with fallback timers, detect drogue deployment with fallback timers
                     else if (fallback_timers_worked && getTime() >= fallback_5k_time) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
                     }
 
+                    // otherwise just "detect" with constant timer
                     else if (getTime() >= DROGUE_CONSTANT_TIMER) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
@@ -231,8 +253,11 @@ void execute_flight_autosequence(){
 
             case ST_WAIT_MAIN: {
                 deployDrogue();
+
+                // insert pressure reading
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
 
+                // same idea as drogue deployment detection
                 if(baro_detector.avg_size >= AD_CAPACITY) {
                     if (apogee_detection_worked && detect_event(&baro_detector, phase)) {
                         main_flag = 1;
@@ -254,18 +279,24 @@ void execute_flight_autosequence(){
             } 
 
             case ST_WAIT_GROUND: {
+                deployMain();
+                // insert pressure reading
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
                 
-                if (detect_event(&baro_detector, phase)) {
-                    phase = ST_DONE;
-                    landed_flag = 1;
+                // check if landed with barometer detector, if we have enough barometer readings
+                if(baro_detector.slope_size >= AD_CAPACITY) {
+                    if (detect_event(&baro_detector, phase)) {
+                        phase = ST_DONE;
+                        landed_flag = 1;
+                    }
                 }
 
-                deployMain();
+                
                 break;
             } 
 
             case ST_DONE: {
+                // enter low power mode once on ground
                 low_power_mode();
                 break;
             }
@@ -275,6 +306,7 @@ void execute_flight_autosequence(){
             
         }//end switch(phase)
 
+        // wait until thread period is up before next loop iteration
         vTaskDelayUntil(&last, period);
     }
 }
