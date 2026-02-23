@@ -34,7 +34,7 @@ void execute_flight_autosequence(){
     uint32_t fallback_1k_time = 0;
 
     // for velocity/acceleration estimation post lockout
-    int altitude_buf_size = 0;
+    int altitude_buf_size = 0; // CT: what the hellyante is this
     float altitude_readings[ALTITUDE_BUFFER_SIZE] = {0}; // in meters
     float time_readings[ALTITUDE_BUFFER_SIZE] = {0};      // in seconds
     int heights_recorded = 0;
@@ -153,10 +153,10 @@ void execute_flight_autosequence(){
             // cannot take pressure readings while above mach 1
             case ST_MACH_LOCKOUT:{   
                 // insert accel reading
-                insert(&imu_detector, imu1, imu2, phase, IMU_DTR);
+                insert(&imu_detector, imu1, imu2, phase, IMU_DTR); // CT: I am confused what is happening here
 
                 // check if current time is greater than the estimated lockout timestamp
-                if (getTime() >= lockout_timestamp){
+                if (getTime() >= lockout_timestamp){ // CT: is lockout entirely calculated with a timestamp?
                     phase = ST_WAIT_APOGEE;
                 }
                 
@@ -165,10 +165,11 @@ void execute_flight_autosequence(){
             } 
 
             case ST_WAIT_APOGEE: {
-                insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
+                insert(&baro_detector, bar1, bar2, phase, BARO_DTR); // CT: is a detector a sensor?
 
                 if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) {
                     altitude_readings[altitude_buf_size] = compute_height((bar1 + bar2) / 2.0f);
+                    // CT: are we this starved of memory that we need to use floats instead of doubles?
                     time_readings[altitude_buf_size] = getTime() / 1000.0f; // convert ms to seconds
                     wait(50); // wait 50 ms for next reading
                     altitude_buf_size++;
@@ -182,6 +183,7 @@ void execute_flight_autosequence(){
                                         &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time);
                 }
 
+                // CT: is this also checking if the moving average is filled?
                 if(baro_detector.slope_size >= AD_CAPACITY) {
                     if (detect_event(&baro_detector, phase)) {
                         apogee_flag = 1;
