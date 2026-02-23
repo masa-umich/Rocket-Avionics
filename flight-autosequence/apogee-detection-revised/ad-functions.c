@@ -104,6 +104,7 @@ float compute_height(float avg_pressure /*, float avg_temp*/) {
     */
 
     if (avg_pressure < P_TROPOPAUSE){
+        // CT: where is T_SEA_LEVEL assigned a value?
         estimated_height = (T_SEA_LEVEL / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_SEA_LEVEL, (R_AIR * LAPSE_RATE) / G));
     }
 

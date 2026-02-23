@@ -11,7 +11,6 @@ void execute_flight_autosequence(){
     uint32_t last = getTime();
 
     // initialize detectors for pressure, accleration, and temperature
-    // CT: why is everything initialized to zero?
     Detector baro_detector = {0};
     Detector imu_detector = {0};
     Detector temp_C_detector = {0};
@@ -154,7 +153,7 @@ void execute_flight_autosequence(){
             // cannot take pressure readings while above mach 1
             case ST_MACH_LOCKOUT:{   
                 // insert accel reading
-                insert(&imu_detector, imu1, imu2, phase, IMU_DTR); // CT: I am confused what is happening here
+                insert(&imu_detector, imu1, imu2, phase, IMU_DTR);
 
                 // check if current time is greater than the estimated lockout timestamp
                 if (getTime() >= lockout_timestamp){ // CT: is lockout entirely calculated with a timestamp?
