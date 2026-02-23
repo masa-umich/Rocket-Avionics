@@ -11,6 +11,7 @@ void execute_flight_autosequence(){
     uint32_t last = getTime();
 
     // initialize detectors for pressure, accleration, and temperature
+    // CT: why is everything initialized to zero?
     Detector baro_detector = {0};
     Detector imu_detector = {0};
     Detector temp_C_detector = {0};
@@ -34,7 +35,7 @@ void execute_flight_autosequence(){
     uint32_t fallback_1k_time = 0;
 
     // for velocity/acceleration estimation post lockout
-    int altitude_buf_size = 0; // CT: what the hellyante is this
+    int altitude_buf_size = 0; // CT: what the hellyante is this, why is the value zero?
     float altitude_readings[ALTITUDE_BUFFER_SIZE] = {0}; // in meters
     float time_readings[ALTITUDE_BUFFER_SIZE] = {0};      // in seconds
     int heights_recorded = 0;
@@ -162,14 +163,30 @@ void execute_flight_autosequence(){
                 
                 break;
 
+                // CT: I feel like we should have something that detects if we have gone supersonic at all:
+                /*
+                Here is my idea:
+                    1. Add a flag during the MECO detect phase that detects a spike in pressure
+                        - when the spike or there is a peak in pressure as seen in BPS's data that
+                        Bryn has, the flag is marked true. 
+                        - This could also include accelerometer data, there should also be a spike in axial acceleration
+                        during the transition from subsonic to transonic to supersonic
+                    2. During the Mach-Lockout phase, the flight computer searches for the exiting transonic spikes
+                        - The flag is turned off after a spike in both pressure and axial acceleration 
+                    3. Move onto the ST_WAIT_APOGEE phase
+
+                    Lmk your thoughts king. I will need to lock in on MASTRAN.
+                */
+
             } 
 
             case ST_WAIT_APOGEE: {
-                insert(&baro_detector, bar1, bar2, phase, BARO_DTR); // CT: is a detector a sensor?
+                insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
 
                 if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) {
+                    // CT: peep compute_height implementation
                     altitude_readings[altitude_buf_size] = compute_height((bar1 + bar2) / 2.0f);
-                    // CT: are we this starved of memory that we need to use floats instead of doubles?
+                    // CT: are we this starved of memory that we need to use floats instead of doubles? (just curious)
                     time_readings[altitude_buf_size] = getTime() / 1000.0f; // convert ms to seconds
                     wait(50); // wait 50 ms for next reading
                     altitude_buf_size++;
@@ -179,18 +196,21 @@ void execute_flight_autosequence(){
                          &post_lockout_accel, &post_lockout_vel, &post_lockout_alt);
 
                     heights_recorded = 1;
+                    // CT: where is post_lockout_vel calculated?
                     compute_fallback_times(post_lockout_alt, post_lockout_vel, post_lockout_accel,
                                         &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time);
                 }
 
                 // CT: is this also checking if the moving average is filled?
+                // also, are we waiting for all three, or if only one detects we can move on?
                 if(baro_detector.slope_size >= AD_CAPACITY) {
                     if (detect_event(&baro_detector, phase)) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         apogee_detection_worked = 1;
                     }
-
+                    
+                    // CT: is the intention to have two backup times? A hardcoded and a kinematics?
                     else if (getTime() >= fallback_apogee_time) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
@@ -211,6 +231,17 @@ void execute_flight_autosequence(){
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
             
                 if(baro_detector.avg_size >= AD_CAPACITY) {
+                    // CT: why is the detect event with baro exclusive to if the apogee detection worked?
+                    /*
+                        My point is that I think we should have it always prioritize the sensor 
+                        detection method regardless of how the script moved onto the next phase.
+
+                        Another thing is that I think that we should consider implementing a backup
+                        deploy signal in case that it doesn't detect an increase in acceleration from the parachute.
+
+                        If the previous parachute never deploys, the next one never will either. We shouldn't move
+                        onto the next phase unless we detect a parachute's acceleration.
+                    */
                     if (apogee_detection_worked && detect_event(&baro_detector, phase)) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
@@ -234,6 +265,8 @@ void execute_flight_autosequence(){
             case ST_WAIT_MAIN: {
                 deployDrogue();
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
+
+                // CT: Same thing as wait_drogue here!
 
                 if(baro_detector.avg_size >= AD_CAPACITY) {
                     if (apogee_detection_worked && detect_event(&baro_detector, phase)) {
@@ -263,6 +296,7 @@ void execute_flight_autosequence(){
                     landed_flag = 1;
                 }
 
+                // CT: why is this not the first function call like in drogue?
                 deployMain();
                 break;
             } 

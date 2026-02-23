@@ -85,6 +85,24 @@ float compute_rho(float pressure, float temp) {
 float compute_height(float avg_pressure /*, float avg_temp*/) {
     float estimated_height;
 
+    // CT: is there any way to include a phase where the static pressure and temperature are used
+    // to calculate the standard atmosphere? It is all based on an offset from some altitude.
+    /*
+        The standard atmosphere here is calculate from sea-level but I think it is more accurate
+        to calculate it from the launch site. This means implementing something that does
+        something like the following:
+
+        - At the beginning of flight-autosequence, pressure and temp are read and stored into
+        the constants seen here to use the standard atmosphere to estimate altitude.
+        
+        - This would require that this function is changed to compute standard atmosphere based
+        off those readings. This might mean that you would have to calculate the offsets at sea
+        level with those measurements.
+
+        - this would overall make it more accurate because there can be high and low pressure systems
+        that can make altitude estimates up to 200 meters off or something like that
+    */
+
     if (avg_pressure < P_TROPOPAUSE){
         estimated_height = (T_SEA_LEVEL / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_SEA_LEVEL, (R_AIR * LAPSE_RATE) / G));
     }
