@@ -44,6 +44,14 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
     }
 }
 
+
+// if we detect an event, return 1, else return 0
+// events are specified by the current phase of the flight
+// MECO     ->
+// Apogee   ->
+// 5k feet  ->
+// 1k feet  ->
+// Ground   ->
 int detect_event(Detector * detector, FlightPhase phase) {
     if (phase == ST_WAIT_MECO)
         return buffer_lt(detector->average, detector->avg_size, 0);
@@ -51,10 +59,10 @@ int detect_event(Detector * detector, FlightPhase phase) {
     if (phase == ST_WAIT_APOGEE)
         return buffer_lt(detector->slope, detector->slope_size, 0);
 
-    if (phase == ST_WAIT_DROGUE)                  //approximate pressure in hPa at 1500 m
+    if (phase == ST_WAIT_DROGUE)                  
         return buffer_gt(detector->average, detector->avg_size, DROGUE_DEPLOY_PRESSURE); 
 
-    if (phase == ST_WAIT_MAIN)               //aproximate pressure in hPa at 300 m       
+    if (phase == ST_WAIT_MAIN)                     
         return buffer_gt(detector->average, detector->avg_size, MAIN_DEPLOY_PRESSURE);  
 
     if (phase == ST_WAIT_GROUND)
@@ -63,116 +71,25 @@ int detect_event(Detector * detector, FlightPhase phase) {
     return 0;
 }
 
-//Accepts temperature in Kelvin
-//Returns sp of sound in m/s
-float speed_of_sound(float temp) {
-    return sqrtf(GAMMA * R_AIR * temp);
-}
-
-//Accepts temperatures in Kelvin
-//Accepts pressures in hPa (converts to Pa)
-//Returns density of air in kg/m^3 using ideal gas law
-float compute_rho(float pressure, float temp) {             
-    return ((pressure * 100.0f) * MOLAR_MASS_AIR) / (R_GAS_CONST * temp);
-}
 
 //Accepts pressure in hPa
 //Accepts temperature in Kelvin
-//Returns height in meters using 1) tropospheric formula and 2) isothermal formula above tropopause
-//Currently only relying on pressure, but can also be found from temp if desired. 
-
-// TO-DO: adjust temperature and pressure at sea level with measured values
-float compute_height(float avg_pressure /*, float avg_temp*/) {
+//Returns height in meters using 
+// 1) tropospheric formula below tropopause, and
+// 2) isothermal formula above tropopause
+float compute_height(float avg_pressure) {
     float estimated_height;
+    float scale_height = R_GAS_CONST * LAPSE_RATE / (G * MOLAR_MASS_AIR);
 
     if (avg_pressure < P_TROPOPAUSE){
-        estimated_height = (T_SEA_LEVEL / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_SEA_LEVEL, (R_AIR * LAPSE_RATE) / G));
+        estimated_height = (T_GROUND / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_GROUND, scale_height));
     }
 
     else {
-        estimated_height = ALT_TROPOPAUSE + (R_AIR * T_TROPOPAUSE / G) * logf(P_TROPOPAUSE / avg_pressure);
+        estimated_height = ALT_TROPOPAUSE + scale_height * logf(P_TROPOPAUSE / avg_pressure);
     }
     
     return estimated_height;
-}
-
-
-
-//wait-time helper 
-float advance_chunk(float *h, float *v, float chunk_dt, float press, float temp)
-{
-    const float local_s_of_s  = speed_of_sound(temp);
-    const float rho = compute_rho(press, temp); // air density           
-    const float drag_accel_coeff = max(1e-9f, 0.5f * rho * CD * CROSS_SECT_AREA / MASS_AT_MECO); // guard
-
-    // Helper lambdas for closed-form v(t)
-    const float s      = sqrtf(drag_accel_coeff/G);
-    const float omega  = sqrtf(G*drag_accel_coeff);
-
-    //CLOSED FORM SOLUTION to dv/dt = -g -(drag_coeff_accel)v^2
-    //Since we are precomputing drag_coeff_accel once per chunk, we treat it as constant.
-    //This simplifies the above differential equation allowing us to come to this clean
-    //solution that we can simply evaluate once per chunk! 
-    //*******************************************************/
-    #define vel_at(t) (sqrtf(G/drag_accel_coeff) * tanf(atanf(s*(*v)) - omega*(t)))
-    //*******************************************************/
-
-    // Time (with this drag_accel_coeff) to drop to local Mach 1 speed
-    //This is just solving the above closed form solution for t 
-    const float t_to_mach = max(0.0f, (atanf(s*(*v)) - atanf(s*local_s_of_s)) / omega);
-
-    // Use at most chunk_dt this pass
-    const float t_used = min(chunk_dt, t_to_mach);
-    const float v_new  = vel_at(t_used);
-
-    // Altitude update: trapezoid (good within a short chunk)
-    const float dh = 0.5f * ((*v) + v_new) * t_used;
-
-    //Update 
-    *h += dh;
-    *v  = v_new;
-    return t_used; // caller decides if we reached Mach 1
-}
-
-//wait-time helper 
-float wait_time_piecewise(float h0, float v0, float pressure, float temp, float chunk_dt, float max_time) {
-    float t_tot = 0.0, h = h0, v = v0;
-    if (fabsf(v) <= speed_of_sound(temp)) // TO-DO CHECK SKIN TC ON NOSECONE
-        return 0.0f;
-
-    for (int i = 0 ; i < (int)ceilf(max_time/chunk_dt); ++i)
-    {
-        const float local_s_of_s = speed_of_sound(temp);
-        if(fabsf(v) <= local_s_of_s)
-            break;
-        
-        float used = advance_chunk(&h, &v, chunk_dt, pressure, temp);
-        t_tot += used;
-
-        // If we hit Mach within this chunk (used < chunk_dt), stop.
-        if (used + 1e-9f < chunk_dt) 
-            break;
-    }
-    return t_tot;
-}
-
-
-float compute_wait_time(int meco_time_ms, float avg_pressure, float avg_temp)
-{
-    //Explanation: 
-    //Goal here is to use integer division to index into a 
-    //LUT to get estimate of current speed. 
-    //Current LUT has 4 estimates per second for 30 seconds.
-    //We're expecting our meco_time in ms, so meco_time_ms / 250 will corresponds to 
-    //and index in the table
-    //Example meco_time_ms = 10000 (or 10 seconds), 100000 /250 = index 40 in the table, i.e.  
-    float current_speed = speed_LUT[(int)(meco_time_ms / 250)];
-
-    float current_height = compute_height(avg_pressure /*,avg_temp*/);
-
-    float wait_s = wait_time_piecewise(current_height, current_speed, avg_pressure, avg_temp, 0.5f, 20.0f);
-
-    return wait_s * 1000;
 }
 
 
@@ -190,6 +107,12 @@ float compute_fallback_times(float altitude, float velocity, float accel,
     // time to 1km altitude
     float t_1k = (-velocity + sqrtf(velocity*velocity + 2*accel*(altitude - 1000.0f))) / accel;
     *one_k_time = t_1k;
+}
+
+
+float compute_pressure(float altitude, float ground_temp, float ground_pressure) {
+    float exp = G * MOLAR_MASS_AIR / (R_GAS_CONST * LAPSE_RATE);
+    return ground_pressure * powf(1 - (LAPSE_RATE * altitude) / ground_temp, exp);
 }
 
 

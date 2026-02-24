@@ -13,7 +13,7 @@ void execute_flight_autosequence(){
     // initialize detectors for pressure, accleration, and temperature
     Detector baro_detector = {0};
     Detector imu_detector = {0};
-    Detector temp_C_detector = {0};
+    Detector temp_K_detector = {0};
 
     // flags for recovery deployment events, to be set when events are detected
     int MECO_flag = 0;
@@ -67,11 +67,13 @@ void execute_flight_autosequence(){
     int apogee_detection_worked = 0;
     int fallback_timers_worked = 0;
 
+    // TODO - get tropopause conditions
+
     // infinite loop to run the sequence, broken by RTOS interrupts
     for (;;){
 
-        // ABORT CHECK 
-
+        // ABORT CHECK - maybe move here for testing
+        
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
                         &imu1, &imu2,
@@ -83,7 +85,8 @@ void execute_flight_autosequence(){
         switch (phase) {
             case ST_DETECT_VALVES_OPEN: {
                 // insert temperature reading into temp detector
-                insert(&temp_C_detector, bar1_temp_C, bar2_temp_C, phase, TEMP_DTR); // insert temp in K or C?
+                insert(&temp_K_detector, bar1_temp_K, bar2_temp_K, phase, TEMP_DTR);
+                insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
 
                 // check if valves are open to transition to next phase
                 if (valves_open()) {
@@ -91,8 +94,16 @@ void execute_flight_autosequence(){
                     ignition_timestamp = getTime();
 
                     // set ground temp at handoff for calculating altitude for non-standard atmosphere conditions
-                    int idx = (temp_C_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                    ground_temp_C = temp_C_detector.average[idx];
+                    int idx_temp = (temp_K_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                    T_GROUND = temp_K_detector.average[idx_temp];
+
+                    int idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                    P_GROUND = baro_detector.average[idx_baro];
+
+                    DROGUE_DEPLOY_PRESSURE = compute_pressure(DROGUE_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
+                    MAIN_DEPLOY_PRESSURE = compute_pressure(MAIN_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
+
+                    LAPSE_RATE = T_TROPOPAUSE - T_GROUND / ALT_TROPOPAUSE - GROUND_ALTITUDE;
                 }
 
                 // if we wait too long without valves opening, ABORT!
@@ -111,13 +122,13 @@ void execute_flight_autosequence(){
                 // insert accel, pressure, and temp readings here
                 insert(&imu_detector, imu1, imu2, phase, IMU_DTR);
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
-                insert(&temp_C_detector, bar1_temp_C, bar2_temp_C, phase, TEMP_DTR);
+                insert(&temp_K_detector, bar1_temp_K, bar2_temp_K, phase, TEMP_DTR);
 
                 // check if imu detector is full of readings
                 if(imu_detector.avg_size >= AD_CAPACITY) {
 
                     // check if MECO detected - when accel becomes negative
-                    if (detect_event(&imu_detector, phase)) {
+                    if (detect_event(&imu_detector, phase) || getTime() - ignition_timestamp > MAX_BURN_DURATION_MS) {
                         MECO_flag = 1;
                         meco_timestamp = getTime();
                         phase = ST_WAIT_APOGEE;
@@ -138,9 +149,9 @@ void execute_flight_autosequence(){
 
 
                         //if temp buffer is ready just get the average
-                        if (temp_C_detector.avg_size >= AD_CAPACITY) {
-                            int idx = (temp_C_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                            avg_temp = temp_C_detector.average[idx];
+                        if (temp_K_detector.avg_size >= AD_CAPACITY) {
+                            int idx = (temp_K_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                            avg_temp = temp_K_detector.average[idx];
                         }
                         //emergency fallback, avg the two most recent temperature readings
                         else {
