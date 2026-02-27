@@ -43,7 +43,6 @@ const float TEMP_K_MIN = TEMP_C_MIN + 273.15f; // Kelvin
 const float TEMP_K_MAX = TEMP_C_MAX + 273.15f; // Kelvin
 
 
-
 typedef enum {
     IMU_DTR = 0,
     BARO_DTR,
@@ -97,5 +96,9 @@ int detect_event(Detector * detector, FlightPhase phase);
 
 float compute_fallback_times(float altitude, float velocity, float accel,
                                 float *apogee_time, float *five_k_time, float *one_k_time);
+
+int detect_pressure_spike();
+
+int smooth_pressure_readings();
 
 #endif

@@ -11,6 +11,9 @@ const uint32_t APOGEE_CONSTANT_TIMER = 100 * 1000; // 100 seconds in millisecond
 const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000; // 120 seconds in milliseconds
 const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000; // 150 seconds in milliseconds
 
+const uint32_t MAX_LOCKOUT_WAIT_TIME = 10000; // 10 seconds in milliseconds
+
+
 
 // System defs
 const uint32_t sampling_frequency = 20; // in Hz

@@ -4,6 +4,16 @@
 #include "ad-functions.h"
 #include <math.h>
 
+int vector_sign(float x, float y, float z) {
+    if (x + y + z > 0)
+        return 1;
+    return -1;
+}
+
+float vector_magnitude(float x, float y, float z) { 
+    return sqrtf(x*x + y*y + z*z);
+}
+
 float mean(int size, float *arr) {
     if (size == 0)
         return 0.0f;
