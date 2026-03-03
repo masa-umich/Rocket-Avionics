@@ -116,4 +116,22 @@ float compute_pressure(float altitude, float ground_temp, float ground_pressure)
 }
 
 
+int detect_acceleration_spike(Detector* detector, float max_accel_seen) {
+    if (detector->avg_size < AD_CAPACITY)
+        return 0;
+
+    float filtered_accel = detector->average[(detector->avg_index - 1 + AD_CAPACITY) % AD_CAPACITY];
+    if (filtered_accel > max_accel_seen && filtered_accel > MIN_START_ACCEL)
+        max_accel_seen = filtered_accel;
+
+    if (max_accel_seen > MIN_START_ACCEL) {
+        float accel_drop = max_accel_seen - filtered_accel;
+        if (accel_drop > MACH_DIP_THRESHOLD)
+            return 1;
+    }
+    
+    return 0;
+
+}
+
 

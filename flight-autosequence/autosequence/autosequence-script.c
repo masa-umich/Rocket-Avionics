@@ -12,7 +12,7 @@ void execute_flight_autosequence(){
 
     // initialize detectors for pressure, accleration, and temperature
     Detector baro_detector = {0};
-    Detector imu_detector = {0};
+    Detector imu_z_detector = {0};
     Detector temp_K_detector = {0};
 
     // timestamps of key events, to be set when events are detected
@@ -29,6 +29,8 @@ void execute_flight_autosequence(){
     uint32_t fallback_5k_time = 0;
     uint32_t fallback_1k_time = 0;
 
+    uint32_t approach_mach1_timestamp = 0;
+
     // for velocity/acceleration estimation post lockout
     int altitude_buf_size = 0;
     float altitude_readings[ALTITUDE_BUFFER_SIZE] = {0}; // in meters
@@ -42,8 +44,8 @@ void execute_flight_autosequence(){
     // initialize baro and imu values 
     float bar1 = 0.0f;
     float bar2 = 0.0f;
-    float imu1 = 0.0f;
-    float imu2 = 0.0f;
+    float imu1_z = 0.0f;
+    float imu2_z = 0.0f;
 
     // initilize temperature values
     float bar1_temp_C = 0.0f;
@@ -60,21 +62,22 @@ void execute_flight_autosequence(){
     int apogee_detection_worked = 0;
     int fallback_timers_worked = 0;
     int sub_to_supersonic_flag = 0;
-    int super_to_subsonic_flag = 0;
     int MECO_flag = 0;
     int apogee_flag = 0;
     int drogue_flag = 0;
     int main_flag = 0;
     int landed_flag = 0;
 
-    // TODO - get tropopause conditions
+
+    float max_accel_seen = 0.0f; // for detecting sub to supersonic transition
+
     // infinite loop to run the sequence, broken by RTOS interrupts
 
     for (;;){
         // ABORT CHECK - maybe move here for testing
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
-                        &imu1, &imu2,
+                        &imu1_z, &imu2_z,
                         &bar1_temp_C, &bar2_temp_C,
                         &bar1_temp_K, &bar2_temp_K);
         
@@ -117,23 +120,35 @@ void execute_flight_autosequence(){
                 energizeMPV1();
                 energizeMPV2();
                 
-                // insert accel readings here
-                insert(&imu_detector, imu1, imu2, phase, IMU_DTR);
+                // insert accel and baro readings here
+                insert(&imu_z_detector, imu1_z, imu2_z, phase, IMU_DTR);
 
-                if (!sub_to_supersonic_flag) {
-                    sub_to_supersonic_flag = detect_pressure_spike();
-                }
+                if (!sub_to_supersonic_flag)
+                    insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
+                    if (detect_acceleration_spike(&imu_z_detector, max_accel_seen)) {
+                        sub_to_supersonic_flag = 1;
+                        approach_mach1_timestamp = getTime();
+                    }
 
                 // check if imu detector is full of readings
-                if(imu_detector.avg_size >= AD_CAPACITY) {
+                if(imu_z_detector.avg_size >= AD_CAPACITY) {
                     // check if MECO detected - when accel becomes negative
-                    if (detect_event(&imu_detector, phase) || getTime() - ignition_timestamp > MAX_BURN_DURATION_MS) {
+                    if (detect_event(&imu_z_detector, phase) || getTime() - ignition_timestamp > MAX_BURN_DURATION_MS) {
                         MECO_flag = 1;
                         meco_timestamp = getTime();
 
                         if (sub_to_supersonic_flag){
                             phase = ST_MACH_LOCKOUT;
-                            lockout_timestamp = meco_timestamp + MAX_LOCKOUT_WAIT_TIME;
+
+                            // set lockout timer based on how long we were in boost phase after approaching mach 1
+                            uint32_t wait = (meco_timestamp - approach_mach1_timestamp) * WAIT_TIME_MULTIPLIER;
+                            if (wait < MIN_LOCKOUT_WAIT_TIME)
+                                wait = MIN_LOCKOUT_WAIT_TIME;
+                            else if (wait > MAX_LOCKOUT_WAIT_TIME)
+                                wait = MAX_LOCKOUT_WAIT_TIME;
+
+                            lockout_timestamp = meco_timestamp + wait; 
+                            
                         }
 
                         else {
@@ -149,12 +164,13 @@ void execute_flight_autosequence(){
             // cannot take pressure readings while above mach 1
             case ST_MACH_LOCKOUT:{   
                 // check if current time is greater than the estimated lockout timestamp
-                // or if we detect another spike in pressure, indicating we've gone back below mach 1
+                /*
                 if (!super_to_subsonic_flag) {
-                    super_to_subsonic_flag = detect_pressure_spike();
+                    super_to_subsonic_flag = detect_acceleration_spike(&imu_z_detector, max_accel_seen);
                 }
+                    */
 
-                if ((super_to_subsonic_flag && smooth_pressure_readings()) || getTime() >= lockout_timestamp){
+                if (getTime() >= lockout_timestamp /* || (super_to_subsonic_flag && smooth_acceleration_readings())*/){
                     phase = ST_WAIT_APOGEE;
                 }
                 
@@ -169,7 +185,8 @@ void execute_flight_autosequence(){
 
                 // insert altitude readings into buffer once 
                 if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) {
-                    altitude_readings[altitude_buf_size] = compute_height((bar1 + bar2) / 2.0f);
+                    float idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                    altitude_readings[altitude_buf_size] = compute_height(baro_detector.average[idx_baro]);
                     time_readings[altitude_buf_size] = getTime() / 1000.0f; // convert ms to seconds
                     wait(50); // wait 50 ms for next reading
                     altitude_buf_size++;

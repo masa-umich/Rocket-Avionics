@@ -43,6 +43,11 @@ const float TEMP_K_MIN = TEMP_C_MIN + 273.15f; // Kelvin
 const float TEMP_K_MAX = TEMP_C_MAX + 273.15f; // Kelvin
 
 
+const float MACH_DIP_THRESHOLD = 15.0f; // drop in acceleration in m/s^2 that indicates transition from subsonic to supersonic
+const float MIN_START_ACCEL = 20.0f; // minimum accel we need to see to consider detecting a spike for mach 1 transition
+
+
+
 typedef enum {
     IMU_DTR = 0,
     BARO_DTR,
@@ -97,8 +102,6 @@ int detect_event(Detector * detector, FlightPhase phase);
 float compute_fallback_times(float altitude, float velocity, float accel,
                                 float *apogee_time, float *five_k_time, float *one_k_time);
 
-int detect_pressure_spike();
-
-int smooth_pressure_readings();
+int detect_acceleration_spike(Detector * detector, float max_accel_seen);
 
 #endif

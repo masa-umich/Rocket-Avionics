@@ -39,7 +39,7 @@ void wait_until(uint32_t target_time_ms){
 } // wait until target time in ms
 
 void get_sensor_data(float* bar1, float* bar2,
-                     float* imu1, float* imu2,
+                     float* imu1_z, float* imu2_z,
                      float* bar1_temp_C, float* bar2_temp_C,
                      float* bar1_temp_K, float* bar2_temp_K){
 
@@ -47,14 +47,8 @@ void get_sensor_data(float* bar1, float* bar2,
         *bar1 = Rocket_h.fcState.bar1; // convert to needed units if necessary
         *bar2 = Rocket_h.fcState.bar2;
 
-        // inaccurate but simple way to get a signed accel reading
-        // okay because we only care about sign, not magnitude for MECO detection
-        // will be positive during engine burn and negative afterwards
-        *imu1 = vector_sign(Rocket_h.fcState.imu1_A.XL_x, Rocket_h.fcState.imu1_A.XL_y, Rocket_h.fcState.imu1_A.XL_z) * 
-        vector_magnitude(Rocket_h.fcState.imu1_A.XL_x, Rocket_h.fcState.imu1_A.XL_y, Rocket_h.fcState.imu1_A.XL_z);
-
-        *imu2 = vector_sign(Rocket_h.fcState.imu2_A.XL_x, Rocket_h.fcState.imu2_A.XL_y, Rocket_h.fcState.imu2_A.XL_z) * 
-        vector_magnitude(Rocket_h.fcState.imu2_A.XL_x, Rocket_h.fcState.imu2_A.XL_y, Rocket_h.fcState.imu2_A.XL_z);
+        *imu1_z = Rocket_h.fcState.imu1_A.XL_z;
+        *imu2_z = Rocket_h.fcState.imu2_A.XL_z;
 
         *bar1_temp_C = Rocket_h.fcState.bar1_temp_C;
         *bar1_temp_K = *bar1_temp_C + 273.15f;

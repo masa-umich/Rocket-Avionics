@@ -14,7 +14,6 @@ const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000; // 150 seconds in milliseconds
 const uint32_t MAX_LOCKOUT_WAIT_TIME = 10000; // 10 seconds in milliseconds
 
 
-
 // System defs
 const uint32_t sampling_frequency = 20; // in Hz
 //const uint32_t period = pdMS_TO_TICKS(1000) / sampling_frequency;
@@ -25,6 +24,9 @@ const int ALTITUDE_BUFFER_SIZE = 11;
 const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000; // 15 seconds
 const uint32_t MAX_BURN_DURATION_MS = 22000; // 22 seconds
 
+const uint32_t MIN_LOCKOUT_WAIT_TIME = 6000; // ms, minimum time we expect to wait in lockout phase
+const uint32_t MAX_LOCKOUT_WAIT_TIME = 20000; // ms, maximum time we expect to wait in lockout phase
+const int WAIT_TIME_MULTIPLIER = 3;
 
 void execute_flight_autosequence();
 
