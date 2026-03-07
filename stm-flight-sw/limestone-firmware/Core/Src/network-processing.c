@@ -21,10 +21,20 @@ void ProcessPackets(void *argument) {
 				switch(parsedmsg.type) {
 					case MSG_HANDOFF: {
 						if(parsedmsg.data.handoff_msg.checksum_valid){
-							// TODO handle handoff
+							if(parsedmsg.data.handoff_msg.h_type == HANDOFF_ARM) {
+								trigger_arm();
+								log_message(FC_STAT_HANDOFF_ARM, -1);
+							}
+							else if(parsedmsg.data.handoff_msg.h_type == HANDOFF_ABORT) {
+								trigger_abort();
+								log_message(FC_STAT_HANDOFF_ABORT, -1);
+							}
+							else {
+								log_message(FC_ERR_HANDOFF_INVALID_TYPE, FC_ERR_TYPE_UNKNOWN_LMP);
+							}
 						}
 						else {
-							// TODO log_message
+							log_message(FC_ERR_HANDOFF_INVALID_CHECKSUM, FC_ERR_TYPE_UNKNOWN_LMP);
 						}
 						break;
 					}

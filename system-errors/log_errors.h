@@ -136,6 +136,9 @@
 #define FC_ERR_UDP_TELEM_RECV_SIZE_ERR			"062 UDP Telemetry receive size error"
 #define FC_ERR_UDP_TELEM_RECV_SIZE_MISMATCH		"063 UDP Telemetry receive size mismatch"
 
+#define FC_ERR_HANDOFF_INVALID_TYPE				"064 Invalid handoff message type"
+#define FC_ERR_HANDOFF_INVALID_CHECKSUM			"065 Invalid handoff message checksum"
+
 #elif defined(BAY_BOARD)
 // Bay Board error messages
 #define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"
@@ -222,6 +225,10 @@
 #define FC_STAT_PDB_SWITCH_GSE					"508 PDB switched to GSE power"
 #define FC_STAT_PDB_COTS_SUPPLY_ON				"509 PDB COTS supply on"
 #define FC_STAT_PDB_COTS_SUPPLY_OFF				"510 PDB COTS supply off"
+#define FC_STAT_HANDOFF_ARM						"511 Handoff arm signal received"
+#define FC_STAT_HANDOFF_ABORT					"512 Handoff abort signal received"
+#define FC_STAT_ARMED							"513 Flight Autosequence armed"
+#define FC_STAT_DEARMED							"514 Flight Autosequence dearmed"
 
 // Bay Board status messages
 #elif defined(BAY_BOARD)

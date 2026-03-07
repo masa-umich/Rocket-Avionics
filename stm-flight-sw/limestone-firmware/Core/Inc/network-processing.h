@@ -14,6 +14,7 @@
 #include "server.h"
 #include "log_errors.h"
 #include "utils.h"
+#include "flight-autosequence.h"
 
 void ProcessPackets(void *argument);
 

@@ -55,13 +55,15 @@ void TelemetryTask(void *argument) {
   		IMU_getAngRate(&(sensors_h.imu2_h), &angRate_readings2);
 
   	  	float pres1 = 0.0;
+  	  	float bar1_temp = 0.0;
   	  	float pres2 = 0.0;
-  	  	int bar1_stat = MS5611_getPres(&(sensors_h.bar1_h), &pres1, &(sensors_h.prom1), OSR_1024);
+  	  	float bar2_temp = 0.0;
+  	  	int bar1_stat = MS5611_getPres(&(sensors_h.bar1_h), &pres1, &bar1_temp, &(sensors_h.prom1), OSR_1024);
   	  	if(bar1_stat) {
   	  		// BAR 1 read error
 			log_peri_message(ERR_BAR_READ "1", BB_ERR_PERI_TYPE_BAR1);
   	  	}
-  	  	int bar2_stat = MS5611_getPres(&(sensors_h.bar2_h), &pres2, &(sensors_h.prom2), OSR_1024);
+  	  	int bar2_stat = MS5611_getPres(&(sensors_h.bar2_h), &pres2, &bar2_temp, &(sensors_h.prom2), OSR_1024);
   	  	if(bar2_stat) {
   	  		// BAR 2 read error
 			log_peri_message(ERR_BAR_READ "2", BB_ERR_PERI_TYPE_BAR2);

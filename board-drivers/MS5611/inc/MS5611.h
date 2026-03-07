@@ -103,10 +103,10 @@ int MS5611_presConvert(MS5611* BAR, uint32_t* pres_raw, OSR osr);
 int MS5611_tempConvert(MS5611* BAR, uint32_t* temp_raw, OSR osr);
 
 // Does some calculations using the constants from the PROM to give real pressure in mbar
-int MS5611_compensateTemp(float* pres, uint32_t pres_raw, uint32_t temp_raw, MS5611_PROM_t* prom);
+int MS5611_compensateTemp(float* pres, float* temp, uint32_t pres_raw, uint32_t temp_raw, MS5611_PROM_t* prom);
 
 // Get pressure from barometer
-int MS5611_getPres(MS5611* BAR, float* pres, MS5611_PROM_t* prom, OSR osr);
+int MS5611_getPres(MS5611* BAR, float* pres, float* temp, MS5611_PROM_t* prom, OSR osr);
 
 // Get rough altitude in feet based on pressure
 // You probably shouldn't use this for apogee detection

@@ -48,6 +48,11 @@ typedef struct {
 	VLV_OpenLoad vlv3_old;
 	float board_temp;
 
+	float bar1_temp; // only used locally for the autosequence
+	float bar2_temp; // only used locally for the autosequence
+
+	float auto_sequence_state;
+
 	uint64_t timestamp; // Only used to monitor how "fresh" the data is
 } Flight_Computer_State_t;
 
