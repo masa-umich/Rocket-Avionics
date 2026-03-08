@@ -51,7 +51,7 @@ int buffer_lt(float* buf, int size, float search_value) {
     return 0;
 }
 
-int buffer_lt(float* buf, int size, float search_value) {
+int buffer_gt(float* buf, int size, float search_value) {
     if (size < AD_CAPACITY)
         return 0;
 
@@ -95,7 +95,7 @@ float fix_reading(float reading, float* buf, int size, DetectorType type) {
             return reading;
 
         case TEMP_DTR:
-            if (reading <= TEMP_C_MIN || reading >= TEMP_C_MAX)
+            if (reading <= TEMP_K_MIN || reading >= TEMP_K_MAX)
                 return mean(size, buf);
             return reading;
 

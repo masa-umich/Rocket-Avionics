@@ -99,7 +99,7 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
 
 int detect_event(Detector * detector, FlightPhase phase);
 
-float compute_fallback_times(float altitude, float velocity, float accel,
+void compute_fallback_times(float altitude, float velocity, float accel,
                                 float *apogee_time, float *five_k_time, float *one_k_time);
 
 int detect_acceleration_spike(Detector * detector, float max_accel_seen);

@@ -94,7 +94,8 @@ float compute_height(float avg_pressure) {
 
 
 // kinematics-based estimation of fallback times to apogee, 5km, and 1km
-float compute_fallback_times(float altitude, float velocity, float accel,
+// void because isn't supposed to return anything (pointers and whatnot)
+void compute_fallback_times(float altitude, float velocity, float accel,
                                 float *apogee_time, float *five_k_time, float *one_k_time) {
     // time to apogee
     float t_apogee = (-velocity)/accel;

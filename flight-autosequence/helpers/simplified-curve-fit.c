@@ -1,7 +1,7 @@
 #ifndef SIMPLIFIED_CURVE_FIT_C
 #define SIMPLIFIED_CURVE_FIT_C
 
-const extern int ALTITUDE_BUFFER_SIZE;
+// ALTITUDE_BUFFER_SIZE is defined in test-autosequence.c, included after this file, to avoid circular dependency issues
 
 void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, float* vel, float* alt){
 
