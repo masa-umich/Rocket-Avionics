@@ -325,7 +325,6 @@ void execute_flight_autosequence_test() {
                     return;
                 }
             }
-            // NOTE: Production code falls through here (missing break) - matching exactly
 
             // enters at launch, waiting for main engine cutoff
             case ST_WAIT_MECO: {
