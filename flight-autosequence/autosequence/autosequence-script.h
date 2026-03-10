@@ -20,7 +20,7 @@ const uint32_t sampling_frequency = 20; // in Hz
 const uint32_t period = 1000.0f / sampling_frequency;
 
 
-const int ALTITUDE_BUFFER_SIZE = 11;
+#define ALTITUDE_BUFFER_SIZE 11
 const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000; // 15 seconds
 const uint32_t MAX_BURN_DURATION_MS = 22000; // 22 seconds
 
