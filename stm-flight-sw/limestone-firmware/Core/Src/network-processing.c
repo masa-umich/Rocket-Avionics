@@ -33,7 +33,7 @@ void ProcessPackets(void *argument) {
 					    	}
 				    	}
 
-				    	if(send_raw_msg_to_device(LimeWire_d, &msg, 2) == 0) {
+				    	if(send_raw_msg_to_all_devices(LimeWire_d, &msg, 2) == 0) {
 				    		// Continue to prevent freeing memory we're still using
 				    		continue;
 				    	}
@@ -58,7 +58,7 @@ void ProcessPackets(void *argument) {
 				    		}
 				    		else {
 				    			// Relay to Bay Boards
-				    			if(send_raw_msg_to_device(get_valve_board(parsedmsg.data.valve_command.valve_id), &msg, 5) == 0) {
+				    			if(send_raw_msg_to_all_devices(get_valve_board(parsedmsg.data.valve_command.valve_id), &msg, 5) == 0) {
 						    		// Continue to prevent freeing memory we're still using
 						    		continue;
 				    			}
@@ -104,7 +104,7 @@ void ProcessPackets(void *argument) {
 					    	    }
 					    	}
 
-					    	if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
+					    	if(send_raw_msg_to_all_devices(LimeWire_d, &msg, 5) == 0) {
 					    		// Continue to prevent freeing memory we're still using
 					    		continue;
 					    	}
@@ -212,7 +212,7 @@ void ProcessPackets(void *argument) {
 				    	}
 				    	else {
 			    			// Relay to other boards
-			    			if(send_raw_msg_to_device(parsedmsg.data.device_command.board_id, &msg, 5) == 0) {
+			    			if(send_raw_msg_to_all_devices(parsedmsg.data.device_command.board_id, &msg, 5) == 0) {
 					    		// Continue to prevent freeing memory we're still using
 					    		continue;
 			    			}
@@ -223,7 +223,7 @@ void ProcessPackets(void *argument) {
 				    	break;
 				    }
 				    case MSG_DEVICE_ACK: {
-		    			if(send_raw_msg_to_device(LimeWire_d, &msg, 5) == 0) {
+		    			if(send_raw_msg_to_all_devices(LimeWire_d, &msg, 5) == 0) {
 				    		// Continue to prevent freeing memory we're still using
 				    		continue;
 		    			}

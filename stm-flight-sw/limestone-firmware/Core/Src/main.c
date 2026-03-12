@@ -41,6 +41,7 @@
 #include "VLVs.h"
 #include "eeprom-config.h"
 #include "log_errors.h"
+#include "udptelemetry.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -102,6 +103,13 @@ Sensors_t sensors_h = {0};
 osThreadId_t telemetryTaskHandle;
 const osThreadAttr_t telemetry_task_attr = {
   .name = "telemetryTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t telemetryUDPTaskHandle;
+const osThreadAttr_t telemetry_udp_task_attr = {
+  .name = "telemetryUDPTask",
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
@@ -247,6 +255,7 @@ int main(void)
   /* add mutexes, ... */
   timesync_setup(&hrtc);
   logging_setup();
+  telemetry_setup();
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -1252,6 +1261,9 @@ void StartAndMonitor(void *argument)
 
 	// Start tasks
 
+  	// Start UDP telemetry processing
+  	telemetryUDPTaskHandle = osThreadNew(TelemetryUDPProcess, NULL, &telemetry_udp_task_attr);
+
   	// Start telemetry task
   	telemetryTaskHandle = osThreadNew(TelemetryTask, NULL, &telemetry_task_attr);
 
@@ -1302,7 +1314,7 @@ void StartAndMonitor(void *argument)
 	uint8_t telemcounter = 0;
 	uint8_t statecounter = 0;
 
-	uint8_t limewireconnected = 0;
+	uint8_t num_limewires = 0;
 
 	uint32_t startTick = HAL_GetTick();
 	uint8_t logdelay = 0;
@@ -1322,9 +1334,10 @@ void StartAndMonitor(void *argument)
 			size_t freemem = xPortGetFreeHeapSize();
 			refresh_log_timers();
 
-			int limefd = get_device_fd(LimeWire_d);
-			if(limefd > -2) {
-				if(limewireconnected == 0 && limefd > -1) {
+			int num_limes = num_devices(LimeWire_d);
+			if(num_limes >= 0) {
+				if(num_limes > num_limewires) {
+					// send
 					uint64_t valvetime = get_rtc_time();
 			  	  	if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
 			  	  		Valve_State_t vstates[3];
@@ -1387,12 +1400,7 @@ void StartAndMonitor(void *argument)
 						}
 			  	  	}
 				}
-				if(limefd > -1) {
-					limewireconnected = 1;
-				}
-				else {
-					limewireconnected = 0;
-				}
+				num_limewires = num_limes;
 			}
 
 			if(telemcounter == 0) {

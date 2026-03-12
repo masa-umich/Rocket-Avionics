@@ -27,7 +27,7 @@ SemaphoreHandle_t shutdownStart;
 SemaphoreHandle_t shutdownDone;
 uint8_t running = 0;
 SemaphoreHandle_t runningMutex;
-int devices[5] = {-1, -1, -1, -1, -1};
+int devices[MAX_CONN_NUM] = {-1, -1, -1, -1, -1};
 SemaphoreHandle_t deviceMutex;
 ip4_addr_t deviceIPs[5];
 SemaphoreHandle_t closeMutex;
@@ -113,7 +113,7 @@ int server_init(void) {
     memset(connections, -1, MAX_CONN_NUM * sizeof(int)); // fill non-active connections with -1
 
     if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
-    	memset(devices, -1, 5 * sizeof(int));
+    	memset(devices, -1, MAX_CONN_NUM * sizeof(int));
     	xSemaphoreGive(deviceMutex);
     }
 
@@ -339,10 +339,12 @@ void server_listener_thread(void *arg) {
 
         // add the new connection to the active connections list
         uint8_t conn_added = 0;
+        uint8_t fd_index = -1;
         sys_mutex_lock(&conn_mu);
 	    for (int i = 0; i < MAX_CONN_NUM; ++i) {
 	    	if (connections[i] == -1) { // -1 is an empty space in the list
 	    		connections[i] = connection_fd;
+	    		fd_index = i;
 	    		lmpmsgbufferlens[i] = 0;
 	    		conn_added = 1;
                 break;
@@ -359,7 +361,7 @@ void server_listener_thread(void *arg) {
 	    for(int i = 0; i < 5; i++) {
 	    	if(deviceIPs[i].addr == (u32_t) connection_socket.sin_addr.s_addr) {
 	    	    if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
-	    	    	devices[i] = connection_fd;
+	    	    	devices[fd_index] = i;
 	    	    	xSemaphoreGive(deviceMutex);
 	    	    	break;
 	    	    }
@@ -438,12 +440,7 @@ void server_reader_thread(void *arg) {
 				    	connections[i] = -1;
 
 			    	    if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
-					    	for(int j = 0; j < 5;j++) {
-					    		if(connection_fd == devices[j]) {
-					    			devices[j] = -1;
-					    			break;
-					    		}
-					    	}
+					    	devices[i] = -1;
 			    	    	xSemaphoreGive(deviceMutex);
 			    	    }
 			    	    xSemaphoreGive(closeMutex);
@@ -511,12 +508,7 @@ void server_reader_thread(void *arg) {
 					    	connections[i] = -1;
 
 				    	    if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
-						    	for(int j = 0; j < 5;j++) {
-						    		if(connection_fd == devices[j]) {
-						    			devices[j] = -1;
-						    			break;
-						    		}
-						    	}
+				    	    	devices[i] = -1;
 				    	    	xSemaphoreGive(deviceMutex);
 				    	    }
 				    	    xSemaphoreGive(closeMutex);
@@ -605,12 +597,7 @@ void server_reader_thread(void *arg) {
     					    connections[i] = -1;
 
     				    	if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
-    						    for(int j = 0; j < 5;j++) {
-    						    	if(connection_fd == devices[j]) {
-    						    		devices[j] = -1;
-    						    		break;
-    						    	}
-    						    }
+    				    		devices[i] = -1;
     				    	    xSemaphoreGive(deviceMutex);
     				    	}
     				    	xSemaphoreGive(closeMutex);
@@ -839,7 +826,7 @@ int shutdown_server() {
 		}
 
 	    if(xSemaphoreTake(deviceMutex, 10) == pdPASS) {
-	    	memset(devices, -1, 5 * sizeof(int));
+	    	memset(devices, -1, MAX_CONN_NUM * sizeof(int));
 	    	xSemaphoreGive(deviceMutex);
 	    }
 
@@ -868,7 +855,7 @@ int shutdown_server() {
 	}
 }
 
-int get_device_fd(Target_Device dev) {
+int num_devices(Target_Device dev) {
 	if(!txbuffer) {
 		return -1;
 	}
@@ -876,9 +863,40 @@ int get_device_fd(Target_Device dev) {
 		return -2;
 	}
     if(xSemaphoreTake(deviceMutex, portMAX_DELAY) == pdPASS) {
-    	int fd = devices[dev];
+    	int dev_num = 0;
+    	for(int i = 0;i < MAX_CONN_NUM;i++) {
+    		if(devices[i] == dev) dev_num++;
+    	}
     	xSemaphoreGive(deviceMutex);
-    	return fd;
+    	return dev_num;
+    }
+    return -2;
+}
+
+int get_device_fd(Target_Device dev, uint8_t index) {
+	if(!txbuffer) {
+		return -1;
+	}
+	if(dev >= NUM_TARGET_DEVICES) {
+		return -2;
+	}
+    if(xSemaphoreTake(deviceMutex, portMAX_DELAY) == pdPASS) {
+    	for(int i = 0;i < MAX_CONN_NUM;i++) {
+    		if(devices[i] == dev) {
+    			if(index == 0) {
+    				xSemaphoreGive(deviceMutex);
+    				sys_mutex_lock(&conn_mu);
+    				int dev_fd = connections[i];
+    				sys_mutex_unlock(&conn_mu);
+    				return dev_fd;
+    			}
+    			else {
+    				index--;
+    			}
+    		}
+    	}
+    	xSemaphoreGive(deviceMutex);
+    	return -3;
     }
     return -2;
 }
@@ -898,12 +916,7 @@ void remove_bad_fds(void) {
         	    	log_message(logmsg, FC_ERR_TYPE_TCP_FD_SCAN);
 
 		    	    if(xSemaphoreTake(deviceMutex, 5) == pdPASS) {
-				    	for(int j = 0; j < 5;j++) {
-				    		if(connections[i] == devices[j]) {
-				    			devices[j] = -1;
-				    			break;
-				    		}
-				    	}
+				    	devices[i] = -1;
 		    	    	xSemaphoreGive(deviceMutex);
 		    	    }
 			    	connections[i] = -1;

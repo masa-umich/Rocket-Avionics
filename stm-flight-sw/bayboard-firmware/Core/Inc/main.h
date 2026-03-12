@@ -115,6 +115,7 @@ void stopLEDtimer();
 #define FLASH_MSG_MARK		(uint8_t)0x1E
 
 #define ERROR_UDP_PORT		(uint16_t)1234
+#define TELEM_UDP_PORT		(uint16_t)6767
 
 #define ERROR_MSG_TYPES		(size_t)32 // Should be a multiple of 2
 #define PERI_ERROR_MSG_TYPES	(size_t)10

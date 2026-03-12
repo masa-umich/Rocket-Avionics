@@ -23,7 +23,7 @@ class TCGain(Enum):
     Gain_128x = 7
 
 pt1_offset = 0.5
-pt1_range = 5000
+pt1_range = 1000
 pt1_max = 4.5
 
 pt2_offset = 1
@@ -50,10 +50,10 @@ vlv1_voltage = ValveVoltage.Valve_24V
 vlv1_enable = 1
 
 vlv2_voltage = ValveVoltage.Valve_24V
-vlv2_enable = 1
+vlv2_enable = 0
 
 vlv3_voltage = ValveVoltage.Valve_24V
-vlv3_enable = 1
+vlv3_enable = 0
 
 limewire_IP = ipaddress.IPv4Address("141.212.192.160")
 flight_computer_IP = ipaddress.IPv4Address("141.212.192.170")

@@ -17,6 +17,7 @@
 #include "MAX11128.h"
 #include "LSM6DSO32XTR.h"
 #include "utils.h"
+#include "udptelemetry.h"
 
 void TelemetryTask(void *argument);
 

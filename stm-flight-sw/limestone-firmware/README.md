@@ -1,9 +1,11 @@
 # Limestone Firmware
 Author: Felixfb, Jackmh </br>
-Read Me last updated: 11/11/2025
+Read Me last updated: 12/8/2025
 
 ## Note:
-This is the location for the flight computer firmware for Limelight. This README will be updated more as the firmware is written. All peripherals, Ethernet, clock configuration, RTOS, and LWIP are set up, hardware drivers are set up using virtual folders linked to the board-drivers directory of this repo.
+This is the location for the flight computer firmware for Limelight. This README will be
+updated more as the firmware is written. The firmware currently works and has been
+lightly tested on the system. Shakedown approved!
 
 ## Important Notes:
 Major STM32 bug: the EthIf task does not get enough stack by default, you must go into the ethernetif.c file and change the INTERFACE_THREAD_STACK_SIZE definition at the top from 350 to anything above 380 (I would pick 500 to be safe). If this is not done, the task will start corrupting memory as soon as it starts.
@@ -19,12 +21,22 @@ To keep track of the firmware version, a header file with build information is
 auto-generated before each build. This build
 information includes the short hash of the most recent git commit, the active branch, type
 of build (Debug vs Release), and the timestamp of the build. This build info is logged in
-flash and over UDP
-when the firmware starts. The auto-generation script is a [uv
+flash and over UDP when the firmware starts. The auto-generation script is a [uv
 script](../version-info/version-gen.py) that the STM32
 project is set up to automatically try to install uv and run the script before a build. The configuration assumes that uv is installed in
 ~/.local/bin/uv (this is the default install location), but if your uv is installed in a different location, you can go to
-Properties -> C/C++ Build -> Environment and add the location of your uv to the PATH variable.
+Properties -> C/C++ Build -> Environment and add the location of your uv to the PATH
+variable.
+
+## Networking Structure
+The networking for Limelight's avionics can be split into 3 main pieces:
+- Telemetry is encoded using LMP and broadcasted over UDP port 6767
+- Event logs are broadcasted over UDP port 1234, encoded as raw strings
+- Valve and board control is done over a TCP network on port 5000. The flight computer
+  acts as the TCP server, while the other boards and the EBox act as TCP clients. All
+  messages over this network are encoded according to LMP. 
+
+[LMP reference](http://masa.eecs.umich.edu/wiki/index.php/Limelight_TCP_Message_Structure)
 
 ## EEPROM Data Ordering
 

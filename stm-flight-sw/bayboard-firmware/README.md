@@ -1,6 +1,6 @@
 # Bay Board Firmware
 Author: Felixfb </br>
-Read Me last updated: 11/11/2025
+Read Me last updated: 12/8/2025
 
 ## Important Notes:
 Major STM32 bug: the EthIf task does not get enough stack by default, you must go into the ethernetif.c file and change the INTERFACE_THREAD_STACK_SIZE definition at the top from 350 to anything above 380 (I would pick 500 to be safe). If this is not done, the task will start corrupting memory as soon as it starts.

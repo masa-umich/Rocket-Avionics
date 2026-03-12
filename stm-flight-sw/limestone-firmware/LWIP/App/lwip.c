@@ -38,6 +38,7 @@
 #include "semphr.h"
 #include "logging.h"
 #include "remote-config.h"
+#include "udptelemetry.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -124,6 +125,7 @@ void MX_LWIP_Init(void)
 		sntp_init();
 		tftp_init(&my_tftp_ctx);
 		init_network_logging(0, fc_addr);
+		init_udp_telem();
 	}
 	else {
 		// ethernet link down
@@ -184,6 +186,7 @@ static void ethernet_link_status_updated(struct netif *netif)
       	  }
       }
 	  tftp_init(&my_tftp_ctx);
+	  init_udp_telem();
 	  // link up
 	  log_message(STAT_LINK_UP, -1);
 
@@ -197,6 +200,7 @@ static void ethernet_link_status_updated(struct netif *netif)
 	  sntp_stop();
 	  shutdown_server();
 	  tftp_cleanup();
+	  deinit_udp_telem();
 	  // link down
 	  log_message(STAT_LINK_DOWN, -1);
 /* USER CODE END 6 */
