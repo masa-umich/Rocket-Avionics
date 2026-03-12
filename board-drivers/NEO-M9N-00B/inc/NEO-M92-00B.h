@@ -3,16 +3,24 @@
  *
  *  Created on: Dec 1, 2023
  *      Author: Evan Eidt
+ *
+ *  Updated on: Jan 16, 2026
+ *      Author: Felix Foreman-Braunschweig, Adhitya Kunju
  */
 
 #pragma once
 #ifndef NEO_M92_00B_H
 #define NEO_M92_00B_H
 
-#include "stm32h7xx_hal.h"
+#include <stdint.h>        // Required for uint8_t, uint32_t
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "FreeRTOS.h"      // Required for SemaphoreHandle_t
 #include "semphr.h"
 
-#include "minmea.h"
+#include "minmea.h"        // Include AFTER stdint.h!!!
+#include "stm32h7xx_hal.h" // HAL types
 
 #define BUFFER_SIZE 100
 
@@ -40,14 +48,20 @@ typedef struct gps_handler {
     uint8_t active_rx_buffer;
 } gps_handler;
 
+typedef enum {
+	NORMAL = 0,
+	NOT_PARSED,
+	NOT_VALID_SCALING
+} ParseStatus;
+
 // Initializes the gps module, returns 0 if okay and -1 on error
-int init_gps(gps_handler* hgps);
+int init_gps(gps_handler* hgps, uint32_t timeout);
 
 // IRQ callback function
 void irq_gps_callback(gps_handler* hgps);
 
 // Returns a struct with parsed GPS data
-void parse_gps_sentence(const char* sentence, gps_data* gps);
+ParseStatus parse_gps_sentence(const char* sentence, gps_data* gps);
 
 /*
  * UBLOX stuff

@@ -132,6 +132,13 @@
 #define FC_ERR_TCP_SERV_RECV_ERROR_UNKNOWN		"059 Unknown errno - TCP server socket flagged as error, fd/errno "
 #define FC_ERR_TCP_SERV_ACCEPT_NO_ROOM			"060 TCP server connection list full"
 
+#define FC_ERR_INIT_GPS							"061 GPS Init failed"
+#define FC_ERR_UDP_TELEM_RECV_SIZE_ERR			"062 UDP Telemetry receive size error"
+#define FC_ERR_UDP_TELEM_RECV_SIZE_MISMATCH		"063 UDP Telemetry receive size mismatch"
+
+#define FC_ERR_HANDOFF_INVALID_TYPE				"064 Invalid handoff message type"
+#define FC_ERR_HANDOFF_INVALID_CHECKSUM			"065 Invalid handoff message checksum"
+
 #elif defined(BAY_BOARD)
 // Bay Board error messages
 #define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"
@@ -185,6 +192,9 @@
 #define BB_ERR_TCP_CLIENT_INIT_MEM_ERR			"040 TCP client memory issue on init"
 
 #define BB_ERR_ADC1_READ						"041 ADC 1 read error"
+#define BB_ERR_TCP_CLIENT_READ_ABORT			"042 TCP client connection aborted"
+#define BB_ERR_TCP_CLIENT_ERROR_ABORT			"043 TCP client connection aborted"
+#define BB_ERR_TCP_CLIENT_SEND_ABORT			"044 TCP client connection aborted"
 
 #endif
 
@@ -215,6 +225,10 @@
 #define FC_STAT_PDB_SWITCH_GSE					"508 PDB switched to GSE power"
 #define FC_STAT_PDB_COTS_SUPPLY_ON				"509 PDB COTS supply on"
 #define FC_STAT_PDB_COTS_SUPPLY_OFF				"510 PDB COTS supply off"
+#define FC_STAT_HANDOFF_ARM						"511 Handoff arm signal received"
+#define FC_STAT_HANDOFF_ABORT					"512 Handoff abort signal received"
+#define FC_STAT_ARMED							"513 Flight Autosequence armed"
+#define FC_STAT_DEARMED							"514 Flight Autosequence dearmed"
 
 // Bay Board status messages
 #elif defined(BAY_BOARD)
@@ -240,6 +254,7 @@
 #define FC_ERR_TYPE_UNKNOWN_LMP					10
 #define FC_ERR_TYPE_TFTP_EEPROM_READ			11
 #define FC_ERR_TYPE_TFTP_EEPROM_WRITE			12
+#define FC_ERR_TYPE_UDP_TELEM					13
 
 // Flight Computer peripheral error message types
 #define FC_ERR_PERI_TYPE_ADC					0

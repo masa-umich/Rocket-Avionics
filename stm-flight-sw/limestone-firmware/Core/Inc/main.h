@@ -53,8 +53,15 @@ typedef struct {
 /* USER CODE BEGIN EC */
 extern inittimers_t timers;
 
-void startLEDtimer(TickType_t delay);
+void buzzerOff();
+
+void buzzerOn();
+
 void stopLEDtimer();
+
+void start_led_timer(TickType_t delay, uint32_t reload, uint8_t force);
+
+void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force);
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -117,6 +124,7 @@ void stopLEDtimer();
 
 #define FLASH_TELEM_MARK	(uint8_t)0x1D
 #define FLASH_MSG_MARK		(uint8_t)0x1E
+#define FLASH_BOTH_MARK		(uint8_t)0x1F
 
 #define ERROR_UDP_PORT		(uint16_t)1234
 #define TELEM_UDP_PORT		(uint16_t)6767
@@ -165,7 +173,7 @@ extern void set_system_time(uint32_t sec, uint32_t us);
 #define DIVIDER_12V_24V		(uint8_t)0
 #define DIVIDER_3V3_5V		(uint8_t)1
 
-#define PERIPHERAL_TIMEOUT		1
+#define PERIPHERAL_TIMEOUT		10
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

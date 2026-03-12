@@ -12,9 +12,17 @@ SemaphoreHandle_t telemudp_mutex;
 
 QueueHandle_t telemetrymsgs = NULL;
 
-void telemetry_setup() {
+osMemoryPoolId_t udpPool;
+
+uint8_t telemetry_setup() {
 	telemudp_mutex = xSemaphoreCreateMutex();
-	telemetrymsgs = xQueueCreate(100, sizeof(Raw_message));
+	telemetrymsgs = xQueueCreate(50, sizeof(Raw_message));
+
+    udpPool = osMemoryPoolNew(50, MAX_MSG_LEN, NULL);
+    if(!udpPool) {
+    	return 1;
+    }
+    return 0;
 }
 
 void init_udp_telem() {
@@ -23,7 +31,8 @@ void init_udp_telem() {
 			telemudp_h = netconn_new(NETCONN_UDP);
 			if(telemudp_h) {
 				ip_set_option(telemudp_h->pcb.udp, SOF_BROADCAST);
-				netconn_set_recvtimeout(telemudp_h, 10);
+				//netconn_set_recvtimeout(telemudp_h, 10);
+				netconn_set_nonblocking(telemudp_h, 1);
 				netconn_bind(telemudp_h, IP4_ADDR_ANY, TELEM_UDP_PORT);
 			}
 			else {
@@ -47,19 +56,16 @@ void deinit_udp_telem() {
 	}
 }
 
-int broadcast_telem_msg(Message *msg, TickType_t wait, size_t buffersize) {
-	if(buffersize == 0) {
-		buffersize = MAX_MSG_LEN;
-	}
+int broadcast_telem_msg(Message *msg, TickType_t wait) {
 	if(!telemudp_h) {
 		return -1;
 	}
-	uint8_t tempbuffer[buffersize];
-	int buflen = serialize_message(msg, tempbuffer, buffersize);
+	uint8_t tempbuffer[MAX_MSG_LEN];
+	int buflen = serialize_message(msg, tempbuffer, MAX_MSG_LEN);
 	if(buflen == -1) {
 		return -3; // Serialization error
 	}
-    uint8_t *buffer = malloc(buflen);
+    uint8_t *buffer = (uint8_t *) osMemoryPoolAlloc(udpPool, 0);
     if(buffer) {
         memcpy(buffer, tempbuffer, buflen);
         Raw_message rawmsg = {0};
@@ -67,7 +73,7 @@ int broadcast_telem_msg(Message *msg, TickType_t wait, size_t buffersize) {
     	rawmsg.packet_len = buflen;
 
     	if(xQueueSend(telemetrymsgs, (void *)&rawmsg, wait) != pdPASS) {
-    		free(buffer);
+    		osMemoryPoolFree(udpPool, buffer);
     		return -2;
     	}
     	return 0;
@@ -94,42 +100,61 @@ void TelemetryUDPProcess(void *argument) {
 				}
 				xSemaphoreGive(telemudp_mutex);
 			}
-			free(msg.bufferptr);
+			osMemoryPoolFree(udpPool, msg.bufferptr);
 		}
 
 		// Receive
 		struct netbuf *buf = NULL;
 		if(xSemaphoreTake(telemudp_mutex, 5) == pdPASS) {
-			err_t recv_err = netconn_recv(telemudp_h, &buf);
-			if(recv_err == ERR_OK) {
-				if(buf) {
-					uint8_t *msgbuf = NULL;
-					uint16_t msg_len = 0;
-					if(netbuf_data(buf, (void**) &msgbuf, &msg_len) == ERR_OK) {
-						unpack_udp_telemetry(msgbuf, msg_len);
+			if(telemudp_h) {
+				err_t recv_err = netconn_recv(telemudp_h, &buf);
+				if(recv_err == ERR_OK) {
+					if(buf) {
+						uint8_t msgbuf[256];
+						uint16_t msg_len = netbuf_len(buf);
+						if(msg_len > 256 || msg_len == 0) {
+							log_message(FC_ERR_UDP_TELEM_RECV_SIZE_ERR, FC_ERR_TYPE_UDP_TELEM);
+						}
+						else {
+							uint16_t ret = netbuf_copy(buf, msgbuf, msg_len);
+							if(ret != 0 && ret == msg_len) {
+								unpack_udp_telemetry(msgbuf, msg_len);
+							}
+						}
+						netbuf_delete(buf);
 					}
-					netbuf_delete(buf);
 				}
+			}
+			else {
+				// If not connected, delay to give cpu to other tasks
+				xSemaphoreGive(telemudp_mutex);
+				osDelay(500);
+				continue;
 			}
 			xSemaphoreGive(telemudp_mutex);
 		}
+		osDelay(1);
 	}
 }
 
 void unpack_udp_telemetry(uint8_t *message, uint16_t msg_len) {
+	if(message[0] + 1 != msg_len) {
+		log_message(FC_ERR_UDP_TELEM_RECV_SIZE_MISMATCH, FC_ERR_TYPE_UDP_TELEM);
+		return;
+	}
 	Message parsedmsg = {0};
 	if(deserialize_message(message, msg_len, &parsedmsg) > 0) {
 		switch(parsedmsg.type) {
 		    case MSG_TELEMETRY: {
 		        // Save
 		    	if(parsedmsg.data.telemetry.board_id == BOARD_FR) {
-		    		if(unpack_fr_telemetry(&(parsedmsg.data.telemetry), 5)) {
+		    		if(unpack_fr_telemetry(&(parsedmsg.data.telemetry), 2)) {
 		    			// Failed to save data
 		    			log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
 		    		}
 		    	}
 		    	else {
-			    	if(unpack_bb_telemetry(&(parsedmsg.data.telemetry), 5)) {
+			    	if(unpack_bb_telemetry(&(parsedmsg.data.telemetry), 2)) {
 			    		// Failed to save data
 			    		log_message(ERR_SAVE_INCOMING_TELEM, FC_ERR_TYPE_INCOMING_TELEM);
 			    	}

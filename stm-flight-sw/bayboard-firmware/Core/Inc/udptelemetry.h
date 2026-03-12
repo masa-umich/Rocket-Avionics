@@ -16,13 +16,13 @@
 #include "lwip/udp.h"
 #include "ip4_addr.h"
 
-void telemetry_setup();
+uint8_t telemetry_setup();
 
 void init_udp_telem();
 
 void deinit_udp_telem();
 
-int broadcast_telem_msg(Message *msg, TickType_t wait, size_t buffersize);
+int broadcast_telem_msg(Message *msg, TickType_t wait);
 
 void TelemetrySend(void *argument);
 

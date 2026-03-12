@@ -57,10 +57,7 @@ void COTS_supply(uint8_t enabled) {
 }
 
 
-int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size_t buffersize) {
-	if(buffersize == 0) {
-		buffersize = MAX_MSG_LEN;
-	}
+int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait) {
 	if(is_server_running() <= 0) {
 		return -1; // Server not running
 	}
@@ -69,8 +66,8 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size
 		return -3; // Device not connected
 	}
 	for(int i = 0;i < num_connected;i++) {
-		uint8_t tempbuffer[buffersize];
-		int buflen = serialize_message(msg, tempbuffer, buffersize);
+		uint8_t tempbuffer[MAX_MSG_LEN];
+		int buflen = serialize_message(msg, tempbuffer, MAX_MSG_LEN);
 		if(buflen == -1) {
 			continue; // Serialization error
 		}
@@ -78,7 +75,7 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size
 		if(device_fd < 0) {
 			continue;
 		}
-	    uint8_t *buffer = malloc(buflen);
+	    uint8_t *buffer = allocFromPool();
 	    if(buffer) {
 	        memcpy(buffer, tempbuffer, buflen);
 	    	Raw_message rawmsg = {0};
@@ -87,7 +84,7 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait, size
 	    	rawmsg.connection_fd = device_fd;
 	    	int result = server_send(&rawmsg, wait);
 	    	if(result != 0) {
-	    		free(buffer);
+	    		freeFromPool(buffer);
 	    	}
 	    }
 	}
@@ -108,7 +105,7 @@ int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType
 			if(device_fd < 0) {
 				continue;
 			}
-		    uint8_t *buffer = malloc(msg->packet_len);
+		    uint8_t *buffer = allocFromPool();
 		    if(buffer) {
 		        memcpy(buffer, msg->bufferptr, msg->packet_len);
 		    	Raw_message rawmsg = {0};
@@ -117,7 +114,7 @@ int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType
 		    	rawmsg.connection_fd = device_fd;
 		    	int result = server_send(&rawmsg, wait);
 		    	if(result != 0) {
-		    		free(buffer);
+		    		freeFromPool(buffer);
 		    	}
 		    }
 		}

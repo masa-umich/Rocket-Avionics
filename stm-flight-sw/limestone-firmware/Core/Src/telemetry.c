@@ -21,6 +21,8 @@ void TelemetryTask(void *argument) {
 	for(;;) {
 		uint32_t startTime = HAL_GetTick();
 		// Read from sensors
+
+		LOCK_FLASH(portMAX_DELAY);
 		uint16_t adc_values[16] = {0};
 		read_adc(&hspi4, &(sensors_h.adc_h), adc_values);
 		if(adc_values[ADC_3V3_BUS_I] == 0) {
@@ -46,17 +48,20 @@ void TelemetryTask(void *argument) {
   		IMU_getAngRate(&(sensors_h.imu2_h), &angRate_readings2);
 
   	  	float pres1 = 0.0;
+  	  	float bar1_temp = 0.0;
   	  	float pres2 = 0.0;
-  	  	int bar1_stat = MS5611_getPres(&(sensors_h.bar1_h), &pres1, &(sensors_h.prom1), OSR_1024);
+  	  	float bar2_temp = 0.0;
+  	  	int bar1_stat = MS5611_getPres(&(sensors_h.bar1_h), &pres1, &bar1_temp, &(sensors_h.prom1), OSR_1024);
   	  	if(bar1_stat) {
   	  		// BAR 1 read error
 			log_peri_message(ERR_BAR_READ "1", FC_ERR_PERI_TYPE_BAR1);
   	  	}
-  	  	int bar2_stat = MS5611_getPres(&(sensors_h.bar2_h), &pres2, &(sensors_h.prom2), OSR_1024);
+  	  	int bar2_stat = MS5611_getPres(&(sensors_h.bar2_h), &pres2, &bar2_temp, &(sensors_h.prom2), OSR_1024);
   	  	if(bar2_stat) {
   	  		// BAR 2 read error
 			log_peri_message(ERR_BAR_READ "2", FC_ERR_PERI_TYPE_BAR2);
   	  	}
+  	  	UNLOCK_FLASH();
 
   	  	float TCvalues[3];
   	  	int TC_stat = ADS_readAll(&(sensors_h.tc_main_h), TCvalues);
@@ -80,6 +85,27 @@ void TelemetryTask(void *argument) {
   	  		old_stat = 0;
   	  		xSemaphoreGive(Rocket_h.fcValve_access);
   	  	}
+  	  	gps_data gps_values = {0};
+  	  	uint8_t gps_good = 0;
+  	  	if(xSemaphoreTake(sensors_h.gps_h.semaphore, 0) == pdTRUE) {
+  	  		char nmea_sen[100];
+  	  		memset(nmea_sen, 0, 100);
+  	  		if(sensors_h.gps_h.active_rx_buffer == 2) {
+  	  			strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_1);
+  	  			sensors_h.gps_h.rx_buffer_1_pos = 0;
+  	  	    }
+  	  	    else {
+  	  	        strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_2);
+  	  	        sensors_h.gps_h.rx_buffer_2_pos = 0;
+  	  	    }
+  	  		enum minmea_sentence_id id = minmea_sentence_id(nmea_sen, false);
+  	  		if(id == MINMEA_SENTENCE_GGA) {
+  	  			ParseStatus status = parse_gps_sentence(nmea_sen, &gps_values);
+  	  			if(status == NORMAL) {
+  	  				gps_good = 1;
+  	  			}
+  	  	    }
+  	  	}
 
   	  	uint64_t recordtime = get_rtc_time();
 
@@ -88,10 +114,12 @@ void TelemetryTask(void *argument) {
   		if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
   			if(!bar1_stat) {
   				Rocket_h.fcState.bar1 = pres1;
+  				Rocket_h.fcState.bar1_temp = bar1_temp;
   			}
 
   			if(!bar2_stat) {
   				Rocket_h.fcState.bar2 = pres2;
+  				Rocket_h.fcState.bar2_temp = bar2_temp;
   			}
 
   			Rocket_h.fcState.imu1_A = XL_readings1;
@@ -118,6 +146,12 @@ void TelemetryTask(void *argument) {
   			Rocket_h.fcState.vlv1_current = current_sense_calc(adc_values[ADC_VLV1_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
   			Rocket_h.fcState.vlv2_current = current_sense_calc(adc_values[ADC_VLV2_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
   			Rocket_h.fcState.vlv3_current = current_sense_calc(adc_values[ADC_VLV3_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
+
+  			if(gps_good) {
+  				Rocket_h.fcState.gps_lat = gps_values.latitude;
+  				Rocket_h.fcState.gps_long = gps_values.longitude;
+  				Rocket_h.fcState.gps_alt = gps_values.altitude;
+  			}
 
   			if(!TC_stat) {
   				if(!isnan(TCvalues[0])) {
@@ -150,7 +184,7 @@ void TelemetryTask(void *argument) {
   		Message telemsg = {0};
   		telemsg.type = MSG_TELEMETRY;
   		if(!pack_fc_telemetry_msg(&(telemsg.data.telemetry), recordtime, 5)) {
-  			if(broadcast_telem_msg(&telemsg, 5, 11 + (4 * FC_TELEMETRY_CHANNELS) + 5) == -2) {
+  			if(broadcast_telem_msg(&telemsg, 5) == -2) {
   				// txbuffer full or memory error
   	  			log_message(ERR_TELEM_MEM_ERR, FC_ERR_TYPE_TELEM_MEM_ERR);
   			}

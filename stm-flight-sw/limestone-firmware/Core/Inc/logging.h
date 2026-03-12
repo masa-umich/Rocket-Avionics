@@ -18,11 +18,19 @@
 #include "lwip/udp.h"
 #include "ip4_addr.h"
 #include "log_errors.h"
+#include "messages.h"
+
+#define MAX_TELEMETRY_B64_SIZE 		(size_t) (MAX_TELEMETRY_MSG_SIZE * 4 / 3) + 10
+#define MAX_LOG_LEN					200
 
 typedef struct {
 	uint8_t *content;
 	size_t len;
 } errormsg_t;
+
+BaseType_t LOCK_FLASH(TickType_t timeout);
+
+void UNLOCK_FLASH();
 
 uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type);
 
@@ -30,7 +38,7 @@ void init_network_logging(uint8_t reinit, ip4_addr_t ipaddr);
 
 void deinit_network_logging();
 
-void logging_setup();
+uint8_t logging_setup();
 
 uint8_t init_flash_logging(SPI_HandleTypeDef * hspi, GPIO_TypeDef *CS_GPIO_Port, uint16_t CS_GPIO_Pin);
 

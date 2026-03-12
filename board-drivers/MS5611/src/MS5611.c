@@ -21,13 +21,13 @@ void MS5611_chipRelease(MS5611* BAR) {
 HAL_StatusTypeDef MS5611_transmit(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	MS5611_chipSelect(BAR);
 	status = HAL_SPI_Transmit(BAR->hspi, tx_buffer, 1, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
 	return status;
 }
@@ -36,13 +36,13 @@ HAL_StatusTypeDef MS5611_transmit(MS5611* BAR, uint8_t* tx_buffer, uint8_t num_b
 HAL_StatusTypeDef MS5611_receive(MS5611* BAR, uint8_t* rx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	MS5611_chipSelect(BAR);
 	status = HAL_SPI_Receive(BAR->hspi, rx_buffer, num_bytes, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
 	return status;
 }
@@ -52,13 +52,13 @@ HAL_StatusTypeDef MS5611_receive(MS5611* BAR, uint8_t* rx_buffer, uint8_t num_by
 int MS5611_read(MS5611* BAR, uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	MS5611_chipSelect(BAR);
 	status = HAL_SPI_TransmitReceive(BAR->hspi, tx_buffer, rx_buffer, num_bytes, BAR->SPI_TIMEOUT);
 	MS5611_chipRelease(BAR);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
 	if (status != HAL_OK) {
 		return 1;
@@ -196,13 +196,13 @@ int MS5611_tempConvert(MS5611* BAR, uint32_t* temp_raw, OSR osr) {
 	return 0;
 }
 
-int MS5611_compensateTemp(float* pres, uint32_t pres_raw, uint32_t temp_raw, MS5611_PROM_t* prom) {
-	volatile int32_t dT, P;
+int MS5611_compensateTemp(float* pres, float* temp, uint32_t pres_raw, uint32_t temp_raw, MS5611_PROM_t* prom) {
+	volatile int32_t dT, P, TEMP;
 	volatile int64_t OFF, SENS;
 	volatile int64_t partialA, partialB;
 
 	dT = temp_raw - ((prom->constants.C5) * (0x1<<8));                      //D2-C5*2^8
-	//TEMP = 2000 + ((int64_t)dT * ((int64_t)prom->constants.C6))/(0x1<<23);//2000 + dT*C6/2^23
+	TEMP = 2000 + (int32_t)(((int64_t)dT * ((int64_t)prom->constants.C6)) >> 23); //2000 + dT*C6/2^23
 	partialA = ((int64_t)prom->constants.C4) * (int64_t)dT;
 	OFF = ((int64_t)prom->constants.C2) * (0x1<<16) + (partialA)/(0x1<<7);  //C2*2^16 + C4*dT/2^7
 	partialB = ((int64_t)prom->constants.C3) * (int64_t)dT;
@@ -210,27 +210,29 @@ int MS5611_compensateTemp(float* pres, uint32_t pres_raw, uint32_t temp_raw, MS5
 
 	P = (((((int64_t)pres_raw)*SENS)/(0x1<<21)-OFF))/(0x1<<15);             //(D1*SENS/2^21-OFF)/2^15
 	*pres = (float)(P * 0.01); // millibar
+	*temp = TEMP / 100.0;
 	return 0;
 }
 
 //Get pressure from barometer
-int MS5611_getPres(MS5611* BAR, float* pres, MS5611_PROM_t* prom, OSR osr) {
+int MS5611_getPres(MS5611* BAR, float* pres, float* temp, MS5611_PROM_t* prom, OSR osr) {
 	uint32_t pres_raw = 0;
 	uint32_t temp_raw = 0;
 	if (MS5611_presConvert(BAR, &pres_raw, osr) == 1) { return 1; }
 	if (MS5611_tempConvert(BAR, &temp_raw, osr) == 1) { return 1; }
-	if (MS5611_compensateTemp(pres, pres_raw, temp_raw, prom) == 1) { return 1; }
+	if (MS5611_compensateTemp(pres, temp, pres_raw, temp_raw, prom) == 1) { return 1; }
 	return 0;
 }
 
 //Get rough altitude based on pressure
 int MS5611_getAlt(MS5611* BAR, float* alt, MS5611_PROM_t* prom, OSR osr) {
 	float pres = 0.0;
+	float temp = 0.0;
 	uint32_t pres_raw = 0;
 	uint32_t temp_raw = 0;
 	if (MS5611_presConvert(BAR, &pres_raw, osr) == 1) { return 1; }
 	if (MS5611_tempConvert(BAR, &temp_raw, osr) == 1) { return 1; }
-	if (MS5611_compensateTemp(&pres, pres_raw, temp_raw, prom) == 1) { return 1; }
+	if (MS5611_compensateTemp(&pres, &temp, pres_raw, temp_raw, prom) == 1) { return 1; }
 	*alt =  (1 - pow((pres/1013.25), 0.190284)) * 145366.45; // feet conversion
 	return 0;
 }

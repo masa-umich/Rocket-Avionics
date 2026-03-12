@@ -162,6 +162,8 @@ static void ethernet_link_status_updated(struct netif *netif)
   {
 /* USER CODE BEGIN 5 */
 	  stopLEDtimer();
+	  buzzerOn();
+	  start_buzz_timer(100, 2, 0);
 	  init_network_logging(1, fc_addr);
 	  sntp_init();
       switch(server_init()) {
@@ -195,7 +197,7 @@ static void ethernet_link_status_updated(struct netif *netif)
   else /* netif is down */
   {
 /* USER CODE BEGIN 6 */
-	  startLEDtimer(250);
+	  start_led_timer(250, UINT32_MAX, 1);
 	  deinit_network_logging();
 	  sntp_stop();
 	  shutdown_server();

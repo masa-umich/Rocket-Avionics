@@ -18,22 +18,22 @@ void set_system_time(uint32_t sec, uint32_t us) {
 
 	RTC_TimeTypeDef sTime = {0};
 	RTC_DateTypeDef sDate = {0};
-	struct tm *tm_time;
+	struct tm tm_time;
 
 	time_t epoch = sec;
-	tm_time = gmtime(&epoch);
+	gmtime_r(&epoch, &tm_time);
 
-	sTime.Hours = tm_time->tm_hour;
-	sTime.Minutes = tm_time->tm_min;
-	sTime.Seconds = tm_time->tm_sec;
+	sTime.Hours = tm_time.tm_hour;
+	sTime.Minutes = tm_time.tm_min;
+	sTime.Seconds = tm_time.tm_sec;
 	sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
 	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
 	//sTime.SubSeconds = 6249 - ((us / 1000000.0) * 6250);
 
-	sDate.Year = tm_time->tm_year - 100;
-	sDate.Month = tm_time->tm_mon + 1;
-	sDate.Date = tm_time->tm_mday;
-	sDate.WeekDay = (tm_time->tm_wday == 0) ? 7 : tm_time->tm_wday;
+	sDate.Year = tm_time.tm_year - 100;
+	sDate.Month = tm_time.tm_mon + 1;
+	sDate.Date = tm_time.tm_mday;
+	sDate.WeekDay = (tm_time.tm_wday == 0) ? 7 : tm_time.tm_wday;
 
 	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
 		// These constants have to do with the counters associated with the RTC
@@ -41,10 +41,10 @@ void set_system_time(uint32_t sec, uint32_t us) {
 		uint32_t subsecond_shift = 6249 - ((us / 1000000.0) * 6250);
 
 		//uint32_t subsecond_shift = 6249ULL - ((((uint64_t) us) * ((uint64_t) 6250)) / 1000000ULL); // This works too but I think above is more memory efficient
-		taskENTER_CRITICAL();
+		//taskENTER_CRITICAL();
 		HAL_RTC_SetDate(rtc, &sDate, RTC_FORMAT_BIN);
 		HAL_RTC_SetTime(rtc, &sTime, RTC_FORMAT_BIN);
-		taskEXIT_CRITICAL();
+		//taskEXIT_CRITICAL();
 
 		HAL_RTCEx_SetSynchroShift(rtc, RTC_SHIFTADD1S_SET, subsecond_shift); // Shift sub-seconds register to do fine grain time sync
 
@@ -78,7 +78,7 @@ uint64_t get_rtc_time() {
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
-	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
+	if(xSemaphoreTake(RTC_mutex, 2) == pdPASS) {
 		if(__HAL_RTC_IS_CALENDAR_INITIALIZED(rtc) == 0) {
 			xSemaphoreGive(RTC_mutex);
 			// RTC not set yet
@@ -116,7 +116,7 @@ void get_iso_time(char *outbuf, int buf_size) {
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
-	if(xSemaphoreTake(RTC_mutex, 5) == pdPASS) {
+	if(xSemaphoreTake(RTC_mutex, 2) == pdPASS) {
 		if(__HAL_RTC_IS_CALENDAR_INITIALIZED(rtc) == 0) {
 			xSemaphoreGive(RTC_mutex);
 			// RTC not set yet

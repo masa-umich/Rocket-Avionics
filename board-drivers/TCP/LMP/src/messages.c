@@ -10,6 +10,12 @@
 #include <stdint.h>
 #include <string.h>
 
+uint8_t check_handoff_checksum(const uint8_t * buf) {
+	return (buf[0] == HANDOFF_CHECKSUM_BYTE1) &&
+			(buf[1] == HANDOFF_CHECKSUM_BYTE2) &&
+			(buf[2] == HANDOFF_CHECKSUM_BYTE3) &&
+			(buf[3] == HANDOFF_CHECKSUM_BYTE4);
+}
 
 // Gets the valve index from the LMP valve id
 // Be careful since the integer value of the Valve_Channel enum starts at 0
@@ -89,7 +95,6 @@ typedef union {
 
 // Serialize
 // Function returns -1 on failure, and number of bytes serialized on success
-
 int serialize_telemetry(const TelemetryMessage *message, uint8_t *buffer,
 						uint32_t buffer_size) {
 	if (message->num_channels > MAX_TELEMETRY_CHANNELS) {
@@ -173,6 +178,35 @@ int serialize_device_ack(const DeviceCommandACK *message, uint8_t *buffer,
 	return num_bytes;
 }
 
+int serialize_heartbeat(const HeartbeatMessage *message, uint8_t *buffer,
+							uint32_t buffer_size) {
+	int num_bytes = MAX_HEARTBEAT_MSG_SIZE;
+	if (buffer_size < num_bytes) {
+		return -1;
+	}
+
+	buffer[0] = (uint8_t) (num_bytes - 1);
+
+	return num_bytes;
+}
+
+int serialize_handoff(const HandoffMessage *message, uint8_t *buffer,
+							uint32_t buffer_size) {
+	int num_bytes = MAX_HANDOFF_MSG_SIZE;
+	if (buffer_size < num_bytes) {
+		return -1;
+	}
+
+	buffer[0] = (uint8_t) (num_bytes - 1);
+	buffer[2] = message->h_type;
+	buffer[3] = HANDOFF_CHECKSUM_BYTE1;
+	buffer[4] = HANDOFF_CHECKSUM_BYTE2;
+	buffer[5] = HANDOFF_CHECKSUM_BYTE3;
+	buffer[6] = HANDOFF_CHECKSUM_BYTE4;
+
+	return num_bytes;
+}
+
 int serialize_message(const Message *message, uint8_t *buffer,
 					  uint32_t buffer_size) {
 	if (buffer_size < 2)
@@ -190,14 +224,17 @@ int serialize_message(const Message *message, uint8_t *buffer,
 			return serialize_valve_state(&message->data.valve_state, buffer,
 										 buffer_size);
 		case MSG_HEARTBEAT:
-			return 1; // No data to serialize
-
+			return serialize_heartbeat(&message->data.heartbeat, buffer,
+										buffer_size);
 		case MSG_DEVICE_COMMAND:
 			return serialize_device_command(&message->data.device_command, buffer,
 					 	 	 	 	 	 buffer_size);
 		case MSG_DEVICE_ACK:
 			return serialize_device_ack(&message->data.device_ack, buffer,
 							 	 	 	 	 	 buffer_size);
+		case MSG_HANDOFF:
+			return serialize_handoff(&message->data.handoff_msg, buffer,
+								 	 	 	 	 	 buffer_size);
 		default:
 			return -1; // Unknown message type
 	}
@@ -304,6 +341,19 @@ int deserialize_device_ack(const uint8_t *buffer, uint32_t buffer_size,
 	return num_bytes;
 }
 
+int deserialize_handoff(const uint8_t *buffer, uint32_t buffer_size,
+							HandoffMessage *msg) {
+	int num_bytes = MAX_HANDOFF_MSG_SIZE;
+	if (buffer_size < num_bytes) {
+		return 0;
+	}
+
+	msg->h_type = buffer[2];
+	msg->checksum_valid = check_handoff_checksum(&buffer[3]);
+
+	return num_bytes;
+}
+
 int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 						Message *msg) {
 	if (buffer_size < 2)
@@ -329,6 +379,9 @@ int deserialize_message(const uint8_t *buffer, uint32_t buffer_size,
 		case MSG_DEVICE_ACK:
 			return deserialize_device_ack(buffer, buffer_size,
 							   	   	   	   &msg->data.device_ack);
+		case MSG_HANDOFF:
+			return deserialize_handoff(buffer, buffer_size,
+									   	   &msg->data.handoff_msg);
 		default:
 			return -1; // Unknown message type
 	}

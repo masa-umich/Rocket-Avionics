@@ -19,8 +19,8 @@
 #include "logging.h"
 
 #define MAX_MSG_LEN	300
-#define TCP_KEEP_ALIVE_IDLE	5
-#define TCP_KEEP_ALIVE_INTERVAL	3
+#define TCP_KEEP_ALIVE_IDLE	3
+#define TCP_KEEP_ALIVE_INTERVAL	1
 #define TCP_KEEP_ALIVE_COUNT 3
 #define TCP_RETRY_DELAY_MS 100
 
@@ -92,6 +92,11 @@ int get_device_fd(Target_Device dev, uint8_t index);
 int num_devices(Target_Device dev);
 
 void remove_bad_fds(void);
+
 void drain_lists();
+
+void freeFromPool(uint8_t * buf);
+
+uint8_t * allocFromPool();
 
 #endif

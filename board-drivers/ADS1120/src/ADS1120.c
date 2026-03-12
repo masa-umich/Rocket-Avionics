@@ -274,7 +274,7 @@ void vTCTask(void *pvParameters) {
 			uint8_t timer = ADS_timerStatus(&(connected_chips[k]), 10);
 			if(timer == 1) {
 				ADS_chipSelect(&(connected_chips[k]));
-				delay_us(10);
+				//delay_us(10);
 				if(!HAL_GPIO_ReadPin(connected_chips[k].DOUT_GPIO_Port, connected_chips[k].DOUT_GPIO_Pin)) {
 					read_and_switch = 1;
 				}
@@ -304,7 +304,7 @@ void vTCTask(void *pvParameters) {
 				}
 
 				ADS_chipSelect(&(connected_chips[k]));
-				delay_us(50);
+				//delay_us(50);
 
 				uint8_t MSB = 0x00;
 				uint8_t LSB = 0x00;
@@ -326,9 +326,9 @@ void vTCTask(void *pvParameters) {
 					//uint8_t txbuffer[4] = {0x00, 0x00, 0x00, 0x00};
 					//uint8_t rxbuffer[4] = {0x00, 0x00, 0x00, 0x00};
 
-					taskENTER_CRITICAL();
+					//taskENTER_CRITICAL();
 					HAL_SPI_TransmitReceive(connected_chips[k].hspi, txbuffer, rxbuffer, 4, connected_chips[k].SPI_TIMEOUT);
-					taskEXIT_CRITICAL();
+					//taskEXIT_CRITICAL();
 
 					MSB = rxbuffer[0];
 					LSB = rxbuffer[1];
@@ -369,17 +369,17 @@ void vTCTask(void *pvParameters) {
 					uint8_t read_txbuffer[3] = {0x10, 0x00, 0x00};
 					uint8_t rxbuffer[3] = {0x00, 0x00, 0x00};
 
-					taskENTER_CRITICAL();
+					//taskENTER_CRITICAL();
 					HAL_SPI_TransmitReceive(connected_chips[k].hspi, read_txbuffer, rxbuffer, 3, connected_chips[k].SPI_TIMEOUT);
-					taskEXIT_CRITICAL();
+					//taskEXIT_CRITICAL();
 
-					delay_us(1);
+					//delay_us(1);
 
 					uint8_t txbuffer[3] = {0x41, conf_byte_1, conf_byte_2};
 
-					taskENTER_CRITICAL();
+					//taskENTER_CRITICAL();
 					HAL_SPI_Transmit(connected_chips[k].hspi, txbuffer, 3, connected_chips[k].SPI_TIMEOUT);
-					taskEXIT_CRITICAL();
+					//taskEXIT_CRITICAL();
 
 					MSB = rxbuffer[1];
 					LSB = rxbuffer[2];
@@ -387,11 +387,11 @@ void vTCTask(void *pvParameters) {
 
 				uint8_t startcmd[1] = {0x08};
 
-				taskENTER_CRITICAL();
+				//taskENTER_CRITICAL();
 				HAL_SPI_Transmit(connected_chips[k].hspi, startcmd, 1, connected_chips[k].SPI_TIMEOUT);
-				taskEXIT_CRITICAL();
+				//taskEXIT_CRITICAL();
 
-				delay_us(25);
+				//delay_us(25);
 				ADS_chipRelease(&(connected_chips[k]));
 
 				if(connected_chips[k].current_mux == 2) {
@@ -426,26 +426,43 @@ void vTCTask(void *pvParameters) {
 HAL_StatusTypeDef ADS_write(ADS_Chip *ADS, uint8_t *tx_buffer, uint8_t num_bytes) {
 	ADS_chipSelect(ADS);
 
-	delay_us(50);
-	taskENTER_CRITICAL();
+	//delay_us(50);
+	//taskENTER_CRITICAL();
 	HAL_StatusTypeDef status = HAL_SPI_Transmit(ADS->hspi, tx_buffer, num_bytes, ADS->SPI_TIMEOUT);
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 
-	delay_us(25);
+	//delay_us(25);
 	ADS_chipRelease(ADS);
 
 	return status;
 }
 
 HAL_StatusTypeDef ADS_read(ADS_Chip *ADS, uint8_t reg_addr, uint8_t *rx_buffer, uint8_t num_bytes) {
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	ADS_chipSelect(ADS);
 	HAL_SPI_Transmit(ADS->hspi, &reg_addr, 1, ADS->SPI_TIMEOUT);
 	HAL_StatusTypeDef status = HAL_SPI_Receive(ADS->hspi, rx_buffer, num_bytes, ADS->SPI_TIMEOUT);
 	ADS_chipRelease(ADS);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
+
+	return status;
+}
+
+HAL_StatusTypeDef ADS_readwrite(ADS_Chip *ADS, uint8_t reg_addr, uint8_t *rx_buffer, uint8_t num_bytes) {
+	//taskENTER_CRITICAL();
+	uint8_t temprx[num_bytes + 1];
+	uint8_t temptx[num_bytes + 1];
+	memset(temptx, 0, num_bytes + 1);
+	temptx[0] = reg_addr;
+
+	ADS_chipSelect(ADS);
+	HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(ADS->hspi, temptx, temprx, num_bytes + 1, ADS->SPI_TIMEOUT);
+	ADS_chipRelease(ADS);
+	memcpy(rx_buffer, temprx + 1, num_bytes);
+
+	//taskEXIT_CRITICAL();
 
 	return status;
 }
@@ -484,7 +501,7 @@ int ADS_configure(ADS_Chip *ADS, uint8_t TC_index, int check) {
 	if(check) {
 		uint8_t rxbuffer[4] = {0, 0, 0, 0};
 
-		ADS_read(ADS, 0x23, rxbuffer, 4);
+		ADS_readwrite(ADS, 0x23, rxbuffer, 4);
 
 		return !(rxbuffer[0] == conf_byte_1 && rxbuffer[1] == conf_byte_2 && rxbuffer[2] == conf_byte_3 && rxbuffer[3] == conf_byte_4);
 	}
@@ -497,16 +514,16 @@ int ADS_configureChip(ADS_Chip *ADS, int check) {
 	uint8_t conf_byte_3 = ADS_VOLT_REF_INT | ADS_FILTER_DISABLED | ADS_PSW_DISABLED | ADS_IDAC_DISABLED;
 	uint8_t conf_byte_4 = ADS_l1MUX_DISABLED | ADS_l2MUX_DISABLED | ADS_DRDY_MODE_BOTH;
 
-	uint8_t txbuffer[3] = {0x49, conf_byte_3, conf_byte_4};
+	uint8_t txbuffer[4] = {0x49, conf_byte_3, conf_byte_4, 0x00};
 
-	ADS_write(ADS, txbuffer, 3);
+	ADS_write(ADS, txbuffer, 4);
 
 	if(check) {
-		uint8_t rxbuffer[2] = {0, 0};
+		uint8_t rxbuffer[4] = {0, 0, 0, 0};
 
-		ADS_read(ADS, 0x29, rxbuffer, 2);
+		ADS_readwrite(ADS, 0x29, rxbuffer, 4);
 
-		return !(rxbuffer[2] == conf_byte_3 && rxbuffer[3] == conf_byte_4);
+		return !(rxbuffer[0] == conf_byte_3 && rxbuffer[1] == conf_byte_4);
 	}
 	else {
 		return 0;

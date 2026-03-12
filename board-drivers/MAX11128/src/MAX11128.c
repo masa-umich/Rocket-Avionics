@@ -94,18 +94,18 @@ void init_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo) {
 		set_read_adc_range(SPI_BUS, pinfo);
 
 		package_cmd(ADC_CONFIG_REG, tx);
-		taskENTER_CRITICAL();
+		//taskENTER_CRITICAL();
 		set_adc(pinfo, GPIO_PIN_RESET);
-		if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+		if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
 		set_adc(pinfo, GPIO_PIN_SET);
-		taskEXIT_CRITICAL();
+		//taskEXIT_CRITICAL();
 
 		package_cmd(ADC_MODE_CNTL_REG, tx);
-		taskENTER_CRITICAL();
+		//taskENTER_CRITICAL();
 		set_adc(pinfo, GPIO_PIN_RESET);
-		if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+		if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
 		set_adc(pinfo, GPIO_PIN_SET);
-		taskEXIT_CRITICAL();
+		//taskEXIT_CRITICAL();
     }
 }
 
@@ -146,12 +146,12 @@ void read_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo,
 		package_cmd(ADC_MODE_CNTL_REG, tx);
 
 		//Transmit chan_id of 0 to ADC for next frame to transmit and set
-		 taskENTER_CRITICAL();
+		 //taskENTER_CRITICAL();
 		set_adc(pinfo, GPIO_PIN_RESET);
-		if(HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, 1) ==  HAL_TIMEOUT){
+		if(HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, MAX11128_SPI_TIMEOUT) ==  HAL_TIMEOUT){
 		}
 		set_adc(pinfo, GPIO_PIN_SET);
-		taskEXIT_CRITICAL();
+		//taskEXIT_CRITICAL();
 
 		uint16_t adc_counts = 0;
 		uint16_t channelId  = 0;
@@ -167,12 +167,12 @@ void read_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo,
 			tx[1] = (channel << 7) | tx[1];
 			rx[0] = rx[1] = 0;
 
-			taskENTER_CRITICAL();
+			//taskENTER_CRITICAL();
 			set_adc(pinfo, GPIO_PIN_RESET);
-			if(HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, 1) == HAL_TIMEOUT){
+			if(HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT){
 			}
 			set_adc(pinfo, GPIO_PIN_SET);
-			taskEXIT_CRITICAL();
+			//taskEXIT_CRITICAL();
 
 			adc_counts = ((rx[0]<<8)|rx[1]) & 0x0FFF;
 			channelId = (rx[0] >> 4) & 0x0F;
@@ -191,11 +191,11 @@ void read_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo,
 			ADC_MODE_CNTL_REG = SET_MAX11128_SWCNV|(CUSTOM_INT<<11);
 
 			package_cmd(ADC_MODE_CNTL_REG, tx);
-			taskENTER_CRITICAL();
+			//taskENTER_CRITICAL();
 			set_adc(pinfo, GPIO_PIN_RESET);
-			if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+			if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
 			set_adc(pinfo, GPIO_PIN_SET);
-			taskEXIT_CRITICAL();
+			//taskEXIT_CRITICAL();
 
 		}
 
@@ -214,11 +214,11 @@ void read_adc(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo,
 		for (uint8_t i = 0; i < pinfo->NUM_CHANNELS; ++i) {
 			rx[0] = rx[1] = 0;
 			tx[0] = tx[1] = 0;
-			taskENTER_CRITICAL();
+			//taskENTER_CRITICAL();
 			set_adc(pinfo, GPIO_PIN_RESET);
 			write_adc_reg(SPI_BUS, tx, rx);
 			set_adc(pinfo, GPIO_PIN_SET);
-			taskEXIT_CRITICAL();
+			//taskEXIT_CRITICAL();
 
 			adc_counts = ((rx[0]<<8)|rx[1]) & 0x0FFF;
 			channelId = (rx[0] >> 4) & 0x0F;
@@ -258,18 +258,18 @@ void set_read_adc_range(SPI_HandleTypeDef *SPI_BUS, GPIO_MAX11128_Pinfo *pinfo) 
 
     /* Transmit custom channels to send data from */
     package_cmd(SET_SCAN_REGISTER_0, tx);
-    taskENTER_CRITICAL();
+    //taskENTER_CRITICAL();
     set_adc(pinfo, GPIO_PIN_RESET);
-    if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+    if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
     set_adc(pinfo, GPIO_PIN_SET);
-    taskEXIT_CRITICAL();
+    //taskEXIT_CRITICAL();
 
     package_cmd(SET_SCAN_REGISTER_1, tx);
-    taskENTER_CRITICAL();
+    //taskENTER_CRITICAL();
     set_adc(pinfo, GPIO_PIN_RESET);
-    if (HAL_SPI_Transmit(SPI_BUS, tx, 2, 1) == HAL_TIMEOUT) {}
+    if (HAL_SPI_Transmit(SPI_BUS, tx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {}
     set_adc(pinfo, GPIO_PIN_SET);
-    taskEXIT_CRITICAL();
+    //taskEXIT_CRITICAL();
 }
 
 void configure_read_adc_all(GPIO_MAX11128_Pinfo *pinfo) {
@@ -285,7 +285,7 @@ void configure_read_adc_all(GPIO_MAX11128_Pinfo *pinfo) {
 }
 
 static inline void write_adc_reg(SPI_HandleTypeDef *SPI_BUS, uint8_t *tx, uint8_t *rx) {
-    if (HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, 1) == HAL_TIMEOUT) {
+    if (HAL_SPI_TransmitReceive(SPI_BUS, tx, rx, 2, MAX11128_SPI_TIMEOUT) == HAL_TIMEOUT) {
     }
 }
 

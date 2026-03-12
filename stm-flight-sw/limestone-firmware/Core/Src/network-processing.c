@@ -10,6 +10,7 @@
 void ProcessPackets(void *argument) {
 	// Started processing thread
 	log_message(STAT_PACKET_TASK_STARTED, -1);
+	uint32_t stateTick = HAL_GetTick();
 	for(;;) {
 		Raw_message msg = {0};
 		int read_stat = server_read(&msg, 50);
@@ -18,6 +19,25 @@ void ProcessPackets(void *argument) {
 			Message parsedmsg = {0};
 			if(deserialize_message(msg.bufferptr, msg.packet_len, &parsedmsg) > 0) {
 				switch(parsedmsg.type) {
+					case MSG_HANDOFF: {
+						if(parsedmsg.data.handoff_msg.checksum_valid){
+							if(parsedmsg.data.handoff_msg.h_type == HANDOFF_ARM) {
+								trigger_arm();
+								log_message(FC_STAT_HANDOFF_ARM, -1);
+							}
+							else if(parsedmsg.data.handoff_msg.h_type == HANDOFF_ABORT) {
+								trigger_abort();
+								log_message(FC_STAT_HANDOFF_ABORT, -1);
+							}
+							else {
+								log_message(FC_ERR_HANDOFF_INVALID_TYPE, FC_ERR_TYPE_UNKNOWN_LMP);
+							}
+						}
+						else {
+							log_message(FC_ERR_HANDOFF_INVALID_CHECKSUM, FC_ERR_TYPE_UNKNOWN_LMP);
+						}
+						break;
+					}
 				    case MSG_TELEMETRY: {
 				        // Save and relay to Limewire
 				    	if(parsedmsg.data.telemetry.board_id == BOARD_FR) {
@@ -52,7 +72,7 @@ void ProcessPackets(void *argument) {
 				    			returnMsg.data.valve_state.valve_state = endState;
 				    			returnMsg.data.valve_state.valve_id = parsedmsg.data.valve_command.valve_id;
 				    			returnMsg.data.valve_state.timestamp = get_rtc_time();
-				      			if(send_msg_to_device(LimeWire_d, &returnMsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5) != 0) {
+				      			if(send_msg_to_device(LimeWire_d, &returnMsg, 5) != 0) {
 				      				// Server not up, target device not connected, or txbuffer is full
 				      			}
 				    		}
@@ -136,7 +156,7 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_QUERY_FLASH;
 				    				log_flash_storage(dev_cmd_ack.data.device_ack.payload, MAX_ACK_PAYLOAD_SIZE);
-					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
 				    				break;
@@ -147,9 +167,9 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_PDB_SRC_GSE;
-				    				strncpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_SRC_GSE_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_SRC_GSE_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
 				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
-					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
 				    				break;
@@ -160,9 +180,9 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_PDB_SRC_BAT;
-				    				strncpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_SRC_BAT_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_SRC_BAT_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
 				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
-					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
 				    				break;
@@ -173,9 +193,9 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_PDB_COTS_OFF;
-				    				strncpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_COTS_OFF_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_COTS_OFF_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
 				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
-					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
 				    				break;
@@ -186,9 +206,9 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_PDB_COTS_ON;
-				    				strncpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_COTS_ON_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_PDB_COTS_ON_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
 				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
-					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
 				    				break;
@@ -199,8 +219,8 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_BUILD_INFO;
 				    				log_message(STAT_VERSION_INFO, -1);
-				    				memcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO + 4, sizeof(STAT_VERSION_INFO) - 4);
-					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
 				    				break;
@@ -238,7 +258,7 @@ void ProcessPackets(void *argument) {
 				// Unknown message type
 				log_message(ERR_UNKNOWN_LMP_PACKET, FC_ERR_TYPE_UNKNOWN_LMP);
 			}
-			free(msg.bufferptr);
+			freeFromPool(msg.bufferptr);
 		}
 		else if(read_stat == -1) {
 			// Server down, delay to prevent taking CPU time from other tasks
@@ -246,6 +266,29 @@ void ProcessPackets(void *argument) {
 		}
 		else {
 			// Timeout on waiting for messages
+		}
+
+		// This goes here to avoid a race condition that could result in stale valve states being sent to limewire
+		if(HAL_GetTick() - stateTick > 1000) {
+			stateTick = HAL_GetTick();
+			if(is_server_running() && num_devices(LimeWire_d) > 0) {
+				uint64_t valvetime = get_rtc_time();
+				if(xSemaphoreTake(Rocket_h.fcValve_access, 5) == pdPASS) {
+					Valve_State_t vstates[3];
+					for(int i = 0;i < 3;i++) {
+						vstates[i] = Rocket_h.fcValveStates[i];
+					}
+					xSemaphoreGive(Rocket_h.fcValve_access);
+					for(int i = 0;i < 3;i++) {
+						Message statemsg = {0};
+						statemsg.type = MSG_VALVE_STATE;
+						statemsg.data.valve_state.timestamp = valvetime;
+						statemsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, i);
+						statemsg.data.valve_state.valve_state = vstates[i];
+						send_msg_to_device(LimeWire_d, &statemsg, 5);
+					}
+				}
+			}
 		}
 	}
 }

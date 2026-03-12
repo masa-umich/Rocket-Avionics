@@ -10,6 +10,7 @@
 void ProcessPackets(void *argument) {
 	// Started processing thread
 	log_message(STAT_PACKET_TASK_STARTED, -1);
+	uint32_t stateTick = HAL_GetTick();
 	for(;;) {
 		RawMessage msg = {0};
 		int read_stat = client_receive(&msg, 1000);
@@ -28,7 +29,7 @@ void ProcessPackets(void *argument) {
 				    			returnMsg.data.valve_state.valve_state = endState;
 				    			returnMsg.data.valve_state.valve_id = parsedmsg.data.valve_command.valve_id;
 				    			returnMsg.data.valve_state.timestamp = get_rtc_time();
-				      			if(send_msg_to_device(&returnMsg, 5, MAX_VALVE_STATE_MSG_SIZE + 5) != 0) {
+				      			if(send_msg_to_device(&returnMsg, 5) != 0) {
 				      				// Client not up, target device not connected, or txbuffer is full
 				      			}
 				    		}
@@ -61,7 +62,7 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.data.device_ack.board_id = bb_num;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_QUERY_FLASH;
 				    				log_flash_storage(dev_cmd_ack.data.device_ack.payload, MAX_ACK_PAYLOAD_SIZE);
-					      			if(send_msg_to_device(&dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+					      			if(send_msg_to_device(&dev_cmd_ack, 5) != 0) {
 					      				// Client not up, target device not connected, or txbuffer is full
 					      			}
 				    				break;
@@ -72,8 +73,8 @@ void ProcessPackets(void *argument) {
 				    				dev_cmd_ack.data.device_ack.board_id = bb_num;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_BUILD_INFO;
 				    				log_message(STAT_VERSION_INFO, -1);
-				    				memcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO + 4, sizeof(STAT_VERSION_INFO) - 4);
-					      			if(send_msg_to_device(&dev_cmd_ack, 5, strlen(dev_cmd_ack.data.device_ack.payload) + 3 + DEVICE_COMMAND_ACK_HEADER_SIZE) != 0) {
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
+					      			if(send_msg_to_device(&dev_cmd_ack, 5) != 0) {
 					      				// Server not up, target device not connected, or txbuffer is full
 					      			}
 				    				break;
@@ -94,7 +95,7 @@ void ProcessPackets(void *argument) {
 				// Unknown message type
 				log_message(ERR_UNKNOWN_LMP_PACKET, BB_ERR_TYPE_UNKNOWN_LMP);
 			}
-			free(msg.bufferptr);
+			freeFromPool(msg.bufferptr);
 		}
 		else if(read_stat == -1) {
 			// Server down, delay to prevent taking CPU time from other tasks
@@ -102,6 +103,29 @@ void ProcessPackets(void *argument) {
 		}
 		else {
 			// Timeout on waiting for messages
+		}
+
+		// This goes here to avoid a race condition that could result in stale valve states being sent to limewire
+		if(HAL_GetTick() - stateTick > 1000) {
+			stateTick = HAL_GetTick();
+			if(is_client_connected()) {
+				uint64_t valvetime = get_rtc_time();
+		  	  	if(xSemaphoreTake(Board_h.bbValve_access, 5) == pdPASS) {
+		  	  		Valve_State_t vstates[NUM_SOLENOIDS];
+					for(int i = 0;i < NUM_SOLENOIDS;i++) {
+						vstates[i] = Board_h.bbValveStates[i];
+					}
+		  	  		xSemaphoreGive(Board_h.bbValve_access);
+					for(int i = 0;i < NUM_SOLENOIDS;i++) {
+						Message statemsg = {0};
+						statemsg.type = MSG_VALVE_STATE;
+						statemsg.data.valve_state.timestamp = valvetime;
+						statemsg.data.valve_state.valve_id = generate_valve_id(bb_num, i);
+						statemsg.data.valve_state.valve_state = vstates[i];
+						send_msg_to_device(&statemsg, 5);
+					}
+		  	  	}
+			}
 		}
 	}
 }

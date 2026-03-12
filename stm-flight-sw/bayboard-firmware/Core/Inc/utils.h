@@ -71,7 +71,7 @@ float bus_voltage_calc(uint16_t raw, uint32_t resA, uint32_t resB);
 
 void reset_board();
 
-int send_msg_to_device(Message *msg, TickType_t wait, size_t buffersize);
+int send_msg_to_device(Message *msg, TickType_t wait);
 
 int send_raw_msg_to_device(RawMessage *msg, TickType_t wait);
 

@@ -38,12 +38,16 @@ float IMU_gyroConvert(uint8_t H_Byte, uint8_t L_Byte) {
 HAL_StatusTypeDef IMU_read(IMU* IMU, uint8_t reg_addr, uint8_t* rx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
-	HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1) | 1, &reg_addr, 1, IMU->I2C_TIMEOUT);
-	status = HAL_I2C_Master_Receive(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1) | 1, (uint8_t *)rx_buffer, num_bytes, IMU->I2C_TIMEOUT);
+	status = HAL_I2C_Mem_Read(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1), reg_addr, I2C_MEMADD_SIZE_8BIT, rx_buffer, num_bytes, IMU->I2C_TIMEOUT);
+	if(status != HAL_OK) {
+		return status;
+	}
+	//HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1) | 1, &reg_addr, 1, IMU->I2C_TIMEOUT);
+	//status = HAL_I2C_Master_Receive(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1) | 1, (uint8_t *)rx_buffer, num_bytes, IMU->I2C_TIMEOUT);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 	return status;
 }
 
@@ -51,11 +55,11 @@ HAL_StatusTypeDef IMU_read(IMU* IMU, uint8_t reg_addr, uint8_t* rx_buffer, uint8
 HAL_StatusTypeDef IMU_write(IMU* IMU, uint8_t* tx_buffer, uint8_t num_bytes) {
 	HAL_StatusTypeDef status;
 
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 
 	status = HAL_I2C_Master_Transmit(IMU->hi2c, IMU_I2C_ADDR_BASE | (IMU->SA0 << 1) | 0, (uint8_t *)tx_buffer, num_bytes + 1, IMU->I2C_TIMEOUT);
 
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 	return status;
 }
 

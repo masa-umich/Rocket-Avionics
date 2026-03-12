@@ -26,6 +26,12 @@ void *ftp_open(const char *fname, const char *mode, u8_t write) {
 		}
 		return write ? (void *) 0 : (void *) FLASH_TELEM_MARK; // FLASH_TELEM_MARK refers to telemetry and valve state LMP dump. Only reading is valid
 	}
+	else if(strcmp(fname, "dump.txt") == 0) {
+		if(!write) {
+			prepare_flash_dump();
+		}
+		return write ? (void *) 0 : (void *) FLASH_BOTH_MARK; // FLASH_TELEM_MARK refers to telemetry and valve state LMP dump. Only reading is valid
+	}
 	else {
 		return (void *) 0;
 	}
@@ -36,7 +42,7 @@ void ftp_close(void *handle) {
 	if(fd == 1) {
 		close_and_validate_config(&hcrc);
 	}
-	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK) {
+	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK || fd == FLASH_BOTH_MARK) {
 		finish_flash_dump();
 	}
 }
@@ -46,7 +52,7 @@ int ftp_read(void *handle, void *buf, int bytes) {
 	if(fd == 1) {
 		return eeprom_config_dump(buf, bytes);
 	}
-	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK) {
+	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK || fd == FLASH_BOTH_MARK) {
 		return dump_flash(fd, buf, bytes);
 	}
 	else {

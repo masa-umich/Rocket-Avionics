@@ -56,6 +56,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/board-drivers/MS5611</locationURI>
 		</link>
 		<link>
+			<name>NEO-M9N-00B</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-2-PROJECT_LOC%7D/board-drivers/NEO-M9N-00B</locationURI>
+		</link>
+		<link>
 			<name>TCP</name>
 			<type>2</type>
 			<locationURI>PARENT-2-PROJECT_LOC/board-drivers/TCP</locationURI>
