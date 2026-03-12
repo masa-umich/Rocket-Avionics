@@ -48,10 +48,6 @@ void trigger_abort();
 
 uint32_t getTime(); // gets time in ms
 
-void energizeMPV1(); // energizes whichever valve opens first // TODO implement
-
-void energizeMPV2(); // energizes whichever valve opens second // TODO implement
-
 void deployPilot(); // function to deploy pilot chute // TODO implement
 
 void deployDrogue(); // function to deploy drogue chute // TODO implement
