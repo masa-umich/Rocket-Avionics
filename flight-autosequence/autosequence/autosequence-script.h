@@ -15,9 +15,7 @@ const uint32_t MAX_LOCKOUT_WAIT_TIME = 10000; // 10 seconds in milliseconds
 
 
 // System defs
-const uint32_t sampling_frequency = 20; // in Hz
-//const uint32_t period = pdMS_TO_TICKS(1000) / sampling_frequency;
-const uint32_t period = 1000.0f / sampling_frequency;
+const uint32_t period = 20; // ms, sampling period
 
 
 #define ALTITUDE_BUFFER_SIZE 11

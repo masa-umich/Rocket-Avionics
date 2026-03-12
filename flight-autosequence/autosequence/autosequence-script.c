@@ -170,7 +170,7 @@ void execute_flight_autosequence(){
                 }
                     */
 
-                if (getTime() >= lockout_timestamp /* || (super_to_subsonic_flag && smooth_acceleration_readings())*/){
+                if (getTime() - ignition_timestamp>= lockout_timestamp /* || (super_to_subsonic_flag && smooth_acceleration_readings())*/){
                     phase = ST_WAIT_APOGEE;
                 }
                 
@@ -187,7 +187,7 @@ void execute_flight_autosequence(){
                 if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) {
                     float idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                     altitude_readings[altitude_buf_size] = compute_height(baro_detector.average[idx_baro]);
-                    time_readings[altitude_buf_size] = getTime() / 1000.0f; // convert ms to seconds
+                    time_readings[altitude_buf_size] = (getTime() - ignition_timestamp) / 1000.0f; // convert ms to seconds
                     wait(50); // wait 50 ms for next reading
                     altitude_buf_size++;
                 }
@@ -213,14 +213,14 @@ void execute_flight_autosequence(){
                     }
 
                     // if our fallback timers predict apogee, set flag and move to next phase
-                    else if (getTime() >= fallback_apogee_time) {
+                    else if (getTime() - ignition_timestamp >= fallback_apogee_time) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         fallback_timers_worked = 1;
                     }
 
                     // if neither work, set constant timer flag
-                    else if (getTime() >= APOGEE_CONSTANT_TIMER) {
+                    else if (getTime() - ignition_timestamp >= APOGEE_CONSTANT_TIMER) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                     }
@@ -245,13 +245,13 @@ void execute_flight_autosequence(){
                     }
 
                     // if we detected apogee with fallback timers, detect drogue deployment with fallback timers
-                    else if (fallback_timers_worked && getTime() >= fallback_5k_time) {
+                    else if (fallback_timers_worked && getTime() - ignition_timestamp >= fallback_5k_time) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
                     }
 
                     // otherwise just "detect" with constant timer
-                    else if (getTime() >= DROGUE_CONSTANT_TIMER) {
+                    else if (getTime() - ignition_timestamp >= DROGUE_CONSTANT_TIMER) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
                     }
@@ -274,12 +274,12 @@ void execute_flight_autosequence(){
                         phase = ST_DONE;
                     }
 
-                    else if (fallback_timers_worked && getTime() >= fallback_1k_time) {
+                    else if (fallback_timers_worked && getTime() - ignition_timestamp >= fallback_1k_time) {
                         main_flag = 1;
                         phase = ST_DONE;
                     }
 
-                    else if (getTime() >= MAIN_CONSTANT_TIMER) {
+                    else if (getTime() - ignition_timestamp >= MAIN_CONSTANT_TIMER) {
                         main_flag = 1;
                         phase = ST_DONE;
                     }
