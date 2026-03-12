@@ -1,50 +1,52 @@
 #ifndef AD_FUNCTIONS_H
 #define AD_FUNCTIONS_H
 
+#include "stdint.h"
+
 //size of the array of readings we maintain during the flight
 //used with the barometer and the IMU
 #define AD_CAPACITY 5          
 
-const float CROSS_SECT_AREA = 0.08f;            // m^2
-const float MASS_AT_MECO = 255.0f;              // kg
-const float CD = 0.50f;                         //drag coefficient
-const float G = 9.8f;                           // gravity
-const float MOLAR_MASS_AIR = 0.02896f;          // kg/mol
-const float R_GAS_CONST = 8.315f;               // gas constant
-const float GAMMA = 1.4f;
+extern const float CROSS_SECT_AREA;           // m^2
+extern const float MASS_AT_MECO;             // kg
+extern const float CD;                         //drag coefficient
+extern const float G;                           // gravity
+extern const float MOLAR_MASS_AIR;          // kg/mol
+extern const float R_GAS_CONST;               // gas constant
+extern const float GAMMA;
 
-const float DROGUE_DEPLOY_ALTITUDE = 1500.0f;     // m, for reference
-const float MAIN_DEPLOY_ALTITUDE = 300.0f;       // m, for reference
+extern const float DROGUE_DEPLOY_ALTITUDE;     // m, for reference
+extern const float MAIN_DEPLOY_ALTITUDE;       // m, for reference
 
 
 // TO BE SET AT LAUNCH
-float GROUND_ALTITUDE = 700.0f;     // meters above sea level at FAR
-float DROGUE_DEPLOY_PRESSURE = 825.0f;    // hPa, to be set at launch
-float MAIN_DEPLOY_PRESSURE = 975.0f;      // hPa, to be set at launch
-float LAPSE_RATE = 0.0065f;               // Celsius per meter
-float P_GROUND = 1013.25f;             // hPa 
-float T_GROUND = 293.0f;               // Kelvin (20 deg C)
-float P_TROPOPAUSE = 226.32f;             // hPa  // TO-DO DOUBLE CHECK THIS
-float T_TROPOPAUSE = 216.65f;             // Kelvin (56.5 deg C)
-float ALT_TROPOPAUSE = 11000.0f;              // meters
+extern float GROUND_ALTITUDE;     // meters above sea level at FAR
+extern float DROGUE_DEPLOY_PRESSURE;   // hPa, to be set at launch
+extern float MAIN_DEPLOY_PRESSURE;      // hPa, to be set at launch
+extern float LAPSE_RATE;               // Celsius per meter
+extern float P_GROUND;             // hPa
+extern float T_GROUND;               // Kelvin (20 deg C)
+extern float P_TROPOPAUSE;             // hPa  // TO-DO DOUBLE CHECK THIS
+extern float T_TROPOPAUSE;             // Kelvin (56.5 deg C)
+extern float ALT_TROPOPAUSE;              // meters
 
 
 
 // THRESHOLD VALUES FOR BAD DATA
-const float ACCEL_MIN = -20.0f; // m/s^2
+extern const float ACCEL_MIN; // m/s^2
 // no max accel threshold because accel readings during burn will be very high
 
-const float BARO_MIN = 0.0f; // hPa
-const float BARO_MAX = 1100.0f; // hPa TODO: adjust max based on expected max altitude
+extern const float BARO_MIN; // hPa
+extern const float BARO_MAX; // hPa TODO: adjust max based on expected max altitude
 
-const float TEMP_C_MIN = -50.0f; // Celsius
-const float TEMP_C_MAX = 50.0f; // Celsius
-const float TEMP_K_MIN = TEMP_C_MIN + 273.15f; // Kelvin
-const float TEMP_K_MAX = TEMP_C_MAX + 273.15f; // Kelvin
+extern const float TEMP_C_MIN; // Celsius
+extern const float TEMP_C_MAX; // Celsius
+extern const float TEMP_K_MIN; // Kelvin
+extern const float TEMP_K_MAX; // Kelvin
 
 
-const float MACH_DIP_THRESHOLD = 15.0f; // drop in acceleration in m/s^2 that indicates transition from subsonic to supersonic
-const float MIN_START_ACCEL = 20.0f; // minimum accel we need to see to consider detecting a spike for mach 1 transition
+extern const float MACH_DIP_THRESHOLD; // drop in acceleration in m/s^2 that indicates transition from subsonic to supersonic
+extern const float MIN_START_ACCEL; // minimum accel we need to see to consider detecting a spike for mach 1 transition
 
 
 
@@ -100,7 +102,7 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
 int detect_event(Detector * detector, FlightPhase phase);
 
 void compute_fallback_times(float altitude, float velocity, float accel,
-                                float *apogee_time, float *five_k_time, float *one_k_time);
+                                uint32_t *apogee_time, uint32_t *five_k_time, uint32_t *one_k_time);
 
 int detect_acceleration_spike(Detector * detector, float max_accel_seen);
 

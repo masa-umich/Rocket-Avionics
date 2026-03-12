@@ -21,7 +21,7 @@ void AutosequenceTask(void *argument) {
 			osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
 			log_message(FC_STAT_ARMED, -1);
 			update_state_in_telem(AUTOS_STATE_ARMED);
-			// TODO Run autosequence
+			execute_flight_autosequence();
 		}
 		update_state_in_telem(AUTOS_STATE_DEARMED);
 		log_message(FC_STAT_DEARMED, -1);
@@ -101,4 +101,16 @@ void update_state_in_telem(AutoS_SM status) {
 		Rocket_h.fcState.auto_sequence_state = status;
 		xSemaphoreGive(Rocket_h.fcState_access);
 	}
+}
+
+void deployPilot() {
+
+}
+
+void deployDrogue() {
+
+}
+
+void deployMain() {
+
 }

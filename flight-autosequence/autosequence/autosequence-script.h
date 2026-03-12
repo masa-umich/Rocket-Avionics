@@ -1,30 +1,32 @@
 #ifndef AUTOSEQUENCE_SCRIPT_H
 #define AUTOSEQUENCE_SCRIPT_H
 
+#include "main.h"
 #include "limestone-interface.h"
 #include <stdlib.h>
 #include <stdint.h>
-#include "main.h"   
+#include "ad-helpers.h"
+
+#define AUTOSEQUENCE_DEBUG 0
 
 // CONSTANT TIMER DEFINITIONS - MODIFY AS NEEDED
-const uint32_t APOGEE_CONSTANT_TIMER = 100 * 1000; // 100 seconds in milliseconds
-const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000; // 120 seconds in milliseconds
-const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000; // 150 seconds in milliseconds
-
-const uint32_t MAX_LOCKOUT_WAIT_TIME = 10000; // 10 seconds in milliseconds
+extern const uint32_t APOGEE_CONSTANT_TIMER; // 100 seconds in milliseconds
+extern const uint32_t DROGUE_CONSTANT_TIMER; // 120 seconds in milliseconds
+extern const uint32_t MAIN_CONSTANT_TIMER; // 150 seconds in milliseconds
 
 
 // System defs
-const uint32_t period = 20; // ms, sampling period
+extern const uint32_t period; // ms, sampling period
 
 
 #define ALTITUDE_BUFFER_SIZE 11
-const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000; // 15 seconds
-const uint32_t MAX_BURN_DURATION_MS = 22000; // 22 seconds
 
-const uint32_t MIN_LOCKOUT_WAIT_TIME = 6000; // ms, minimum time we expect to wait in lockout phase
-const uint32_t MAX_LOCKOUT_WAIT_TIME = 20000; // ms, maximum time we expect to wait in lockout phase
-const int WAIT_TIME_MULTIPLIER = 3;
+extern const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS; // 15 seconds
+extern const uint32_t MAX_BURN_DURATION_MS; // 22 seconds
+
+extern const uint32_t MIN_LOCKOUT_WAIT_TIME; // ms, minimum time we expect to wait in lockout phase
+extern const uint32_t MAX_LOCKOUT_WAIT_TIME; // ms, maximum time we expect to wait in lockout phase
+extern const int WAIT_TIME_MULTIPLIER;
 
 void execute_flight_autosequence();
 

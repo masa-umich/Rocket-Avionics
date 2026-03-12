@@ -1,6 +1,19 @@
 #include "autosequence-script.h"
-#include "helpers/simplified-curve-fit.c"
-#include "apogee-detection-revised/ad-functions.h"
+
+const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000; // 15 seconds
+const uint32_t MAX_BURN_DURATION_MS = 22000; // 22 seconds
+
+const uint32_t MIN_LOCKOUT_WAIT_TIME = 6000; // ms, minimum time we expect to wait in lockout phase
+const uint32_t MAX_LOCKOUT_WAIT_TIME = 20000; // ms, maximum time we expect to wait in lockout phase
+const int WAIT_TIME_MULTIPLIER = 3;
+
+const uint32_t APOGEE_CONSTANT_TIMER = 100 * 1000; // 100 seconds in milliseconds
+const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000; // 120 seconds in milliseconds
+const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000; // 150 seconds in milliseconds
+
+
+// System defs
+const uint32_t period = 20; // ms, sampling period
 
  
 void execute_flight_autosequence(){
@@ -44,8 +57,11 @@ void execute_flight_autosequence(){
     // initialize baro and imu values 
     float bar1 = 0.0f;
     float bar2 = 0.0f;
-    float imu1_z = 0.0f;
-    float imu2_z = 0.0f;
+    float imu1_y = 0.0f;
+    float imu2_y = 0.0f;
+
+    IMU_values imu1_vals = {0};
+    IMU_values imu2_vals = {0};
 
     // initilize temperature values
     float bar1_temp_C = 0.0f;
@@ -77,10 +93,14 @@ void execute_flight_autosequence(){
         // ABORT CHECK - maybe move here for testing
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
-                        &imu1_z, &imu2_z,
-                        &bar1_temp_C, &bar2_temp_C,
-                        &bar1_temp_K, &bar2_temp_K);
+                        &imu1_vals, &imu2_vals,
+                        &bar1_temp_C, &bar2_temp_C);
+        bar1_temp_K = bar1_temp_C + 273.15;
+        bar2_temp_K = bar2_temp_C + 273.15;
         
+        imu1_y = imu1_vals.XL_y;
+        imu2_y = imu2_vals.XL_y;
+
 
         // execute different code depending on which phase of flight we're in
         switch (phase) {
@@ -116,19 +136,20 @@ void execute_flight_autosequence(){
             
             // enters at launch, waiting for main engine cutoff
             case ST_WAIT_MECO: {
-                // energize MPVs while in this phase
-                energizeMPV1();
-                energizeMPV2();
+#ifdef AUTOSEQUENCE_DEBUG
+            	return;
+#endif
                 
                 // insert accel and baro readings here
-                insert(&imu_z_detector, imu1_z, imu2_z, phase, IMU_DTR);
+                insert(&imu_z_detector, imu1_y, imu2_y, phase, IMU_DTR);
 
-                if (!sub_to_supersonic_flag)
+                if (!sub_to_supersonic_flag) {
                     insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
                     if (detect_acceleration_spike(&imu_z_detector, max_accel_seen)) {
                         sub_to_supersonic_flag = 1;
                         approach_mach1_timestamp = getTime();
                     }
+                }
 
                 // check if imu detector is full of readings
                 if(imu_z_detector.avg_size >= AD_CAPACITY) {
@@ -185,7 +206,7 @@ void execute_flight_autosequence(){
 
                 // insert altitude readings into buffer once 
                 if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) {
-                    float idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                    uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                     altitude_readings[altitude_buf_size] = compute_height(baro_detector.average[idx_baro]);
                     time_readings[altitude_buf_size] = (getTime() - ignition_timestamp) / 1000.0f; // convert ms to seconds
                     wait(50); // wait 50 ms for next reading
@@ -199,6 +220,9 @@ void execute_flight_autosequence(){
                          &post_lockout_accel, &post_lockout_vel, &post_lockout_alt);
 
                     heights_recorded = 1;
+                    fallback_apogee_time = getTime();
+                    fallback_5k_time = getTime();
+                    fallback_1k_time = getTime();
                     compute_fallback_times(post_lockout_alt, post_lockout_vel, post_lockout_accel,
                                         &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time);
                 }
@@ -307,7 +331,7 @@ void execute_flight_autosequence(){
 
             case ST_DONE: {
                 // enter low power mode once on ground
-                low_power_mode();
+                // return
                 break;
             }
 

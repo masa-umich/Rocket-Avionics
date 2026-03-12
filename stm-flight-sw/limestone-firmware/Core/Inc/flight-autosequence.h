@@ -12,6 +12,7 @@
 #include "log_errors.h"
 #include "logging.h"
 #include "system-state.h"
+#include "autosequence-script.h"
 
 #define AUTOSEQUENCE_TASK_STACK		(uint32_t) 512 * 4
 
