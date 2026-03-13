@@ -95,6 +95,17 @@ int init_gps(gps_handler* hgps, uint32_t timeout) {
     return -1;
 }
 
+void irq_gps_error_callback(gps_handler* hgps) {
+    if (hgps->active_rx_buffer == 1) {
+    	hgps->rx_buffer_1_pos = 0;
+	}
+	else { // rx_buffer_2 is active
+		hgps->rx_buffer_2_pos = 0;
+	}
+
+	HAL_UART_Receive_IT(hgps->huart, &hgps->uart_rx_byte, 1); // Setup UART for interrupt-based rx
+}
+
 void irq_gps_callback(gps_handler* hgps) { // TODO make better
 
     BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
@@ -111,7 +122,9 @@ void irq_gps_callback(gps_handler* hgps) { // TODO make better
 			hgps->rx_buffer_2[0] = '$'; // Start adding to rx_buffer_2
 			hgps->rx_buffer_2_pos = 1;
 
-			xSemaphoreGiveFromISR(hgps->semaphore, &xHigherPriorityTaskWoken); // release semaphore to kick the parsing RTOS task
+			if(hgps->rx_buffer_1[0] == '$') {
+				xSemaphoreGiveFromISR(hgps->semaphore, &xHigherPriorityTaskWoken); // release semaphore to kick the parsing RTOS task
+			}
 		}
 	}
 	else { // rx_buffer_2 is active
@@ -126,7 +139,9 @@ void irq_gps_callback(gps_handler* hgps) { // TODO make better
 			hgps->rx_buffer_1[0] = '$'; // Start adding to rx_buffer_2
 			hgps->rx_buffer_1_pos = 1;
 
-			xSemaphoreGiveFromISR(hgps->semaphore, &xHigherPriorityTaskWoken); // release semaphore to kick the parsing RTOS task
+			if(hgps->rx_buffer_2[0] == '$') {
+				xSemaphoreGiveFromISR(hgps->semaphore, &xHigherPriorityTaskWoken); // release semaphore to kick the parsing RTOS task
+			}
 		}
 	}
     
@@ -134,7 +149,7 @@ void irq_gps_callback(gps_handler* hgps) { // TODO make better
 
     /* Yield if xHigherPriorityTaskWoken is pdTrue.  The 
     actual macro used here is port specific. Initiates a context-switch */
-    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+    //portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 
 }
 

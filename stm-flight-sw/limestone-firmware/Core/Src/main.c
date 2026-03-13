@@ -1227,6 +1227,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         irq_gps_callback(&(sensors_h.gps_h));
     }
 }
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+    if(huart->Instance == USART10) {
+    	irq_gps_error_callback(&(sensors_h.gps_h));
+    }
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartAndMonitor */
@@ -1365,9 +1371,6 @@ void StartAndMonitor(void *argument)
   	xSemaphoreTake(gpsSemaphore, 0);
   	sensors_h.gps_h.semaphore = gpsSemaphore;
   	sensors_h.gps_h.huart = &huart10;
-    if(init_gps(&(sensors_h.gps_h), 500) != 0) {
-        log_message(FC_ERR_INIT_GPS, -1);
-    }
 
 	// Start tasks
 
@@ -1431,20 +1434,27 @@ void StartAndMonitor(void *argument)
 
 	uint32_t onlineTick = HAL_GetTick();
 	uint32_t heartTick = HAL_GetTick();
-	uint8_t logdelay = 0;
+	uint8_t startup_delay = 0;
+	uint8_t gps_init = 0;
 	/* Infinite loop */
 	for(;;) {
 		//size_t freemem = xPortGetFreeHeapSize();
 		// Log and send error/status messages
-		if(logdelay > 4) {
+		if(startup_delay > 4) {
 			handle_logging();
+			if(!gps_init) {
+				gps_init = 1;
+			    if(init_gps(&(sensors_h.gps_h), 500) != 0) {
+			        log_message(FC_ERR_INIT_GPS, -1);
+			    }
+			}
 		}
 
 		// Send all valve states on connection with limewire
 		if(HAL_GetTick() - onlineTick > 250) {
 			onlineTick = HAL_GetTick();
-			if(logdelay < 5) {
-				logdelay++;
+			if(startup_delay < 5) {
+				startup_delay++;
 			}
 			refresh_log_timers();
 

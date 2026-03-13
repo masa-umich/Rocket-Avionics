@@ -60,6 +60,8 @@ int init_gps(gps_handler* hgps, uint32_t timeout);
 // IRQ callback function
 void irq_gps_callback(gps_handler* hgps);
 
+void irq_gps_error_callback(gps_handler* hgps);
+
 // Returns a struct with parsed GPS data
 ParseStatus parse_gps_sentence(const char* sentence, gps_data* gps);
 
