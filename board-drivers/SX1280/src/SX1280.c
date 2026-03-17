@@ -542,9 +542,6 @@ static SX1280_Status_t SX1280_SPI_TransmitReceive(uint8_t *pTxData, uint8_t *pRx
         return wait_status;
     }
 
-    // enter critical section for thread safety
-    taskENTER_CRITICAL();
-
 
     // set NSS low to select the radio
     HAL_GPIO_WritePin(sx1280_hal_config->nssPort, sx1280_hal_config->nssPin, GPIO_PIN_RESET);
@@ -562,8 +559,6 @@ static SX1280_Status_t SX1280_SPI_TransmitReceive(uint8_t *pTxData, uint8_t *pRx
 
     // set NSS high to deselect the radio
     HAL_GPIO_WritePin(sx1280_hal_config->nssPort, sx1280_hal_config->nssPin, GPIO_PIN_SET);
-    // exit critical section
-    taskEXIT_CRITICAL();
 
     if (hal_status == HAL_TIMEOUT) {
         return SX1280_TIMEOUT;
