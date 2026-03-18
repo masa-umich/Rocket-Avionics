@@ -166,6 +166,20 @@ static void spi_transmit_receive(W25N04KV_Flash *flash, uint8_t *tx,
 
 }
 
+static void spi_transmit_receive_large(W25N04KV_Flash *flash, uint8_t *tx,
+		uint16_t tx_size,	uint8_t *rx, uint16_t rx_size) {
+
+	__disable_irq();
+	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N04KV_CS_ACTIVE);  // Select chip
+	// Transmit/receive, and store the status code
+	flash->last_HAL_status = HAL_SPI_Transmit(flash->SPI_bus, tx, tx_size, W25N04KV_SPI_TIMEOUT);
+	flash->last_HAL_status = HAL_SPI_Receive(flash->SPI_bus, rx, rx_size, W25N04KV_SPI_TIMEOUT);
+	// TODO the Transmit status will get lost, should it still be stored like this?
+	HAL_GPIO_WritePin(flash->cs_base, flash->cs_pin, W25N04KV_CS_INACTIVE);  // Release chip
+	__enable_irq();
+
+}
+
 /**
  * The Read Status Register instruction may be used at any time, even while
  * a Program or Erase cycle is in progress.
@@ -576,7 +590,7 @@ static void read_flash_buffer(W25N04KV_Flash *flash, uint8_t *buffer,
 	uint8_t column_adr_8bit_array[2] = W25N04KV_UNPACK_UINT16_TO_2_BYTES(column_adr);
 	uint8_t tx[4] = {W25N04KV_READ_DATA, column_adr_8bit_array[0], column_adr_8bit_array[1], 0};  // last byte is unused
 
-	spi_transmit_receive(flash, tx, 4, buffer, num_bytes);
+	spi_transmit_receive_large(flash, tx, 4, buffer, num_bytes);
 }
 
 /**

@@ -21,6 +21,8 @@
 #define AUTOS_OX_FLAG			(0x00000001U << 2)
 #define AUTOS_FUEL_FLAG			(0x00000001U << 3)
 
+#define AUTOS_TEST
+
 typedef struct {
 	float XL_x; // accel in x direction
 	float XL_y; // y direction is axial to the rocket - positive points from engine to nose cone (upwards)

@@ -21,7 +21,11 @@ void AutosequenceTask(void *argument) {
 			osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
 			log_message(FC_STAT_ARMED, -1);
 			update_state_in_telem(AUTOS_STATE_ARMED);
+#ifndef AUTOS_TEST
 			execute_flight_autosequence();
+#else
+			osDelay(10000);
+#endif
 		}
 		update_state_in_telem(AUTOS_STATE_DEARMED);
 		log_message(FC_STAT_DEARMED, -1);
