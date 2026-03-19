@@ -14,7 +14,7 @@ int vector_sign(float x, float y, float z) {
 
 void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, float* vel, float* alt){
 
-    int N = ;
+    int N = ALTITUDE_BUFFER_SIZE;
 
     float sum_t = 0.0f;
     float sum_t2 = 0.0f;

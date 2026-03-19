@@ -18,9 +18,6 @@ extern const uint32_t MAIN_CONSTANT_TIMER; // 150 seconds in milliseconds
 // System defs
 extern const uint32_t period; // ms, sampling period
 
-
-#define ALTITUDE_BUFFER_SIZE 11
-
 extern const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS; // 15 seconds
 extern const uint32_t MAX_BURN_DURATION_MS; // 22 seconds
 

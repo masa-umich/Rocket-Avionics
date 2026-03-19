@@ -3,6 +3,7 @@
 
 #include "stdint.h"
 
+#define ALTITUDE_BUFFER_SIZE 11
 //size of the array of readings we maintain during the flight
 //used with the barometer and the IMU
 #define AD_CAPACITY 5          
