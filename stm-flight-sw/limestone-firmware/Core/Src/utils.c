@@ -126,3 +126,15 @@ int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType
 	msg->connection_fd = device_fd;
 	return server_send(msg, wait);
 }
+
+void set_valve_within(Valve_Channel valve, Valve_State_t desiredState) {
+	Valve_State_t endState = set_and_update_valve(valve, desiredState);
+	Message returnMsg = {0};
+	returnMsg.type = MSG_VALVE_STATE;
+	returnMsg.data.valve_state.valve_state = endState;
+	returnMsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, valve);
+	returnMsg.data.valve_state.timestamp = get_rtc_time();
+	if(send_msg_to_device(LimeWire_d, &returnMsg, 5) != 0) {
+		// Server not up, target device not connected, or txbuffer is full
+	}
+}

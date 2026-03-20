@@ -93,4 +93,6 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait);
 // this is not successful (if that is intended).
 int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType_t wait);
 
+void set_valve_within(Valve_Channel valve, Valve_State_t desiredState);
+
 #endif

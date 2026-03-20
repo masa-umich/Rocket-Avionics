@@ -222,10 +222,11 @@ void start_led_timer(TickType_t delay, uint32_t reload, uint8_t force) {
 	}
 }
 
-void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force) {
+void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force, uint8_t startMode) {
 	if(xSemaphoreTake(timer_mutex, 0) == pdPASS) {
 		if(timers.buzzTimer) {
 			if(force || xTimerIsTimerActive(timers.buzzTimer) != pdPASS) {
+				HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, startMode);
 				vTimerSetTimerID(timers.buzzTimer, (void *)reload);
 				xTimerChangePeriod(timers.buzzTimer, delay, 0);
 			}
@@ -379,7 +380,7 @@ int main(void)
 	  		  // eeprom load error, defaults loaded
 	  		  load_eeprom_defaults(&loaded_config);
 	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -2: {
@@ -388,7 +389,7 @@ int main(void)
 	  		  loaded_config.tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
 	  		  loaded_config.tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
 	  		  loaded_config.tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -3: {
@@ -400,7 +401,7 @@ int main(void)
 	  		  loaded_config.vlv2_v = FC_EEPROM_VLV_VOL_DEFAULT;
 	  		  loaded_config.vlv3_en = FC_EEPROM_VLV_EN_DEFAULT;
 	  		  loaded_config.vlv3_v = FC_EEPROM_VLV_VOL_DEFAULT;
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -4: {
@@ -411,7 +412,7 @@ int main(void)
 	  		  loaded_config.pilot_para_index = FC_EEPROM_PILOT_DEFAULT;
 	  		  loaded_config.drogue_para_index = FC_EEPROM_DROGUE_DEFAULT;
 	  		  loaded_config.main_para_index = FC_EEPROM_MAIN_DEFAULT;
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  default: {
@@ -426,7 +427,7 @@ int main(void)
 	  // eeprom init error, defaults loaded
 	  load_eeprom_defaults(&loaded_config);
 	  log_message(ERR_EEPROM_INIT, -1);
-	  start_buzz_timer(500, UINT32_MAX, 1);
+	  start_buzz_timer(500, UINT32_MAX, 1, 0);
   }
   fc_addr = loaded_config.flightcomputerIP;
   log_message(STAT_VERSION_INFO, -1);
@@ -1258,6 +1259,7 @@ void StartAndMonitor(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
+  osDelay(1);
   	// Signal end of critical section
 	if(is_net_logging_up()) {
 		// No UDP error
@@ -1269,7 +1271,7 @@ void StartAndMonitor(void *argument)
 	}
 
 	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
-	start_buzz_timer(1000, 0, 0);
+	start_buzz_timer(1000, 0, 0, 1);
 
 	// Setup TCP server
 	if(server_create(loaded_config.limewireIP, loaded_config.bayboard1IP, loaded_config.bayboard2IP, loaded_config.bayboard3IP, loaded_config.flightrecordIP)) {

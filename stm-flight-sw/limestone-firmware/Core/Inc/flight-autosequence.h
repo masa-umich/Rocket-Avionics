@@ -13,6 +13,9 @@
 #include "logging.h"
 #include "system-state.h"
 #include "autosequence-script.h"
+#include "eeprom-config.h"
+
+extern EEPROM_conf_t loaded_config;
 
 #define AUTOSEQUENCE_TASK_STACK		(uint32_t) 512 * 4
 
@@ -39,6 +42,8 @@ typedef enum {
 
 void AutosequenceTask(void *argument);
 
+void coldflow_autosequence();
+
 void setup_autosequence();
 
 void trigger_Fuel();
@@ -51,11 +56,11 @@ void trigger_abort();
 
 uint32_t getTime(); // gets time in ms
 
-void deployPilot(); // function to deploy pilot chute // TODO implement
+void deployPilot(); // function to deploy pilot chute
 
-void deployDrogue(); // function to deploy drogue chute // TODO implement
+void deployDrogue(); // function to deploy drogue chute
 
-void deployMain(); // function to deploy main chute // TODO implement
+void deployMain(); // function to deploy main chute
 
 void wait(uint32_t ms); // wait function in ms
 

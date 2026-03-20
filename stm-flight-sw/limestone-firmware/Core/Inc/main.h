@@ -52,7 +52,6 @@ typedef struct {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 extern inittimers_t timers;
-extern EEPROM_conf_t loaded_config;
 
 void buzzerOff();
 
@@ -62,7 +61,7 @@ void stopLEDtimer();
 
 void start_led_timer(TickType_t delay, uint32_t reload, uint8_t force);
 
-void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force);
+void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force, uint8_t startMode);
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

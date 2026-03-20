@@ -120,5 +120,18 @@ void deployMain() {
 }
 
 void coldflow_autosequence() {
-
+	uint32_t start = getTime();
+	while(getTime() - start < 30000) {
+		if(valves_open()) {
+			break;
+		}
+		if(should_abort()) {
+			return;
+		}
+		wait(100);
+	}
+	if(getTime() - start >= 30000) return;
+	wait(1000);
+	deployPilot();
+	wait(500);
 }

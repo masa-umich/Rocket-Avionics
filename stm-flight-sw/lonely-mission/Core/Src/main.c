@@ -1519,7 +1519,7 @@ void StartAndMonitor(void *argument)
 
 		if(telemcounter == 0) {
 			log_telemetry();
-			telemcounter = (uint8_t) ((200/TELEM_LOG_RATE) - 1); // 4hz
+			telemcounter = (uint8_t) ((200/TELEM_LOG_RATE) - 1);
 		}
 		else {
 			telemcounter--;
