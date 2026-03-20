@@ -6,15 +6,8 @@
  */
 #include "ad-helpers.h"
 
-int vector_sign(float x, float y, float z) {
-    if (x + y + z > 0)
-        return 1;
-    return -1;
-}
-
-void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, float* vel, float* alt){
-
-    int N = ALTITUDE_BUFFER_SIZE;
+void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, float* vel, float* alt, int size){
+    int N = size;
 
     float sum_t = 0.0f;
     float sum_t2 = 0.0f;
@@ -25,24 +18,37 @@ void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, fl
     float sum_t4 = 0.0f;
 
     float t0 = time_arr[N/2];
-    for (int i = 0; i < N; ++i) {
-        time_arr[i] -= t0; // Center time data
+    float h0 = altitude_arr[N/2];
 
-        sum_t += time_arr[i];
-        sum_t2 += time_arr[i] * time_arr[i];
-        sum_h += altitude_arr[i];
-        sum_ht += altitude_arr[i] * time_arr[i];
-        sum_ht2 += altitude_arr[i] * time_arr[i] * time_arr[i];
-        sum_t4 += time_arr[i] * time_arr[i] * time_arr[i] * time_arr[i];
+    for (int i = 0; i < N; ++i) {
+        float t = time_arr[i] - t0; 
+        float h = altitude_arr[i] - h0;
+        float t2 = t * t;
+
+        sum_t += t;
+        sum_t2 += t * t;
+        sum_h += h;
+        sum_ht += h * t;
+        sum_ht2 += h * t2;
+        sum_t4 += t2*t2;
     }
 
-    float c = sum_h/N;
-    float b = sum_ht/ sum_t2;
-    float a = (sum_ht2 - c * sum_t2) / sum_t4;
+    float denominator = (N * sum_t4) - (sum_t2 * sum_t2);
+
+    if (fabsf(denominator) < 1e-2f || fabsf(sum_t2) < 1e-2f) {
+        *inst_accel = 0.0f; 
+        *vel = 0.0f; 
+        *alt = altitude_arr[N/2];
+        return; 
+    }
+
+    float a = (N * sum_ht2 - sum_h * sum_t2) / denominator;
+    float b = sum_ht / sum_t2;
+    float c = (sum_h - a * sum_t2) / N;
 
     *inst_accel = 2.0f * a;
     *vel = b;
-    *alt = c;
+    *alt = c + h0;
 }
 
 float vector_magnitude(float x, float y, float z) {
@@ -76,12 +82,12 @@ int buffer_lt(float* buf, int size, float search_value) {
         return 0;
 
     int count = 0;
-    for (int i = 0; i < AD_CAPACITY; ++i)
+    for (int i = 0; i < size; ++i)
     {
         if (buf[i] < search_value)
             ++count;
     }
-    if (count >= (AD_CAPACITY * 0.8))
+    if (count >= (size * 0.8))
         return 1;
     return 0;
 }
@@ -91,12 +97,12 @@ int buffer_gt(float* buf, int size, float search_value) {
         return 0;
 
     int count = 0;
-    for (int i = 0; i < AD_CAPACITY; ++i)
+    for (int i = 0; i < size; ++i)
     {
         if (buf[i] > search_value)
             ++count;
     }
-    if (count >= (AD_CAPACITY * 0.8))
+    if (count >= (size * 0.8))
         return 1;
     return 0;
 }
@@ -106,12 +112,12 @@ int buffer_eq(float* buf, int size, float search_value) {
         return 0;
 
     int count = 0;
-    for (int i = 0; i < AD_CAPACITY; ++i)
+    for (int i = 0; i < size; ++i)
     {
         if (fabsf(buf[i] - search_value) < 1e-1f) // consider equal if within 0.1
             ++count;
     }
-    if (count >= (AD_CAPACITY * 0.8))
+    if (count >= (size * 0.8))
         return 1;
     return 0;
 }

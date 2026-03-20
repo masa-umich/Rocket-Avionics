@@ -4,8 +4,6 @@
 #include "ad-functions.h"
 #include <math.h>
 
-int vector_sign(float x, float y, float z);
-
 float vector_magnitude(float x, float y, float z);
 
 float mean(int size, float *arr);
@@ -23,6 +21,6 @@ int buffer_eq(float* buf, int size, float search_value);
 
 float fix_reading(float reading, float* buf, int size, DetectorType type);
 
-void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, float* vel, float* alt);
+void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, float* vel, float* alt, int size);
 
 #endif
