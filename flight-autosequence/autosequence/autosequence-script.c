@@ -5,7 +5,7 @@ const uint32_t MAX_BURN_DURATION_MS = 22000; // 22 seconds
 
 const uint32_t MIN_LOCKOUT_WAIT_TIME = 6000; // ms, minimum time we expect to wait in lockout phase
 const uint32_t MAX_LOCKOUT_WAIT_TIME = 20000; // ms, maximum time we expect to wait in lockout phase
-const int WAIT_TIME_MULTIPLIER = 3;
+const uint8_t WAIT_TIME_MULTIPLIER = 3;
 
 const uint32_t APOGEE_CONSTANT_TIMER = 100 * 1000; // 100 seconds in milliseconds
 const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000; // 120 seconds in milliseconds
@@ -13,10 +13,10 @@ const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000; // 150 seconds in milliseconds
 
 
 // System defs
-const uint32_t period = 20; // ms, sampling period
+const uint32_t period = 25; // ms, greater than sampling period of 20 ms
 
  
-void execute_flight_autosequence(){
+int execute_flight_autosequence(){
     // starts by waiting for valves to open
     FlightPhase phase = ST_DETECT_VALVES_OPEN; 
 
@@ -45,10 +45,10 @@ void execute_flight_autosequence(){
     uint32_t approach_mach1_timestamp = 0;
 
     // for velocity/acceleration estimation post lockout
-    int altitude_buf_size = 0;
+    uint8_t altitude_buf_size = 0;
     float altitude_readings[ALTITUDE_BUFFER_SIZE] = {0}; // in meters
     float time_readings[ALTITUDE_BUFFER_SIZE] = {0};      // in seconds
-    int heights_recorded = 0;
+    uint8_t heights_recorded = 0;
 
     float ground_temp_C = 0.0f; // to be set at handoff
 
@@ -75,14 +75,14 @@ void execute_flight_autosequence(){
     float post_lockout_alt = 0.0f;
 
     // flags TODO
-    int apogee_detection_worked = 0;
-    int fallback_timers_worked = 0;
-    int sub_to_supersonic_flag = 0;
-    int MECO_flag = 0;
-    int apogee_flag = 0;
-    int drogue_flag = 0;
-    int main_flag = 0;
-    int landed_flag = 0;
+    uint8_t apogee_detection_worked = 0;
+    uint8_t fallback_timers_worked = 0;
+    uint8_t sub_to_supersonic_flag = 0;
+    uint8_t MECO_flag = 0;
+    uint8_t apogee_flag = 0;
+    uint8_t drogue_flag = 0;
+    uint8_t main_flag = 0;
+    uint8_t landed_flag = 0;
 
 
     float max_accel_seen = 0.0f; // for detecting sub to supersonic transition
@@ -90,7 +90,12 @@ void execute_flight_autosequence(){
     // infinite loop to run the sequence, broken by RTOS interrupts
 
     for (;;){
-        // ABORT CHECK - maybe move here for testing
+        if (should_abort()) {
+            return -1;
+            //return;
+        }
+
+
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
                         &imu1_vals, &imu2_vals,
@@ -115,21 +120,24 @@ void execute_flight_autosequence(){
                     ignition_timestamp = getTime();
 
                     // set ground temp at handoff for calculating altitude for non-standard atmosphere conditions
-                    int idx_temp = (temp_K_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                    uint8_t idx_temp = (temp_K_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                     T_GROUND = temp_K_detector.average[idx_temp];
 
-                    int idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                    // set ground temp at handoff
+                    uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                     P_GROUND = baro_detector.average[idx_baro];
 
+                    // adjust lapse rate based on altitude & non-standard atmospheric conditions
+                    LAPSE_RATE = (T_TROPOPAUSE - T_GROUND) / (ALT_TROPOPAUSE - GROUND_ALTITUDE);
+
+                    // calculate drogue and main deploy pressures based on ground temp and pressure
                     DROGUE_DEPLOY_PRESSURE = compute_pressure(DROGUE_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
                     MAIN_DEPLOY_PRESSURE = compute_pressure(MAIN_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
-
-                    LAPSE_RATE = T_TROPOPAUSE - T_GROUND / ALT_TROPOPAUSE - GROUND_ALTITUDE;
                 }
 
                 // if we wait too long without valves opening, ABORT!
                 else if (getTime() - handoff_timestamp > MAX_HANDOFF_TO_VALVE_OPEN_MS) {
-                    abort();
+                    return -1;
                     //return;
                 }
             }
@@ -145,7 +153,7 @@ void execute_flight_autosequence(){
 
                 if (!sub_to_supersonic_flag) {
                     insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
-                    if (detect_acceleration_spike(&imu_z_detector, max_accel_seen)) {
+                    if (detect_acceleration_spike(&imu_z_detector, &max_accel_seen)) {
                         sub_to_supersonic_flag = 1;
                         approach_mach1_timestamp = getTime();
                     }
@@ -217,7 +225,7 @@ void execute_flight_autosequence(){
                 // and acceleration, then compute fallback times
                 else if (!heights_recorded) {
                     quadr_curve_fit(altitude_readings, time_readings,
-                         &post_lockout_accel, &post_lockout_vel, &post_lockout_alt);
+                         &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
 
                     heights_recorded = 1;
                     fallback_apogee_time = getTime();

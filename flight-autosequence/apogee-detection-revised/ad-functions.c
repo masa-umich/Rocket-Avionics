@@ -62,7 +62,7 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
     detector->index_2 = detector->index_2 % AD_CAPACITY;
     detector->size_2 = min(detector->size_2 + 1, AD_CAPACITY);
 
-    // Update average buffer
+    // Update average buffer    
     detector->average[detector->avg_index] = 
                 (mean(detector->size_1, detector->readings_1) + 
                  mean(detector->size_2, detector->readings_2)) / 2;        
@@ -74,7 +74,7 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
     {
         if (detector->avg_size >= AD_CAPACITY)
         {
-            detector->slope[detector->slope_i] =
+            detector->slope[detector->slope_i] = // TODO check slope calculation  
                 (detector->average[(detector->avg_index + AD_CAPACITY - 1) % AD_CAPACITY] -
                  detector->average[(detector->avg_index + AD_CAPACITY - AD_CAPACITY) % AD_CAPACITY]) /
                 AD_CAPACITY;
@@ -120,14 +120,15 @@ int detect_event(Detector * detector, FlightPhase phase) {
 // 2) isothermal formula above tropopause
 float compute_height(float avg_pressure) {
     float estimated_height;
-    float scale_height = R_GAS_CONST * LAPSE_RATE / (G * MOLAR_MASS_AIR);
+    float scale_height_trop = R_GAS_CONST * LAPSE_RATE / (G * MOLAR_MASS_AIR);
+    float scale_height_iso = R_GAS_CONST * T_TROPOPAUSE / (G * MOLAR_MASS_AIR);
 
     if (avg_pressure < P_TROPOPAUSE){
-        estimated_height = (T_GROUND / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_GROUND, scale_height));
+        estimated_height = (T_GROUND / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_GROUND, scale_height_trop));
     }
 
     else {
-        estimated_height = ALT_TROPOPAUSE + scale_height * logf(P_TROPOPAUSE / avg_pressure);
+        estimated_height = ALT_TROPOPAUSE + scale_height_iso * logf(P_TROPOPAUSE / avg_pressure);
     }
     
     return estimated_height;
@@ -158,18 +159,20 @@ float compute_pressure(float altitude, float ground_temp, float ground_pressure)
 }
 
 
-int detect_acceleration_spike(Detector* detector, float max_accel_seen) {
+int detect_acceleration_spike(Detector* detector, float* max_accel_seen) {
     if (detector->avg_size < AD_CAPACITY)
         return 0;
 
     float filtered_accel = detector->average[(detector->avg_index - 1 + AD_CAPACITY) % AD_CAPACITY];
-    if (filtered_accel > max_accel_seen && filtered_accel > MIN_START_ACCEL)
-        max_accel_seen = filtered_accel;
+    if (filtered_accel > *max_accel_seen && filtered_accel > MIN_START_ACCEL)
+        *max_accel_seen = filtered_accel;
 
-    if (max_accel_seen > MIN_START_ACCEL) {
-        float accel_drop = max_accel_seen - filtered_accel;
-        if (accel_drop > MACH_DIP_THRESHOLD)
+    if (*max_accel_seen > MIN_START_ACCEL) {
+        float accel_drop = *max_accel_seen - filtered_accel;
+        if (accel_drop > MACH_DIP_THRESHOLD){
+            *max_accel_seen = MIN_START_ACCEL;
             return 1;
+        }
     }
     
     return 0;
