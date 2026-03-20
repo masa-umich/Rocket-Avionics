@@ -52,6 +52,7 @@ typedef struct {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 extern inittimers_t timers;
+extern EEPROM_conf_t loaded_config;
 
 void buzzerOff();
 
@@ -72,7 +73,7 @@ void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force);
 
 #define TELEMETRY_HZ		(uint32_t)50
 
-#define FC_EEPROM_LEN		(uint16_t)93
+#define FC_EEPROM_LEN		(uint16_t)98
 //#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
 #define RESTART_AFTER_CONFIG
 
@@ -114,6 +115,12 @@ void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force);
 #define FC_EEPROM_FRIP_DEFAULT_2			212
 #define FC_EEPROM_FRIP_DEFAULT_3			192
 #define FC_EEPROM_FRIP_DEFAULT_4			210
+
+#define FC_EEPROM_OX_MPV_DEFAULT			0
+#define FC_EEPROM_FUEL_MPV_DEFAULT			1
+#define FC_EEPROM_PILOT_DEFAULT				0
+#define FC_EEPROM_DROGUE_DEFAULT			1
+#define FC_EEPROM_MAIN_DEFAULT				2
 
 #define FC_MAC_ADDR_1		0x00
 #define FC_MAC_ADDR_2		0x80

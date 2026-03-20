@@ -40,6 +40,12 @@ typedef struct {
 	ip4_addr_t bayboard2IP;
 	ip4_addr_t bayboard3IP;
 	ip4_addr_t flightrecordIP;
+
+	uint8_t fuel_mpv_index;
+	uint8_t ox_mpv_index;
+	uint8_t pilot_para_index;
+	uint8_t	drogue_para_index;
+	uint8_t main_para_index;
 } EEPROM_conf_t;
 
 void prepare_eeprom_config();

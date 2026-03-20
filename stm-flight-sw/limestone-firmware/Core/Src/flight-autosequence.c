@@ -24,7 +24,7 @@ void AutosequenceTask(void *argument) {
 #ifndef AUTOS_TEST
 			execute_flight_autosequence();
 #else
-			osDelay(10000);
+			coldflow_autosequence();
 #endif
 		}
 		update_state_in_telem(AUTOS_STATE_DEARMED);
@@ -108,13 +108,17 @@ void update_state_in_telem(AutoS_SM status) {
 }
 
 void deployPilot() {
-
+	set_valve_within((Valve_Channel) loaded_config.pilot_para_index, Valve_Energized);
 }
 
 void deployDrogue() {
-
+	set_valve_within((Valve_Channel) loaded_config.drogue_para_index, Valve_Energized);
 }
 
 void deployMain() {
+	set_valve_within((Valve_Channel) loaded_config.main_para_index, Valve_Energized);
+}
+
+void coldflow_autosequence() {
 
 }

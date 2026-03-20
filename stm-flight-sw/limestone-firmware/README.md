@@ -72,9 +72,16 @@ The networking for Limelight's avionics can be split into 3 main pieces:
 | 82 - 85 | Bay Board 2 IP | uint32_t |
 | 86 - 89 | Bay Board 3 IP | uint32_t |
 | 90 - 93 | Flight Recorder IP | uint32_t |
+| 94      | Ox MPV Valve Channel | uint8_t |
+| 95      | Fuel MPV Valve Channel | uint8_t |
+| 96      | BOP Piston Valve Channel | uint8_t |
+| 97      | Drogue Chute Valve Channel | uint8_t |
+| 98      | Main Chute Valve Channel | uint8_t |
 
 ### Notes
-The PT configuration floats are **little-endian**, but the IP addresses are **big-endian**.
+The PT configuration floats are **little-endian**, but the IP addresses are
+**big-endian**. The last 5 entries of the EEPROM are 0-indexed, so the first valve channel
+would be 0.
 
 TC gain chart:
 | Gain | Config Value |

@@ -151,6 +151,7 @@ void TelemetryTask(void *argument) {
   				Rocket_h.fcState.gps_lat = gps_values.latitude;
   				Rocket_h.fcState.gps_long = gps_values.longitude;
   				Rocket_h.fcState.gps_alt = gps_values.altitude;
+  				Rocket_h.fcState.gps_sats = gps_values.sats_tracked;
   			}
 
   			if(!TC_stat) {

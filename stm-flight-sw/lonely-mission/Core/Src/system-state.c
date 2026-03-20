@@ -68,6 +68,7 @@ int pack_fc_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t tim
 		msg->telemetry_data[FC_GPS_LAT_I] = Rocket_h.fcState.gps_lat;
 		msg->telemetry_data[FC_GPS_LONG_I] = Rocket_h.fcState.gps_long;
 		msg->telemetry_data[FC_GPS_ALT_I] = Rocket_h.fcState.gps_alt;
+		msg->telemetry_data[FC_GPS_SATS_I] = Rocket_h.fcState.gps_sats;
 		msg->telemetry_data[FC_BAR_1_I] = Rocket_h.fcState.bar1;
 		msg->telemetry_data[FC_BAR_2_I] = Rocket_h.fcState.bar2;
 		msg->telemetry_data[FC_24V_VOLTAGE_I] = Rocket_h.fcState.bus24v_voltage;
@@ -79,6 +80,7 @@ int pack_fc_telemetry_msg(TelemetryMessage *msg, uint64_t timestamp, uint8_t tim
 		msg->telemetry_data[FC_3V3_VOLTAGE_I] = Rocket_h.fcState.bus3v3_voltage;
 		msg->telemetry_data[FC_3V3_CURRENT_I] = Rocket_h.fcState.bus3v3_current;
 		msg->telemetry_data[FC_BOARD_TEMP_I] = Rocket_h.fcState.board_temp;
+		msg->telemetry_data[FC_AUTOS_STATE_I] = Rocket_h.fcState.auto_sequence_state;
 		xSemaphoreGive(Rocket_h.fcState_access);
 	}
 	else {

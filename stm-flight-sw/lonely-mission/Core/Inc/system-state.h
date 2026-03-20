@@ -30,6 +30,7 @@ typedef struct {
 	float gps_lat;
 	float gps_long;
 	float gps_alt;
+	float gps_sats;
 	float bar1;
 	float bar2;
 	float bus24v_voltage;

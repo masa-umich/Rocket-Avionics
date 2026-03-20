@@ -18,4 +18,6 @@
 
 void ProcessPackets(void *argument);
 
+void set_valve_within(Valve_Channel valve, Valve_State_t desiredState);
+
 #endif /* INC_NETWORK_PROCESSING_H_ */

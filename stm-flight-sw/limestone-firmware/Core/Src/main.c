@@ -403,6 +403,17 @@ int main(void)
 	  		  start_buzz_timer(500, UINT32_MAX, 1);
 	  		  break;
 	  	  }
+	  	  case -4: {
+	  		  // autosequence channel conf error
+	  		  log_message(FC_ERR_EEPROM_LOAD_AUTOS_ERR, -1);
+	  		  loaded_config.ox_mpv_index = FC_EEPROM_OX_MPV_DEFAULT;
+	  		  loaded_config.fuel_mpv_index = FC_EEPROM_FUEL_MPV_DEFAULT;
+	  		  loaded_config.pilot_para_index = FC_EEPROM_PILOT_DEFAULT;
+	  		  loaded_config.drogue_para_index = FC_EEPROM_DROGUE_DEFAULT;
+	  		  loaded_config.main_para_index = FC_EEPROM_MAIN_DEFAULT;
+	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  break;
+	  	  }
 	  	  default: {
 	  		  // eeprom conf loaded
 	  		  log_message(STAT_EEPROM_LOADED, -1);

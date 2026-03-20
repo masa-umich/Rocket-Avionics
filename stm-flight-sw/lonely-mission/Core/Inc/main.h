@@ -75,7 +75,7 @@ void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force);
 #define TELEMETRY_HZ		(uint32_t)50
 
 #define FC_EEPROM_LEN		(uint16_t)93
-//#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
+#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
 #define RESTART_AFTER_CONFIG
 
 #define EEPROM_RESTART_DELAY_MS				500

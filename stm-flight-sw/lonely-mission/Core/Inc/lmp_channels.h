@@ -12,7 +12,7 @@
 
 #define MAX_TELEM_CHANNELS              53
 
-#define FC_TELEMETRY_CHANNELS           40
+#define FC_TELEMETRY_CHANNELS           42
 #define FC_VLV1_CURRENT_I               0
 #define FC_VLV1_OLD_I                   1
 #define FC_VLV2_CURRENT_I               2
@@ -42,17 +42,19 @@
 #define FC_GPS_LAT_I                    26
 #define FC_GPS_LONG_I                   27
 #define FC_GPS_ALT_I                    28
-#define FC_BAR_1_I                      29
-#define FC_BAR_2_I                      30
-#define FC_24V_VOLTAGE_I                31
-#define FC_24V_CURRENT_I                32
-#define FC_12V_VOLTAGE_I                33
-#define FC_12V_CURRENT_I                34
-#define FC_5V_VOLTAGE_I                 35
-#define FC_5V_CURRENT_I                 36
-#define FC_3V3_VOLTAGE_I                37
-#define FC_3V3_CURRENT_I                38
-#define FC_BOARD_TEMP_I                 39
+#define FC_GPS_SATS_I					29
+#define FC_BAR_1_I                      30
+#define FC_BAR_2_I                      31
+#define FC_24V_VOLTAGE_I                32
+#define FC_24V_CURRENT_I                33
+#define FC_12V_VOLTAGE_I                34
+#define FC_12V_CURRENT_I                35
+#define FC_5V_VOLTAGE_I                 36
+#define FC_5V_CURRENT_I                 37
+#define FC_3V3_VOLTAGE_I                38
+#define FC_3V3_CURRENT_I                39
+#define FC_BOARD_TEMP_I                 40
+#define FC_AUTOS_STATE_I				41
 
 #define BB1_TELEMETRY_CHANNELS          53
 #define BB1_VLV1_CURRENT_I              0

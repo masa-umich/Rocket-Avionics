@@ -139,6 +139,8 @@
 #define FC_ERR_HANDOFF_INVALID_TYPE				"064 Invalid handoff message type"
 #define FC_ERR_HANDOFF_INVALID_CHECKSUM			"065 Invalid handoff message checksum"
 
+#define FC_ERR_EEPROM_LOAD_AUTOS_ERR			"066 EEPROM config invalid autosequence channels, loading defaults"
+
 #elif defined(BAY_BOARD)
 // Bay Board error messages
 #define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"
