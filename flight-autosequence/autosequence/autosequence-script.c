@@ -25,7 +25,7 @@ int execute_flight_autosequence(){
 
     // initialize detectors for pressure, accleration, and temperature
     Detector baro_detector = {0};
-    Detector imu_z_detector = {0};
+    Detector imu_y_detector = {0};
     Detector temp_K_detector = {0};
 
     // timestamps of key events, to be set when events are detected
@@ -36,6 +36,11 @@ int execute_flight_autosequence(){
     uint32_t apogee_timestamp = 0;
     uint32_t drogue_timestamp = 0;
     uint32_t main_timestamp = 0;
+
+    // altitudes of chute deployment
+    float apogee_altitude = 0.0f;
+    float drogue_altitude = 0.0f;
+    float main_altitude = 0.0f;
 
     // fallback time estimates -- ALL CALCULATED WITH KINEMATICS!
     uint32_t fallback_apogee_time = 0; 
@@ -51,8 +56,6 @@ int execute_flight_autosequence(){
     uint8_t heights_recorded = 0;
 
     float ground_temp_C = 0.0f; // to be set at handoff
-
-    handoff_timestamp = getTime();
 
     // initialize baro and imu values 
     float bar1 = 0.0f;
@@ -95,7 +98,6 @@ int execute_flight_autosequence(){
             //return;
         }
 
-
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
                         &imu1_vals, &imu2_vals,
@@ -136,35 +138,37 @@ int execute_flight_autosequence(){
                 }
 
                 // if we wait too long without valves opening, ABORT!
-                else if (getTime() - handoff_timestamp > MAX_HANDOFF_TO_VALVE_OPEN_MS) {
+                else if (time_since(handoff_timestamp) > MAX_HANDOFF_TO_VALVE_OPEN_MS) {
                     return -1;
                     //return;
                 }
+
+                break;
             }
             
             // enters at launch, waiting for main engine cutoff
             case ST_WAIT_MECO: {
-#ifdef AUTOSEQUENCE_DEBUG
-            	return;
-#endif
+                #ifdef AUTOSEQUENCE_TEST
+                    return 1;
+                #endif
                 
                 // insert accel and baro readings here
-                insert(&imu_z_detector, imu1_y, imu2_y, phase, IMU_DTR);
+                insert(&imu_y_detector, imu1_y, imu2_y, phase, IMU_DTR);
 
                 if (!sub_to_supersonic_flag) {
                     insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
-                    if (detect_acceleration_spike(&imu_z_detector, &max_accel_seen)) {
+                    if (detect_acceleration_spike(&imu_y_detector, &max_accel_seen)) {
                         sub_to_supersonic_flag = 1;
-                        approach_mach1_timestamp = getTime();
+                        approach_mach1_timestamp = time_since(ignition_timestamp);
                     }
                 }
 
                 // check if imu detector is full of readings
-                if(imu_z_detector.avg_size >= AD_CAPACITY) {
+                if(imu_y_detector.avg_size >= AD_CAPACITY) {
                     // check if MECO detected - when accel becomes negative
-                    if (detect_event(&imu_z_detector, phase) || getTime() - ignition_timestamp > MAX_BURN_DURATION_MS) {
+                    if (detect_event(&imu_y_detector, phase) || time_since(ignition_timestamp) > MAX_BURN_DURATION_MS) {
                         MECO_flag = 1;
-                        meco_timestamp = getTime();
+                        meco_timestamp = time_since(ignition_timestamp);
 
                         if (sub_to_supersonic_flag){
                             phase = ST_MACH_LOCKOUT;
@@ -192,14 +196,8 @@ int execute_flight_autosequence(){
 
             // cannot take pressure readings while above mach 1
             case ST_MACH_LOCKOUT:{   
-                // check if current time is greater than the estimated lockout timestamp
-                /*
-                if (!super_to_subsonic_flag) {
-                    super_to_subsonic_flag = detect_acceleration_spike(&imu_z_detector, max_accel_seen);
-                }
-                    */
 
-                if (getTime() - ignition_timestamp>= lockout_timestamp /* || (super_to_subsonic_flag && smooth_acceleration_readings())*/){
+                if (time_since(ignition_timestamp) >= lockout_timestamp){
                     phase = ST_WAIT_APOGEE;
                 }
                 
@@ -216,8 +214,7 @@ int execute_flight_autosequence(){
                 if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) {
                     uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                     altitude_readings[altitude_buf_size] = compute_height(baro_detector.average[idx_baro]);
-                    time_readings[altitude_buf_size] = (getTime() - ignition_timestamp) / 1000.0f; // convert ms to seconds
-                    wait(50); // wait 50 ms for next reading
+                    time_readings[altitude_buf_size] = time_since(ignition_timestamp) / 1000.0f; // convert ms to seconds
                     altitude_buf_size++;
                 }
 
@@ -225,12 +222,12 @@ int execute_flight_autosequence(){
                 // and acceleration, then compute fallback times
                 else if (!heights_recorded) {
                     quadr_curve_fit(altitude_readings, time_readings,
-                         &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
+                        &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
 
                     heights_recorded = 1;
-                    fallback_apogee_time = getTime();
-                    fallback_5k_time = getTime();
-                    fallback_1k_time = getTime();
+                    fallback_apogee_time = time_since(ignition_timestamp);
+                    fallback_5k_time = time_since(ignition_timestamp);
+                    fallback_1k_time = time_since(ignition_timestamp);
                     compute_fallback_times(post_lockout_alt, post_lockout_vel, post_lockout_accel,
                                         &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time);
                 }
@@ -242,19 +239,31 @@ int execute_flight_autosequence(){
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         apogee_detection_worked = 1;
+                        apogee_timestamp = time_since(ignition_timestamp);
+                        
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        apogee_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
 
                     // if our fallback timers predict apogee, set flag and move to next phase
-                    else if (getTime() - ignition_timestamp >= fallback_apogee_time) {
+                    else if (time_since(ignition_timestamp) >= fallback_apogee_time) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         fallback_timers_worked = 1;
+                        apogee_timestamp = time_since(ignition_timestamp);
+
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        apogee_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
 
                     // if neither work, set constant timer flag
-                    else if (getTime() - ignition_timestamp >= APOGEE_CONSTANT_TIMER) {
+                    else if (time_since(ignition_timestamp) >= APOGEE_CONSTANT_TIMER) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
+                        apogee_timestamp = time_since(ignition_timestamp);
+
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        apogee_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
                 }
 
@@ -274,18 +283,30 @@ int execute_flight_autosequence(){
                     if (apogee_detection_worked && detect_event(&baro_detector, phase)) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
+                        drogue_timestamp = time_since(ignition_timestamp);
+
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        drogue_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
 
                     // if we detected apogee with fallback timers, detect drogue deployment with fallback timers
-                    else if (fallback_timers_worked && getTime() - ignition_timestamp >= fallback_5k_time) {
+                    else if (fallback_timers_worked && time_since(ignition_timestamp) >= fallback_5k_time) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
+                        drogue_timestamp = time_since(ignition_timestamp);
+
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        drogue_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
 
                     // otherwise just "detect" with constant timer
-                    else if (getTime() - ignition_timestamp >= DROGUE_CONSTANT_TIMER) {
+                    else if (time_since(ignition_timestamp) >= DROGUE_CONSTANT_TIMER) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
+                        drogue_timestamp = time_since(ignition_timestamp);
+
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        drogue_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
                 }
 
@@ -303,17 +324,29 @@ int execute_flight_autosequence(){
                 if(baro_detector.avg_size >= AD_CAPACITY) {
                     if (apogee_detection_worked && detect_event(&baro_detector, phase)) {
                         main_flag = 1;
-                        phase = ST_DONE;
+                        phase = ST_WAIT_GROUND;
+                        main_timestamp = time_since(ignition_timestamp);
+
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        main_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
 
-                    else if (fallback_timers_worked && getTime() - ignition_timestamp >= fallback_1k_time) {
+                    else if (fallback_timers_worked && time_since(ignition_timestamp) >= fallback_1k_time) {
                         main_flag = 1;
-                        phase = ST_DONE;
+                        phase = ST_WAIT_GROUND;
+                        main_timestamp = time_since(ignition_timestamp);
+
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        main_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
 
-                    else if (getTime() - ignition_timestamp >= MAIN_CONSTANT_TIMER) {
+                    else if (time_since(ignition_timestamp) >= MAIN_CONSTANT_TIMER) {
                         main_flag = 1;
-                        phase = ST_DONE;
+                        phase = ST_WAIT_GROUND;
+                        main_timestamp = time_since(ignition_timestamp);
+
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        main_altitude = compute_height(baro_detector.avg_index[idx_baro]);
                     }
                 }
 
@@ -347,8 +380,6 @@ int execute_flight_autosequence(){
                 break;
             
         }//end switch(phase)
-
-        // wait until thread period is up before next loop iteration
         vTaskDelayUntil(&last, period);
     }
 }

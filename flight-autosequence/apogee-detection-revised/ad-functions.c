@@ -1,5 +1,4 @@
 #include "ad-functions.h"
-#include <math.h>
 
 const float CROSS_SECT_AREA = 0.08f;            // m^2
 const float MASS_AT_MECO = 255.0f;              // kg

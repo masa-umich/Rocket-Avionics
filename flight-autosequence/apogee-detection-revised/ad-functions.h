@@ -2,6 +2,7 @@
 #define AD_FUNCTIONS_H
 
 #include "stdint.h"
+#include <math.h>
 
 #define ALTITUDE_BUFFER_SIZE 11
 //size of the array of readings we maintain during the flight

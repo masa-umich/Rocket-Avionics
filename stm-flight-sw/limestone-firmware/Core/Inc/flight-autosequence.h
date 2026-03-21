@@ -59,6 +59,8 @@ void trigger_abort();
 
 uint32_t getTime(); // gets time in ms
 
+uint32_t time_since(uint32_t time_other);
+
 void deployPilot(); // function to deploy pilot chute // TODO implement
 
 void deployDrogue(); // function to deploy drogue chute // TODO implement
