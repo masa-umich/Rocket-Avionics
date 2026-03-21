@@ -105,6 +105,6 @@ int detect_event(Detector * detector, FlightPhase phase);
 void compute_fallback_times(float altitude, float velocity, float accel,
                                 uint32_t *apogee_time, uint32_t *five_k_time, uint32_t *one_k_time);
 
-int detect_acceleration_spike(Detector * detector, float max_accel_seen);
+int detect_acceleration_spike(Detector * detector, float* max_accel_seen);
 
 #endif

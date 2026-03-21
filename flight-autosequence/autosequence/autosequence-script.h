@@ -23,9 +23,9 @@ extern const uint32_t MAX_BURN_DURATION_MS; // 22 seconds
 
 extern const uint32_t MIN_LOCKOUT_WAIT_TIME; // ms, minimum time we expect to wait in lockout phase
 extern const uint32_t MAX_LOCKOUT_WAIT_TIME; // ms, maximum time we expect to wait in lockout phase
-extern const int WAIT_TIME_MULTIPLIER;
+extern const uint8_t WAIT_TIME_MULTIPLIER;
 
-void execute_flight_autosequence();
+int execute_flight_autosequence();
 
 
 #endif

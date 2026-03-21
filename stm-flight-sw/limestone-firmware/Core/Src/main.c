@@ -1270,7 +1270,7 @@ void StartAndMonitor(void *argument)
 		start_led_timer(250, UINT32_MAX, 1);
 	}
 
-	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
+	//HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
 	start_buzz_timer(1000, 0, 0, 1);
 
 	// Setup TCP server
@@ -1567,7 +1567,43 @@ void StartAndMonitor(void *argument)
 			}
 		}
 
-	  osDelay(5);
+  	  	if(xSemaphoreTake(sensors_h.gps_h.semaphore, 0) == pdTRUE) {
+  	  		char nmea_sen[100];
+  	  		memset(nmea_sen, 0, 100);
+  	  		if(sensors_h.gps_h.active_rx_buffer == 2) {
+  	  			strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_1);
+  	  			sensors_h.gps_h.rx_buffer_1_pos = 0;
+  	  	    }
+  	  	    else {
+  	  	        strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_2);
+  	  	        sensors_h.gps_h.rx_buffer_2_pos = 0;
+  	  	    }
+  	  		enum minmea_sentence_id id = minmea_sentence_id(nmea_sen, false);
+  	  		if(id == MINMEA_SENTENCE_GGA) {
+  	  			gps_data gps_values = {0};
+  	  			ParseStatus status = parse_gps_sentence(nmea_sen, &gps_values);
+  	  			if(status == NORMAL) {
+  	  				if(xSemaphoreTake(Rocket_h.fcState_access, 1) == pdPASS) {
+  	  					Rocket_h.fcState.gps_lat = gps_values.latitude;
+  	  					Rocket_h.fcState.gps_long = gps_values.longitude;
+  	  					Rocket_h.fcState.gps_alt = gps_values.altitude;
+  	  					Rocket_h.fcState.gps_sats = gps_values.sats_tracked;
+  	  					xSemaphoreGive(Rocket_h.fcState_access);
+  	  				}
+  	  			}
+  	  			else {
+  	  				if(xSemaphoreTake(Rocket_h.fcState_access, 1) == pdPASS) {
+  	  					Rocket_h.fcState.gps_lat = NAN;
+  	  					Rocket_h.fcState.gps_long = NAN;
+  	  					Rocket_h.fcState.gps_alt = NAN;
+  	  					Rocket_h.fcState.gps_sats = NAN;
+  	  					xSemaphoreGive(Rocket_h.fcState_access);
+  	  				}
+  	  			}
+  	  	    }
+  	  	}
+
+		osDelay(5);
 	}
   /* USER CODE END 5 */
 }

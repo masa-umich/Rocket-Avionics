@@ -101,7 +101,7 @@ uint8_t should_abort() {
 }
 
 void update_state_in_telem(AutoS_SM status) {
-	if(xSemaphoreTake(Rocket_h.fcState_access, portMAX_DELAY) == pdPASS) {
+	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
 		Rocket_h.fcState.auto_sequence_state = status;
 		xSemaphoreGive(Rocket_h.fcState_access);
 	}
@@ -121,7 +121,7 @@ void deployMain() {
 
 void coldflow_autosequence() {
 	uint32_t start = getTime();
-	while(getTime() - start < 30000) {
+	while(getTime() - start < 20000) {
 		if(valves_open()) {
 			break;
 		}
@@ -130,8 +130,16 @@ void coldflow_autosequence() {
 		}
 		wait(100);
 	}
-	if(getTime() - start >= 30000) return;
-	wait(1000);
+	if(getTime() - start >= 20000) return;
+	update_state_in_telem(AUTOS_STATE_BURN);
+	start = getTime();
+	while(getTime() - start < 30000) {
+		if(should_abort()) {
+			return;
+		}
+		wait(100);
+	}
+	update_state_in_telem(AUTOS_STATE_SUPERSONIC); // Doesn't make sense but just for coldflow testing
 	deployPilot();
 	wait(500);
 }

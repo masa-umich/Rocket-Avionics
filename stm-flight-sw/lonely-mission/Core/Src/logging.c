@@ -154,7 +154,7 @@ void log_valve_states() {
 
 void handle_logging() {
 	errormsg_t logmsg;
-	if(xQueueReceive(errorMsglist, (void *)&logmsg, 5) == pdPASS) {
+	if(xQueueReceive(errorMsglist, (void *)&logmsg, 0) == pdPASS) {
 		uint8_t flashstat = write_raw_to_flash(logmsg.content, logmsg.len);
 		if(flashstat == 2) {
 			// Flash is full, send UDP message every 5 seconds

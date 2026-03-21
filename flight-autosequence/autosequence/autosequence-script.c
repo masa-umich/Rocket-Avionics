@@ -1,6 +1,6 @@
 #include "autosequence-script.h"
 
-const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000; // 15 seconds
+const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 20000; // 20 seconds
 const uint32_t MAX_BURN_DURATION_MS = 22000; // 22 seconds
 
 const uint32_t MIN_LOCKOUT_WAIT_TIME = 6000; // ms, minimum time we expect to wait in lockout phase
@@ -145,7 +145,7 @@ int execute_flight_autosequence(){
             // enters at launch, waiting for main engine cutoff
             case ST_WAIT_MECO: {
 #ifdef AUTOSEQUENCE_DEBUG
-            	return;
+            	return 0;
 #endif
                 
                 // insert accel and baro readings here
