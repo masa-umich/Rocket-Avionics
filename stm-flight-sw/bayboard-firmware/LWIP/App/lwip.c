@@ -162,8 +162,8 @@ static void ethernet_link_status_updated(struct netif *netif)
   {
 /* USER CODE BEGIN 5 */
 	  stopLEDtimer();
-	  buzzerOn();
-	  start_buzz_timer(100, 2, 0, 0);
+	  //buzzerOn();
+	  start_buzz_timer(100, 2, 0, 1);
 	  init_network_logging(1, bb_addr);
 	  sntp_init();
 	  client_reinit();

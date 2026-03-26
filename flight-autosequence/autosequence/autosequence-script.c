@@ -140,6 +140,7 @@ int execute_flight_autosequence(){
                     return -1;
                     //return;
                 }
+                break;
             }
             
             // enters at launch, waiting for main engine cutoff
@@ -191,7 +192,7 @@ int execute_flight_autosequence(){
             } 
 
             // cannot take pressure readings while above mach 1
-            case ST_MACH_LOCKOUT:{   
+            case ST_MACH_LOCKOUT:{
                 // check if current time is greater than the estimated lockout timestamp
                 /*
                 if (!super_to_subsonic_flag) {
