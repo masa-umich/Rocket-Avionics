@@ -24,6 +24,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "MS5611.h"
+#include "sx1280.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,12 +35,26 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+//CHANGE TRANSMIT/RECEIVE HERE
+#define IS_TRANSMITTER 0
 
+// Packet Defines
+#define TARGET_PAYLOAD_SIZE 375
+#define MAX_LORA_PAYLOAD 255
+#define HEADER_SIZE 1 // 1 byte for Packet Sequence Number
+#define CHUNK_SIZE (MAX_LORA_PAYLOAD - HEADER_SIZE)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define SX1280_IRQ_TX_DONE              (1 << 0)
+#define SX1280_IRQ_RX_DONE              (1 << 1)
+#define SX1280_IRQ_SYNC_WORD_VALID      (1 << 2)
+#define SX1280_IRQ_SYNC_WORD_ERROR      (1 << 3)
+#define SX1280_IRQ_HEADER_VALID         (1 << 4)
+#define SX1280_IRQ_HEADER_ERROR         (1 << 5)
+#define SX1280_IRQ_CRC_ERROR            (1 << 6)
+#define SX1280_IRQ_RX_TX_TIMEOUT        (1 << 14)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -77,10 +93,27 @@ UART_HandleTypeDef huart10;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 512 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
+// Handle for radio driver
+SX1280_Hal_t radio_hal_config;
+
+// Status var for driver funcs
+SX1280_Status_t radio_status;
+
+
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+PUTCHAR_PROTOTYPE
+{
+  HAL_UART_Transmit(&huart10, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  return ch;
+}
 
 /* USER CODE END PV */
 
@@ -154,6 +187,8 @@ int main(void)
   MX_RTC_Init();
   MX_ETH_Init();
   /* USER CODE BEGIN 2 */
+  printf("LIMESTONE BOOTING--\r\n");
+
 
   /* USER CODE END 2 */
 
@@ -697,12 +732,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF7_SPI3;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : VLV_OLD2_Pin */
-  GPIO_InitStruct.Pin = VLV_OLD2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(VLV_OLD2_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PB10 PB14 PB15 */
   GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -746,8 +775,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PG12 PG14 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_14;
+  /*Configure GPIO pin : PG12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -791,23 +820,191 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-    MS5611 baro = {0};
-	baro.hspi = &hspi6;
-	baro.CS_GPIO_Pin = BAR2_CS_Pin;
-	baro.CS_GPIO_Port = BAR2_CS_GPIO_Port;
-	baro.SPI_TIMEOUT = 1000;
-	baro.pres_offset = 0;
-	baro.alt_offset = 0;
+	// Populate HAL Config struct for driver
+	// use handles/defines from CUBEMX
 
-	MS5611_PROM_t prom = {0};
-	float pres = 0;
+	radio_hal_config.spiHandle = &hspi5;
+	radio_hal_config.nssPort = SPI5_CS_GPIO_Port;   // this is PF6
+	radio_hal_config.nssPin = SPI5_CS_Pin;
+	radio_hal_config.resetPort = RF_NSRT_GPIO_Port;  // this is PC2
+	radio_hal_config.resetPin = RF_NSRT_Pin;
+	radio_hal_config.busyPort = RF_BUSY_GPIO_Port; // PF10
+	radio_hal_config.busyPin = RF_BUSY_Pin;
 
-	MS5611_Reset(&baro);
-	MS5611_readPROM(&baro, &prom);
+	//initialize the radio
+	  printf("Initializing SX1280\r\n");
+	  radio_status = SX1280_Init(&radio_hal_config);
 
-	for (;;) {
-		MS5611_getPres(&baro, &pres, OSR_256);
-	}
+	  if (radio_status == SX1280_OK) {
+	    printf("SX1280 Init OK\r\n");
+	  } else {
+	    printf("SX1280 Init FAILED Status: %d\r\n", radio_status);
+	    // Loop forever if init fails
+	    while(1) {
+	      vTaskDelay(1000);
+	    }
+	  }
+
+	  printf("Setting LoRa SyncWord to 0x12\r\n");
+	  radio_status = SX1280_SetLoRaSyncWord(0x12);
+	  if (radio_status != SX1280_OK) {
+	    printf("Failed to set SyncWord\r\n");
+	  }
+
+  // Define states for our state machine
+  typedef enum {
+      RADIO_MODE_UNKNOWN,
+      RADIO_MODE_TX,
+      RADIO_MODE_RX
+  } RadioMode_t;
+
+  RadioMode_t current_mode = RADIO_MODE_UNKNOWN;
+  RadioMode_t desired_mode = RADIO_MODE_UNKNOWN;
+
+  // --- Transmitter-specific variables ---
+  uint8_t full_payload[TARGET_PAYLOAD_SIZE];
+  for (int i = 0; i < TARGET_PAYLOAD_SIZE; i++)
+  {
+	  full_payload[i] = (uint8_t)(i % 256); // filling with dummy numbers 0-255
+  }
+
+  // temp buff LoRa packet
+  uint8_t tx_packet_buffer[MAX_LORA_PAYLOAD];
+
+  int packet_counter = 0;
+
+  // --- Receiver-specific variables ---
+  uint8_t rx_buffer[255]; //buffer holds received data
+
+  // important, because there is a possibility we send two packets we must reassemble buffer
+  uint8_t reassembled_data[TARGET_PAYLOAD_SIZE];
+
+  uint8_t chunks_received_mask = 0; // bitmask, bit 0 for chunk 1, bit 1 for chunk 2
+
+  for(;;)
+  {
+	  // READ RF SWITCH STATE. NO CONNECTIONS = RECEIVE. JUMPER = TRANSMIT
+	  GPIO_PinState rf_switch_state = HAL_GPIO_ReadPin(RF_MODE_SW_GPIO_Port, RF_MODE_SW_Pin);
+
+	  if (rf_switch_state == GPIO_PIN_SET) {
+		  // Jumper is ON (HIGH). Set desired mode to TRANSMIT
+		  desired_mode = RADIO_MODE_TX;
+	  } else {
+		  // Jumper is OFF (LOW). Set desired mode to RECEIVE
+		  desired_mode = RADIO_MODE_RX;
+	  }
+
+	  // check to make change to radio's state
+	  if (current_mode != desired_mode) {
+		  printf("Switch state changed, Desired mode: %s\r\n", (desired_mode == RADIO_MODE_TX) ? "TRANSMIT" : "RECEIVE");
+
+		  // Put radio in STDBY before changing modes
+		  SX1280_SetStandby(STDBY_RC);
+
+		  if (desired_mode == RADIO_MODE_RX) {
+			  // --- INITIALIZE RECEIVE MODE ---
+			  printf("Entering Receive Mode(SAFE)...\r\n");
+			  radio_status = SX1280_SetRx(SX1280_RX_TIMEOUT_CONTINUOUS);
+			  if (radio_status != SX1280_OK) {
+				  printf("Error setting RX mode\r\n");
+				  current_mode = RADIO_MODE_UNKNOWN; // Stay unknown to retry
+			  } else {
+				  current_mode = RADIO_MODE_RX; // Lock the new mode
+				  chunks_received_mask = 0; // Rset reassembly logic
+			  }
+		  } else { // desired_mode == RADIO_MODE_TX
+			  // --- INITIALIZE TRANSMIT MODE ---
+			  printf("Entering Transmit Mode(CHECK ANTENNA)...\r\n");
+			  current_mode = RADIO_MODE_TX;
+		  }
+	  }
+
+	  // 3. Run the logic for the current mode
+	  if (current_mode == RADIO_MODE_RX) {
+		  // --- Run one iteration of RECEIVER logic ---
+		  uint16_t irq_status = 0;
+		  radio_status = SX1280_GetIrqStatus(&irq_status);
+
+		  if (irq_status & SX1280_IRQ_RX_DONE)
+		  {
+			  int16_t packet_length = SX1280_ReadBuffer(rx_buffer, 255);
+			  SX1280_ClearIrqStatus(0xFFFF); // Clear all IRQs
+
+			  if (packet_length > 0)
+			  {
+                  uint8_t chunk_id = rx_buffer[0];
+
+                  if (chunk_id == 0x01) {
+                      printf("Received Chunk 1 (%d bytes)\r\n", packet_length-1);
+                      memcpy(&reassembled_data[0], &rx_buffer[1], packet_length-1);
+                      chunks_received_mask |= 1;
+                  }
+                  else if (chunk_id == 0x02) {
+                      printf("Received Chunk 2 (%d bytes)\r\n", packet_length-1);
+                      memcpy(&reassembled_data[CHUNK_SIZE], &rx_buffer[1], packet_length-1);
+                      chunks_received_mask |= 2;
+                  }
+
+                  // full payload check
+                  if (chunks_received_mask == 3) {
+                      printf("FULL PAYLOAD RECEIVED, Processing\r\n");
+                      // Process data here (r
+                      chunks_received_mask = 0; // Next frame incoming, reset
+                  }
+			  } else if (packet_length < 0) {
+				  printf("Error reading buffer\r\n");
+			  }
+		  }
+		  vTaskDelay(10); // Poll frequently
+
+	  } else if (current_mode == RADIO_MODE_TX) {
+		  // --- Run one iteration of TRANSMITTER logic ---
+		  printf("Sending frmae %d \r\n", packet_counter);
+
+		  // sending chunk 1
+		  tx_packet_buffer[0] = 0x01; // header ID 1
+          memcpy(&tx_packet_buffer[1], &full_payload[0], CHUNK_SIZE); // 254 bytes data
+
+          SX1280_SetPacketParams(0x0C, LORA_EXPLICIT_HEADER, CHUNK_SIZE+1, LORA_CRC_ON, LORA_IQ_STANDARD);
+          SX1280_WriteBuffer(tx_packet_buffer, CHUNK_SIZE+1);
+          SX1280_SetTx(5000); // 5 seconds
+
+          // Wait for TX DONE (Busy wait or polling IRQ)
+          uint16_t irq;
+
+          do {
+              vTaskDelay(100);
+              SX1280_GetIrqStatus(&irq);
+          } while (!(irq & (SX1280_IRQ_TX_DONE | SX1280_IRQ_RX_TX_TIMEOUT)));
+          SX1280_ClearIrqStatus(0xFFFF);
+
+          // --- SEND CHUNK 2 ---
+          int remaining_bytes = TARGET_PAYLOAD_SIZE - CHUNK_SIZE;
+          tx_packet_buffer[0] = 0x02; // Header ID 2
+          memcpy(&tx_packet_buffer[1], &full_payload[CHUNK_SIZE], remaining_bytes);
+
+          SX1280_SetPacketParams(0x0C, LORA_EXPLICIT_HEADER, remaining_bytes+1, LORA_CRC_ON, LORA_IQ_STANDARD);
+          SX1280_WriteBuffer(tx_packet_buffer, remaining_bytes+1);
+          SX1280_SetTx(5000); // 5 seconds
+
+          // Wait for TX DONE
+          do {
+              vTaskDelay(100);
+              SX1280_GetIrqStatus(&irq);
+          } while (!(irq & (SX1280_IRQ_TX_DONE | SX1280_IRQ_RX_TX_TIMEOUT)));
+          SX1280_ClearIrqStatus(0xFFFF);
+
+          printf("Frame %d Sent (Split in 2)\r\n", packet_counter);
+		  packet_counter++;
+
+		  // next full frame update
+		  vTaskDelay(5000);
+	  }
+	  else
+	  {
+		  vTaskDelay(1000);
+	  }
+  }
   /* USER CODE END 5 */
 }
 
