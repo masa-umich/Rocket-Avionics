@@ -1,11 +1,10 @@
-# Limestone Firmware
-Author: Felixfb, Jackmh </br>
-Read Me last updated: 12/8/2025
+# Lonely Mission Firmware
+Author: Felixfb </br>
+Read Me last updated: 3/25/2026
 
 ## Note:
-This is the location for the flight computer firmware for Limelight. This README will be
-updated more as the firmware is written. The firmware currently works and has been
-lightly tested on the system. Shakedown approved!
+This is the location for the lonely mission firmware for Limelight. This project is
+basically just a copy of limestone-firmware.
 
 ## Important Notes:
 Major STM32 bug: the EthIf task does not get enough stack by default, you must go into the ethernetif.c file and change the INTERFACE_THREAD_STACK_SIZE definition at the top from 350 to anything above 380 (I would pick 500 to be safe). If this is not done, the task will start corrupting memory as soon as it starts.

@@ -117,12 +117,12 @@ void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force);
 #define FC_EEPROM_FRIP_DEFAULT_3			192
 #define FC_EEPROM_FRIP_DEFAULT_4			210
 
-#define FC_MAC_ADDR_1		0x00
-#define FC_MAC_ADDR_2		0x80
-#define FC_MAC_ADDR_3		0xE1
-#define FC_MAC_ADDR_4		0x3f
-#define FC_MAC_ADDR_5		0xd8
-#define FC_MAC_ADDR_6		0xa2
+#define GS_MAC_ADDR_1		0x00
+#define GS_MAC_ADDR_2		0x80
+#define GS_MAC_ADDR_3		0xE1
+#define GS_MAC_ADDR_4		0x3f
+#define GS_MAC_ADDR_5		0xd8
+#define GS_MAC_ADDR_6		0xa2
 
 #define FLASH_TELEM_MARK	(uint8_t)0x1D
 #define FLASH_MSG_MARK		(uint8_t)0x1E

@@ -242,12 +242,12 @@ static void low_level_init(struct netif *netif)
   heth.Init.RxBuffLen = 1536;
 
   /* USER CODE BEGIN MACADDRESS */
-  MACAddr[0] = FC_MAC_ADDR_1;
-  MACAddr[1] = FC_MAC_ADDR_2;
-  MACAddr[2] = FC_MAC_ADDR_3;
-  MACAddr[3] = FC_MAC_ADDR_4;
-  MACAddr[4] = FC_MAC_ADDR_5;
-  MACAddr[5] = FC_MAC_ADDR_6;
+  MACAddr[0] = GS_MAC_ADDR_1;
+  MACAddr[1] = GS_MAC_ADDR_2;
+  MACAddr[2] = GS_MAC_ADDR_3;
+  MACAddr[3] = GS_MAC_ADDR_4;
+  MACAddr[4] = GS_MAC_ADDR_5;
+  MACAddr[5] = GS_MAC_ADDR_6;
   /* USER CODE END MACADDRESS */
 
   hal_eth_init_status = HAL_ETH_Init(&heth);
