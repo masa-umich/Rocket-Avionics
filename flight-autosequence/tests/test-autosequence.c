@@ -73,8 +73,8 @@ const uint32_t MAX_LOCKOUT_WAIT_TIME = 2000;  // 2000ms maximum lockout
 const int WAIT_TIME_MULTIPLIER = 2;
 
 // Sampling rate configuration (must match synthetic data timing)
-const uint32_t sampling_frequency = 20;  // 20 Hz sampling rate
-const uint32_t period = 50;              // 50ms between samples
+const uint32_t sampling_frequency = 50;  // 20 Hz sampling rate
+const uint32_t period = 20;              // 50ms between samples
 
 // ============================================================================
 // SOURCE INCLUDES
@@ -277,11 +277,12 @@ void execute_flight_autosequence_test() {
         // Print warnings when synthetic data contains intentional anomalies
         // These test the detector's robustness to sensor glitches
         // ====================================================================
-        if (current_sample == 30) printf("  [EDGE CASE] Acceleration spike in IMU1\n");
-        if (current_sample == 40) printf("  [EDGE CASE] Mach transition dip\n");
-        if (current_sample == 84) printf("  [EDGE CASE] Pressure spike during lockout\n");
-        if (current_sample == 120) printf("  [EDGE CASE] Flat apogee region begins\n");
-        if (current_sample == 160) printf("  [EDGE CASE] Barometer 1 dropout (160-162)\n");
+        // NOTE: for this, i multiplied it by 2.5 bc the frequency increased
+        if (current_sample == 75) printf("  [EDGE CASE] Acceleration spike in IMU1\n");
+        if (current_sample == 100) printf("  [EDGE CASE] Mach transition dip\n");
+        if (current_sample == 210) printf("  [EDGE CASE] Pressure spike during lockout\n");
+        if (current_sample == 300) printf("  [EDGE CASE] Flat apogee region begins\n");
+        if (current_sample == 400) printf("  [EDGE CASE] Barometer 1 dropout (160-162)\n");
 
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
