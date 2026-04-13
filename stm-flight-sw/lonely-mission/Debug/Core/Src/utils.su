@@ -1,0 +1,9 @@
+../Drivers/CMSIS/Include/core_cm7.h:2156:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
+../Core/Src/utils.c:10:7:current_sense_calc	24	static
+../Core/Src/utils.c:19:7:bus_voltage_calc	32	static
+../Core/Src/utils.c:25:7:PT_calc	40	static
+../Core/Src/utils.c:32:6:reset_board	8	static
+../Core/Src/utils.c:39:6:PDB_source	16	static
+../Core/Src/utils.c:49:6:COTS_supply	16	static
+../Core/Src/utils.c:60:5:send_msg_to_device	360	static
+../Core/Src/utils.c:94:5:send_raw_msg_to_all_devices	64	static

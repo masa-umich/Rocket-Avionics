@@ -1,0 +1,4 @@
+../Core/Src/remote-config.c:12:7:ftp_open	11
+../Core/Src/remote-config.c:40:6:ftp_close	5
+../Core/Src/remote-config.c:50:5:ftp_read	5
+../Core/Src/remote-config.c:63:5:ftp_write	2
