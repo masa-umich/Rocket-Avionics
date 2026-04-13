@@ -1,0 +1,6 @@
+../Core/Src/udptelemetry.c:17:9:telemetry_setup	2
+../Core/Src/udptelemetry.c:28:6:init_udp_telem	4
+../Core/Src/udptelemetry.c:50:6:deinit_udp_telem	2
+../Core/Src/udptelemetry.c:59:5:broadcast_telem_msg	5
+../Core/Src/udptelemetry.c:84:6:TelemetryUDPProcess	14
+../Core/Src/udptelemetry.c:140:6:unpack_udp_telemetry	7

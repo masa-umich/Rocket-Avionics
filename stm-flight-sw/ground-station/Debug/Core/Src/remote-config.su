@@ -1,0 +1,4 @@
+../Core/Src/remote-config.c:12:7:ftp_open	24	static
+../Core/Src/remote-config.c:40:6:ftp_close	24	static
+../Core/Src/remote-config.c:50:5:ftp_read	32	static
+../Core/Src/remote-config.c:63:5:ftp_write	24	static

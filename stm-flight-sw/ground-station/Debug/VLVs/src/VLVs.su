@@ -1,0 +1,7 @@
+/Users/felix/Desktop/Rocket-Avionics/board-drivers/VLVs/src/VLVs.c:20:6:VLV_Set_Voltage	16	static
+/Users/felix/Desktop/Rocket-Avionics/board-drivers/VLVs/src/VLVs.c:39:6:VLV_Set_Conf	32	static
+/Users/felix/Desktop/Rocket-Avionics/board-drivers/VLVs/src/VLVs.c:91:6:VLV_Toggle	32	static
+/Users/felix/Desktop/Rocket-Avionics/board-drivers/VLVs/src/VLVs.c:95:6:VLV_En	32	static
+/Users/felix/Desktop/Rocket-Avionics/board-drivers/VLVs/src/VLVs.c:99:6:VLV_Den	32	static
+/Users/felix/Desktop/Rocket-Avionics/board-drivers/VLVs/src/VLVs.c:103:14:VLV_isOpenLoad	32	static
+/Users/felix/Desktop/Rocket-Avionics/board-drivers/VLVs/src/VLVs.c:108:15:VLV_State	32	static

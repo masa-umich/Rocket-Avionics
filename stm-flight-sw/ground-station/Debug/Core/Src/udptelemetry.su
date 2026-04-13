@@ -1,0 +1,5 @@
+../Core/Src/udptelemetry.c:17:9:telemetry_setup	8	static
+../Core/Src/udptelemetry.c:28:6:init_udp_telem	8	static
+../Core/Src/udptelemetry.c:48:6:deinit_udp_telem	8	static
+../Core/Src/udptelemetry.c:57:5:broadcast_telem_msg	336	static
+../Core/Src/udptelemetry.c:82:6:TelemetryUDPProcess	40	static
