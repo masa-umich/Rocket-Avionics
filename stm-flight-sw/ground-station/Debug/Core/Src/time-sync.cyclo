@@ -1,4 +1,0 @@
-../Core/Src/time-sync.c:14:6:set_system_time	3
-../Core/Src/time-sync.c:77:10:get_rtc_time	3
-../Core/Src/time-sync.c:111:6:get_iso_time	4
-../Core/Src/time-sync.c:141:6:timesync_setup	1

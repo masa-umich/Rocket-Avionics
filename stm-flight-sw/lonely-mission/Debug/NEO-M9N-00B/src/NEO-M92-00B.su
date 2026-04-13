@@ -1,5 +1,0 @@
-/Users/felix/Desktop/Rocket-Avionics/board-drivers/NEO-M9N-00B/src/../inc/minmea.h:246:21:minmea_tocoord	24	static
-/Users/felix/Desktop/Rocket-Avionics/board-drivers/NEO-M9N-00B/src/NEO-M92-00B.c:14:5:init_gps	256	static
-/Users/felix/Desktop/Rocket-Avionics/board-drivers/NEO-M9N-00B/src/NEO-M92-00B.c:98:6:irq_gps_error_callback	16	static
-/Users/felix/Desktop/Rocket-Avionics/board-drivers/NEO-M9N-00B/src/NEO-M92-00B.c:109:6:irq_gps_callback	24	static
-/Users/felix/Desktop/Rocket-Avionics/board-drivers/NEO-M9N-00B/src/NEO-M92-00B.c:156:13:parse_gps_sentence	104	static

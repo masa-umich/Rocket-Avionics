@@ -1,8 +1,0 @@
-../Core/Src/eeprom-config.c:14:6:timerRestart	1
-../Core/Src/eeprom-config.c:18:6:prepare_eeprom_config	1
-../Core/Src/eeprom-config.c:22:6:close_and_validate_config	10
-../Core/Src/eeprom-config.c:90:5:eeprom_config_dump	4
-../Core/Src/eeprom-config.c:106:5:eeprom_config_write	3
-../Core/Src/eeprom-config.c:121:9:setup_eeprom	1
-../Core/Src/eeprom-config.c:126:5:load_eeprom_config	16
-../Core/Src/eeprom-config.c:202:6:load_eeprom_defaults	1

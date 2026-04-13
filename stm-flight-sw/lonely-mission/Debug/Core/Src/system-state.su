@@ -1,6 +1,0 @@
-../Core/Src/system-state.c:13:6:setup_system_state	8	static
-../Core/Src/system-state.c:26:6:setup_valve	32	static
-../Core/Src/system-state.c:37:5:pack_fc_telemetry_msg	24	static
-../Core/Src/system-state.c:96:5:unpack_bb_telemetry	24	static
-../Core/Src/system-state.c:295:5:unpack_fr_telemetry	16	static
-../Core/Src/system-state.c:324:15:set_and_update_valve	24	static

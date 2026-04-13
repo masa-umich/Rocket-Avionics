@@ -1,3 +1,0 @@
-../Core/Src/freertos.c:62:13:configureTimerForRunTimeStats	1
-../Core/Src/freertos.c:67:22:getRunTimeCounterValue	1
-../Core/Src/freertos.c:74:6:vApplicationStackOverflowHook	1
