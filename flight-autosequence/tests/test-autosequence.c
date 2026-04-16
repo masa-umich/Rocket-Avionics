@@ -44,6 +44,37 @@ uint32_t HAL_GetTick(void) { return mock_time_ms; }
 #define MAIN_H
 #define TEMP_HEADER_H
 
+// ============================================================================
+// TEST CONFIGURATION CONSTANTS
+// These values are scaled/adjusted for the test environment
+// ============================================================================
+
+// Number of altitude samples to collect for curve fitting after lockout
+#define ALTITUDE_BUFFER_SIZE 11
+
+// Fallback constant timers (milliseconds) - used if detection fails
+// These provide guaranteed deployment even if sensors fail
+const uint32_t APOGEE_CONSTANT_TIMER = 100 * 1000;   // 100 seconds
+const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000;   // 120 seconds
+const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000;     // 150 seconds
+
+// Maximum time to wait for valves to open after handoff before aborting
+const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000;  // 15 seconds
+
+// Maximum expected burn duration - triggers MECO detection if exceeded
+const uint32_t MAX_BURN_DURATION_MS = 22000;  // 22 seconds
+
+// Mach lockout timing bounds (scaled down for faster test execution)
+// These prevent premature apogee detection during transonic flight
+const uint32_t MIN_LOCKOUT_WAIT_TIME = 500;   // 500ms minimum lockout
+const uint32_t MAX_LOCKOUT_WAIT_TIME = 2000;  // 2000ms maximum lockout
+
+// Multiplier for calculating lockout duration based on supersonic flight time
+const int WAIT_TIME_MULTIPLIER = 2;
+
+// Sampling rate configuration (must match synthetic data timing)
+const uint32_t sampling_frequency = 50;  // 20 Hz sampling rate
+const uint32_t period = 20;              // 50ms between samples
 
 // ============================================================================
 // SOURCE INCLUDES
@@ -231,13 +262,47 @@ int execute_flight_autosequence(){
 
     float max_accel_seen = 0.0f; // for detecting sub to supersonic transition
 
-    // infinite loop to run the sequence, broken by RTOS interrupts
+    // ========================================================================
+    // ATMOSPHERIC MODEL INITIALIZATION
+    // Set standard atmosphere values - will be updated with actual ground
+    // measurements when valves open
+    // ========================================================================
+    P_GROUND = 1013.25f;     // Ground pressure (hPa) - standard sea level
+    T_GROUND = 293.0f;       // Ground temperature (K) - approximately 20C
+    GROUND_ALTITUDE = 0.0f;  // Ground altitude (m) - sea level reference
+    LAPSE_RATE = 0.0065f;    // Temperature lapse rate (K/m) - troposphere
 
-    for (;;){
-        if (should_abort()) {
-            return -1;
-            //return;
-        }
+    // ========================================================================
+    // TEST OUTPUT HEADER
+    // ========================================================================
+    printf("\n============================================================\n");
+    printf("  AUTOSEQUENCE TEST - Full State Machine\n");
+    printf("  %d samples @ %d Hz (%.1fs simulated)\n", DATA_SIZE, SAMPLE_RATE_HZ,
+           DATA_SIZE * SAMPLE_PERIOD_MS / 1000.0f);
+    printf("============================================================\n\n");
+
+    ping("AUTOSEQUENCE START");
+
+    // ========================================================================
+    // MAIN LOOP
+    // Runs for DATA_SIZE iterations (instead of infinite loop in production)
+    // Each iteration processes one sample of synthetic flight data
+    // ========================================================================
+    for (current_sample = 0; current_sample < DATA_SIZE; current_sample++) {
+        // Update simulated time based on sample index and period
+        mock_time_ms = current_sample * SAMPLE_PERIOD_MS;
+        // hopefully these are correct
+        // ====================================================================
+        // EDGE CASE ANNOTATIONS
+        // Print warnings when synthetic data contains intentional anomalies
+        // These test the detector's robustness to sensor glitches
+        // ====================================================================
+        // NOTE: for this, i multiplied it by 2.5 bc the frequency increased
+        if (current_sample == 75) printf("  [EDGE CASE] Acceleration spike in IMU1\n");
+        if (current_sample == 100) printf("  [EDGE CASE] Mach transition dip\n");
+        if (current_sample == 210) printf("  [EDGE CASE] Pressure spike during lockout\n");
+        if (current_sample == 300) printf("  [EDGE CASE] Flat apogee region begins\n");
+        if (current_sample == 400) printf("  [EDGE CASE] Barometer 1 dropout (160-162)\n");
 
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
