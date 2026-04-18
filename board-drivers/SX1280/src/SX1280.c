@@ -40,15 +40,6 @@
 // datasheet section 14.4.1, page 131 (V3.3) - Frequency Error Compensation
 #define SX1280_REG_FREQ_ERROR_COMP 0x093C
 
-// IRQ Mask Definitions (from Datasheet Table 11-73)
-#define SX1280_IRQ_TX_DONE              (1 << 0)
-#define SX1280_IRQ_RX_DONE              (1 << 1)
-#define SX1280_IRQ_SYNC_WORD_VALID      (1 << 2)
-#define SX1280_IRQ_SYNC_WORD_ERROR      (1 << 3)
-#define SX1280_IRQ_HEADER_VALID         (1 << 4)
-#define SX1280_IRQ_HEADER_ERROR         (1 << 5)
-#define SX1280_IRQ_CRC_ERROR            (1 << 6)
-#define SX1280_IRQ_RX_TX_TIMEOUT        (1 << 14)
 #define TX_BUFFER_OFFSET 0x00
 
 //***********************************************************
@@ -100,7 +91,7 @@ SX1280_Status_t SX1280_Init(SX1280_Hal_t* hal_config) {
 
     // SF12, BW 400kHz (Datasheet Table 3-5)
     // CR 4/8 = Maximum Error Correction (Overhead is high, but link budget is poor)
-    if (SX1280_SetModulationParams(LORA_SF8, LORA_BW_400, LORA_CR_4_5) != SX1280_OK) {
+    if (SX1280_SetModulationParams(LORA_SF12, LORA_BW_400, LORA_CR_4_8) != SX1280_OK) {
         return SX1280_ERROR;
     }
     if (SX1280_SetPacketParams(12, LORA_EXPLICIT_HEADER, 255, LORA_CRC_ON, LORA_IQ_STANDARD) != SX1280_OK) {

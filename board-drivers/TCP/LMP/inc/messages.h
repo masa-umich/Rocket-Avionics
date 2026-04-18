@@ -34,6 +34,7 @@ typedef enum {
 	BOARD_BAY_2 = 0x02, // Bay Board 2
 	BOARD_BAY_3 = 0x03, // Bay Board 3
 	BOARD_FR = 0x04,	// Flight Recorder
+	BOARD_GS = 0x05,	// Ground Station
 } BoardId;
 
 typedef enum {

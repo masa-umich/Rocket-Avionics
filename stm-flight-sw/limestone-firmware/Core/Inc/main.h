@@ -135,6 +135,8 @@ void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force, uint8_t 
 #define ERROR_UDP_PORT		(uint16_t)1234
 #define TELEM_UDP_PORT		(uint16_t)6767
 
+#define RADIO_PACKET_LENGTH		48
+
 #define ERROR_MSG_TYPES		(size_t)32 // Should be a multiple of 2
 #define PERI_ERROR_MSG_TYPES	(size_t)8
 
@@ -174,6 +176,8 @@ extern void set_system_time(uint32_t sec, uint32_t us);
 #define ADC_5V_BUS_I		(size_t)13
 #define ADC_12V_BUS_I		(size_t)14
 #define ADC_24V_BUS_I		(size_t)15
+
+#define FLUCTUS_CHANNEL		ADC_PT5_I
 
 #define DIVIDER_VALVE		(uint8_t)1
 #define DIVIDER_12V_24V		(uint8_t)0

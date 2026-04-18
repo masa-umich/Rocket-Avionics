@@ -111,6 +111,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/flight-autosequence/apogee-detection-revised}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/flight-autosequence/autosequence}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/flight-autosequence/helpers}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/SX1280/inc}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.297978599" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -148,6 +149,7 @@
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="MS5611/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="NEO-M9N-00B/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="SX1280/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="TCP/LMP/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="TCP/server/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="VLVs"/>
@@ -305,5 +307,8 @@
 		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/limestone-firmware"/>
 		</configuration>
+	</storageModule>
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<project id="limestone-firmware.null.538594779" name="limestone-firmware"/>
 	</storageModule>
 </cproject>

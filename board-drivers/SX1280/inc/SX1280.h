@@ -66,6 +66,16 @@
 
 #define SX1280_SPI_TIMEOUT_MS 100
 
+// IRQ Mask Definitions (from Datasheet Table 11-73)
+#define SX1280_IRQ_TX_DONE              (1 << 0)
+#define SX1280_IRQ_RX_DONE              (1 << 1)
+#define SX1280_IRQ_SYNC_WORD_VALID      (1 << 2)
+#define SX1280_IRQ_SYNC_WORD_ERROR      (1 << 3)
+#define SX1280_IRQ_HEADER_VALID         (1 << 4)
+#define SX1280_IRQ_HEADER_ERROR         (1 << 5)
+#define SX1280_IRQ_CRC_ERROR            (1 << 6)
+#define SX1280_IRQ_RX_TX_TIMEOUT        (1 << 14)
+
 
 /**
 * @brief status enum for driver functions

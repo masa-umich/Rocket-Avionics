@@ -112,6 +112,8 @@ void TelemetryTask(void *argument) {
   			Rocket_h.fcState.pt4 = PT_calc(PT4_h, adc_values[ADC_PT4_I]);
   			Rocket_h.fcState.pt5 = PT_calc(PT5_h, adc_values[ADC_PT5_I]);
 
+  			Rocket_h.fcState.fluctus_state = fluctus_threshold(adc_values[FLUCTUS_CHANNEL]);
+
   			Rocket_h.fcState.bus24v_voltage = bus_voltage_calc(adc_values[ADC_24V_BUS_I], POWER_24V_RES_A, POWER_24V_RES_B);
   			Rocket_h.fcState.bus12v_voltage = bus_voltage_calc(adc_values[ADC_12V_BUS_I], POWER_12V_RES_A, POWER_12V_RES_B);
   			Rocket_h.fcState.bus5v_voltage = bus_voltage_calc(adc_values[ADC_5V_BUS_I], POWER_5V_RES_A, POWER_5V_RES_B);
@@ -127,14 +129,14 @@ void TelemetryTask(void *argument) {
   			Rocket_h.fcState.vlv3_current = current_sense_calc(adc_values[ADC_VLV3_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
 
   			if(!TC_stat) {
-  				if(!isnan(TCvalues[0])) {
-  					Rocket_h.fcState.tc1 = TCvalues[0];
+  				if(!isnan(TCvalues[2])) {
+  					Rocket_h.fcState.tc1 = TCvalues[2];
   				}
   				if(!isnan(TCvalues[1])) {
   					Rocket_h.fcState.tc2 = TCvalues[1];
   				}
-  				if(!isnan(TCvalues[2])) {
-  					Rocket_h.fcState.tc3 = TCvalues[2];
+  				if(!isnan(TCvalues[0])) {
+  					Rocket_h.fcState.tc3 = TCvalues[0];
   				}
   			}
   			Rocket_h.fcState.board_temp = TC_board_temp;

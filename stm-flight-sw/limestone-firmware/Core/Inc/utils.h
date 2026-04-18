@@ -71,6 +71,8 @@ float current_sense_calc(uint16_t raw, uint16_t res, uint8_t divider);
 // resB is the resistance between the ADC pin and GND
 float bus_voltage_calc(uint16_t raw, uint32_t resA, uint32_t resB);
 
+uint8_t fluctus_threshold(uint16_t raw);
+
 void reset_board();
 
 void PDB_source(uint8_t use_bat);

@@ -44,6 +44,7 @@
 #include "udptelemetry.h"
 #include "NEO-M92-00B.h"
 #include "flight-autosequence.h"
+#include "radio-telem.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -117,6 +118,8 @@ PT_t PT5_h = {0.5f, 5000.0f, 4.5f};
 
 Sensors_t sensors_h = {0};
 
+SX1280_Hal_t radio_config;
+
 osThreadId_t telemetryTaskHandle;
 const osThreadAttr_t telemetry_task_attr = {
   .name = "telemetryTask",
@@ -149,6 +152,13 @@ osThreadId_t autosequenceTaskHandle;
 const osThreadAttr_t autosequence_task_attr = {
   .name = "autosequence",
   .stack_size = AUTOSEQUENCE_TASK_STACK,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t radioTaskHandle;
+const osThreadAttr_t radio_task_attr = {
+  .name = "radio",
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE END PV */
@@ -1313,9 +1323,9 @@ void StartAndMonitor(void *argument)
 	}
 
   	// TC ADCs
-  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
   	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
 
   	if(ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, 3)) {
   		// ADS thread start error
@@ -1385,6 +1395,17 @@ void StartAndMonitor(void *argument)
   	sensors_h.gps_h.semaphore = gpsSemaphore;
   	sensors_h.gps_h.huart = &huart10;
 
+  	// Init radio
+  	radio_config.spiHandle = &hspi5;
+  	radio_config.nssPort = RADIO_CS_GPIO_Port;
+  	radio_config.nssPin = RADIO_CS_Pin;
+  	radio_config.resetPort = RF_NSRT_GPIO_Port;
+  	radio_config.resetPin = RF_NSRT_Pin;
+  	radio_config.busyPort = RF_BUSY_GPIO_Port;
+  	radio_config.busyPin = RF_BUSY_Pin;
+
+  	setup_radio(HAL_GPIO_ReadPin(RF_MODE_SW_GPIO_Port, RF_MODE_SW_Pin) == GPIO_PIN_SET, &radio_config);
+
 	// Start tasks
 
   	// Start UDP telemetry processing
@@ -1398,6 +1419,9 @@ void StartAndMonitor(void *argument)
 
   	// Start autosequence task
   	autosequenceTaskHandle = osThreadNew(AutosequenceTask, NULL, &autosequence_task_attr);
+
+  	// Start radio broadcasting
+  	radioTaskHandle = osThreadNew(BroadcastRadio, NULL, &radio_task_attr);
 
   	// Start TCP server only if the ethernet link is up
 

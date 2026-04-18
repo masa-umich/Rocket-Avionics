@@ -29,6 +29,12 @@ float PT_calc(PT_t PT_info, uint16_t raw) {
 	return (PT_v - PT_info.zero_V) / PT_slope;
 }
 
+uint8_t fluctus_threshold(uint16_t raw) {
+	float adc_v = (raw / 4095.0) * 3.3;
+	float channel_v = adc_v * PT_DIVIDER;
+	return channel_v > 1.0;
+}
+
 void reset_board() {
 	flush_flash_log_for_reset();
 
