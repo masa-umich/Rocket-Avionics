@@ -1404,7 +1404,15 @@ void StartAndMonitor(void *argument)
   	radio_config.busyPort = RF_BUSY_GPIO_Port;
   	radio_config.busyPin = RF_BUSY_Pin;
 
-  	setup_radio(HAL_GPIO_ReadPin(RF_MODE_SW_GPIO_Port, RF_MODE_SW_Pin) == GPIO_PIN_SET, &radio_config);
+  	if(!setup_radio(HAL_GPIO_ReadPin(RF_MODE_SW_GPIO_Port, RF_MODE_SW_Pin) == GPIO_PIN_SET, &radio_config)) {
+  		log_message(FC_ERR_RADIO_INIT_FAILED, -1);
+  	}
+
+  	Autos_boot_t boot_params = {0};
+  	if(!read_autosequence_params((void *) &boot_params, sizeof(Autos_boot_t))) {
+  		log_message(ERR_TFTP_EEPROM_READ_ERR, -1);
+  		memset(&boot_params, 0, sizeof(Autos_boot_t));
+  	}
 
 	// Start tasks
 
@@ -1418,7 +1426,7 @@ void StartAndMonitor(void *argument)
   	packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
 
   	// Start autosequence task
-  	autosequenceTaskHandle = osThreadNew(AutosequenceTask, NULL, &autosequence_task_attr);
+  	autosequenceTaskHandle = osThreadNew(AutosequenceTask, (void *)&boot_params, &autosequence_task_attr);
 
   	// Start radio broadcasting
   	radioTaskHandle = osThreadNew(BroadcastRadio, NULL, &radio_task_attr);
@@ -1563,22 +1571,24 @@ void StartAndMonitor(void *argument)
 				}
 				num_limewires = num_limes;
 			}
+		}
 
-			if(telemcounter == 0) {
-				log_telemetry();
-				telemcounter = 0; // 4hz
-			}
-			else {
-				telemcounter--;
-			}
+#warning "Move logging back to the if statement above"
 
-			if(statecounter == 0) {
-				log_valve_states();
-				statecounter = 1; // 2hz
-			}
-			else {
-				statecounter--;
-			}
+		if(telemcounter == 0) {
+			log_telemetry();
+			telemcounter = 3; // 4hz
+		}
+		else {
+			telemcounter--;
+		}
+
+		if(statecounter == 0) {
+			log_valve_states();
+			statecounter = 3; // 2hz
+		}
+		else {
+			statecounter--;
 		}
 
 		// Send heartbeat

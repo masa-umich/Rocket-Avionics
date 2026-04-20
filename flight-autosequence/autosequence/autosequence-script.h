@@ -25,7 +25,6 @@ extern const uint32_t MIN_LOCKOUT_WAIT_TIME; // ms, minimum time we expect to wa
 extern const uint32_t MAX_LOCKOUT_WAIT_TIME; // ms, maximum time we expect to wait in lockout phase
 extern const uint8_t WAIT_TIME_MULTIPLIER;
 
-int execute_flight_autosequence();
-
+int execute_flight_autosequence(Autos_boot_t * boot_params);
 
 #endif

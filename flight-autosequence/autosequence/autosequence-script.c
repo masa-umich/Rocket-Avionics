@@ -16,7 +16,7 @@ const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000; // 150 seconds in milliseconds
 const uint32_t period = 25; // ms, greater than sampling period of 20 ms
 
  
-int execute_flight_autosequence(){
+int execute_flight_autosequence(Autos_boot_t * boot_params) {
     // starts by waiting for valves to open
     FlightPhase phase = ST_DETECT_VALVES_OPEN; 
 

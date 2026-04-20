@@ -76,6 +76,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/board-drivers/VLVs</locationURI>
 		</link>
 		<link>
+			<name>W25N04KV</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-2-PROJECT_LOC%7D/board-drivers/FLASH/W25N04KV</locationURI>
+		</link>
+		<link>
 			<name>flight-autosequence</name>
 			<type>2</type>
 			<locationURI>$%7BPARENT-2-PROJECT_LOC%7D/flight-autosequence</locationURI>

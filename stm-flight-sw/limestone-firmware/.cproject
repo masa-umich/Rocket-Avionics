@@ -104,7 +104,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/TCP/server/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/VLVs/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/M24256E/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/FLASH/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/system-errors}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/TCP/LMP/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/NEO-M9N-00B/inc}&quot;"/>
@@ -112,6 +111,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/flight-autosequence/autosequence}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/flight-autosequence/helpers}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/SX1280/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/W25N04KV/inc}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.297978599" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -141,7 +141,6 @@
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="ADS1120/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="FLASH/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="LSM6DSO32XTR/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LWIP"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="M24256E/src"/>
@@ -153,6 +152,7 @@
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="TCP/LMP/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="TCP/server/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="VLVs"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="W25N04KV/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="flight-autosequence/apogee-detection-revised"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="flight-autosequence/autosequence"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="flight-autosequence/helpers"/>

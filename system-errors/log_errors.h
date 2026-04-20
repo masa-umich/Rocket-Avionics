@@ -141,6 +141,8 @@
 
 #define FC_ERR_EEPROM_LOAD_AUTOS_ERR			"066 EEPROM config invalid autosequence channels, loading defaults"
 
+#define FC_ERR_RADIO_INIT_FAILED				"067 Radio Init failed"
+
 #elif defined(BAY_BOARD)
 // Bay Board error messages
 #define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"

@@ -11,6 +11,16 @@
 eeprom_t eeprom_h = {0};
 size_t eeprom_cursor = 0;
 
+uint8_t write_autosequence_params(void * buf, size_t len) {
+	eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, EEPROM_BOOT_PARAMS_ADDR, buf, len);
+	return write_stat == EEPROM_OK;
+}
+
+uint8_t read_autosequence_params(void * buf, size_t len) {
+	eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, EEPROM_BOOT_PARAMS_ADDR, buf, len);
+	return read_stat == EEPROM_OK;
+}
+
 void timerRestart(TimerHandle_t xTimer) {
 	reset_board();
 }

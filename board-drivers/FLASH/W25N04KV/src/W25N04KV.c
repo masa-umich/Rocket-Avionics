@@ -110,6 +110,8 @@
  */
 #define W25N04KV_UNPACK_UINT16_TO_2_BYTES(num)		{(uint8_t) (((num) & 0xFF00) >> 8), (uint8_t) ((num) & 0x00FF)}
 
+#define W25N04KV_UNPACK_UINT32_TO_3_BYTES(num)		{(uint8_t) (((num) & 0xFF0000) >> 16), (uint8_t) (((num) & 0x00FF00) >> 8), (uint8_t) ((num) & 0x0000FF)}
+
 /**
  * Converts an array of 2 uint8_t numbers into 1 uint16_t number.
  *
@@ -283,8 +285,8 @@ static void write_status_register(W25N04KV_Flash *flash, uint8_t register_adr,
  * @param page_num   <uint16_t>           Page number of data to load to the device's buffer
  */
 static void load_page(W25N04KV_Flash *flash, uint32_t page_num) {
-	uint8_t page_num_8bit_array[2] = W25N04KV_UNPACK_UINT16_TO_2_BYTES(page_num);
-	uint8_t tx[4] = {W25N04KV_PAGE_DATA_READ, 0, page_num_8bit_array[0], page_num_8bit_array[1]};  // 2nd byte is unused
+	uint8_t page_num_8bit_array[3] = W25N04KV_UNPACK_UINT32_TO_3_BYTES(page_num);
+	uint8_t tx[4] = {W25N04KV_PAGE_DATA_READ, page_num_8bit_array[0], page_num_8bit_array[1], page_num_8bit_array[2]};
 
 	spi_transmit(flash, tx, 4);
 
@@ -428,8 +430,8 @@ static void write_page_to_buffer(W25N04KV_Flash *flash, uint8_t *data,
  * @param page_adr   <uint16_t>           The page for the buffer to be written to.
  */
 static void program_buffer_to_memory(W25N04KV_Flash *flash, uint32_t page_adr) {
-	uint8_t page_adr_8bit_array[2] = W25N04KV_UNPACK_UINT16_TO_2_BYTES(page_adr);
-	uint8_t tx[4] = {W25N04KV_PROGRAM_EXECUTE, 0, page_adr_8bit_array[0], page_adr_8bit_array[1]};  // 2nd byte unused
+	uint8_t page_adr_8bit_array[3] = W25N04KV_UNPACK_UINT32_TO_3_BYTES(page_adr);
+	uint8_t tx[4] = {W25N04KV_PROGRAM_EXECUTE, page_adr_8bit_array[0], page_adr_8bit_array[1], page_adr_8bit_array[2]};
 
 	spi_transmit(flash, tx, 4);
 	osDelay(1);
@@ -518,8 +520,8 @@ static uint8_t get_erase_failure_status(W25N04KV_Flash *flash) {
 static void erase_block(W25N04KV_Flash *flash, uint32_t page_adr) {
 	enable_write(flash);	// Set WEL bit high, it will automatically be set back to 0 after the command executes
 
-	uint8_t page_adr_8bit_array[2] = W25N04KV_UNPACK_UINT16_TO_2_BYTES(page_adr);
-	uint8_t tx[4] = {W25N04KV_ERASE_BLOCK, 0, page_adr_8bit_array[0], page_adr_8bit_array[1]};	// 2nd byte unused
+	uint8_t page_adr_8bit_array[3] = W25N04KV_UNPACK_UINT32_TO_3_BYTES(page_adr);
+	uint8_t tx[4] = {W25N04KV_ERASE_BLOCK, page_adr_8bit_array[0], page_adr_8bit_array[1], page_adr_8bit_array[2]};
 	spi_transmit(flash, tx, 4);
 
 	disable_write(flash);	// Disable WEL just in case the erase block command doens't execute

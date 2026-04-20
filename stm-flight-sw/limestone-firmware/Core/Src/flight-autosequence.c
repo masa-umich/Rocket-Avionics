@@ -14,22 +14,41 @@ void setup_autosequence() {
 }
 
 void AutosequenceTask(void *argument) {
+	Autos_boot_t * boot_params = (Autos_boot_t *) argument;
 	for(;;) {
 		osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
-		uint32_t flags = osEventFlagsWait(autos_events, AUTOS_ARM_FLAG, osFlagsWaitAny, osWaitForever);
+		uint32_t flags = boot_params->phase > AUTOS_STATE_DEARMED ? (boot_params->phase < AUTOS_STATE_DONE ? AUTOS_ARM_FLAG : 0) : osEventFlagsWait(autos_events, AUTOS_ARM_FLAG, osFlagsWaitAny, osWaitForever);
 		if(!(flags & osFlagsError) && (flags & AUTOS_ARM_FLAG)) {
 			osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
 			log_message(FC_STAT_ARMED, -1);
-			update_state_in_telem(AUTOS_STATE_ARMED);
+			update_state_in_telem(boot_params->phase > AUTOS_STATE_DEARMED ? boot_params->phase : AUTOS_STATE_ARMED);
 #ifndef AUTOS_TEST
-			execute_flight_autosequence();
+			execute_flight_autosequence(boot_params);
 #else
-			coldflow_autosequence();
+			coldflow_autosequence(boot_params);
 #endif
 		}
+		else if(flags & osFlagsError) {
+			osDelay(100);
+			continue;
+		}
+		update_state_in_telem(AUTOS_STATE_DONE);
+		Autos_boot_t done_state = {0};
+		done_state.phase = AUTOS_STATE_DONE;
+		update_boot_params(&done_state);
+		for(;;) {
+			uint32_t end_flags = osEventFlagsWait(autos_events, AUTOS_ABORT_FLAG, osFlagsWaitAny, osWaitForever);
+			if(!(end_flags & osFlagsError) && (end_flags & AUTOS_ABORT_FLAG)) {
+				break;
+			}
+			osDelay(100);
+		}
 		update_state_in_telem(AUTOS_STATE_DEARMED);
-		log_message(FC_STAT_DEARMED, -1);
+		Autos_boot_t end_state = {0};
+		end_state.phase = AUTOS_STATE_DEARMED;
+		update_boot_params(&end_state);
 		osDelay(1);
+		boot_params->phase = AUTOS_STATE_DEARMED;
 	}
 }
 
@@ -119,7 +138,7 @@ void deployMain() {
 	set_valve_within((Valve_Channel) loaded_config.main_para_index, Valve_Energized);
 }
 
-void coldflow_autosequence() {
+void coldflow_autosequence(Autos_boot_t *) {
 	uint32_t start = getTime();
 	while(getTime() - start < 20000) {
 		if(valves_open()) {
@@ -142,4 +161,8 @@ void coldflow_autosequence() {
 	update_state_in_telem(AUTOS_STATE_SUPERSONIC); // Doesn't make sense but just for coldflow testing
 	deployPilot();
 	wait(500);
+}
+
+void update_boot_params(Autos_boot_t * params) {
+	write_autosequence_params((void *)params, sizeof(Autos_boot_t));
 }
