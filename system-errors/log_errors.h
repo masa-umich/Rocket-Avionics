@@ -22,6 +22,8 @@
 #define FIRMWARE_NAME		"Limelight Flight Computer Firmware"
 #elif defined(BAY_BOARD)
 #define FIRMWARE_NAME		"Limelight Bay Board Firmware"
+#elif defined(FLIGHT_RECORDER)
+#define FIRMWARE_NAME		"Limelight Flight Recorder Firmware"
 #else
 #define FIRMWARE_NAME		"Unknown Firmware"
 #endif

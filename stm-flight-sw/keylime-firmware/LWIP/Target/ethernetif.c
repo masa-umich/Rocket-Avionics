@@ -33,7 +33,7 @@
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
-
+extern uint8_t bb_num;
 /* USER CODE END 0 */
 
 /* Private define ------------------------------------------------------------*/
@@ -43,7 +43,7 @@
 #define ETHIF_TX_TIMEOUT (2000U)
 /* USER CODE BEGIN OS_THREAD_STACK_SIZE_WITH_RTOS */
 /* Stack size of the interface thread */
-#define INTERFACE_THREAD_STACK_SIZE ( 350 )
+#define INTERFACE_THREAD_STACK_SIZE ( 1024 ) // Why the fuck would they make this too small??
 /* USER CODE END OS_THREAD_STACK_SIZE_WITH_RTOS */
 /* Network interface name */
 #define IFNAME0 's'
@@ -100,7 +100,6 @@ LWIP_MEMPOOL_DECLARE(RX_POOL, ETH_RX_BUFFER_CNT, sizeof(RxBuff_t), "Zero-copy RX
 
 /* Variable Definitions */
 static uint8_t RxAllocStatus;
-
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
 
 #pragma location=0x30000000
@@ -121,7 +120,7 @@ ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT] __attribute__((section(".TxDecr
 #endif
 
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
-#pragma location = 0x30000100
+#pragma location = 0x30000200
 extern u8_t memp_memory_RX_POOL_base[];
 
 #elif defined ( __CC_ARM ) /* MDK ARM Compiler */
@@ -195,7 +194,16 @@ void HAL_ETH_ErrorCallback(ETH_HandleTypeDef *handlerEth)
 }
 
 /* USER CODE BEGIN 4 */
-
+void ethernetif_patch(void* argument)
+{
+  for( ;; )
+  {
+    if (osSemaphoreAcquire(TxPktSemaphore, TIME_WAITING_FOR_INPUT) == osOK)
+    {
+    	HAL_ETH_ReleaseTxPacket(&heth);
+    }
+  }
+}
 /* USER CODE END 4 */
 
 /*******************************************************************************
@@ -234,7 +242,44 @@ static void low_level_init(struct netif *netif)
   heth.Init.RxBuffLen = 1536;
 
   /* USER CODE BEGIN MACADDRESS */
-
+  switch(bb_num) {
+  	  case 1: {
+  		  MACAddr[0] = BB1_MAC_ADDR_1;
+  		  MACAddr[1] = BB1_MAC_ADDR_2;
+  		  MACAddr[2] = BB1_MAC_ADDR_3;
+  		  MACAddr[3] = BB1_MAC_ADDR_4;
+  		  MACAddr[4] = BB1_MAC_ADDR_5;
+  		  MACAddr[5] = BB1_MAC_ADDR_6;
+  		  break;
+  	  }
+  	  case 2: {
+  		  MACAddr[0] = BB2_MAC_ADDR_1;
+  		  MACAddr[1] = BB2_MAC_ADDR_2;
+  		  MACAddr[2] = BB2_MAC_ADDR_3;
+  		  MACAddr[3] = BB2_MAC_ADDR_4;
+  		  MACAddr[4] = BB2_MAC_ADDR_5;
+  		  MACAddr[5] = BB2_MAC_ADDR_6;
+  		  break;
+  	  }
+  	  case 3: {
+  		  MACAddr[0] = BB3_MAC_ADDR_1;
+  		  MACAddr[1] = BB3_MAC_ADDR_2;
+  		  MACAddr[2] = BB3_MAC_ADDR_3;
+  		  MACAddr[3] = BB3_MAC_ADDR_4;
+  		  MACAddr[4] = BB3_MAC_ADDR_5;
+  		  MACAddr[5] = BB3_MAC_ADDR_6;
+  		  break;
+  	  }
+  	  default: {
+  		  MACAddr[0] = BB1_MAC_ADDR_1;
+  		  MACAddr[1] = BB1_MAC_ADDR_2;
+  		  MACAddr[2] = BB1_MAC_ADDR_3;
+  		  MACAddr[3] = BB1_MAC_ADDR_4;
+  		  MACAddr[4] = BB1_MAC_ADDR_5;
+  		  MACAddr[5] = BB1_MAC_ADDR_6;
+  		  break;
+  	  }
+  }
   /* USER CODE END MACADDRESS */
 
   hal_eth_init_status = HAL_ETH_Init(&heth);
@@ -250,7 +295,6 @@ static void low_level_init(struct netif *netif)
   LWIP_MEMPOOL_INIT(RX_POOL);
 
 #if LWIP_ARP || LWIP_ETHERNET
-
   /* set MAC hardware address length */
   netif->hwaddr_len = ETH_HWADDR_LEN;
 
@@ -289,7 +333,12 @@ static void low_level_init(struct netif *netif)
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN PHY_PRE_CONFIG */
-
+  osThreadAttr_t attributes1;
+  memset(&attributes1, 0x0, sizeof(osThreadAttr_t));
+  attributes1.name = "EthClr";
+  attributes1.stack_size = INTERFACE_THREAD_STACK_SIZE;
+  attributes1.priority = osPriorityRealtime;
+  //osThreadNew(ethernetif_patch, NULL, &attributes1);
 /* USER CODE END PHY_PRE_CONFIG */
   /* Set PHY IO functions */
   LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
@@ -347,7 +396,6 @@ static void low_level_init(struct netif *netif)
     HAL_ETH_Start_IT(&heth);
     netif_set_up(netif);
     netif_set_link_up(netif);
-
 /* USER CODE BEGIN PHY_POST_CONFIG */
 
 /* USER CODE END PHY_POST_CONFIG */
@@ -813,6 +861,7 @@ void ethernet_link_thread(void* argument)
   }
   else if(!netif_is_link_up(netif) && (PHYLinkState > LAN8742_STATUS_LINK_DOWN))
   {
+
     switch (PHYLinkState)
     {
     case LAN8742_STATUS_100MBITS_FULLDUPLEX:
@@ -926,7 +975,7 @@ void HAL_ETH_TxFreeCallback(uint32_t * buff)
 {
 /* USER CODE BEGIN HAL ETH TxFreeCallback */
 
-  pbuf_free((struct pbuf *)buff);
+  pbuf_free_callback((struct pbuf *)buff);
 
 /* USER CODE END HAL ETH TxFreeCallback */
 }
