@@ -2,8 +2,9 @@
           FLIGHT AUTOSEQUENCE RESULTS            
 =================================================
 
+Start row: 2098
+
 --- FLAGS ---
-Sub to Supersonic:       0
 MECO Detected:           1
 Apogee Detected:         1
   - Detection Worked:    1
@@ -13,15 +14,29 @@ Main Deployed:           1
 Landed:                  1
 
 --- TIMESTAMPS (ms since ignition) ---
-Approach Mach 1:         0 ms
-MECO Timestamp:          3480 ms
-Lockout Ends At:         0 ms
-Apogee Timestamp:        3580 ms
-Drogue Timestamp:        3600 ms
-Main Timestamp:          3620 ms
+MECO Timestamp:          3500 ms
+Lockout Ends At:         8000 ms
+Apogee Timestamp:        16780 ms
+Drogue Timestamp:        16800 ms
+Main Timestamp:          211760 ms
+Landed Timestamp:        267020 ms
 
 --- KEY ALTITUDES ---
-Apogee Altitude:         298.00 m
-Drogue Deploy Altitude:  302.00 m
-Main Deploy Altitude:    305.00 m
+Apogee Altitude:         1392.00 m
+Drogue Deploy Altitude:  1397.00 m
+Main Deploy Altitude:    298.00 m
+
+--- POST LOCKOUT KINEMATICS ---
+Delay after lockout:     1860 ms
+Altitude:                1079.55 m
+Velocity:                91.19 m/s
+Acceleration:            -11.77 m/s^2
+
+--- FALLBACK TIMER PREDICTIONS ---
+Apogee time:             17588 ms
+Drogue deploy time:      17588 ms
+Main deploy time:        212906 ms
+Apogee altitude:         1432.84 m
+Drogue deploy altitude:  1432.84 m
+Main deploy altitude:    300.00 m
 =================================================

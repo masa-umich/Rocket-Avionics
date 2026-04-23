@@ -1,11 +1,8 @@
 #include "test-autosequence-flightdata_lm3.h"
 
 const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000; // 15 seconds
-const uint32_t MAX_BURN_DURATION_MS = 22000; // 22 seconds
-
-const uint32_t MIN_LOCKOUT_WAIT_TIME = 6000; // ms, minimum time we expect to wait in lockout phase
-const uint32_t MAX_LOCKOUT_WAIT_TIME = 20000; // ms, maximum time we expect to wait in lockout phase
-const uint8_t WAIT_TIME_MULTIPLIER = 3;
+const uint32_t MAX_BURN_DURATION_MS = 5000; // 1 second
+const uint32_t LOCKOUT_END_TIME = 8000; // 10s, hard cutoff for lockout phase end
 
 const uint32_t APOGEE_CONSTANT_TIMER = 100 * 1000; // 100 seconds in milliseconds
 const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000; // 120 seconds in milliseconds
@@ -35,6 +32,7 @@ int execute_flight_autosequence(){
     uint32_t drogue_timestamp = 0;
     uint32_t main_timestamp = 0;
     uint32_t approach_mach1_timestamp = 0;
+    uint32_t landed_timestamp = 0;
 
     // altitudes of chute deployment
     float apogee_altitude = 0.0f;
@@ -46,11 +44,17 @@ int execute_flight_autosequence(){
     uint32_t fallback_5k_time = 0;
     uint32_t fallback_1k_time = 0;
 
+    // fallback altitude estimates
+    float fallback_apogee_altitude = 0.0f;
+    float fallback_5k_altitude = 0.0f;
+    float fallback_1k_altitude = 0.0f;
+
     // for velocity/acceleration estimation post lockout
     uint8_t altitude_buf_size = 0;
     float altitude_readings[ALTITUDE_BUFFER_SIZE] = {0}; // in meters
     float time_readings[ALTITUDE_BUFFER_SIZE] = {0};      // in seconds
     uint8_t heights_recorded = 0;
+    int loop_ctr = 0;
 
     // --- COMPUTED VARIABLES TO REPLACE RAW SENSORS ---
     float computed_altitude = 0.0f;    // from 'baro-altitude (m)'
@@ -61,6 +65,7 @@ int execute_flight_autosequence(){
     float post_lockout_accel = 0.0f;
     float post_lockout_vel = 0.0f;
     float post_lockout_alt = 0.0f;
+    float approximated_accel = 0.0f;
 
     // flags
     uint8_t apogee_detection_worked = 0;
@@ -101,24 +106,8 @@ int execute_flight_autosequence(){
             
             // enters at launch, waiting for main engine cutoff
             case ST_WAIT_MECO: {
-                #ifdef AUTOSEQUENCE_TEST
-                    return 1;
-                #endif
-                
                 // insert accel and baro readings here
                 insert(&accel_detector, vert_accel, vert_accel, phase, ACCEL_DTR);
-
-                if (!sub_to_supersonic_flag) {
-                    insert(&alt_detector, computed_altitude, computed_altitude, phase, ALT_DTR);
-                    fprintf(stderr, "Max accel seen: %f\n", max_accel_seen);
-                    /*
-                    if (detect_acceleration_spike(&accel_detector, &max_accel_seen)) {
-                        sub_to_supersonic_flag = 1;
-                        approach_mach1_timestamp = time_since(ignition_timestamp);
-                        fprintf(stderr, "Sub to supersonic transition detected at time: %u ms\n", approach_mach1_timestamp);
-                    }
-                    */
-                }
 
                 // check if accel detector is full of readings
                 if(accel_detector.avg_size >= AD_CAPACITY) {
@@ -126,25 +115,8 @@ int execute_flight_autosequence(){
                     if (detect_event(&accel_detector, phase) || time_since(ignition_timestamp) > MAX_BURN_DURATION_MS) {
                         MECO_flag = 1;
                         meco_timestamp = time_since(ignition_timestamp);
+                        phase = ST_MACH_LOCKOUT;
 
-                        if (sub_to_supersonic_flag){
-                            phase = ST_MACH_LOCKOUT;
-
-                            // set lockout timer based on how long we were in boost phase after approaching mach 1
-                            uint32_t wait = (meco_timestamp - approach_mach1_timestamp) * WAIT_TIME_MULTIPLIER;
-                            if (wait < MIN_LOCKOUT_WAIT_TIME)
-                                wait = MIN_LOCKOUT_WAIT_TIME;
-                            else if (wait > MAX_LOCKOUT_WAIT_TIME)
-                                wait = MAX_LOCKOUT_WAIT_TIME;
-
-                            lockout_timestamp = meco_timestamp + wait; 
-                            
-                        }
-
-                        else {
-                            phase = ST_WAIT_APOGEE;
-                        }
-                        
                     }
                 }
 
@@ -152,8 +124,9 @@ int execute_flight_autosequence(){
             } 
 
             case ST_MACH_LOCKOUT: {   
-                if (time_since(ignition_timestamp) >= lockout_timestamp){
+                if (time_since(ignition_timestamp) >= LOCKOUT_END_TIME){
                     phase = ST_WAIT_APOGEE;
+                    lockout_timestamp = LOCKOUT_END_TIME;
                 }
                 break;
             } 
@@ -162,25 +135,29 @@ int execute_flight_autosequence(){
                 // insert ALTITUDE reading
                 insert(&alt_detector, computed_altitude, computed_altitude, phase, ALT_DTR);
 
-                if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) {
-                    uint8_t idx_alt = (alt_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                    altitude_readings[altitude_buf_size] = alt_detector.average[idx_alt];
-                    time_readings[altitude_buf_size] = time_since(ignition_timestamp) / 1000.0f; 
-                    altitude_buf_size++;
+
+                if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) { // only record every 5th reading to ensure we have a good spread of data points over time
+                    if (loop_ctr % ALT_BUF_ELT_SPACING == 0) {
+                        altitude_readings[altitude_buf_size] = computed_altitude;
+                        time_readings[altitude_buf_size] = time_since(ignition_timestamp) / 1000.0f; 
+                        altitude_buf_size++;
+                    }
                 }
                 else if (!heights_recorded) {
                     quadr_curve_fit(altitude_readings, time_readings,
                         &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
+                    
+                    approximated_accel = -sqrt(post_lockout_accel*-G); // average acceleration during descent (assuming linear change from post-lockout accel to -G at apogee)
 
                     heights_recorded = 1;
                     fallback_apogee_time = time_since(ignition_timestamp);
                     fallback_5k_time = time_since(ignition_timestamp);
                     fallback_1k_time = time_since(ignition_timestamp);
-                    compute_fallback_times(post_lockout_alt, post_lockout_vel, post_lockout_accel,
-                                        &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time);
+                    compute_fallback_times(post_lockout_alt, post_lockout_vel, approximated_accel,
+                                        &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time,
+                                        &fallback_apogee_altitude, &fallback_5k_altitude, &fallback_1k_altitude);
                 }
-
-                if(alt_detector.slope_size >= AD_CAPACITY) {
+                else if(alt_detector.slope_size >= AD_CAPACITY) {
                     // NEW LOGIC: Also check if baro_speed drops below zero
                     if (detect_event(&alt_detector, phase) ||
                         time_since(ignition_timestamp) >= fallback_apogee_time || 
@@ -200,6 +177,7 @@ int execute_flight_autosequence(){
                         apogee_altitude = computed_altitude;
                     }
                 }
+                loop_ctr++;
                 break;
             } 
 
@@ -289,6 +267,7 @@ int execute_flight_autosequence(){
                     if (detect_event(&alt_detector, phase)) {
                         phase = ST_DONE;
                         landed_flag = 1;
+                        landed_timestamp = time_since(ignition_timestamp);
                     }
                 }
                 break;
@@ -312,9 +291,9 @@ int execute_flight_autosequence(){
         fprintf(outfile, "=================================================\n");
         fprintf(outfile, "          FLIGHT AUTOSEQUENCE RESULTS            \n");
         fprintf(outfile, "=================================================\n\n");
-        
+        fprintf(outfile, "Start row: %d\n\n", g_start_row);
         fprintf(outfile, "--- FLAGS ---\n");
-        fprintf(outfile, "Sub to Supersonic:       %d\n", sub_to_supersonic_flag);
+        //fprintf(outfile, "Sub to Supersonic:       %d\n", sub_to_supersonic_flag);
         fprintf(outfile, "MECO Detected:           %d\n", MECO_flag);
         fprintf(outfile, "Apogee Detected:         %d\n", apogee_flag);
         fprintf(outfile, "  - Detection Worked:    %d\n", apogee_detection_worked);
@@ -324,18 +303,36 @@ int execute_flight_autosequence(){
         fprintf(outfile, "Landed:                  %d\n\n", landed_flag);
 
         fprintf(outfile, "--- TIMESTAMPS (ms since ignition) ---\n");
-        fprintf(outfile, "Approach Mach 1:         %u ms\n", approach_mach1_timestamp);
         fprintf(outfile, "MECO Timestamp:          %u ms\n", meco_timestamp);
         fprintf(outfile, "Lockout Ends At:         %u ms\n", lockout_timestamp);
         fprintf(outfile, "Apogee Timestamp:        %u ms\n", apogee_timestamp);
         fprintf(outfile, "Drogue Timestamp:        %u ms\n", drogue_timestamp);
-        fprintf(outfile, "Main Timestamp:          %u ms\n\n", main_timestamp);
+        fprintf(outfile, "Main Timestamp:          %u ms\n", main_timestamp);
+        fprintf(outfile, "Landed Timestamp:        %u ms\n\n", landed_timestamp);
+
 
         fprintf(outfile, "--- KEY ALTITUDES ---\n");
         fprintf(outfile, "Apogee Altitude:         %.2f m\n", apogee_altitude);
         fprintf(outfile, "Drogue Deploy Altitude:  %.2f m\n", drogue_altitude);
-        fprintf(outfile, "Main Deploy Altitude:    %.2f m\n", main_altitude);
-        
+        fprintf(outfile, "Main Deploy Altitude:    %.2f m\n\n", main_altitude);
+
+
+        fprintf(outfile, "--- POST LOCKOUT KINEMATICS ---\n");
+        fprintf(outfile, "Delay after lockout:     %u ms\n", altitude_buf_size * ALT_BUF_ELT_SPACING * period);
+        fprintf(outfile, "Altitude:                %.2f m\n", post_lockout_alt);
+        fprintf(outfile, "Velocity:                %.2f m/s\n", post_lockout_vel);
+        fprintf(outfile, "Acceleration:            %.2f m/s^2\n\n", approximated_accel); // subtract gravity to get net accel
+
+
+        fprintf(outfile, "--- FALLBACK TIMER PREDICTIONS ---\n");
+        fprintf(outfile, "Apogee time:             %u ms\n", fallback_apogee_time);
+        fprintf(outfile, "Drogue deploy time:      %u ms\n", fallback_5k_time);
+        fprintf(outfile, "Main deploy time:        %u ms\n", fallback_1k_time);
+
+        fprintf(outfile, "Apogee altitude:         %.2f m\n", fallback_apogee_altitude);
+        fprintf(outfile, "Drogue deploy altitude:  %.2f m\n", fallback_5k_altitude);
+        fprintf(outfile, "Main deploy altitude:    %.2f m\n", fallback_1k_altitude);
+
         fprintf(outfile, "=================================================\n");
         fclose(outfile);
         printf("Simulation results successfully written to 'test-autosequence-flightdata.out'\n");
@@ -346,8 +343,23 @@ int execute_flight_autosequence(){
     return 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s <csv_filename> [start_row]\n", argv[0]);
+        return 1;
+    }
+
+    g_csv_filename = argv[1];
+
+    // If start_row explicitly provided, use it; otherwise auto-detect
+    if (argc >= 3) {
+        g_start_row = atoi(argv[2]);
+    } else {
+        g_start_row = find_launch_row(g_csv_filename);
+    }
+
+    printf("Starting simulation from row %d\n", g_start_row);
+
     execute_flight_autosequence();
-    uint32_t current_time = getTime();
-    printf("The current simulated time is: %u milliseconds\n", current_time);
+    return 0;
 }

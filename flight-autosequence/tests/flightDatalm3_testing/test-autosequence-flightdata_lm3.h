@@ -1,4 +1,3 @@
-
 #ifndef TEST_AUTOSEQUENCE_FLIGHTDATA_LM3_H
 #define TEST_AUTOSEQUENCE_FLIGHTDATA_LM3_H
 
@@ -11,111 +10,133 @@
 #include <string.h>
 #include <time.h>
 
-uint32_t simulated_time_ms = 0; 
+uint32_t simulated_time_ms = 0;
+
+// Set by main() before simulation starts
+const char *g_csv_filename = NULL;
+int g_start_row = 2090;
 
 uint32_t getTime() {
     return simulated_time_ms;
 }
 
-// Helper function to swap European commas with standard periods for float parsing
 void replace_comma_with_dot(char *str) {
     while (*str) {
-        if (*str == ',') {
-            *str = '.';
-        }
+        if (*str == ',') *str = '.';
         str++;
     }
 }
 
-// Function returns 1 if a line was successfully read, and 0 if we hit the End of File (EOF)
 int get_computed_data(float *computed_altitude, float *vert_accel, float *baro_speed, float *amb_temp_C) {
-    // Keep the file pointer open across multiple function calls
     static FILE *file = NULL;
     char line[1024];
-    static int row_count = 0; // Moved this up so we can sync it
+    static int row_count = 0;
 
-    // Set exactly which line you want to start reading from
-    const int START_ROW = 2090; 
-
-    // 1. Open the file on the very first call
     if (file == NULL) {
-        file = fopen("flightData_lm3.csv", "r");
-        if (file == NULL) {
-            printf("Error: Could not open flightData_lm3.csv\n");
-            exit(1); 
+        if (g_csv_filename == NULL) {
+            printf("Error: g_csv_filename not set!\n");
+            exit(1);
         }
-        
-        // Fast-forward through the file to skip the pad data
-        // (This also automatically skips your 2 header lines!)
-        for (int i = 0; i < START_ROW; i++) {
+
+        file = fopen(g_csv_filename, "r");
+        if (file == NULL) {
+            printf("Error: Could not open %s\n", g_csv_filename);
+            exit(1);
+        }
+
+        for (int i = 0; i < g_start_row; i++) {
             if (fgets(line, sizeof(line), file) == NULL) {
-                printf("Error: File has fewer lines than START_ROW!\n");
+                printf("Error: File has fewer lines than g_start_row!\n");
                 exit(1);
             }
         }
-        
-        // Sync our row tracking to match where we skipped to
-        row_count = START_ROW; 
+
+        row_count = g_start_row;
     }
 
     row_count++;
-    
-    // 2. Read the next line of data
+
     if (fgets(line, sizeof(line), file) != NULL) {
-        
-        // Swap all ',' to '.' so atof() can convert them to floats
         replace_comma_with_dot(line);
 
-        // 3. Tokenize the string by semicolons ';'
         char *token = strtok(line, ";");
         int col_index = 0;
 
-        // Loop through the columns and grab the specific indices we need
         while (token != NULL) {
             switch (col_index) {
-                case 0: // Time (assuming column 0)
-                    simulated_time_ms = (uint32_t)(atof(token));
-                    break;
-                case 3: // baro-altitude (m)
-                    *computed_altitude = atof(token);
-                    break;
-                case 7: // vert-accel (m/s2)
-                    *vert_accel = atof(token);
-                    break;
-                case 10: // baro-speed (m/s)
-                    *baro_speed = atof(token);
-                    break;
-                case 11: // amb-temp (deg c)
-                    *amb_temp_C = atof(token);
-                    break;
+                case 0:  simulated_time_ms  = (uint32_t)(atof(token)); break;
+                case 3:  *computed_altitude = atof(token); break;
+                case 7:  *vert_accel        = atof(token); break;
+                case 10: *baro_speed        = atof(token); break;
+                case 11: *amb_temp_C        = atof(token); break;
             }
             token = strtok(NULL, ";");
             col_index++;
         }
-        
-        // Updated printf to include the time so you can verify it's working!
-        if (row_count % 100 == 0) {
-            printf("Time: %u ms | Row %d: Alt=%.2f m, Vert Accel=%.2f m/s^2, Baro Speed=%.2f m/s, Amb Temp=%.2f C\n", 
-                simulated_time_ms, row_count, *computed_altitude, *vert_accel, *baro_speed, *amb_temp_C);
-        }
-        
-        return 1; // Successfully read the line
+        return 1;
     }
 
-    // 4. End of file reached
     fclose(file);
-    file = NULL; // Reset in case you want to loop the simulation again
-    return 0; // Return 0 to tell the main loop to stop
+    file = NULL;
+    return 0;
 }
 
-// Returns the milliseconds elapsed since a given timestamp
 uint32_t time_since(uint32_t timestamp) {
     return getTime() - timestamp;
 }
 
-// Mocks the valve state. In a simulation, we return 1 (true) to kick off the sequence immediately.
 uint8_t valves_open() {
-    return 1; 
+    return 1;
+}
+
+int find_launch_row(const char *filename) {
+    FILE *f = fopen(filename, "r");
+    if (!f) {
+        printf("Error: Could not open %s to find launch row\n", filename);
+        exit(1);
+    }
+
+    char line[1024];
+    int row = 0;
+    int prev_status = -1;
+
+    while (fgets(line, sizeof(line), f)) {
+        // Skip the first two header lines (sep=; and column names)
+        if (row < 2) {
+            row++;
+            continue;
+        }
+
+        char tmp[1024];
+        strncpy(tmp, line, sizeof(tmp));
+        replace_comma_with_dot(tmp);
+
+        char *token = strtok(tmp, ";");
+        int col = 0;
+        int status = prev_status;
+
+        while (token != NULL) {
+            if (col == 2) {
+                status = atoi(token);
+                break;
+            }
+            token = strtok(NULL, ";");
+            col++;
+        }
+
+        if (prev_status == 3 && status == 4) {
+            fclose(f);
+            printf("Launch detected at row %d (status 3->4)\n", row);
+            return row;
+        }
+
+        prev_status = status;
+        row++;
+    }
+
+    fclose(f);
+    printf("Warning: No 3->4 status transition found, defaulting to row 0\n");
+    return 0;
 }
 
 #endif
