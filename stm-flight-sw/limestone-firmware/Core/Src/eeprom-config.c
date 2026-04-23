@@ -10,15 +10,41 @@
 
 eeprom_t eeprom_h = {0};
 size_t eeprom_cursor = 0;
+SemaphoreHandle_t eeprom_mutex;
 
 uint8_t write_autosequence_params(void * buf, size_t len) {
-	eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, EEPROM_BOOT_PARAMS_ADDR, buf, len);
-	return write_stat == EEPROM_OK;
+	if(xSemaphoreTake(eeprom_mutex, 2) == pdPASS) {
+		eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, EEPROM_BOOT_PARAMS_ADDR, buf, len);
+		xSemaphoreGive(eeprom_mutex);
+		return write_stat == EEPROM_OK;
+	}
+	return 0;
 }
 
 uint8_t read_autosequence_params(void * buf, size_t len) {
-	eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, EEPROM_BOOT_PARAMS_ADDR, buf, len);
-	return read_stat == EEPROM_OK;
+	if(xSemaphoreTake(eeprom_mutex, 2) == pdPASS) {
+		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, EEPROM_BOOT_PARAMS_ADDR, buf, len);
+		xSemaphoreGive(eeprom_mutex);
+		return read_stat == EEPROM_OK;
+	}
+	return 0;
+}
+
+int get_radio_state(uint8_t blocking) {
+	if(xSemaphoreTake(eeprom_mutex, blocking ? 2 : 0) == pdPASS) {
+		uint8_t radio_stat = 0;
+		eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, EEPROM_RADIO_PARAM_ADDR, &radio_stat, 1);
+		xSemaphoreGive(eeprom_mutex);
+		return read_stat == EEPROM_OK ? (radio_stat < 2 ? radio_stat : -1) : -1;
+	}
+	return -1;
+}
+
+void set_radio_state(uint8_t state) {
+	if(xSemaphoreTake(eeprom_mutex, 2) == pdPASS) {
+		eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, EEPROM_RADIO_PARAM_ADDR, &state, 1);
+		xSemaphoreGive(eeprom_mutex);
+	}
 }
 
 void timerRestart(TimerHandle_t xTimer) {
@@ -30,10 +56,12 @@ void prepare_eeprom_config() {
 }
 
 void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
+	xSemaphoreTake(eeprom_mutex, portMAX_DELAY);
 	eeprom_cursor -= 4;
 	if(eeprom_cursor < FC_EEPROM_LEN) {
 		// too short
 		log_message(ERR_TFTP_EERPOM_TOO_SHORT, -1);
+		xSemaphoreGive(eeprom_mutex);
 		return;
 	}
 	// CRC check
@@ -42,6 +70,7 @@ void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
 	if(read_stat != EEPROM_OK) {
 		// read error
 		log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
+		xSemaphoreGive(eeprom_mutex);
 		return;
 	}
 	HAL_CRC_Calculate(hcrc, NULL, 0); // reset calculation
@@ -54,6 +83,7 @@ void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
 		if(read_stat != EEPROM_OK) {
 			// read error
 			log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
+			xSemaphoreGive(eeprom_mutex);
 			return;
 		}
 		calc_crc = HAL_CRC_Accumulate(hcrc, (uint32_t *) buf, read_bytes);
@@ -72,12 +102,14 @@ void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
 			if(read_stat != EEPROM_OK) {
 				// copy read error
 				log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
+				xSemaphoreGive(eeprom_mutex);
 				return;
 			}
 			eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, cursor, buf, read_bytes);
 			if(write_stat != EEPROM_OK) {
 				// copy write error
 				log_message(ERR_TFTP_EEPROM_WRITE_ERR, FC_ERR_TYPE_TFTP_EEPROM_WRITE);
+				xSemaphoreGive(eeprom_mutex);
 				return;
 			}
 			cursor += read_bytes;
@@ -95,40 +127,49 @@ void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
 		// Mismatched CRC
 		log_message(ERR_TFTP_EEPROM_BAD_CRC, -1);
 	}
+	xSemaphoreGive(eeprom_mutex);
 }
 
 int eeprom_config_dump(void *buf, int bytes) {
 	// Read from EEPROM
 	int bytes_to_read = (eeprom_cursor + bytes > FC_EEPROM_LEN) ? FC_EEPROM_LEN - eeprom_cursor : bytes;
 	if(bytes_to_read == 0) {
+		xSemaphoreGive(eeprom_mutex);
 		return 0;
 	}
+	xSemaphoreTake(eeprom_mutex, portMAX_DELAY);
 	eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor, buf, bytes_to_read);
 	if(read_stat != EEPROM_OK) {
 		// eeprom read error
 		log_message(ERR_TFTP_EEPROM_READ_ERR, FC_ERR_TYPE_TFTP_EEPROM_READ);
+		xSemaphoreGive(eeprom_mutex);
 		return -1;
 	}
 	eeprom_cursor += bytes_to_read;
+	xSemaphoreGive(eeprom_mutex);
 	return bytes_to_read;
 }
 
 int eeprom_config_write(struct pbuf *p) {
+	xSemaphoreTake(eeprom_mutex, portMAX_DELAY);
 	struct pbuf *currbuf = p;
 	do {
 		eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, eeprom_cursor + FC_EEPROM_LEN, currbuf->payload, currbuf->len);
 		if(write_stat != EEPROM_OK) {
 			// eeprom write error
 			log_message(ERR_TFTP_EEPROM_WRITE_ERR, FC_ERR_TYPE_TFTP_EEPROM_WRITE);
+			xSemaphoreGive(eeprom_mutex);
 			return -1;
 		}
 		eeprom_cursor += currbuf->len;
 		currbuf = currbuf->next;
 	} while (currbuf != NULL);
+	xSemaphoreGive(eeprom_mutex);
 	return p->tot_len;
 }
 
 uint8_t setup_eeprom(I2C_HandleTypeDef *hi2c, GPIO_TypeDef *WC_GPIO_Port, uint16_t WC_Pin) {
+	eeprom_mutex = xSemaphoreCreateMutex();
 	return eeprom_init(&eeprom_h, hi2c, WC_GPIO_Port, WC_Pin) == EEPROM_OK;
 }
 

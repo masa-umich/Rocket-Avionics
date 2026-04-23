@@ -25,4 +25,8 @@ uint8_t setup_radio(uint8_t broadcast, SX1280_Hal_t * config);
 
 void BroadcastRadio(void *argument);
 
+void init_radio(uint8_t enable);
+
+void set_broadcast_state(uint8_t enable);
+
 #endif /* INC_RADIO_TELEM_H_ */

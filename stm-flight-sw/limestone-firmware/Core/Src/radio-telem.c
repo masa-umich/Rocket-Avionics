@@ -7,15 +7,30 @@
 
 #include "radio-telem.h"
 
-uint8_t broadcast_enabled = 0x00;
+uint8_t global_broadcast_enabled = 0;
+
+uint8_t broadcast_enable = 0;
+SemaphoreHandle_t broadcast_mutex;
+
+void init_radio(uint8_t enable) {
+	broadcast_enable = enable;
+	broadcast_mutex = xSemaphoreCreateMutex();
+}
+
+void set_broadcast_state(uint8_t enable) {
+	if(xSemaphoreTake(broadcast_mutex, 10) == pdPASS) {
+		broadcast_enable = enable;
+		xSemaphoreGive(broadcast_mutex);
+	}
+}
 
 uint8_t setup_radio(uint8_t broadcast, SX1280_Hal_t *config) {
-	broadcast_enabled = broadcast;
+	global_broadcast_enabled = broadcast;
 
 	SX1280_Status_t radio_status = SX1280_Init(config);
 
 	if(radio_status != SX1280_OK) {
-		broadcast_enabled = 0x00;
+		global_broadcast_enabled = 0;
 		return 0;
 	}
 
@@ -25,7 +40,11 @@ uint8_t setup_radio(uint8_t broadcast, SX1280_Hal_t *config) {
 
 void BroadcastRadio(void *argument) {
 	for(;;) {
-		if(broadcast_enabled) {
+		xSemaphoreTake(broadcast_mutex, portMAX_DELAY);
+		uint8_t enabled = broadcast_enable;
+		xSemaphoreGive(broadcast_mutex);
+
+		if(global_broadcast_enabled && enabled) {
 			uint8_t tx_buffer[RADIO_PACKET_LENGTH];
 			if(serialize_radio_telem(tx_buffer, RADIO_PACKET_LENGTH, 5)) {
 		        SX1280_SetPacketParams(0x0C, LORA_IMPLICIT_HEADER, RADIO_PACKET_LENGTH, LORA_CRC_ON, LORA_IQ_STANDARD);

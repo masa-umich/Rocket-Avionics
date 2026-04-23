@@ -234,6 +234,34 @@ void ProcessPackets(void *argument) {
 					      			}
 				    				break;
 				    			}
+				    			case DEVICE_CMD_RADIO_ON: {
+				    				set_broadcast_state(1);
+				    				set_radio_state(1);
+				    				Message dev_cmd_ack = {0};
+				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
+				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
+				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_RADIO_ON;
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_RADIO_ON_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
+					      				// Server not up, target device not connected, or txbuffer is full
+					      			}
+				    				break;
+				    			}
+				    			case DEVICE_CMD_RADIO_OFF: {
+				    				set_broadcast_state(0);
+				    				set_radio_state(0);
+				    				Message dev_cmd_ack = {0};
+				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
+				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
+				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_RADIO_OFF;
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FC_RADIO_OFF_ACK_MSG, sizeof(dev_cmd_ack.data.device_ack.payload));
+				    				dev_cmd_ack.data.device_ack.payload[sizeof(dev_cmd_ack.data.device_ack.payload) - 1] = '\0';
+					      			if(send_msg_to_device(LimeWire_d, &dev_cmd_ack, 5) != 0) {
+					      				// Server not up, target device not connected, or txbuffer is full
+					      			}
+				    				break;
+				    			}
 				    			default: {
 				    				break;
 				    			}

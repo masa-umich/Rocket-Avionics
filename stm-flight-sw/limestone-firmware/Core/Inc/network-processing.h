@@ -16,6 +16,7 @@
 #include "utils.h"
 #include "flight-autosequence.h"
 #include "eeprom-config.h"
+#include "radio-telem.h"
 
 extern EEPROM_conf_t loaded_config;
 

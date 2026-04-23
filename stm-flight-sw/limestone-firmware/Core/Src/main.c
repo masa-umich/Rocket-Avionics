@@ -447,6 +447,7 @@ int main(void)
 	  start_led_timer(500, UINT32_MAX, 1);
   }
 
+  init_radio(get_radio_state(0) == 1);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -1571,24 +1572,22 @@ void StartAndMonitor(void *argument)
 				}
 				num_limewires = num_limes;
 			}
-		}
 
-#warning "Move logging back to the if statement above"
+			if(telemcounter == 0) {
+				log_telemetry();
+				telemcounter = 0; // 4hz
+			}
+			else {
+				telemcounter--;
+			}
 
-		if(telemcounter == 0) {
-			log_telemetry();
-			telemcounter = 3; // 4hz
-		}
-		else {
-			telemcounter--;
-		}
-
-		if(statecounter == 0) {
-			log_valve_states();
-			statecounter = 3; // 2hz
-		}
-		else {
-			statecounter--;
+			if(statecounter == 0) {
+				log_valve_states();
+				statecounter = 1; // 2hz
+			}
+			else {
+				statecounter--;
+			}
 		}
 
 		// Send heartbeat

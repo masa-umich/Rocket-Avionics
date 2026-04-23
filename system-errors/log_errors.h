@@ -374,5 +374,7 @@
 #define FC_PDB_SRC_BAT_ACK_MSG					"PDB source switched to battery power"
 #define FC_PDB_COTS_ON_ACK_MSG					"PDB COTS supply turned on"
 #define FC_PDB_COTS_OFF_ACK_MSG					"PDB COTS supply turned off"
+#define FC_RADIO_ON_ACK_MSG						"Radio broadcasting turned on"
+#define FC_RADIO_OFF_ACK_MSG					"Radio broadcasting turned off"
 
 #endif /* INC_LOG_ERRORS_H_ */
