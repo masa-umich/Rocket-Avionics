@@ -526,7 +526,7 @@ static void erase_block(W25N04KV_Flash *flash, uint32_t page_adr) {
 
 	disable_write(flash);	// Disable WEL just in case the erase block command doens't execute
 
-	osDelay(5);
+	osDelay(10);
 
 	get_erase_failure_status(flash);
 }

@@ -29,14 +29,10 @@
 #include <string.h>
 
 /* USER CODE BEGIN 0 */
-#include "sntp.h"
-#include "client.h"
-#include "tftp_server.h"
-#include "lwip/udp.h"
 #include "log_errors.h"
-#include "FreeRTOS.h"
-#include "semphr.h"
 #include "logging.h"
+#include "sntp.h"
+#include "eeprom-config.h"
 #include "remote-config.h"
 #include "udptelemetry.h"
 /* USER CODE END 0 */
@@ -46,7 +42,7 @@ static void ethernet_link_status_updated(struct netif *netif);
 void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
-extern ip4_addr_t bb_addr;
+extern ip4_addr_t fr_addr;
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -58,7 +54,7 @@ uint8_t IP_ADDRESS[4];
 uint8_t NETMASK_ADDRESS[4];
 uint8_t GATEWAY_ADDRESS[4];
 /* USER CODE BEGIN OS_THREAD_ATTR_CMSIS_RTOS_V2 */
-#define INTERFACE_THREAD_STACK_SIZE ( 2048 )
+#define INTERFACE_THREAD_STACK_SIZE ( 1024 )
 osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
@@ -86,10 +82,10 @@ void MX_LWIP_Init(void)
   GATEWAY_ADDRESS[3] = 0;
 
 /* USER CODE BEGIN IP_ADDRESSES */
-  IP_ADDRESS[0] = ip4_addr1(&bb_addr);
-  IP_ADDRESS[1] = ip4_addr2(&bb_addr);
-  IP_ADDRESS[2] = ip4_addr3(&bb_addr);
-  IP_ADDRESS[3] = ip4_addr4(&bb_addr);
+  IP_ADDRESS[0] = ip4_addr1(&fr_addr);
+  IP_ADDRESS[1] = ip4_addr2(&fr_addr);
+  IP_ADDRESS[2] = ip4_addr3(&fr_addr);
+  IP_ADDRESS[3] = ip4_addr4(&fr_addr);
 /* USER CODE END IP_ADDRESSES */
 
   /* Initialize the LwIP stack with RTOS */
@@ -114,28 +110,22 @@ void MX_LWIP_Init(void)
 
   /* Create the Ethernet link handler thread */
 /* USER CODE BEGIN H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
-
-  	// Putting this here to avoid calling sntp and tftp functions in different running threads
-    // Also has the advantage of trying to start the UDP message logging early on
-
-	// Setup NTP listener
-	sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
-
-	if(netif_is_link_up(&gnetif)) {
-		sntp_init();
-		tftp_init(&my_tftp_ctx);
-		init_network_logging(0);
-		init_udp_telem();
-	}
-	else {
-		// ethernet link down
-		log_message(ERR_LINK_INIT_DOWN, -1);
-	}
+  sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
+  if(netif_is_link_up(&gnetif)) {
+	sntp_init();
+	tftp_init(&my_tftp_ctx);
+  	init_network_logging(0, fr_addr);
+  	init_udp_telem();
+  }
+  else {
+  	// ethernet link down
+  	log_message(ERR_LINK_INIT_DOWN, -1);
+  }
 
   memset(&attributes, 0x0, sizeof(osThreadAttr_t));
   attributes.name = "EthLink";
   attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
-  attributes.priority = osPriorityNormal;
+  attributes.priority = osPriorityBelowNormal;
   osThreadNew(ethernet_link_thread, &gnetif, &attributes);
 /* USER CODE END H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
@@ -161,14 +151,13 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
-	  init_network_logging(1);
+	  init_network_logging(1, fr_addr);
 	  sntp_init();
 	  client_reinit();
 	  tftp_init(&my_tftp_ctx);
 	  init_udp_telem();
-	  // link up
-	  log_message(STAT_LINK_UP, -1);
 
+	  log_message(STAT_LINK_UP, -1);
 /* USER CODE END 5 */
   }
   else /* netif is down */
@@ -179,7 +168,7 @@ static void ethernet_link_status_updated(struct netif *netif)
 	  client_stop();
 	  tftp_cleanup();
 	  deinit_udp_telem();
-	  // link down
+
 	  log_message(STAT_LINK_DOWN, -1);
 /* USER CODE END 6 */
   }

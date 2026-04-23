@@ -32,6 +32,7 @@ void init_udp_telem() {
 			if(telemudp_h) {
 				ip_set_option(telemudp_h->pcb.udp, SOF_BROADCAST);
 				netconn_set_nonblocking(telemudp_h, 1);
+				netconn_bind(telemudp_h, IP4_ADDR_ANY, TELEM_UDP_PORT);
 			}
 			else {
 				// failed to create netconn
@@ -54,51 +55,41 @@ void deinit_udp_telem() {
 	}
 }
 
-int broadcast_telem_msg(Message *msg, TickType_t wait) {
-	if(!telemudp_h) {
-		return -1;
-	}
-	uint8_t tempbuffer[MAX_MSG_LEN];
-	int buflen = serialize_message(msg, tempbuffer, MAX_MSG_LEN);
-	if(buflen == -1) {
-		return -3; // Serialization error
-	}
-    uint8_t *buffer = (uint8_t *) osMemoryPoolAlloc(udpPool, 0);
-    if(buffer) {
-        memcpy(buffer, tempbuffer, buflen);
-    	RawMessage rawmsg = {0};
-    	rawmsg.bufferptr = buffer;
-    	rawmsg.packet_len = buflen;
-
-    	if(xQueueSend(telemetrymsgs, (void *)&rawmsg, wait) != pdPASS) {
-    		osMemoryPoolFree(udpPool, buffer);
-    		return -2;
-    	}
-    	return 0;
-    }
-    return -2;
-}
-
 void TelemetrySend(void *argument) {
 	for(;;) {
-		RawMessage msg = {0};
-		if(xQueueReceive(telemetrymsgs, (void *)&msg, portMAX_DELAY) == pdPASS) {
-			if(xSemaphoreTake(telemudp_mutex, 5) == pdPASS) {
-				if(telemudp_h) {
-					struct netbuf *outbuf = netbuf_new();
-					if(outbuf) {
-						void *pkt_buf = netbuf_alloc(outbuf, msg.packet_len);
-						if(pkt_buf) {
-							memcpy(pkt_buf, msg.bufferptr, msg.packet_len);
-							netconn_sendto(telemudp_h, outbuf, IP4_ADDR_BROADCAST, TELEM_UDP_PORT);
+		struct netbuf *buf = NULL;
+		if(xSemaphoreTake(telemudp_mutex, 5) == pdPASS) {
+			if(telemudp_h) {
+				err_t recv_err = netconn_recv(telemudp_h, &buf);
+				if(recv_err == ERR_OK) {
+					if(buf) {
+						uint8_t msgbuf[256];
+						uint16_t msg_len = netbuf_len(buf);
+						if(msg_len > 256 || msg_len == 0) {
+							log_message(FR_ERR_UDP_TELEM_RECV_SIZE_ERR, FR_ERR_TYPE_UDP_TELEM);
 						}
-						netbuf_delete(outbuf);
+						else {
+							uint16_t ret = netbuf_copy(buf, msgbuf, msg_len);
+							if(ret != 0 && ret == msg_len) {
+								log_udp_telemetry(msgbuf, msg_len);
+							}
+						}
+						netbuf_delete(buf);
 					}
 				}
-				xSemaphoreGive(telemudp_mutex);
 			}
-			osMemoryPoolFree(udpPool, msg.bufferptr);
+			else {
+				// If not connected, delay to give cpu to other tasks
+				xSemaphoreGive(telemudp_mutex);
+				osDelay(500);
+				continue;
+			}
+			xSemaphoreGive(telemudp_mutex);
 		}
 		osDelay(1);
 	}
+}
+
+void log_udp_telemetry(uint8_t *message, uint16_t msg_len) {
+	log_lmp_packet(message, msg_len);
 }

@@ -14,23 +14,29 @@ void *ftp_open(const char *fname, const char *mode, u8_t write) {
 		prepare_eeprom_config();
 		return (void *) 1; // 1 refers to eeprom
 	}
-	else if(strcmp(fname, "messages.txt") == 0) {
+	else if(strcmp(fname, "dump1.txt") == 0) {
 		if(!write) {
 			prepare_flash_dump();
 		}
-		return write ? (void *) 0 : (void *) FLASH_MSG_MARK; // FLASH_MSG_MARK refers to status/error messages. Only reading is valid
+		return write ? (void *) 0 : (void *) (FLASH_BOTH_MARK + 0);
 	}
-	else if(strcmp(fname, "telemetry.bin") == 0) {
+	else if(strcmp(fname, "dump2.txt") == 0) {
 		if(!write) {
 			prepare_flash_dump();
 		}
-		return write ? (void *) 0 : (void *) FLASH_TELEM_MARK; // FLASH_TELEM_MARK refers to telemetry and valve state LMP dump. Only reading is valid
+		return write ? (void *) 0 : (void *) (FLASH_BOTH_MARK + 1);
 	}
-	else if(strcmp(fname, "dump.txt") == 0) {
+	else if(strcmp(fname, "dump3.txt") == 0) {
 		if(!write) {
 			prepare_flash_dump();
 		}
-		return write ? (void *) 0 : (void *) FLASH_BOTH_MARK; // FLASH_TELEM_MARK refers to telemetry and valve state LMP dump. Only reading is valid
+		return write ? (void *) 0 : (void *) (FLASH_BOTH_MARK + 2);
+	}
+	else if(strcmp(fname, "dump4.txt") == 0) {
+		if(!write) {
+			prepare_flash_dump();
+		}
+		return write ? (void *) 0 : (void *) (FLASH_BOTH_MARK + 3);
 	}
 	else {
 		return (void *) 0;
@@ -42,7 +48,7 @@ void ftp_close(void *handle) {
 	if(fd == 1) {
 		close_and_validate_config(&hcrc);
 	}
-	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK || fd == FLASH_BOTH_MARK) {
+	else if(fd >= FLASH_BOTH_MARK && (fd - FLASH_BOTH_MARK < 4)) {
 		finish_flash_dump();
 	}
 }
@@ -52,7 +58,7 @@ int ftp_read(void *handle, void *buf, int bytes) {
 	if(fd == 1) {
 		return eeprom_config_dump(buf, bytes);
 	}
-	else if(fd == FLASH_MSG_MARK || fd == FLASH_TELEM_MARK || fd == FLASH_BOTH_MARK) {
+	else if(fd >= FLASH_BOTH_MARK && (fd - FLASH_BOTH_MARK < 4)) {
 		return dump_flash(fd, buf, bytes);
 	}
 	else {

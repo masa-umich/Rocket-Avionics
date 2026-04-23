@@ -10,7 +10,6 @@
 void ProcessPackets(void *argument) {
 	// Started processing thread
 	log_message(STAT_PACKET_TASK_STARTED, -1);
-	uint32_t stateTick = HAL_GetTick();
 	for(;;) {
 		RawMessage msg = {0};
 		int read_stat = client_receive(&msg, 1000);
@@ -19,33 +18,8 @@ void ProcessPackets(void *argument) {
 			Message parsedmsg = {0};
 			if(deserialize_message(msg.bufferptr, msg.packet_len, &parsedmsg) > 0) {
 				switch(parsedmsg.type) {
-				    case MSG_VALVE_COMMAND: {
-				    	if(check_valve_id(parsedmsg.data.valve_command.valve_id)) {
-				    		if(get_valve_board(parsedmsg.data.valve_command.valve_id) == bb_num) {
-				    			// Do valve command and send state message
-				    			Valve_State_t endState = set_and_update_valve(get_valve(parsedmsg.data.valve_command.valve_id), parsedmsg.data.valve_command.valve_state);
-				    			Message returnMsg = {0};
-				    			returnMsg.type = MSG_VALVE_STATE;
-				    			returnMsg.data.valve_state.valve_state = endState;
-				    			returnMsg.data.valve_state.valve_id = parsedmsg.data.valve_command.valve_id;
-				    			returnMsg.data.valve_state.timestamp = get_rtc_time();
-				      			if(send_msg_to_device(&returnMsg, 5) != 0) {
-				      				// Client not up, target device not connected, or txbuffer is full
-				      			}
-				    		}
-				    		else {
-				    			// Not a message for this bay board. This is bad because it means the flight computer is malfunctioning
-				    			log_message(ERR_PROCESS_VLV_CMD_BADID, BB_ERR_TYPE_BAD_VLVID);
-				    		}
-				    	}
-				    	else {
-				    		// Invalid valve id
-				    		log_message(ERR_PROCESS_VLV_CMD_BADID, BB_ERR_TYPE_BAD_VLVID);
-				    	}
-				        break;
-				    }
 				    case MSG_DEVICE_COMMAND: {
-				    	if(parsedmsg.data.device_command.board_id == bb_num) {
+				    	if(parsedmsg.data.device_command.board_id == BOARD_FR) {
 				    		// Process device command
 				    		switch(parsedmsg.data.device_command.cmd_id) {
 				    			case DEVICE_CMD_RESET: {
@@ -59,7 +33,7 @@ void ProcessPackets(void *argument) {
 				    			case DEVICE_CMD_QUERY_FLASH: {
 				    				Message dev_cmd_ack = {0};
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
-				    				dev_cmd_ack.data.device_ack.board_id = bb_num;
+				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FR;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_QUERY_FLASH;
 				    				log_flash_storage(dev_cmd_ack.data.device_ack.payload, MAX_ACK_PAYLOAD_SIZE);
 					      			if(send_msg_to_device(&dev_cmd_ack, 5) != 0) {
@@ -70,7 +44,7 @@ void ProcessPackets(void *argument) {
 				    			case DEVICE_CMD_BUILD_INFO: {
 				    				Message dev_cmd_ack = {0};
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
-				    				dev_cmd_ack.data.device_ack.board_id = bb_num;
+				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FR;
 				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_BUILD_INFO;
 				    				log_message(STAT_VERSION_INFO, -1);
 				    				strlcpy(dev_cmd_ack.data.device_ack.payload, STAT_VERSION_INFO + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
@@ -93,7 +67,7 @@ void ProcessPackets(void *argument) {
 			}
 			else {
 				// Unknown message type
-				log_message(ERR_UNKNOWN_LMP_PACKET, BB_ERR_TYPE_UNKNOWN_LMP);
+				log_message(ERR_UNKNOWN_LMP_PACKET, FR_ERR_TYPE_UNKNOWN_LMP);
 			}
 			freeFromPool(msg.bufferptr);
 		}
@@ -103,29 +77,6 @@ void ProcessPackets(void *argument) {
 		}
 		else {
 			// Timeout on waiting for messages
-		}
-
-		// This goes here to avoid a race condition that could result in stale valve states being sent to limewire
-		if(HAL_GetTick() - stateTick > 1000) {
-			stateTick = HAL_GetTick();
-			if(is_client_connected()) {
-				uint64_t valvetime = get_rtc_time();
-		  	  	if(xSemaphoreTake(Board_h.bbValve_access, 5) == pdPASS) {
-		  	  		Valve_State_t vstates[NUM_SOLENOIDS];
-					for(int i = 0;i < NUM_SOLENOIDS;i++) {
-						vstates[i] = Board_h.bbValveStates[i];
-					}
-		  	  		xSemaphoreGive(Board_h.bbValve_access);
-					for(int i = 0;i < NUM_SOLENOIDS;i++) {
-						Message statemsg = {0};
-						statemsg.type = MSG_VALVE_STATE;
-						statemsg.data.valve_state.timestamp = valvetime;
-						statemsg.data.valve_state.valve_id = generate_valve_id(bb_num, i);
-						statemsg.data.valve_state.valve_state = vstates[i];
-						send_msg_to_device(&statemsg, 5);
-					}
-		  	  	}
-			}
 		}
 	}
 }

@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -23,48 +23,28 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "api.h"
-#include "string.h"
-#include "client.h"
-#include "messages.h"
-#include "M24256E.h"
-#include "utils.h"
-#include "lmp_channels.h"
-#include "lwip/udp.h"
-#include "log_errors.h"
-#include "queue.h"
-#include "eeprom-config.h"
-#include "telemetry.h"
-#include "network-processing.h"
-#include "board-state.h"
 #include "logging.h"
-#include "time-sync.h"
+#include "eeprom-config.h"
+#include "client.h"
+#include "network-processing.h"
 #include "udptelemetry.h"
-//#include "lwip/netif.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+extern struct netif gnetif;
+EEPROM_conf_t loaded_config = {0};
+ip4_addr_t fr_addr;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-void __malloc_lock(struct _reent *r) {
-    if(xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
-        vTaskSuspendAll();
-    }
-}
 
-void __malloc_unlock(struct _reent *r) {
-    if(xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
-        (void)xTaskResumeAll();
-    }
-}
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -80,22 +60,14 @@ SPI_HandleTypeDef hspi2;
 SPI_HandleTypeDef hspi4;
 SPI_HandleTypeDef hspi5;
 
-/* Definitions for startTask */
-osThreadId_t startTaskHandle;
-const osThreadAttr_t startTask_attributes = {
-  .name = "startTask",
-  .stack_size = 1024 * 4,
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 2048 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
-extern struct netif gnetif;
-
-ip4_addr_t fr_addr;
-
-EEPROM_conf_t loaded_config = {0};
-
-//Sensors_t sensors_h = {0};
-
 osThreadId_t telemetryTaskHandle;
 const osThreadAttr_t telemetry_task_attr = {
   .name = "telemetryTask",
@@ -123,6 +95,7 @@ const osThreadAttr_t flash_clear_task_attr = {
   .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -131,21 +104,30 @@ void PeriphCommonClock_Config(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
+static void MX_SPI5_Init(void);
 static void MX_CRC_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_SPI4_Init(void);
-static void MX_SPI1_Init(void);
-static void MX_SPI5_Init(void);
-void StartAndMonitor(void *argument);
+void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint64_t getTimestamp() {
-	return HAL_GetTick();
+void __malloc_lock(struct _reent *r) {
+    if(xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        vTaskSuspendAll();
+    }
+}
+
+void __malloc_unlock(struct _reent *r) {
+    if(xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        (void)xTaskResumeAll();
+    }
 }
 /* USER CODE END 0 */
 
@@ -187,7 +169,6 @@ int main(void)
   PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  // RTC init code - enable backup domain access because we're using HSE / 60 as RTC clock source
   HAL_PWR_EnableBkUpAccess();
   // Force reset RTC registers in case something got corrupted
   __HAL_RCC_BACKUPRESET_FORCE();
@@ -197,26 +178,26 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_RTC_Init();
+  MX_SPI5_Init();
   MX_CRC_Init();
   MX_I2C1_Init();
+  MX_SPI1_Init();
   MX_SPI2_Init();
   MX_SPI4_Init();
-  MX_SPI1_Init();
-  MX_SPI5_Init();
   /* USER CODE BEGIN 2 */
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
   timesync_setup(&hrtc);
   if(logging_setup()) {
-	  for(;;) {}
+	 for(;;) {}
   }
   if(telemetry_setup()) {
-	  for(;;) {}
+     for(;;) {}
   }
   /* USER CODE END RTOS_MUTEX */
 
@@ -229,54 +210,55 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-
-  // This next section is considered the "critical" portion of initialization. This portion has no access to logging and therefore needs to communicate status other ways. The section ends on the return of the MX_LWIP_Init function
-  // The end of this section is marked by a UDP message and/or the on-board LED becoming solid and/or a short buzzer beep
-
-  // Load EEPROM config
   if(setup_eeprom(&hi2c1, EEPROM_WC_GPIO_Port, EEPROM_WC_Pin)) {
 #ifdef EEPROM_OVERRIDE
-	  load_eeprom_defaults(&loaded_config);
-	  log_message(STAT_EEPROM_DEFAULT_LOADED, -1);
+  	load_eeprom_defaults(&loaded_config);
+  	log_message(STAT_EEPROM_DEFAULT_LOADED, -1);
 #else
-	  switch(load_eeprom_config(&loaded_config)) {
-	  	  case -1: {
-	  		  // eeprom load error, defaults loaded
-	  		  load_eeprom_defaults(&loaded_config);
-	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
-	  		  break;
-	  	  }
-	  	  default: {
-	  		  // eeprom conf loaded
-	  		  log_message(STAT_EEPROM_LOADED, -1);
-	  		  break;
-	  	  }
-	  }
+  	switch(load_eeprom_config(&loaded_config)) {
+  	  	case -1: {
+  	  		// eeprom load error, defaults loaded
+  	  		load_eeprom_defaults(&loaded_config);
+  	  		log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
+  	  		break;
+  	  	}
+  	  	default: {
+  	  		// eeprom conf loaded
+  	  		log_message(STAT_EEPROM_LOADED, -1);
+  	  		break;
+  		}
+  	}
 #endif
   }
   else {
-	  // eeprom init error, defaults loaded
-	  load_eeprom_defaults(&loaded_config);
-	  log_message(ERR_EEPROM_INIT, -1);
+    // eeprom init error, defaults loaded
+    load_eeprom_defaults(&loaded_config);
+    log_message(ERR_EEPROM_INIT, -1);
   }
+  fr_addr = loaded_config.flightrecorderIP;
+
   log_message(STAT_VERSION_INFO, -1);
-  fr_addr = loaded_config.;
-
-  // Init flash
-#warning "work on this"
-  if(init_flash_logging(&hspi1, FLASH_CS_GPIO_Port, FLASH_CS_Pin)) {
+  if(init_flash_logging(&hspi1, SPI1_CS_GPIO_Port, SPI1_CS_Pin, 0)) {
+	log_message(FR_ERR_FLASH_INIT_FAILED "1", -1);
   }
-
+  if(init_flash_logging(&hspi2, SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1)) {
+    log_message(FR_ERR_FLASH_INIT_FAILED "2", -1);
+  }
+  if(init_flash_logging(&hspi4, SPI4_CS_GPIO_Port, SPI4_CS_Pin, 2)) {
+    log_message(FR_ERR_FLASH_INIT_FAILED "3", -1);
+  }
+  if(init_flash_logging(&hspi5, SPI5_CS_GPIO_Port, SPI5_CS_Pin, 3)) {
+    log_message(FR_ERR_FLASH_INIT_FAILED "4", -1);
+  }
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of startTask */
-  startTaskHandle = osThreadNew(StartAndMonitor, NULL, &startTask_attributes);
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
   flashClearTaskHandle = osThreadNew(FlashClearTask, NULL, &flash_clear_task_attr);
+  /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -368,15 +350,15 @@ void PeriphCommonClock_Config(void)
   /** Initializes the peripherals clock
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI4|RCC_PERIPHCLK_SPI5;
-  PeriphClkInitStruct.PLL2.PLL2M = 3;
-  PeriphClkInitStruct.PLL2.PLL2N = 30;
-  PeriphClkInitStruct.PLL2.PLL2P = 2;
-  PeriphClkInitStruct.PLL2.PLL2Q = 2;
-  PeriphClkInitStruct.PLL2.PLL2R = 2;
-  PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
-  PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
-  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
-  PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_PLL2;
+  PeriphClkInitStruct.PLL3.PLL3M = 3;
+  PeriphClkInitStruct.PLL3.PLL3N = 30;
+  PeriphClkInitStruct.PLL3.PLL3P = 2;
+  PeriphClkInitStruct.PLL3.PLL3Q = 2;
+  PeriphClkInitStruct.PLL3.PLL3R = 2;
+  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_3;
+  PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
+  PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
+  PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_PLL3;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -486,7 +468,7 @@ static void MX_RTC_Init(void)
   hrtc.Instance = RTC;
   hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
   hrtc.Init.AsynchPrediv = 127;
-  hrtc.Init.SynchPrediv = 6249;
+  hrtc.Init.SynchPrediv = 255;
   hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
   hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
   hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
@@ -745,7 +727,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(SPI5_CS_GPIO_Port, SPI5_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, ETH_NRST_Pin|LED_R_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
@@ -756,15 +738,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(EEPROM_WC_GPIO_Port, EEPROM_WC_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, LED_G_Pin|LED_B_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : SPI4_CS_Pin LED_G_Pin LED_B_Pin */
-  GPIO_InitStruct.Pin = SPI4_CS_Pin|LED_G_Pin|LED_B_Pin;
+  /*Configure GPIO pin : SPI4_CS_Pin */
+  GPIO_InitStruct.Pin = SPI4_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+  HAL_GPIO_Init(SPI4_CS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SPI5_CS_Pin */
   GPIO_InitStruct.Pin = SPI5_CS_Pin;
@@ -773,19 +752,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(SPI5_CS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ETH_NRST_Pin LED_R_Pin */
-  GPIO_InitStruct.Pin = ETH_NRST_Pin|LED_R_Pin;
+  /*Configure GPIO pins : PA3 SPI2_CS_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_3|SPI2_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : SPI2_CS_Pin */
-  GPIO_InitStruct.Pin = SPI2_CS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(SPI2_CS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SPI1_CS_Pin EEPROM_WC_Pin */
   GPIO_InitStruct.Pin = SPI1_CS_Pin|EEPROM_WC_Pin;
@@ -799,91 +771,66 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartAndMonitor */
+/* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the startTask thread.
+  * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartAndMonitor */
-void StartAndMonitor(void *argument)
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
 {
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
-  osDelay(1);
 
-  	// Signal end of critical section
+  telemetrySendTaskHandle = osThreadNew(TelemetrySend, NULL, &telemetry_send_task_attr);
 
-	// Start tasks
+  // Start packet handler
+  packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
 
-  	// Start telemetry sending over UDP
-  	telemetrySendTaskHandle = osThreadNew(TelemetrySend, NULL, &telemetry_send_task_attr);
-
-  	// Start telemetry task
-  	telemetryTaskHandle = osThreadNew(TelemetryTask, NULL, &telemetry_task_attr);
-
-  	// Start packet handler
-  	packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
-
-  	// Start TCP client
-  	switch(client_init(&loaded_config.flightrecorderIP, netif_is_link_up(&gnetif))) {
-  		case 2: {
-  			// threads didn't start
-  			log_message(FR_ERR_TCP_CLIENT_INIT_THREAD, -1);
-  			break;
-  		}
-  		case 1: {
-  			// memory error
-  			log_message(FR_ERR_TCP_CLIENT_INIT_MEM_ERR, -1);
-  			break;
-  		}
-  		default: {
-  			// client initialized
-  			log_message(FR_STAT_TCP_CLIENT_INIT, -1);
-  			break;
-  		}
+  // Start TCP client
+  switch(client_init(&loaded_config.flightcomputerIP, netif_is_link_up(&gnetif))) {
+  	case 2: {
+  		// threads didn't start
+  		log_message(FR_ERR_TCP_CLIENT_INIT_THREAD, -1);
+  		break;
   	}
+  	case 1: {
+  		// memory error
+  		log_message(FR_ERR_TCP_CLIENT_INIT_MEM_ERR, -1);
+  		break;
+  	}
+  	default: {
+  		// client initialized
+  		log_message(FR_STAT_TCP_CLIENT_INIT, -1);
+  		break;
+  	}
+  }
 
-	// log startup done
-	log_message(STAT_STARTUP_DONE, -1);
+  log_message(STAT_STARTUP_DONE, -1);
 
-	/*
-	 * ALL VALVE STATES SHOULD BE SENT ON THE START OF CONNECTION WITH LIMEWIRE (FC FOR BBs) (WHEN THE FC CONNECTS TO LIMEWIRE SEND THE VALVE STATES FOR THE ENTIRE ROCKET)
-	 *
-	 * fc telemetry comes from struct, sent on a 50hz loop
-	 * bb telemetry comes from tcp packets, relayed to limewire and stored for optional access in autosequences
-	 * fc valve states are sent after valve commands are sent AND possibly every now and then, in case something gets disconnected, then stored for optional access
-	 * bb valve states are relayed from tcp packets, and saved for optional access
-	 * all valve commands are processed when received. fc relays commands from limewire to bb
-	 *
-	 * telemetry task - read from peripherals and send telemetry msg
-	 * tcp process task - process incoming packets for relaying or valve stuff
-	 */
-
-	uint32_t startTick = HAL_GetTick();
-	uint8_t logdelay = 0; // This is to delay the logging for 1 second after startup to let the link come online so the operators can read event messages from startup
-
-	/* Infinite loop */
-	for(;;) {
-		//size_t freemem = xPortGetFreeHeapSize();
-		if(logdelay > 4) {
-			handle_logging(); // Log to UDP and flash
-		}
-
-		if(HAL_GetTick() - startTick > 250) {
-			startTick = HAL_GetTick();
-			if(logdelay < 5) {
-				logdelay++;
-			}
-			//size_t freemem = xPortGetFreeHeapSize();
-			refresh_log_timers();
-		}
-
-	  osDelay(5);
+  uint32_t startTick = HAL_GetTick();
+  uint8_t logdelay = 0;
+  for(;;) {
+	//size_t freemem = xPortGetFreeHeapSize();
+	if(logdelay > 4) {
+		handle_logging(); // Log to UDP and flash
 	}
+
+	if(HAL_GetTick() - startTick > 250) {
+		startTick = HAL_GetTick();
+		if(logdelay < 5) {
+			logdelay++;
+		}
+		//size_t freemem = xPortGetFreeHeapSize();
+		refresh_log_timers();
+	}
+	  osDelay(5);
+  }
   /* USER CODE END 5 */
 }
 
@@ -915,7 +862,7 @@ void MPU_Config(void)
   /** Initializes and configures the Region and the memory to be protected
   */
   MPU_InitStruct.Number = MPU_REGION_NUMBER1;
-  MPU_InitStruct.BaseAddress = 0x30000200;
+  MPU_InitStruct.BaseAddress = 0x30000000;
   MPU_InitStruct.Size = MPU_REGION_SIZE_32KB;
   MPU_InitStruct.SubRegionDisable = 0x0;
   MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
@@ -927,7 +874,6 @@ void MPU_Config(void)
   /** Initializes and configures the Region and the memory to be protected
   */
   MPU_InitStruct.Number = MPU_REGION_NUMBER2;
-  MPU_InitStruct.BaseAddress = 0x30000000;
   MPU_InitStruct.Size = MPU_REGION_SIZE_512B;
   MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
   MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
@@ -969,7 +915,7 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  //__disable_irq();
+  __disable_irq();
   while (1)
   {
   }

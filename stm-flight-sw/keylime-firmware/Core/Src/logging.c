@@ -8,7 +8,7 @@
 #include "logging.h"
 #include "utils.h"
 
-W25N04KV_Flash flash_h = {0};
+W25N04KV_Flash flash_chips[4];
 SemaphoreHandle_t flash_mutex;
 SemaphoreHandle_t flash_clear_mutex;
 SemaphoreHandle_t flash_spi_mutex;
@@ -39,13 +39,13 @@ void UNLOCK_FLASH() {
 	xSemaphoreGive(flash_spi_mutex);
 }
 
-void init_network_logging(uint8_t reinit) {
+void init_network_logging(uint8_t reinit, ip4_addr_t ipaddr) {
 	if(xSemaphoreTake(errorudp_mutex, portMAX_DELAY) == pdPASS) {
 		if(!errormsgudp) {
 			errormsgudp = netconn_new(NETCONN_UDP);
 			if(errormsgudp) {
 				ip_set_option(errormsgudp->pcb.udp, SOF_BROADCAST);
-				send_udp_online();
+				send_udp_online(&ipaddr);
 			}
 			else {
 				// failed to create netconn
@@ -88,6 +88,11 @@ uint8_t logging_setup() {
 
 	memset(errormsgtimers, 0, ERROR_MSG_TYPES / 2);
 	memset(perierrormsgtimers, 0, PERI_ERROR_MSG_TYPES);
+
+	for(uint8_t i = 0;i < 4;i++) {
+		memset(&(flash_chips[i]), 0, sizeof(W25N04KV_Flash));
+	}
+
 	errorMsgList = xQueueCreate(25, sizeof(errormsg_t));
 
 	logPool = osMemoryPoolNew(25, MAX_LOG_LEN, NULL);
@@ -97,9 +102,9 @@ uint8_t logging_setup() {
 	return 0;
 }
 
-uint8_t init_flash_logging(SPI_HandleTypeDef * hspi, GPIO_TypeDef *CS_GPIO_Port, uint16_t CS_GPIO_Pin) {
-	init_flash(&flash_h, hspi, CS_GPIO_Port, CS_GPIO_Pin);
-	if(!ping_flash(&flash_h)) {
+uint8_t init_flash_logging(SPI_HandleTypeDef * hspi, GPIO_TypeDef *CS_GPIO_Port, uint16_t CS_GPIO_Pin, uint8_t flash_index) {
+	init_flash(&(flash_chips[flash_index]), hspi, CS_GPIO_Port, CS_GPIO_Pin);
+	if(!ping_flash(&(flash_chips[flash_index]))) {
 		// flash not connected
 		log_message(ERR_FLASH_INIT, -1);
 		return 1;
@@ -159,25 +164,7 @@ uint8_t log_message(const char *msgtext, int msgtype) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
 		rawmsgbuf[25] = ' ';
-		// I don't want to use snprinf here - there are few enough options
-		switch(bb_num) {
-			case 1: {
-				rawmsgbuf[26] = '1';
-				break;
-			}
-			case 2: {
-				rawmsgbuf[26] = '2';
-				break;
-			}
-			case 3: {
-				rawmsgbuf[26] = '3';
-				break;
-			}
-			default: {
-				rawmsgbuf[26] = '9';
-				break;
-			}
-		}
+		rawmsgbuf[26] = '4';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;
@@ -223,24 +210,7 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 		rawmsgbuf[0] = FLASH_MSG_MARK;
 		get_iso_time((char *) &rawmsgbuf[1], msglen - 1);
 		rawmsgbuf[25] = ' ';
-		switch(bb_num) {
-			case 1: {
-				rawmsgbuf[26] = '1';
-				break;
-			}
-			case 2: {
-				rawmsgbuf[26] = '2';
-				break;
-			}
-			case 3: {
-				rawmsgbuf[26] = '3';
-				break;
-			}
-			default: {
-				rawmsgbuf[26] = '9';
-				break;
-			}
-		}
+		rawmsgbuf[26] = '4';
 		memcpy(&rawmsgbuf[27], msgtext, strlen(msgtext));
 		rawmsgbuf[msglen - 1] = '\n';
 		errormsg_t fullmsg;
@@ -254,51 +224,6 @@ uint8_t log_peri_message(const char *msgtext, int msgtype) {
 		return 0;
 	}
 	return 3;
-}
-
-void log_telemetry() {
-	Message telemsg = {0};
-	telemsg.type = MSG_TELEMETRY;
-	if(!pack_bb_telemetry_msg(&(telemsg.data.telemetry), get_rtc_time(), 5)) {
-		uint8_t tempbuffer[11 + (4 * BB1_TELEMETRY_CHANNELS) + 5];
-		int buflen = serialize_message(&telemsg, tempbuffer, 11 + (4 * BB1_TELEMETRY_CHANNELS) + 5);
-		if(buflen != -1) {
-			if(log_lmp_packet(tempbuffer, buflen) == 2) {
-				if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
-					send_flash_full();
-					lastflashfull = HAL_GetTick();
-				}
-			}
-		}
-	}
-}
-
-void log_valve_states() {
-	if(xSemaphoreTake(Board_h.bbValve_access, 5) == pdPASS) {
-	  	Valve_State_t vstates[NUM_VALVE_CHS];
-	  	for(int i = 0;i < NUM_VALVE_CHS;i++) {
-	  		vstates[i] = Board_h.bbValveStates[i];
-	  	}
-	  	xSemaphoreGive(Board_h.bbValve_access);
-	  	uint64_t valvetime = get_rtc_time();
-	  	for(int i = 0;i < NUM_VALVE_CHS;i++) {
-	  		Message statemsg = {0};
-	  		statemsg.type = MSG_VALVE_STATE;
-	  		statemsg.data.valve_state.timestamp = valvetime;
-	  		statemsg.data.valve_state.valve_id = generate_valve_id(bb_num, i);
-	  		statemsg.data.valve_state.valve_state = vstates[i];
-	  		uint8_t tempbuffer[MAX_VALVE_STATE_MSG_SIZE + 5];
-	  		int buflen = serialize_message(&statemsg, tempbuffer, MAX_VALVE_STATE_MSG_SIZE + 5);
-	  		if(buflen != -1) {
-	  			if(log_lmp_packet(tempbuffer, buflen) == 2) {
-	  				if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
-	  					send_flash_full();
-	  					lastflashfull = HAL_GetTick();
-	  				}
-	  			}
-	  		}
-	  	}
-	}
 }
 
 void handle_logging() {
@@ -333,8 +258,10 @@ void handle_logging() {
 
 void prepare_flash_dump() {
 	xSemaphoreTake(flash_mutex, portMAX_DELAY);
-	finish_flash_write(&flash_h);
-	reset_flash_read_pointer(&flash_h);
+	for(int i = 0;i < 4;i++) {
+		finish_flash_write(&(flash_chips[i]));
+		reset_flash_read_pointer(&(flash_chips[i]));
+	}
 	validflashbytes = 0;
 	flashmsgtype = 0;
 	LOCK_FLASH(portMAX_DELAY);
@@ -346,82 +273,26 @@ void finish_flash_dump() {
 }
 
 int dump_flash(uint32_t fd, void *buf, int bytes) {
+	uint8_t chip_index = fd - FLASH_BOTH_MARK;
 	uint8_t flashbuf[2048];
 	while(bytes > validflashbytes) {
-		if(next_read_page(&flash_h) >= W25N04KV_NUM_PAGES) {
+		if(next_read_page(&(flash_chips[chip_index])) >= W25N04KV_NUM_PAGES) {
 			break;
 		}
-		read_next_2KB_from_flash(&flash_h, flashbuf);
-		if(fd == FLASH_BOTH_MARK) {
-			uint8_t empty = 1;
-			for(uint16_t i = 0;i < 2048;i++) {
-				if(flashbuf[i] != 0xFF) {
-					empty = 0;
-					break;
-				}
-			}
-			if(!empty) {
-				memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
-				validflashbytes += 2048;
-			}
-			else {
+		read_next_2KB_from_flash(&(flash_chips[chip_index]), flashbuf);
+		uint8_t empty = 1;
+		for(uint16_t i = 0;i < 2048;i++) {
+			if(flashbuf[i] != 0xFF) {
+				empty = 0;
 				break;
 			}
 		}
+		if(!empty) {
+			memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
+			validflashbytes += 2048;
+		}
 		else {
-			uint16_t cursor = 0;
-			uint8_t empty = 1;
-			if(flashbuf[0] != FLASH_MSG_MARK && flashbuf[0] != FLASH_TELEM_MARK) {
-				// Load or "discard" partial message, be careful if the entire 2048 bytes are part of the partial message
-				for(cursor = 0;cursor < 2048;cursor++) {
-					if(flashbuf[cursor] != 0xFF) {
-						empty = 0;
-					}
-					if(flashbuf[cursor] == '\n') {
-						break;
-					}
-				}
-				cursor += 1;
-				if(cursor > 2047) {
-					if(empty) {
-						break;
-					}
-					// Load entire or none, then continue
-					if(fd == flashmsgtype) {
-						memcpy(&flashreadbuffer[validflashbytes], flashbuf, 2048);
-						validflashbytes += 2048;
-					}
-					continue;
-				}
-				else {
-					if(fd == flashmsgtype) {
-						memcpy(&flashreadbuffer[validflashbytes], flashbuf, cursor);
-						validflashbytes += cursor;
-					}
-				}
-			}
-			int start = -1;
-			for(;cursor < 2048;cursor++) {
-				if(flashbuf[cursor] == FLASH_MSG_MARK || flashbuf[cursor] == FLASH_TELEM_MARK) {
-					flashmsgtype = flashbuf[cursor];
-					start = cursor + 1;
-				}
-				else if(flashbuf[cursor] == '\n') {
-					if(fd == flashmsgtype) {
-						if(start != -1) {
-							memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (cursor - start) + 1);
-							validflashbytes += (cursor - start) + 1;
-						}
-					}
-					start = -1;
-				}
-			}
-			if(start != -1) {
-				if(fd == flashmsgtype) {
-					memcpy(&flashreadbuffer[validflashbytes], &flashbuf[start], (2047 - start) + 1);
-					validflashbytes += (2047 - start) + 1;
-				}
-			}
+			break;
 		}
 	}
 	// Load validflashbytes into buf, keep in mind it could be less than 512 or even 0
@@ -432,39 +303,37 @@ int dump_flash(uint32_t fd, void *buf, int bytes) {
 	return readbytes;
 }
 
-// Writes text to flash, msgtext does not have to be null terminated and msglen should not include the null character if it is included
-// type is the msg type, use the macros in main.h
-// returns 0 on success, 1 if there is not enough space or the flash could not be accessed
-uint8_t write_ascii_to_flash(const char *msgtext, size_t msglen, uint8_t type) {
+// Returns 0 on success, 1 on access error, 2 if the flash is full
+uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
 	if(xSemaphoreTake(flash_mutex, 0) == pdPASS) {
-		if(get_bytes_remaining(&flash_h) < msglen + 2) {
-			xSemaphoreGive(flash_mutex);
-			return 1;
+		uint8_t res = 0;
+		for(uint8_t i = 0;i < 4;i++) {
+			if(get_bytes_remaining(&(flash_chips[i])) < msglen) {
+				res = 1;
+				continue;
+			}
+			write_to_flash(&(flash_chips[i]), writebuf, msglen);
 		}
-		uint8_t *writebuf = (uint8_t *) malloc(msglen + 2);
-		writebuf[0] = type;
-		memcpy(&writebuf[1], msgtext, msglen);
-		writebuf[msglen + 1] = '\n';
-		write_to_flash(&flash_h, writebuf, msglen + 2);
-		free(writebuf);
 		xSemaphoreGive(flash_mutex);
-		return 0;
+		return res ? 2 : 0;
 	}
 	return 1;
 }
 
-// Returns 0 on success, 1 on access error, 2 if the flash is full
-uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
-	if(xSemaphoreTake(flash_mutex, 0) == pdPASS) {
-		if(get_bytes_remaining(&flash_h) < msglen) {
-			xSemaphoreGive(flash_mutex);
-			return 2;
+void log_lmp_packet(uint8_t *buf, size_t buflen) {
+	uint8_t outbuf[MAX_TELEMETRY_B64_SIZE];
+	uint8_t outlen = base64_encode(buf, buflen, outbuf, MAX_TELEMETRY_B64_SIZE, 1);
+	if(outlen > 0) {
+		outbuf[0] = FLASH_TELEM_MARK;
+		outbuf[outlen] = '\n';
+		uint8_t stat = write_raw_to_flash(outbuf, outlen + 1);
+		if(stat == 2) {
+			if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
+				send_flash_full();
+				lastflashfull = HAL_GetTick();
+			}
 		}
-		write_to_flash(&flash_h, writebuf, msglen);
-		xSemaphoreGive(flash_mutex);
-		return 0;
 	}
-	return 1;
 }
 
 void send_flash_full() {
@@ -476,24 +345,7 @@ void send_flash_full() {
 				if(pkt_buf) {
 					get_iso_time(pkt_buf, 24 + 1 + 1 + sizeof(ERR_FLASH_FULL) - 1);
 					pkt_buf[24] = ' ';
-					switch(bb_num) {
-						case 1: {
-							pkt_buf[25] = '1';
-							break;
-						}
-						case 2: {
-							pkt_buf[25] = '2';
-							break;
-						}
-						case 3: {
-							pkt_buf[25] = '3';
-							break;
-						}
-						default: {
-							pkt_buf[25] = '9';
-							break;
-						}
-					}
+					pkt_buf[25] = '4';
 					memcpy(&pkt_buf[26], ERR_FLASH_FULL, sizeof(ERR_FLASH_FULL) - 1);
 					netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
 				}
@@ -504,19 +356,6 @@ void send_flash_full() {
 	}
 }
 
-// 0 success, 1 semaphore timeout, 2 flash full, 3 memory error
-int log_lmp_packet(uint8_t *buf, size_t buflen) {
-	uint8_t outbuf[MAX_TELEMETRY_B64_SIZE];
-	uint8_t outlen = base64_encode(buf, buflen, outbuf, MAX_TELEMETRY_B64_SIZE, 1);
-	if(outlen > 0) {
-		outbuf[0] = FLASH_TELEM_MARK;
-		outbuf[outlen] = '\n';
-		uint8_t stat = write_raw_to_flash(outbuf, outlen + 1);
-		return stat;
-	}
-	return 3;
-}
-
 void send_udp_online(ip4_addr_t * ip) {
 	size_t msglen = 24 + 1 + 1 + sizeof(STAT_NETWORK_LOG_ONLINE) + 15;
 	struct netbuf *outbuf = netbuf_new();
@@ -525,24 +364,7 @@ void send_udp_online(ip4_addr_t * ip) {
 		if(pkt_buf) {
 			get_iso_time((char *) pkt_buf, msglen);
 			pkt_buf[24] = ' ';
-			switch(bb_num) {
-				case 1: {
-					pkt_buf[25] = '1';
-					break;
-				}
-				case 2: {
-					pkt_buf[25] = '2';
-					break;
-				}
-				case 3: {
-					pkt_buf[25] = '3';
-					break;
-				}
-				default: {
-					pkt_buf[25] = '9';
-					break;
-				}
-			}
+			pkt_buf[25] = '4';
 			snprintf((char *) &pkt_buf[26], sizeof(STAT_NETWORK_LOG_ONLINE) + 15, STAT_NETWORK_LOG_ONLINE "%u.%u.%u.%u", ip4_addr1(ip), ip4_addr2(ip), ip4_addr3(ip), ip4_addr4(ip));
 			netconn_sendto(errormsgudp, outbuf, IP4_ADDR_BROADCAST, ERROR_UDP_PORT);
 		}
@@ -553,42 +375,59 @@ void send_udp_online(ip4_addr_t * ip) {
 void log_flash_storage(char *logstring, int numbytes) {
 	if(xSemaphoreTake(flash_mutex, 1) == pdPASS) {
 		//uint32_t used = 536870912UL - fc_get_bytes_remaining(&flash_h);
-		uint32_t available = get_bytes_remaining(&flash_h);
+		uint32_t available[4] = {get_bytes_remaining(&(flash_chips[0])), get_bytes_remaining(&(flash_chips[1])), get_bytes_remaining(&(flash_chips[2])), get_bytes_remaining(&(flash_chips[3]))};
 		xSemaphoreGive(flash_mutex);
 
-		uint8_t percent = (((uint64_t) available) * 100) / 536870912;
-		if(available < 1024) {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 23];
-	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", available, percent);
-	    	log_message(logmsg, -1);
-	    	if(numbytes >= sizeof(logmsg) - 4) {
-	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
-	    		return;
-	    	}
+		uint32_t min_avail = available[0];
+		for(uint8_t i = 1;i < 4;i++) {
+			if(available[i] < min_avail) {
+				min_avail = available[i];
+			}
 		}
-		else if(available < 1048576UL) {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
-	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", available, available >> 10, percent);
-	    	log_message(logmsg, -1);
-	    	if(numbytes >= sizeof(logmsg) - 4) {
-	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
-	    		return;
-	    	}
 
+		char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
+		generate_space_string(min_avail, logmsg, sizeof(STAT_AVAILABLE_FLASH) + 37);
+		if(numbytes >= sizeof(logmsg) - 4) {
+			memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
 		}
 		else {
-	    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 32];
-	    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu16 "MB/512MB %u%%", available, (uint16_t) (available >> 20), percent);
-	    	log_message(logmsg, -1);
-	    	if(numbytes >= sizeof(logmsg) - 4) {
-	    		memcpy(logstring, logmsg + 4, sizeof(logmsg) - 4);
-	    		return;
-	    	}
+			memcpy(logstring, "\0", 1);
+		}
+
+		for(uint8_t i = 0;i < 4;i++) {
+			char chipmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
+			generate_space_string(available[i], chipmsg, sizeof(STAT_AVAILABLE_FLASH) + 37);
+			log_message(chipmsg, -1);
 		}
 	}
+}
 
-	if(numbytes > 0) {
-		memcpy(logstring, "\0", 1);
+void generate_space_string(uint32_t available, char *logstring, int numbytes) {
+	uint8_t percent = (((uint64_t) available) * 100) / 536870912;
+	if(available < 1024) {
+    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 23];
+    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B/512MB %u%%", available, percent);
+    	if(numbytes >= sizeof(logmsg)) {
+    		memcpy(logstring, logmsg, sizeof(logmsg));
+    		return;
+    	}
+	}
+	else if(available < 1048576UL) {
+    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
+    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", available, available >> 10, percent);
+    	if(numbytes >= sizeof(logmsg)) {
+    		memcpy(logstring, logmsg, sizeof(logmsg));
+    		return;
+    	}
+
+	}
+	else {
+    	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 32];
+    	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu16 "MB/512MB %u%%", available, (uint16_t) (available >> 20), percent);
+    	if(numbytes >= sizeof(logmsg)) {
+    		memcpy(logstring, logmsg, sizeof(logmsg));
+    		return;
+    	}
 	}
 }
 
@@ -600,13 +439,15 @@ void clear_flash() {
 void handle_flash_clearing() {
     if(xSemaphoreTake(flash_clear_mutex, portMAX_DELAY) == pdPASS) {
     	if(xSemaphoreTake(flash_mutex, 100) == pdPASS) {
-    		finish_flash_write(&flash_h); // Flush write buffer
-        	erase_flash(&flash_h); // Clear
+    		for(uint8_t i = 0;i < 4;i++) {
+        		finish_flash_write(&(flash_chips[i])); // Flush write buffer
+            	erase_flash(&(flash_chips[i])); // Clear
+    		}
     		xSemaphoreGive(flash_mutex);
     		log_message(STAT_CLEAR_FLASH, -1);
 			Message dev_cmd_ack = {0};
 			dev_cmd_ack.type = MSG_DEVICE_ACK;
-			dev_cmd_ack.data.device_ack.board_id = bb_num;
+			dev_cmd_ack.data.device_ack.board_id = BOARD_FR;
 			dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_CLEAR_FLASH;
 			strlcpy(dev_cmd_ack.data.device_ack.payload, STAT_CLEAR_FLASH + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
   			if(send_msg_to_device(&dev_cmd_ack, 5) != 0) {
@@ -636,14 +477,18 @@ void FlashClearTask(void *argument) {
 
 void flush_flash_log() {
 	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
-		finish_flash_write(&flash_h);
+		for(uint8_t i = 0;i < 4;i++) {
+			finish_flash_write(&(flash_chips[i]));
+		}
 		xSemaphoreGive(flash_mutex);
 	}
 }
 
 void flush_flash_log_for_reset() {
 	if(xSemaphoreTake(flash_mutex, 500) == pdPASS) {
-		finish_flash_write(&flash_h);
+		for(uint8_t i = 0;i < 4;i++) {
+			finish_flash_write(&(flash_chips[i]));
+		}
 	}
 }
 

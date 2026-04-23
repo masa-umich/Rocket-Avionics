@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -31,22 +31,21 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-//#include "LSM6DSO32XTR.h"
-//#include "semphr.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "stdlib.h"
 #include "string.h"
-#include "lmp_channels.h"
 #include "timers.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -63,22 +62,22 @@ extern "C" {
 
 #define EEPROM_RESTART_DELAY_MS				500
 
-#define BB_EEPROM_FCIP_DEFAULT_1			141
-#define BB_EEPROM_FCIP_DEFAULT_2			212
-#define BB_EEPROM_FCIP_DEFAULT_3			192
-#define BB_EEPROM_FCIP_DEFAULT_4			170
+#define FR_EEPROM_FCIP_DEFAULT_1			141
+#define FR_EEPROM_FCIP_DEFAULT_2			212
+#define FR_EEPROM_FCIP_DEFAULT_3			192
+#define FR_EEPROM_FCIP_DEFAULT_4			170
 
-#define BB_EEPROM_FRIP_DEFAULT_1			141
-#define BB_EEPROM_FRIP_DEFAULT_2			212
-#define BB_EEPROM_FRIP_DEFAULT_3			192
-#define BB_EEPROM_FRIP_DEFAULT_4			210
+#define FR_EEPROM_FRIP_DEFAULT_1			141
+#define FR_EEPROM_FRIP_DEFAULT_2			212
+#define FR_EEPROM_FRIP_DEFAULT_3			192
+#define FR_EEPROM_FRIP_DEFAULT_4			210
 
 #define FR_MAC_ADDR_1		0x00
 #define FR_MAC_ADDR_2		0x80
 #define FR_MAC_ADDR_3		0xE1
-#define FR_MAC_ADDR_4		0x3A
-#define FR_MAC_ADDR_5		0x12
-#define FR_MAC_ADDR_6		0x4F
+#define FR_MAC_ADDR_4		0x3E
+#define FR_MAC_ADDR_5		0x19
+#define FR_MAC_ADDR_6		0xC2
 
 #define FLASH_TELEM_MARK	(uint8_t)0x1D
 #define FLASH_MSG_MARK		(uint8_t)0x1E
@@ -94,14 +93,13 @@ extern "C" {
 
 extern void set_system_time(uint32_t sec, uint32_t us);
 #define SNTP_SET_SYSTEM_TIME_US(sec, us) set_system_time(sec, us)
-
-#define PERIPHERAL_TIMEOUT	10 // No reason to delay, plus being stuck in a HAL timeout is bad because we turn off interrupts during HAL API calls
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -109,20 +107,12 @@ void Error_Handler(void);
 #define SPI4_CS_GPIO_Port GPIOE
 #define SPI5_CS_Pin GPIO_PIN_6
 #define SPI5_CS_GPIO_Port GPIOF
-#define ETH_NRST_Pin GPIO_PIN_0
-#define ETH_NRST_GPIO_Port GPIOB
 #define SPI2_CS_Pin GPIO_PIN_11
 #define SPI2_CS_GPIO_Port GPIOA
 #define SPI1_CS_Pin GPIO_PIN_10
 #define SPI1_CS_GPIO_Port GPIOG
 #define EEPROM_WC_Pin GPIO_PIN_12
 #define EEPROM_WC_GPIO_Port GPIOG
-#define LED_R_Pin GPIO_PIN_9
-#define LED_R_GPIO_Port GPIOB
-#define LED_G_Pin GPIO_PIN_0
-#define LED_G_GPIO_Port GPIOE
-#define LED_B_Pin GPIO_PIN_1
-#define LED_B_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

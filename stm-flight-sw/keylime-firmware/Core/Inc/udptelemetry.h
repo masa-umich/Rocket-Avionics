@@ -26,4 +26,6 @@ int broadcast_telem_msg(Message *msg, TickType_t wait);
 
 void TelemetrySend(void *argument);
 
+void log_udp_telemetry(uint8_t *message, uint16_t msg_len);
+
 #endif /* INC_UDPTELEMETRY_H_ */

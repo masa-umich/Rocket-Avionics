@@ -52,9 +52,9 @@
 /*----- Default value in ETH configuration GUI in CubeMx: 1524 -----*/
 #define ETH_RX_BUFFER_SIZE 1536
 /*----- Default Value for MEMP_NUM_UDP_PCB: 4 ---*/
-#define MEMP_NUM_UDP_PCB 6
+#define MEMP_NUM_UDP_PCB 8
 /*----- Default Value for MEMP_NUM_TCP_PCB: 5 ---*/
-#define MEMP_NUM_TCP_PCB 9
+#define MEMP_NUM_TCP_PCB 8
 /*----- Value in opt.h for MEM_ALIGNMENT: 1 -----*/
 #define MEM_ALIGNMENT 4
 /*----- Default Value for MEM_SIZE: 1600 ---*/
@@ -91,8 +91,6 @@
 #define TCP_MSS 1460
 /*----- Default Value for TCP_SND_BUF: 2920 ---*/
 #define TCP_SND_BUF 5840
-/*----- Default Value for TCP_SND_QUEUELEN: 17 ---*/
-#define TCP_SND_QUEUELEN 16
 /*----- Value in opt.h for LWIP_NETIF_LINK_CALLBACK: 0 -----*/
 #define LWIP_NETIF_LINK_CALLBACK 1
 /*----- Value in opt.h for TCPIP_THREAD_STACKSIZE: 0 -----*/
@@ -129,10 +127,8 @@
 #define LWIP_SNTP 1
 /*----- Default Value for LWIP_TFTP: 0 ---*/
 #define LWIP_TFTP 1
-/*----- Default Value for LWIP_STATS: 0 ---*/
-#define LWIP_STATS 1
-/*----- Value in opt.h for MIB2_STATS: 0 or SNMP_LWIP_MIB2 -----*/
-#define MIB2_STATS 0
+/*----- Value in opt.h for LWIP_STATS: 1 -----*/
+#define LWIP_STATS 0
 /*----- Value in opt.h for CHECKSUM_GEN_IP: 1 -----*/
 #define CHECKSUM_GEN_IP 0
 /*----- Value in opt.h for CHECKSUM_GEN_UDP: 1 -----*/
@@ -149,30 +145,10 @@
 #define CHECKSUM_CHECK_TCP 0
 /*----- Value in opt.h for CHECKSUM_CHECK_ICMP6: 1 -----*/
 #define CHECKSUM_CHECK_ICMP6 0
-/*----- Default Value for LWIP_DBG_MIN_LEVEL: LWIP_DBG_LEVEL_ALL ---*/
-#define LWIP_DBG_MIN_LEVEL LWIP_DBG_LEVEL_WARNING
-/*----- Default Value for LWIP_DBG_TYPES_ON: LWIP_DBG_ON ---*/
-#define LWIP_DBG_TYPES_ON LWIP_DBG_OFF
 /*-----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
 #define IP_SOF_BROADCAST      1
 #define IP_SOF_BROADCAST_RECV 1
-
-//#define TCP_KEEPIDLE 10000 // 10 seconds
-//#define TCP_KEEPINTVL 5000 // 5 seconds
-/*#define LWIP_DEBUG
-#define TCP_DEBUG		LWIP_DBG_ON
-#define PBUF_DEBUF		LWIP_DBG_ON
-//#define SNTP_DEBUG    LWIP_DBG_ON
-//#define UDP_DEBUG     LWIP_DBG_ON
-//#define ICMP_DEBUG 	  LWIP_DBG_ON
-#define LWIP_DBG_TYPES_ON     LWIP_DBG_ON
-#define LWIP_DBG_MIN_LEVEL LWIP_DBG_LEVEL_ALL
-#define LWIP_STATS 1
-#define TCP_STATS 1
-#define MEM_STATS 1
-#define MEMP_STATS 1
-#define SYS_STATS 1*/
 /* USER CODE END 1 */
 
 #ifdef __cplusplus
