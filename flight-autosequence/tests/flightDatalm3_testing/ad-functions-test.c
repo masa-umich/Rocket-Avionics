@@ -7,7 +7,7 @@ const float MOLAR_MASS_AIR = 0.02896f;          // kg/mol
 const float R_GAS_CONST = 8.315f;               // gas constant
 const float GAMMA = 1.4f;
 
-const float DROGUE_DEPLOY_ALTITUDE = 1500.0f;     // m
+const float DROGUE_DEPLOY_ALTITUDE = 1524.0f;     // m
 const float MAIN_DEPLOY_ALTITUDE = 300.0f;        // m
 float GROUND_ALTITUDE = 700.0f;                   // m
 
@@ -22,8 +22,8 @@ const float TEMP_C_MAX = 50.0f;  // Celsius
 const float TEMP_K_MIN = TEMP_C_MIN + 273.15f; // Kelvin
 const float TEMP_K_MAX = TEMP_C_MAX + 273.15f; // Kelvin
 
-const float PILOT_TERM_VEL = 5.8f; // m/s, terminal velocity with drogue chute deployed (for fallback timer calculations)
-const float DROGUE_TERM_VEL = 5.8f;   // m/s, terminal velocity with main chute deployed (for fallback timer calculations)
+const float PILOT_TERM_VEL = 6.0f; // m/s, terminal velocity with drogue chute deployed (for fallback timer calculations)
+const float DROGUE_TERM_VEL = 5.5f;   // m/s, terminal velocity with main chute deployed (for fallback timer calculations)
 
 void insert(Detector * detector, float reading1, float reading2, FlightPhase phase, DetectorType type) {
     // Data imputation
@@ -82,7 +82,7 @@ int detect_event(Detector * detector, FlightPhase phase) {
 
     if (phase == ST_WAIT_GROUND)
         // Altitude slope hits 0 (no longer changing)
-        return buffer_lt(detector->average, detector->slope_size, 10.0f);
+        return buffer_lt(detector->average, detector->avg_size, 20.0f);
 
     return 0;
 }

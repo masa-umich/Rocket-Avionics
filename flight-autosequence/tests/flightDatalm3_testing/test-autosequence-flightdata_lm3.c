@@ -9,7 +9,7 @@ const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000; // 120 seconds in millisecond
 const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000; // 150 seconds in milliseconds
 
 // System defs
-const uint32_t period = 20; // ms, greater than sampling period of 20 ms
+const uint32_t period = 50; // ms, greater than sampling period of 20 ms
 
 
 int execute_flight_autosequence(){
@@ -159,22 +159,26 @@ int execute_flight_autosequence(){
                 }
                 else if(alt_detector.slope_size >= AD_CAPACITY) {
                     // NEW LOGIC: Also check if baro_speed drops below zero
-                    if (detect_event(&alt_detector, phase) ||
-                        time_since(ignition_timestamp) >= fallback_apogee_time || 
-                        time_since(ignition_timestamp) >= APOGEE_CONSTANT_TIMER) {
+                    uint32_t current_time = time_since(ignition_timestamp);
+                    int apogee_by_detection = detect_event(&alt_detector, phase);
+                    int apogee_by_fallback = current_time >= fallback_apogee_time;
+                    int apogee_by_constant_timer = current_time >= APOGEE_CONSTANT_TIMER;
+
+                    if (apogee_by_detection||
+                        apogee_by_fallback || 
+                        apogee_by_constant_timer) {
                         
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
-                        apogee_timestamp = time_since(ignition_timestamp);
+                        apogee_timestamp = current_time;
+                        apogee_altitude = computed_altitude;
                         
-                        if (detect_event(&alt_detector, phase)) {
+                        if (apogee_by_detection) {
                             apogee_detection_worked = 1;
                         } 
-                        else if (time_since(ignition_timestamp) >= fallback_apogee_time){
+                        else if (apogee_by_fallback){
                             fallback_timers_worked = 1;
                         }
-
-                        apogee_altitude = computed_altitude;
                     }
                 }
                 loop_ctr++;
@@ -187,23 +191,27 @@ int execute_flight_autosequence(){
                 
                 if(alt_detector.avg_size >= AD_CAPACITY) {
                     int deploy_drogue = 0;
-                    uint32_t flight_time = time_since(ignition_timestamp); 
+                    uint32_t current_time = time_since(ignition_timestamp); 
+
+                    int fiveK_by_detection = detect_event(&alt_detector, phase);
+                    int fiveK_by_fallback = current_time >= fallback_5k_time;
+                    int fiveK_by_constant_timer = current_time >= DROGUE_CONSTANT_TIMER;
 
                     // TIER 1: If apogee logic worked, strictly lock out ALL timers.
                     if (apogee_detection_worked) {
-                        if (detect_event(&alt_detector, phase)) {
+                        if (fiveK_by_detection) {
                             deploy_drogue = 1;
                         }
                     } 
                     // TIER 2: Apogee failed, so we fall back to computed timers.
                     else if (fallback_timers_worked) {
-                        if (flight_time >= fallback_5k_time) {
+                        if (fiveK_by_fallback) {
                             deploy_drogue = 1;
                         }
                     } 
                     // TIER 3: Both primary and secondary failed. 
                     else {
-                        if (flight_time >= DROGUE_CONSTANT_TIMER) {
+                        if (fiveK_by_constant_timer) {
                             deploy_drogue = 1;
                         }
                     }
@@ -211,7 +219,7 @@ int execute_flight_autosequence(){
                     if (deploy_drogue) {
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
-                        drogue_timestamp = flight_time;
+                        drogue_timestamp = current_time;
                         drogue_altitude = computed_altitude;
                     }
                 }
@@ -224,23 +232,27 @@ int execute_flight_autosequence(){
 
                 if(alt_detector.avg_size >= AD_CAPACITY) {
                     int deploy_main = 0;
-                    uint32_t flight_time = time_since(ignition_timestamp);
+                    uint32_t current_time = time_since(ignition_timestamp);
+
+                    int oneK_by_detection = detect_event(&alt_detector, phase);
+                    int oneK_by_fallback = current_time >= fallback_1k_time;
+                    int oneK_by_constant_timer = current_time >= MAIN_CONSTANT_TIMER;
 
                     // TIER 1: Primary Method (Apogee logic worked, rely strictly on altitude)
                     if (apogee_detection_worked) {
-                        if (detect_event(&alt_detector, phase)) {
+                        if (oneK_by_detection) {
                             deploy_main = 1;
                         }
                     }
                     // TIER 2: Secondary Method (Apogee failed, rely strictly on calculated fallback)
                     else if (fallback_timers_worked) {
-                        if (flight_time >= fallback_1k_time) {
+                        if (oneK_by_fallback) {
                             deploy_main = 1;
                         }
                     }
                     // TIER 3: Ultimate Backup (Neither worked, use raw constant timer)
                     else {
-                        if (flight_time >= MAIN_CONSTANT_TIMER) {
+                        if (oneK_by_constant_timer) {
                             deploy_main = 1;
                         }
                     }
@@ -248,7 +260,7 @@ int execute_flight_autosequence(){
                     if (deploy_main) {
                         main_flag = 1;
                         phase = ST_WAIT_GROUND;
-                        main_timestamp = flight_time; 
+                        main_timestamp = current_time; 
                         
                         uint8_t idx_alt = (alt_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                         main_altitude = alt_detector.average[idx_alt];
