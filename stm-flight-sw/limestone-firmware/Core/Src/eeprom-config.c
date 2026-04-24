@@ -42,7 +42,7 @@ int get_radio_state(uint8_t blocking) {
 
 void set_radio_state(uint8_t state) {
 	if(xSemaphoreTake(eeprom_mutex, 2) == pdPASS) {
-		eeprom_status_t write_stat = eeprom_write_mem(&eeprom_h, EEPROM_RADIO_PARAM_ADDR, &state, 1);
+		eeprom_write_mem(&eeprom_h, EEPROM_RADIO_PARAM_ADDR, &state, 1);
 		xSemaphoreGive(eeprom_mutex);
 	}
 }

@@ -112,7 +112,9 @@ void TelemetryTask(void *argument) {
   			Rocket_h.fcState.pt4 = PT_calc(PT4_h, adc_values[ADC_PT4_I]);
   			Rocket_h.fcState.pt5 = PT_calc(PT5_h, adc_values[ADC_PT5_I]);
 
-  			Rocket_h.fcState.fluctus_state = fluctus_threshold(adc_values[FLUCTUS_CHANNEL]);
+  			Rocket_h.fcState.fluctus_apogee_state = fluctus_threshold(adc_values[FLUCTUS_APOGEE_CHANNEL]);
+  			Rocket_h.fcState.fluctus_1k_state = fluctus_threshold(adc_values[FLUCTUS_1K_CHANNEL]);
+  			Rocket_h.fcState.fluctus_5k_state = fluctus_threshold(adc_values[FLUCTUS_5K_CHANNEL]);
 
   			Rocket_h.fcState.bus24v_voltage = bus_voltage_calc(adc_values[ADC_24V_BUS_I], POWER_24V_RES_A, POWER_24V_RES_B);
   			Rocket_h.fcState.bus12v_voltage = bus_voltage_calc(adc_values[ADC_12V_BUS_I], POWER_12V_RES_A, POWER_12V_RES_B);

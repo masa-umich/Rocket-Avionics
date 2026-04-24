@@ -177,7 +177,9 @@ extern void set_system_time(uint32_t sec, uint32_t us);
 #define ADC_12V_BUS_I		(size_t)14
 #define ADC_24V_BUS_I		(size_t)15
 
-#define FLUCTUS_CHANNEL		ADC_PT5_I
+#define FLUCTUS_APOGEE_CHANNEL		ADC_PT5_I
+#define FLUCTUS_5K_CHANNEL			ADC_PT4_I
+#define FLUCTUS_1K_CHANNEL			ADC_PT3_I
 
 #define DIVIDER_VALVE		(uint8_t)1
 #define DIVIDER_12V_24V		(uint8_t)0

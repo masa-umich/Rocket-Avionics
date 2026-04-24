@@ -240,6 +240,12 @@ void BuzzTimer(TimerHandle_t xTimer) {
     toggleCount--;
 
     vTimerSetTimerID(xTimer, (void *)toggleCount);
+    if(HAL_GPIO_ReadPin(BUZZ_GPIO_Port, BUZZ_Pin)) {
+    	xTimerChangePeriod(xTimer, 1000, 0);
+    }
+    else {
+    	xTimerChangePeriod(xTimer, 10000, 0);
+    }
 }
 
 void LEDTimer(TimerHandle_t xTimer) {
@@ -1249,7 +1255,7 @@ void StartAndMonitor(void *argument)
 	}
 
 	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
-	start_buzz_timer(1000, 0, 0);
+	start_buzz_timer(1000, UINT32_MAX, 0);
 
 	// Setup TCP server
 	if(server_create(loaded_config.limewireIP, loaded_config.bayboard1IP, loaded_config.bayboard2IP, loaded_config.bayboard3IP, loaded_config.flightrecordIP)) {

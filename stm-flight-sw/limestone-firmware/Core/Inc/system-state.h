@@ -56,7 +56,9 @@ typedef struct {
 	float auto_sequence_state;
 
 	uint64_t timestamp; // Only used to monitor how "fresh" the data is
-	uint8_t fluctus_state;
+	uint8_t fluctus_apogee_state;
+	uint8_t fluctus_5k_state;
+	uint8_t fluctus_1k_state;
 } Flight_Computer_State_t;
 
 typedef struct {

@@ -422,7 +422,9 @@ uint8_t serialize_radio_telem(uint8_t * buf, size_t len, TickType_t timeout) {
 		pack_uint16(Rocket_h.fcState.bus24v_voltage * 1000, buf + 26);
 		pack_int16(Rocket_h.fcState.board_temp, buf + 28);
 		pack_uint8(Rocket_h.fcState.auto_sequence_state, buf + 30);
-		pack_uint8(Rocket_h.fcState.fluctus_state, buf + 31);
+		//pack_uint8(Rocket_h.fcState.fluctus_state, buf + 31);
+		uint8_t fluctus_mask = (Rocket_h.fcState.fluctus_5k_state << 2) | (Rocket_h.fcState.fluctus_1k_state << 1) | (Rocket_h.fcState.fluctus_apogee_state << 0);
+		memcpy(buf + 31, &fluctus_mask, 1);
 
 		uint64_t ms_time = Rocket_h.fcState.timestamp / 1000000;
 		memcpy(buf + 40, &ms_time, 8);
