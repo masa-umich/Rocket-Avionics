@@ -185,3 +185,30 @@ uint8_t coldflow_autosequence(Autos_boot_t * params) {
 void update_boot_params(Autos_boot_t * params) {
 	write_autosequence_params((void *)params, sizeof(Autos_boot_t));
 }
+
+uint8_t get_fluctus_apogee() {
+	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+		uint8_t state = Rocket_h.fcState.fluctus_apogee_state;
+		xSemaphoreGive(Rocket_h.fcState_access);
+		return state;
+	}
+	return 0;
+}
+
+uint8_t get_fluctus_5k() {
+	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+		uint8_t state = Rocket_h.fcState.fluctus_5k_state;
+		xSemaphoreGive(Rocket_h.fcState_access);
+		return state;
+	}
+	return 0;
+}
+
+uint8_t get_fluctus_1k() {
+	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+		uint8_t state = Rocket_h.fcState.fluctus_1k_state;
+		xSemaphoreGive(Rocket_h.fcState_access);
+		return state;
+	}
+	return 0;
+}

@@ -90,4 +90,10 @@ void update_state_in_telem(AutoS_SM status); // update state machine channel in 
 
 void update_boot_params(Autos_boot_t * params);
 
+uint8_t get_fluctus_apogee();
+
+uint8_t get_fluctus_5k();
+
+uint8_t get_fluctus_1k();
+
 #endif /* INC_FLIGHT_AUTOSEQUENCE_H_ */
