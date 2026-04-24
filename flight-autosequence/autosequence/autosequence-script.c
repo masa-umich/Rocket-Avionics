@@ -130,7 +130,7 @@ int execute_flight_autosequence(){
                     P_GROUND = baro_detector.average[idx_baro];
 
                     // adjust lapse rate based on altitude & non-standard atmospheric conditions
-                    LAPSE_RATE = (T_TROPOPAUSE - T_GROUND) / (ALT_TROPOPAUSE - GROUND_ALTITUDE);
+                    LAPSE_RATE = (T_GROUND - T_TROPOPAUSE) / (ALT_TROPOPAUSE - GROUND_ALTITUDE);
 
                     // calculate drogue and main deploy pressures based on ground temp and pressure
                     DROGUE_DEPLOY_PRESSURE = compute_pressure(DROGUE_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
@@ -242,7 +242,7 @@ int execute_flight_autosequence(){
                         apogee_timestamp = time_since(ignition_timestamp);
                         
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        apogee_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        apogee_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
 
                     // if our fallback timers predict apogee, set flag and move to next phase
@@ -253,7 +253,7 @@ int execute_flight_autosequence(){
                         apogee_timestamp = time_since(ignition_timestamp);
 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        apogee_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        apogee_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
 
                     // if neither work, set constant timer flag
@@ -263,7 +263,7 @@ int execute_flight_autosequence(){
                         apogee_timestamp = time_since(ignition_timestamp);
 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        apogee_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        apogee_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
                 }
 
@@ -286,7 +286,7 @@ int execute_flight_autosequence(){
                         drogue_timestamp = time_since(ignition_timestamp);
 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        drogue_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        drogue_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
 
                     // if we detected apogee with fallback timers, detect drogue deployment with fallback timers
@@ -296,7 +296,7 @@ int execute_flight_autosequence(){
                         drogue_timestamp = time_since(ignition_timestamp);
 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        drogue_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        drogue_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
 
                     // otherwise just "detect" with constant timer
@@ -306,7 +306,7 @@ int execute_flight_autosequence(){
                         drogue_timestamp = time_since(ignition_timestamp);
 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        drogue_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        drogue_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
                 }
 
@@ -328,7 +328,7 @@ int execute_flight_autosequence(){
                         main_timestamp = time_since(ignition_timestamp);
 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        main_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        main_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
 
                     else if (fallback_timers_worked && time_since(ignition_timestamp) >= fallback_1k_time) {
@@ -337,7 +337,7 @@ int execute_flight_autosequence(){
                         main_timestamp = time_since(ignition_timestamp);
 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        main_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        main_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
 
                     else if (time_since(ignition_timestamp) >= MAIN_CONSTANT_TIMER) {
@@ -346,7 +346,7 @@ int execute_flight_autosequence(){
                         main_timestamp = time_since(ignition_timestamp);
 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        main_altitude = compute_height(baro_detector.avg_index[idx_baro]);
+                        main_altitude = compute_height(baro_detector.average[idx_baro]);
                     }
                 }
 
