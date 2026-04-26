@@ -11,7 +11,7 @@
 #include "stddef.h"
 #include "stdint.h"
 
-uint8_t base64_encode(const unsigned char *src, size_t len,
+size_t base64_encode(const unsigned char *src, size_t len,
 				unsigned char * out, size_t buflen, int padding);
 
 size_t b64_size(size_t len, int padding);

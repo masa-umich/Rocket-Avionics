@@ -372,18 +372,21 @@ int main(void)
 	  	  }
 	  	  case -2: {
 	  		  // eeprom tc gain value error
+	  		  load_eeprom_defaults(&loaded_config, &bb_num);
 	  		  log_message(ERR_EEPROM_LOAD_TC_ERR, -1);
 	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -3: {
 	  		  // eeprom valve conf error
+	  		  load_eeprom_defaults(&loaded_config, &bb_num);
 	  		  log_message(ERR_EEPROM_LOAD_VLV_ERR, -1);
 	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -4: {
 	  		  // invalid bb number
+	  		  load_eeprom_defaults(&loaded_config, &bb_num);
 	  		  log_message(BB_ERR_EEPROM_LOAD_BB_NUM_ERR, -1);
 	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;

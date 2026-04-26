@@ -322,7 +322,7 @@ uint8_t write_raw_to_flash(uint8_t *writebuf, size_t msglen) {
 
 void log_lmp_packet(uint8_t *buf, size_t buflen) {
 	uint8_t outbuf[MAX_TELEMETRY_B64_SIZE];
-	uint8_t outlen = base64_encode(buf, buflen, outbuf, MAX_TELEMETRY_B64_SIZE, 1);
+	size_t outlen = base64_encode(buf, buflen, outbuf, MAX_TELEMETRY_B64_SIZE, 1);
 	if(outlen > 0) {
 		outbuf[0] = FLASH_TELEM_MARK;
 		outbuf[outlen] = '\n';
