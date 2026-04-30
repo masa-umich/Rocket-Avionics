@@ -12,7 +12,7 @@ extern CRC_HandleTypeDef hcrc;
 void *ftp_open(const char *fname, const char *mode, u8_t write) {
 	if(strcmp(fname, "eeprom.bin") == 0) {
 		prepare_eeprom_config();
-		return (void *) 1; // 1 refers to eeprom
+		return write ? (void *) 0 : (void *) 1;
 	}
 	else if(strcmp(fname, "dump1.txt") == 0) {
 		if(!write) {

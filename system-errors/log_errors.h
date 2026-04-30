@@ -302,6 +302,8 @@
 #define BB_STAT_TCP_CLIENT_CONNECTED			"501 TCP client connected"
 #define BB_STAT_TCP_CLIENT_CLOSED				"502 TCP client disconnected"
 #define FR_STAT_TCP_CLIENT_INIT					"504 TCP client initialized"
+#define FR_STAT_LOGGING_ON						"505 Flight Recorder telemetry logging enabled"
+#define FR_STAT_LOGGING_OFF						"506 Flight Recorder telemetry logging disabled"
 
 #endif
 

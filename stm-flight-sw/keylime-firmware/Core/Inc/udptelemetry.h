@@ -15,8 +15,11 @@
 #include "api.h"
 #include "lwip/udp.h"
 #include "ip4_addr.h"
+#include "eeprom-config.h"
 
-uint8_t telemetry_setup();
+void switch_telem_logging(uint8_t enable);
+
+uint8_t telemetry_setup(uint8_t enabled);
 
 void init_udp_telem();
 

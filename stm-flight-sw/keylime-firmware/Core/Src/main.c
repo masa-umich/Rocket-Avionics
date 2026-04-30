@@ -196,9 +196,6 @@ int main(void)
   if(logging_setup()) {
 	 for(;;) {}
   }
-  if(telemetry_setup()) {
-     for(;;) {}
-  }
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -250,6 +247,11 @@ int main(void)
   if(init_flash_logging(&hspi5, SPI5_CS_GPIO_Port, SPI5_CS_Pin, 3)) {
     log_message(FR_ERR_FLASH_INIT_FAILED "4", -1);
   }
+
+  if(telemetry_setup(get_logging_state(0) == 1)) {
+     for(;;) {}
+  }
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */

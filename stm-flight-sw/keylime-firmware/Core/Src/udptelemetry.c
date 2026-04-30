@@ -14,8 +14,21 @@ QueueHandle_t telemetrymsgs = NULL;
 
 osMemoryPoolId_t udpPool;
 
-uint8_t telemetry_setup() {
+uint8_t logging_enabled = 0;
+SemaphoreHandle_t enable_mutex;
+
+void switch_telem_logging(uint8_t enable) {
+	if(xSemaphoreTake(enable_mutex, 2) == pdPASS) {
+		logging_enabled = enable;
+		xSemaphoreGive(enable_mutex);
+		set_logging_state(enable);
+	}
+}
+
+uint8_t telemetry_setup(uint8_t enabled) {
+	logging_enabled = enabled;
 	telemudp_mutex = xSemaphoreCreateMutex();
+	enable_mutex = xSemaphoreCreateMutex();
 	telemetrymsgs = xQueueCreate(50, sizeof(RawMessage));
     udpPool = osMemoryPoolNew(50, MAX_MSG_LEN, NULL);
 
@@ -91,5 +104,11 @@ void TelemetrySend(void *argument) {
 }
 
 void log_udp_telemetry(uint8_t *message, uint16_t msg_len) {
-	log_lmp_packet(message, msg_len);
+	if(xSemaphoreTake(enable_mutex, 2) == pdPASS) {
+		uint8_t enabled = logging_enabled;
+		xSemaphoreGive(enable_mutex);
+		if(enabled) {
+			log_lmp_packet(message, msg_len);
+		}
+	}
 }

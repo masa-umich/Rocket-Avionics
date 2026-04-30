@@ -53,6 +53,32 @@ void ProcessPackets(void *argument) {
 					      			}
 				    				break;
 				    			}
+				    			case DEVICE_CMD_LOGGING_ON: {
+				    				switch_telem_logging(1);
+				    				Message dev_cmd_ack = {0};
+				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
+				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FR;
+				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_LOGGING_ON;
+				    				log_message(FR_STAT_LOGGING_ON, -1);
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FR_STAT_LOGGING_ON + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
+					      			if(send_msg_to_device(&dev_cmd_ack, 5) != 0) {
+					      				// Server not up, target device not connected, or txbuffer is full
+					      			}
+				    				break;
+				    			}
+				    			case DEVICE_CMD_LOGGING_OFF: {
+				    				switch_telem_logging(0);
+				    				Message dev_cmd_ack = {0};
+				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
+				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FR;
+				    				dev_cmd_ack.data.device_ack.cmd_id = DEVICE_CMD_LOGGING_OFF;
+				    				log_message(FR_STAT_LOGGING_OFF, -1);
+				    				strlcpy(dev_cmd_ack.data.device_ack.payload, FR_STAT_LOGGING_OFF + 4, sizeof(dev_cmd_ack.data.device_ack.payload));
+					      			if(send_msg_to_device(&dev_cmd_ack, 5) != 0) {
+					      				// Server not up, target device not connected, or txbuffer is full
+					      			}
+				    				break;
+				    			}
 				    			default: {
 				    				break;
 				    			}

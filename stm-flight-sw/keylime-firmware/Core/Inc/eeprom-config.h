@@ -15,10 +15,16 @@
 #include "log_errors.h"
 #include "timers.h"
 
+#define EEPROM_LOGGING_PARAM_ADDR		(uint16_t)0x2000
+
 typedef struct {
 	ip4_addr_t flightcomputerIP;
 	ip4_addr_t flightrecorderIP;
 } EEPROM_conf_t;
+
+int get_logging_state(uint8_t blocking);
+
+void set_logging_state(uint8_t state);
 
 void prepare_eeprom_config();
 

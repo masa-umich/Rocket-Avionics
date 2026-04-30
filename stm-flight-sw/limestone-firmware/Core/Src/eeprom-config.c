@@ -132,12 +132,12 @@ void close_and_validate_config(CRC_HandleTypeDef *hcrc) {
 
 int eeprom_config_dump(void *buf, int bytes) {
 	// Read from EEPROM
+	xSemaphoreTake(eeprom_mutex, portMAX_DELAY);
 	int bytes_to_read = (eeprom_cursor + bytes > FC_EEPROM_LEN) ? FC_EEPROM_LEN - eeprom_cursor : bytes;
 	if(bytes_to_read == 0) {
 		xSemaphoreGive(eeprom_mutex);
 		return 0;
 	}
-	xSemaphoreTake(eeprom_mutex, portMAX_DELAY);
 	eeprom_status_t read_stat = eeprom_read_mem(&eeprom_h, eeprom_cursor, buf, bytes_to_read);
 	if(read_stat != EEPROM_OK) {
 		// eeprom read error

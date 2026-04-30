@@ -14,6 +14,7 @@
 #include "client.h"
 #include "log_errors.h"
 #include "utils.h"
+#include "udptelemetry.h"
 
 void ProcessPackets(void *argument);
 
