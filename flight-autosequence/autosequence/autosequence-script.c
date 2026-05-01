@@ -221,7 +221,7 @@ int execute_flight_autosequence(Autos_boot_t *boot_params){
                 }
 
                 // check if apogee detected with barometer detector, if we have enough barometer readings
-                else if(alt_detector.slope_size >= AD_CAPACITY) {
+                else if(baro_detectorslope_size >= AD_CAPACITY) {
                     // NEW LOGIC: Also check if baro_speed drops below zero
                     uint32_t current_time = time_since(ignition_timestamp);
                     uint8_t apogee_by_detection = detect_event(&baro_detector, phase);
@@ -260,10 +260,10 @@ int execute_flight_autosequence(Autos_boot_t *boot_params){
                 deployPilot();
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
                 
-                if(alt_detector.avg_size >= AD_CAPACITY) {
+                if(baro_detector.avg_size >= AD_CAPACITY) {
                     uint32_t current_time = time_since(ignition_timestamp); 
 
-                    uint8_t fiveK_by_detection = detect_event(&alt_detector, phase);
+                    uint8_t fiveK_by_detection = detect_event(&baro_detector, phase);
                     uint8_t fiveK_by_fallback = current_time >= fallback_5k_time;
                     uint8_t fiveK_by_constant_timer = current_time >= DROGUE_CONSTANT_TIMER;
 
@@ -312,7 +312,7 @@ int execute_flight_autosequence(Autos_boot_t *boot_params){
                 deployDrogue();
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
 
-                if(alt_detector.avg_size >= AD_CAPACITY) {
+                if(baro_detector.avg_size >= AD_CAPACITY) {
                     uint32_t current_time = time_since(ignition_timestamp);
 
                     uint8_t oneK_by_detection = detect_event(&baro_detector, phase);
