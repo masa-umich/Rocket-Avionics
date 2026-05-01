@@ -29,9 +29,9 @@ void AutosequenceTask(void *argument) {
 				update_boot_params(&arm_state);
 			}
 #ifndef AUTOS_TEST
-			int exit_stat = execute_flight_autosequence(boot_params);
+			int exit_stat = execute_flight_autosequence(*boot_params);
 #else
-			int exit_stat = coldflow_autosequence(boot_params);
+			int exit_stat = coldflow_autosequence(*boot_params);
 #endif
 
 			if(exit_stat < 0) {
@@ -158,8 +158,8 @@ void deployMain() {
 	set_valve_within((Valve_Channel) loaded_config.main_para_index, Valve_Energized);
 }
 
-int coldflow_autosequence(Autos_boot_t * params) {
-	uint8_t entry_state = params->phase;
+int coldflow_autosequence(Autos_boot_t params) {
+	uint8_t entry_state = params.phase;
 	uint32_t start = getTime();
 	while(getTime() - start < 20000 && entry_state < AUTOS_STATE_BURN) {
 		if(valves_open()) {
@@ -216,4 +216,9 @@ uint8_t get_fluctus_1k() {
 		return state;
 	}
 	return 0;
+}
+
+void log_autos_info(Autos_boot_t * params) {
+	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
+	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", available, available >> 10, percent);
 }

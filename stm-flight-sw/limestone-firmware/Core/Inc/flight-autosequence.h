@@ -54,7 +54,7 @@ typedef struct {
 
 void AutosequenceTask(void *argument);
 
-int coldflow_autosequence(Autos_boot_t * params);
+int coldflow_autosequence(Autos_boot_t params);
 
 void setup_autosequence();
 

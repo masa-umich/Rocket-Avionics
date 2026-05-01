@@ -70,7 +70,8 @@ typedef struct {
 
 //What 'state' is our apogee-detection system in? 
 typedef enum {
-    ST_DETECT_VALVES_OPEN = 0,
+	ST_DISARMED = 0x00,
+    ST_DETECT_VALVES_OPEN,
     ST_MACH_LOCKOUT,
     ST_WAIT_MECO,
     ST_WAIT_APOGEE,

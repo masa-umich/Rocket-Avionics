@@ -290,6 +290,7 @@
 #define FC_STAT_HANDOFF_ABORT					"512 Handoff abort signal received"
 #define FC_STAT_ARMED							"513 Flight Autosequence armed"
 #define FC_STAT_DEARMED							"514 Flight Autosequence dearmed"
+#define FC_STAT_AUTOS_LOG						"515"
 
 // Bay Board status messages
 #elif defined(BAY_BOARD)
