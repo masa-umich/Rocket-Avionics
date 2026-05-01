@@ -221,7 +221,7 @@ int execute_flight_autosequence(Autos_boot_t *boot_params){
                 }
 
                 // check if apogee detected with barometer detector, if we have enough barometer readings
-                else if(baro_detectorslope_size >= AD_CAPACITY) {
+                else if(baro_detector.avg_size >= AD_CAPACITY) {
                     // NEW LOGIC: Also check if baro_speed drops below zero
                     uint32_t current_time = time_since(ignition_timestamp);
                     uint8_t apogee_by_detection = detect_event(&baro_detector, phase);
@@ -365,7 +365,7 @@ int execute_flight_autosequence(Autos_boot_t *boot_params){
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
                 
                 // check if landed with barometer detector, if we have enough barometer readings
-                if(baro_detector.slope_size >= AD_CAPACITY) {
+                if(baro_detector.avg_size >= AD_CAPACITY) {
                     if (detect_event(&baro_detector, phase)) {
                         phase = ST_DONE;
                         landed_flag = 1;

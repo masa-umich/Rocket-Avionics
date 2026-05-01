@@ -4,8 +4,6 @@
 #include "ad-functions.h"
 #include <math.h>
 
-float vector_magnitude(float x, float y, float z);
-
 float mean(int size, float *arr);
 
 int min(int x, int y);

@@ -98,4 +98,6 @@ void compute_fallback_times(float altitude, float velocity, float accel,
                             uint32_t *apogee_time, uint32_t *five_k_time, uint32_t *one_k_time,
                             float* h_apogee, float* h_5k, float* h_1k);
 
+void clear(Detector * detector);
+
 #endif

@@ -138,4 +138,19 @@ float compute_pressure(float altitude, float ground_temp, float ground_pressure)
     return ground_pressure * powf(1 - (LAPSE_RATE * altitude) / ground_temp, exp);
 }
 
+void clear(Detector * detector) {
+    for (int i = 0; i < AD_CAPACITY; ++i) {
+        detector->readings_1[i] = 0.0f;
+        detector->readings_2[i] = 0.0f;
+        detector->average[i] = 0.0f;
+    }
+    detector->index_1 = 0;
+    detector->size_1 = 0;
+    detector->index_2 = 0;
+    detector->size_2 = 0;
+    detector->avg_index = 0;
+    detector->avg_size = 0;
+    detector->slope = 0;
+}
+
 
