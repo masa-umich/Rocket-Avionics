@@ -28,7 +28,7 @@ int execute_flight_autosequence(Autos_boot_t *boot_params){
     // timestamps of key events, to be set when events are detected
     uint32_t handoff_timestamp = 0;
     uint32_t ignition_timestamp = 0;
-    uint32_t meco_timestamp = 0;         
+    uint32_t meco_timestamp = 0;
     uint32_t apogee_timestamp = 0;
     uint32_t drogue_timestamp = 0;
     uint32_t main_timestamp = 0;
@@ -38,6 +38,16 @@ int execute_flight_autosequence(Autos_boot_t *boot_params){
     float apogee_altitude = 0.0f;
     float drogue_altitude = 0.0f;
     float main_altitude = 0.0f;
+
+    UNUSED(meco_timestamp);
+    UNUSED(apogee_timestamp);
+    UNUSED(drogue_timestamp);
+    UNUSED(main_timestamp);
+    UNUSED(landed_timestamp);
+    UNUSED(apogee_altitude);
+    UNUSED(drogue_altitude);
+    UNUSED(main_altitude);
+
 
     // fallback time estimates
     uint32_t fallback_apogee_time = 0; 
@@ -88,6 +98,12 @@ int execute_flight_autosequence(Autos_boot_t *boot_params){
     uint8_t fluctus_apogee_detected = 0;
     uint8_t fluctus_5k_detected = 0;
     uint8_t fluctus_1k_detected = 0;
+
+    UNUSED(MECO_flag);
+    UNUSED(apogee_flag);
+    UNUSED(landed_flag);
+    UNUSED(fluctus_5k_detected);
+    UNUSED(fluctus_1k_detected);
 
     // Fluctus FC detection timers
     uint32_t fluctus_apogee_timestamp = 0;

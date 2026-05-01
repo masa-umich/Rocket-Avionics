@@ -16,14 +16,14 @@
 
 extern EEPROM_conf_t loaded_config;
 
-#define AUTOSEQUENCE_TASK_STACK		(uint32_t) 512 * 4
+#define AUTOSEQUENCE_TASK_STACK		(uint32_t) 512 * 8
 
 #define AUTOS_ARM_FLAG			(0x00000001U << 0)
 #define AUTOS_ABORT_FLAG		(0x00000001U << 1)
 #define AUTOS_OX_FLAG			(0x00000001U << 2)
 #define AUTOS_FUEL_FLAG			(0x00000001U << 3)
 
-#define AUTOS_TEST
+//#define AUTOS_TEST
 
 typedef struct {
 	float XL_x; // accel in x direction
@@ -75,6 +75,8 @@ void deployDrogue(); // function to deploy drogue chute
 void deployMain(); // function to deploy main chute
 
 void wait(uint32_t ms); // wait function in ms
+
+uint32_t time_since(uint32_t time_other);
 
 void wait_until(uint32_t target_time_ms); // wait until target time in ms
 

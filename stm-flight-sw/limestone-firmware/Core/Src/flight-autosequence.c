@@ -6,6 +6,7 @@
  */
 
 #include "flight-autosequence.h"
+#include "autosequence-script.h"
 
 osEventFlagsId_t autos_events;
 
@@ -31,6 +32,7 @@ void AutosequenceTask(void *argument) {
 			int exit_stat = execute_flight_autosequence(boot_params);
 #else
 			int exit_stat = coldflow_autosequence(boot_params);
+#endif
 
 			if(exit_stat < 0) {
 				update_state_in_telem(AUTOS_STATE_DEARMED);
@@ -41,7 +43,6 @@ void AutosequenceTask(void *argument) {
 				boot_params->phase = AUTOS_STATE_DEARMED;
 				continue;
 			}
-#endif
 		}
 		else if(flags & osFlagsError) {
 			osDelay(100);
@@ -87,7 +88,7 @@ uint32_t getTime() {
 	return osKernelGetTickCount();
 }
 
-uint32_t time_since(uint32_t time_other){
+uint32_t time_since(uint32_t time_other) {
 	return getTime() - time_other;
 }
 
