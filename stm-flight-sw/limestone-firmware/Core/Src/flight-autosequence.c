@@ -87,6 +87,10 @@ uint32_t getTime() {
 	return osKernelGetTickCount();
 }
 
+uint32_t time_since(uint32_t time_other){
+	return getTime() - time_other;
+}
+
 void wait(uint32_t ms) {
 	osDelay(pdMS_TO_TICKS(ms));
 }
