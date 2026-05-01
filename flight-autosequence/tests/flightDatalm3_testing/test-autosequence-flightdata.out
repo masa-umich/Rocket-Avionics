@@ -16,27 +16,27 @@ Landed:                  1
 --- TIMESTAMPS (ms since ignition) ---
 MECO Timestamp:          5050 ms
 Lockout Ends At:         8000 ms
-Apogee Timestamp:        17450 ms
-Drogue Timestamp:        22550 ms
-Main Timestamp:          278400 ms
-Landed Timestamp:        340950 ms
+Apogee Timestamp:        17950 ms
+Drogue Timestamp:        29200 ms
+Main Timestamp:          255600 ms
+Landed Timestamp:        313050 ms
 
 --- KEY ALTITUDES ---
-Apogee Altitude:         1569.11 m
-Drogue Deploy Altitude:  1521.87 m
-Main Deploy Altitude:    297.18 m
+Apogee Altitude:         1470.36 m
+Drogue Deploy Altitude:  1520.04 m
+Main Deploy Altitude:    296.27 m
 
 --- POST LOCKOUT KINEMATICS ---
-Delay after lockout:     4650 ms
-Altitude:                1324.46 m
-Velocity:                75.89 m/s
-Acceleration:            -11.77 m/s^2
+Delay after lockout:     1860 ms
+Altitude:                1302.10 m
+Velocity:                82.00 m/s
+Acceleration:            -11.30 m/s^2
 
 --- FALLBACK TIMER PREDICTIONS ---
-Apogee time:             19047 ms
-Drogue deploy time:      26562 ms
-Main deploy time:        249107 ms
-Apogee altitude:         1569.09 m
+Apogee time:             19857 ms
+Drogue deploy time:      32463 ms
+Main deploy time:        255008 ms
+Apogee altitude:         1599.64 m
 Drogue deploy altitude:  1524.00 m
 Main deploy altitude:    300.00 m
 =================================================

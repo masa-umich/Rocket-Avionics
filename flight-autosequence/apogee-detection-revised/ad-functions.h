@@ -4,38 +4,36 @@
 #include "stdint.h"
 #include <math.h>
 
-#define ALTITUDE_BUFFER_SIZE 11
-//size of the array of readings we maintain during the flight
 //used with the barometer and the IMU
-#define AD_CAPACITY 5          
+#define AD_CAPACITY 21        
 
-extern const float CROSS_SECT_AREA;           // m^2
-extern const float MASS_AT_MECO;             // kg
-extern const float CD;                         //drag coefficient
 extern const float G;                           // gravity
 extern const float MOLAR_MASS_AIR;          // kg/mol
 extern const float R_GAS_CONST;               // gas constant
 extern const float GAMMA;
+extern const float LAPSE_RATE;               // Celsius per meter
+
 
 extern const float DROGUE_DEPLOY_ALTITUDE;     // m, for reference
 extern const float MAIN_DEPLOY_ALTITUDE;       // m, for reference
 
 
 // TO BE SET AT LAUNCH
-extern float GROUND_ALTITUDE;     // meters above sea level at FAR
 extern float DROGUE_DEPLOY_PRESSURE;   // hPa, to be set at launch
 extern float MAIN_DEPLOY_PRESSURE;      // hPa, to be set at launch
-extern float LAPSE_RATE;               // Celsius per meter
 extern float P_GROUND;             // hPa
 extern float T_GROUND;               // Kelvin (20 deg C)
-extern float P_TROPOPAUSE;             // hPa  // TO-DO DOUBLE CHECK THIS
-extern float T_TROPOPAUSE;             // Kelvin (56.5 deg C)
-extern float ALT_TROPOPAUSE;              // meters
+
+//extern float GROUND_ALTITUDE;     // meters above sea level at FAR
+//extern float P_TROPOPAUSE;             // hPa  // TO-DO DOUBLE CHECK THIS
+//extern float T_TROPOPAUSE;             // Kelvin (56.5 deg C)
+//extern float ALT_TROPOPAUSE;              // meters
 
 
 
 // THRESHOLD VALUES FOR BAD DATA
 extern const float ACCEL_MIN; // m/s^2
+extern const float ACCEL_MAX;  // m/s^2
 // no max accel threshold because accel readings during burn will be very high
 
 extern const float BARO_MIN; // hPa
@@ -43,14 +41,9 @@ extern const float BARO_MAX; // hPa TODO: adjust max based on expected max altit
 
 extern const float TEMP_C_MIN; // Celsius
 extern const float TEMP_C_MAX; // Celsius
-extern const float TEMP_K_MIN; // Kelvin
-extern const float TEMP_K_MAX; // Kelvin
 
-
-extern const float MACH_DIP_THRESHOLD; // drop in acceleration in m/s^2 that indicates transition from subsonic to supersonic
-extern const float MIN_START_ACCEL; // minimum accel we need to see to consider detecting a spike for mach 1 transition
-
-
+extern const float PILOT_TERM_VEL; // m/s, terminal velocity with drogue chute deployed (for fallback timer calculations)
+extern const float DROGUE_TERM_VEL;   // m/s, terminal velocity with main chute deployed (for fallback timer calculations)
 
 typedef enum {
     IMU_DTR = 0,
@@ -71,9 +64,7 @@ typedef struct {
     int avg_index;
     int avg_size;
 
-    float slope[AD_CAPACITY];
-    int slope_i;
-    int slope_size;
+    float slope;
 } Detector;
 
 //What 'state' is our apogee-detection system in? 
@@ -104,8 +95,7 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
 int detect_event(Detector * detector, FlightPhase phase);
 
 void compute_fallback_times(float altitude, float velocity, float accel,
-                                uint32_t *apogee_time, uint32_t *five_k_time, uint32_t *one_k_time);
-
-int detect_acceleration_spike(Detector * detector, float* max_accel_seen);
+                            uint32_t *apogee_time, uint32_t *five_k_time, uint32_t *one_k_time,
+                            float* h_apogee, float* h_5k, float* h_1k);
 
 #endif

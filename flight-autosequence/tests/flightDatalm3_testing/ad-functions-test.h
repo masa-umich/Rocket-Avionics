@@ -54,9 +54,7 @@ typedef struct {
     int avg_index;
     int avg_size;
 
-    float slope[AD_CAPACITY];
-    int slope_i;
-    int slope_size;
+    float slope;
 } Detector;
 
 // What 'state' is our apogee-detection system in? 
@@ -101,5 +99,7 @@ int detect_event(Detector * detector, FlightPhase phase);
 void compute_fallback_times(float altitude, float velocity, float accel,
                                 uint32_t *apogee_time, uint32_t *five_k_time, uint32_t *one_k_time,
                                 float* h_apogee, float* h_5k, float* h_1k);
+
+float linreg_slope(float *buf, int start, int n);
 
 #endif

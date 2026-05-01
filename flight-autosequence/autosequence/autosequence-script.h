@@ -9,21 +9,22 @@
 
 #define AUTOSEQUENCE_DEBUG 0
 
+#define ALTITUDE_BUFFER_SIZE 31
+#define ALT_BUF_ELT_SPACING 3 // record every 3rd altitude reading to ensure we have a good spread of data points for curve fitting
+
 // CONSTANT TIMER DEFINITIONS - MODIFY AS NEEDED
-extern const uint32_t APOGEE_CONSTANT_TIMER; // 100 seconds in milliseconds
-extern const uint32_t DROGUE_CONSTANT_TIMER; // 120 seconds in milliseconds
-extern const uint32_t MAIN_CONSTANT_TIMER; // 150 seconds in milliseconds
+extern const uint32_t APOGEE_CONSTANT_TIMER; // 60 seconds in milliseconds
+extern const uint32_t DROGUE_CONSTANT_TIMER; // 1200 seconds in milliseconds
+extern const uint32_t MAIN_CONSTANT_TIMER; // 1500 seconds in milliseconds
 
 
 // System defs
 extern const uint32_t period; // ms, sampling period
 
 extern const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS; // 15 seconds
-extern const uint32_t MAX_BURN_DURATION_MS; // 22 seconds
+extern const uint32_t LOCKOUT_END_TIME; // 30 seconds, hard cutoff for lockout phase end
+extern const uint32_t APOGEE_AGREEMENT_WINDOW; // 2 seconds
 
-extern const uint32_t MIN_LOCKOUT_WAIT_TIME; // ms, minimum time we expect to wait in lockout phase
-extern const uint32_t MAX_LOCKOUT_WAIT_TIME; // ms, maximum time we expect to wait in lockout phase
-extern const int WAIT_TIME_MULTIPLIER;
 
 void execute_flight_autosequence();
 

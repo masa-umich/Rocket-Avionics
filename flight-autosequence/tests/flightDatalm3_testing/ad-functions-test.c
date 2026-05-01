@@ -48,18 +48,8 @@ void insert(Detector * detector, float reading1, float reading2, FlightPhase pha
     detector->avg_index = detector->avg_index % AD_CAPACITY;
     detector->avg_size = min(detector->avg_size + 1, AD_CAPACITY);
 
-    if (phase == ST_MACH_LOCKOUT || phase == ST_WAIT_APOGEE || phase == ST_WAIT_GROUND)
-    {
-        if (detector->avg_size >= AD_CAPACITY)
-        {
-            detector->slope[detector->slope_i] = 
-                (detector->average[(detector->avg_index + AD_CAPACITY - 1) % AD_CAPACITY] -
-                 detector->average[(detector->avg_index + AD_CAPACITY - AD_CAPACITY) % AD_CAPACITY]) /
-                AD_CAPACITY;
-            
-            detector->slope_size = min(detector->slope_size + 1, AD_CAPACITY);
-            detector->slope_i = (detector->slope_i + 1) % AD_CAPACITY;
-        }
+    if (detector->avg_size >= AD_CAPACITY) {
+        detector->slope = linreg_slope(detector->average, detector->avg_index, AD_CAPACITY);
     }
 }
 
@@ -70,7 +60,7 @@ int detect_event(Detector * detector, FlightPhase phase) {
 
     if (phase == ST_WAIT_APOGEE)
         // With altitude, a negative slope (< 0) correctly indicates the rocket is falling!
-        return buffer_lt(detector->slope, detector->slope_size, 0.0f);
+        return detector->slope < 0.0f; // pressure slope should be positive at apogee since pressure increases as we descend
 
     if (phase == ST_WAIT_DROGUE)                  
         // We look for altitude dropping BELOW the drogue deployment height
@@ -285,7 +275,6 @@ void clear(Detector * detector) {
         detector->readings_1[i] = 0.0f;
         detector->readings_2[i] = 0.0f;
         detector->average[i] = 0.0f;
-        detector->slope[i] = 0.0f;
     }
     detector->index_1 = 0;
     detector->size_1 = 0;
@@ -293,6 +282,20 @@ void clear(Detector * detector) {
     detector->size_2 = 0;
     detector->avg_index = 0;
     detector->avg_size = 0;
-    detector->slope_i = 0;
-    detector->slope_size = 0;
+    detector->slope = 0;
+}
+
+float linreg_slope(float *buf, int start, int n) {
+    float sum_y = 0, sum_xy = 0;
+    for (int i = 0; i < n; i++) {
+        float y = buf[(start + i) % n];
+        sum_y  += y;
+        sum_xy += i * y;
+    }
+
+    float sum_i  = (n * (n - 1)) / 2.0f;
+    float sum_i2 = (n * (n - 1) * (2*n - 1)) / 6.0f;
+    float denom  = n * sum_i2 - sum_i * sum_i;
+
+    return (n * sum_xy - sum_i * sum_y) / denom;
 }

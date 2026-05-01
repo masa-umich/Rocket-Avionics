@@ -1,15 +1,14 @@
 #include "test-autosequence-flightdata_lm3.h"
 
-const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15000; // 15 seconds
-const uint32_t MAX_BURN_DURATION_MS = 5000; // 1 second
-const uint32_t LOCKOUT_END_TIME = 8000; // 10s, hard cutoff for lockout phase end
+const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15 * 1000; // 15 seconds
+const uint32_t LOCKOUT_END_TIME = 30 * 1000; // 30 seconds, hard cutoff for lockout phase end
 
-const uint32_t APOGEE_CONSTANT_TIMER = 100 * 1000; // 100 seconds in milliseconds
-const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000; // 120 seconds in milliseconds
-const uint32_t MAIN_CONSTANT_TIMER = 150 * 1000; // 150 seconds in milliseconds
+const uint32_t APOGEE_CONSTANT_TIMER = 60 * 1000; // 60 seconds in milliseconds
+const uint32_t DROGUE_CONSTANT_TIMER = 1200 * 1000; // 1200 seconds in milliseconds
+const uint32_t MAIN_CONSTANT_TIMER = 1500 * 1000; // 1500 seconds in milliseconds
 
 // System defs
-const uint32_t period = 50; // ms, greater than sampling period of 20 ms
+const uint32_t period = 20; // ms, greater than sampling period of 20 ms
 
 
 int execute_flight_autosequence(){
@@ -157,7 +156,7 @@ int execute_flight_autosequence(){
                                         &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time,
                                         &fallback_apogee_altitude, &fallback_5k_altitude, &fallback_1k_altitude);
                 }
-                else if(alt_detector.slope_size >= AD_CAPACITY) {
+                else if(alt_detector.avg_size >= AD_CAPACITY) {
                     // NEW LOGIC: Also check if baro_speed drops below zero
                     uint32_t current_time = time_since(ignition_timestamp);
                     int apogee_by_detection = detect_event(&alt_detector, phase);
@@ -274,7 +273,7 @@ int execute_flight_autosequence(){
                 //deployMain();
                 insert(&alt_detector, computed_altitude, computed_altitude, phase, ALT_DTR);
                 
-                if(alt_detector.slope_size >= AD_CAPACITY) {
+                if(alt_detector.avg_size >= AD_CAPACITY) {
                     // Detect when altitude stops changing (slope is roughly 0 over time)
                     if (detect_event(&alt_detector, phase)) {
                         phase = ST_DONE;
