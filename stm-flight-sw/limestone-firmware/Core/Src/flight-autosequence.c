@@ -28,11 +28,11 @@ void AutosequenceTask(void *argument) {
 				update_boot_params(&arm_state);
 			}
 #ifndef AUTOS_TEST
-			uint8_t exit_stat = execute_flight_autosequence(boot_params);
+			int exit_stat = execute_flight_autosequence(boot_params);
 #else
-			uint8_t exit_stat = coldflow_autosequence(boot_params);
+			int exit_stat = coldflow_autosequence(boot_params);
 
-			if(!exit_stat) {
+			if(exit_stat < 0) {
 				update_state_in_telem(AUTOS_STATE_DEARMED);
 				Autos_boot_t end_state = {0};
 				end_state.phase = AUTOS_STATE_DEARMED;
@@ -153,7 +153,7 @@ void deployMain() {
 	set_valve_within((Valve_Channel) loaded_config.main_para_index, Valve_Energized);
 }
 
-uint8_t coldflow_autosequence(Autos_boot_t * params) {
+int coldflow_autosequence(Autos_boot_t * params) {
 	uint8_t entry_state = params->phase;
 	uint32_t start = getTime();
 	while(getTime() - start < 20000 && entry_state < AUTOS_STATE_BURN) {
@@ -161,11 +161,11 @@ uint8_t coldflow_autosequence(Autos_boot_t * params) {
 			break;
 		}
 		if(should_abort()) {
-			return 0;
+			return -1;
 		}
 		wait(100);
 	}
-	if(getTime() - start >= 20000) return 0;
+	if(getTime() - start >= 20000) return -1;
 	for(uint8_t i = entry_state > AUTOS_STATE_BURN ? entry_state : AUTOS_STATE_BURN;i < AUTOS_STATE_DONE;i++) {
 		update_state_in_telem(i);
 		Autos_boot_t cur_state = {0};
@@ -174,12 +174,12 @@ uint8_t coldflow_autosequence(Autos_boot_t * params) {
 		start = getTime();
 		while(getTime() - start < 5000) {
 			if(should_abort()) {
-				return 0;
+				return -1;
 			}
 			wait(100);
 		}
 	}
-	return 1;
+	return 0;
 }
 
 void update_boot_params(Autos_boot_t * params) {
