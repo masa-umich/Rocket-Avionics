@@ -29,6 +29,12 @@ float PT_calc(PT_t PT_info, uint16_t raw) {
 	return (PT_v - PT_info.zero_V) / PT_slope;
 }
 
+uint8_t fluctus_threshold(uint16_t raw) {
+	float adc_v = (raw / 4095.0) * 3.3;
+	float channel_v = adc_v * PT_DIVIDER;
+	return channel_v > 1.0;
+}
+
 void reset_board() {
 	flush_flash_log_for_reset();
 
@@ -125,4 +131,16 @@ int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType
 	}
 	msg->connection_fd = device_fd;
 	return server_send(msg, wait);
+}
+
+void set_valve_within(Valve_Channel valve, Valve_State_t desiredState) {
+	Valve_State_t endState = set_and_update_valve(valve, desiredState);
+	Message returnMsg = {0};
+	returnMsg.type = MSG_VALVE_STATE;
+	returnMsg.data.valve_state.valve_state = endState;
+	returnMsg.data.valve_state.valve_id = generate_valve_id(BOARD_FC, valve);
+	returnMsg.data.valve_state.timestamp = get_rtc_time();
+	if(send_msg_to_device(LimeWire_d, &returnMsg, 5) != 0) {
+		// Server not up, target device not connected, or txbuffer is full
+	}
 }

@@ -15,9 +15,11 @@
 #include "log_errors.h"
 #include "utils.h"
 #include "flight-autosequence.h"
+#include "eeprom-config.h"
+#include "radio-telem.h"
+
+extern EEPROM_conf_t loaded_config;
 
 void ProcessPackets(void *argument);
-
-void set_valve_within(Valve_Channel valve, Valve_State_t desiredState);
 
 #endif /* INC_NETWORK_PROCESSING_H_ */

@@ -44,6 +44,7 @@
 #include "udptelemetry.h"
 #include "NEO-M92-00B.h"
 #include "flight-autosequence.h"
+#include "radio-telem.h"
 //#include "lwip/netif.h"
 /* USER CODE END Includes */
 
@@ -117,6 +118,8 @@ PT_t PT5_h = {0.5f, 5000.0f, 4.5f};
 
 Sensors_t sensors_h = {0};
 
+SX1280_Hal_t radio_config;
+
 osThreadId_t telemetryTaskHandle;
 const osThreadAttr_t telemetry_task_attr = {
   .name = "telemetryTask",
@@ -149,6 +152,13 @@ osThreadId_t autosequenceTaskHandle;
 const osThreadAttr_t autosequence_task_attr = {
   .name = "autosequence",
   .stack_size = AUTOSEQUENCE_TASK_STACK,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t radioTaskHandle;
+const osThreadAttr_t radio_task_attr = {
+  .name = "radio",
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE END PV */
@@ -222,10 +232,11 @@ void start_led_timer(TickType_t delay, uint32_t reload, uint8_t force) {
 	}
 }
 
-void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force) {
+void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force, uint8_t startMode) {
 	if(xSemaphoreTake(timer_mutex, 0) == pdPASS) {
 		if(timers.buzzTimer) {
 			if(force || xTimerIsTimerActive(timers.buzzTimer) != pdPASS) {
+				HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, startMode);
 				vTimerSetTimerID(timers.buzzTimer, (void *)reload);
 				xTimerChangePeriod(timers.buzzTimer, delay, 0);
 			}
@@ -379,7 +390,7 @@ int main(void)
 	  		  // eeprom load error, defaults loaded
 	  		  load_eeprom_defaults(&loaded_config);
 	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -2: {
@@ -388,7 +399,7 @@ int main(void)
 	  		  loaded_config.tc1_gain = FC_EEPROM_TC_GAIN_DEFAULT;
 	  		  loaded_config.tc2_gain = FC_EEPROM_TC_GAIN_DEFAULT;
 	  		  loaded_config.tc3_gain = FC_EEPROM_TC_GAIN_DEFAULT;
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -3: {
@@ -400,7 +411,7 @@ int main(void)
 	  		  loaded_config.vlv2_v = FC_EEPROM_VLV_VOL_DEFAULT;
 	  		  loaded_config.vlv3_en = FC_EEPROM_VLV_EN_DEFAULT;
 	  		  loaded_config.vlv3_v = FC_EEPROM_VLV_VOL_DEFAULT;
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -4: {
@@ -411,7 +422,7 @@ int main(void)
 	  		  loaded_config.pilot_para_index = FC_EEPROM_PILOT_DEFAULT;
 	  		  loaded_config.drogue_para_index = FC_EEPROM_DROGUE_DEFAULT;
 	  		  loaded_config.main_para_index = FC_EEPROM_MAIN_DEFAULT;
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  default: {
@@ -426,7 +437,7 @@ int main(void)
 	  // eeprom init error, defaults loaded
 	  load_eeprom_defaults(&loaded_config);
 	  log_message(ERR_EEPROM_INIT, -1);
-	  start_buzz_timer(500, UINT32_MAX, 1);
+	  start_buzz_timer(500, UINT32_MAX, 1, 0);
   }
   fc_addr = loaded_config.flightcomputerIP;
   log_message(STAT_VERSION_INFO, -1);
@@ -436,6 +447,7 @@ int main(void)
 	  start_led_timer(500, UINT32_MAX, 1);
   }
 
+  init_radio(get_radio_state(0) == 1);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -1258,6 +1270,7 @@ void StartAndMonitor(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
+  osDelay(1);
   	// Signal end of critical section
 	if(is_net_logging_up()) {
 		// No UDP error
@@ -1268,8 +1281,8 @@ void StartAndMonitor(void *argument)
 		start_led_timer(250, UINT32_MAX, 1);
 	}
 
-	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
-	start_buzz_timer(1000, 0, 0);
+	//HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
+	start_buzz_timer(1000, 0, 0, 1);
 
 	// Setup TCP server
 	if(server_create(loaded_config.limewireIP, loaded_config.bayboard1IP, loaded_config.bayboard2IP, loaded_config.bayboard3IP, loaded_config.flightrecordIP)) {
@@ -1311,9 +1324,9 @@ void StartAndMonitor(void *argument)
 	}
 
   	// TC ADCs
-  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc1_gain, ADS_DATA_RATE_600);
   	ADS_configTC(&(sensors_h.TCs[1]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC1_CS_GPIO_Port, TC1_CS_Pin, ADS_MUX_AIN2_AIN3, loaded_config.tc2_gain, ADS_DATA_RATE_600);
-  	ADS_configTC(&(sensors_h.TCs[2]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
+  	ADS_configTC(&(sensors_h.TCs[0]), &hspi2, GPIOB, GPIO_PIN_14, PERIPHERAL_TIMEOUT, TC2_CS_GPIO_Port, TC2_CS_Pin, ADS_MUX_AIN0_AIN1, loaded_config.tc3_gain, ADS_DATA_RATE_600);
 
   	if(ADS_init(&(sensors_h.tc_main_h), sensors_h.TCs, 3)) {
   		// ADS thread start error
@@ -1383,6 +1396,25 @@ void StartAndMonitor(void *argument)
   	sensors_h.gps_h.semaphore = gpsSemaphore;
   	sensors_h.gps_h.huart = &huart10;
 
+  	// Init radio
+  	radio_config.spiHandle = &hspi5;
+  	radio_config.nssPort = RADIO_CS_GPIO_Port;
+  	radio_config.nssPin = RADIO_CS_Pin;
+  	radio_config.resetPort = RF_NSRT_GPIO_Port;
+  	radio_config.resetPin = RF_NSRT_Pin;
+  	radio_config.busyPort = RF_BUSY_GPIO_Port;
+  	radio_config.busyPin = RF_BUSY_Pin;
+
+  	if(!setup_radio(HAL_GPIO_ReadPin(RF_MODE_SW_GPIO_Port, RF_MODE_SW_Pin) == GPIO_PIN_SET, &radio_config)) {
+  		log_message(FC_ERR_RADIO_INIT_FAILED, -1);
+  	}
+
+  	Autos_boot_t boot_params = {0};
+  	if(!read_autosequence_params((void *) &boot_params, sizeof(Autos_boot_t))) {
+  		log_message(ERR_TFTP_EEPROM_READ_ERR, -1);
+  		memset(&boot_params, 0, sizeof(Autos_boot_t));
+  	}
+
 	// Start tasks
 
   	// Start UDP telemetry processing
@@ -1395,7 +1427,10 @@ void StartAndMonitor(void *argument)
   	packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
 
   	// Start autosequence task
-  	autosequenceTaskHandle = osThreadNew(AutosequenceTask, NULL, &autosequence_task_attr);
+  	autosequenceTaskHandle = osThreadNew(AutosequenceTask, (void *)&boot_params, &autosequence_task_attr);
+
+  	// Start radio broadcasting
+  	radioTaskHandle = osThreadNew(BroadcastRadio, NULL, &radio_task_attr);
 
   	// Start TCP server only if the ethernet link is up
 
@@ -1565,7 +1600,43 @@ void StartAndMonitor(void *argument)
 			}
 		}
 
-	  osDelay(5);
+  	  	if(xSemaphoreTake(sensors_h.gps_h.semaphore, 0) == pdTRUE) {
+  	  		char nmea_sen[100];
+  	  		memset(nmea_sen, 0, 100);
+  	  		if(sensors_h.gps_h.active_rx_buffer == 2) {
+  	  			strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_1);
+  	  			sensors_h.gps_h.rx_buffer_1_pos = 0;
+  	  	    }
+  	  	    else {
+  	  	        strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_2);
+  	  	        sensors_h.gps_h.rx_buffer_2_pos = 0;
+  	  	    }
+  	  		enum minmea_sentence_id id = minmea_sentence_id(nmea_sen, false);
+  	  		if(id == MINMEA_SENTENCE_GGA) {
+  	  			gps_data gps_values = {0};
+  	  			ParseStatus status = parse_gps_sentence(nmea_sen, &gps_values);
+  	  			if(status == NORMAL) {
+  	  				if(xSemaphoreTake(Rocket_h.fcState_access, 1) == pdPASS) {
+  	  					Rocket_h.fcState.gps_lat = gps_values.latitude;
+  	  					Rocket_h.fcState.gps_long = gps_values.longitude;
+  	  					Rocket_h.fcState.gps_alt = gps_values.altitude;
+  	  					Rocket_h.fcState.gps_sats = gps_values.sats_tracked;
+  	  					xSemaphoreGive(Rocket_h.fcState_access);
+  	  				}
+  	  			}
+  	  			else {
+  	  				if(xSemaphoreTake(Rocket_h.fcState_access, 1) == pdPASS) {
+  	  					Rocket_h.fcState.gps_lat = NAN;
+  	  					Rocket_h.fcState.gps_long = NAN;
+  	  					Rocket_h.fcState.gps_alt = NAN;
+  	  					Rocket_h.fcState.gps_sats = NAN;
+  	  					xSemaphoreGive(Rocket_h.fcState_access);
+  	  				}
+  	  			}
+  	  	    }
+  	  	}
+
+		osDelay(5);
 	}
   /* USER CODE END 5 */
 }

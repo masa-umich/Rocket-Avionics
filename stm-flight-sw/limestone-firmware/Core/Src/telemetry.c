@@ -85,27 +85,6 @@ void TelemetryTask(void *argument) {
   	  		old_stat = 0;
   	  		xSemaphoreGive(Rocket_h.fcValve_access);
   	  	}
-  	  	gps_data gps_values = {0};
-  	  	uint8_t gps_good = 0;
-  	  	if(xSemaphoreTake(sensors_h.gps_h.semaphore, 0) == pdTRUE) {
-  	  		char nmea_sen[100];
-  	  		memset(nmea_sen, 0, 100);
-  	  		if(sensors_h.gps_h.active_rx_buffer == 2) {
-  	  			strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_1);
-  	  			sensors_h.gps_h.rx_buffer_1_pos = 0;
-  	  	    }
-  	  	    else {
-  	  	        strcpy(nmea_sen, (char*)sensors_h.gps_h.rx_buffer_2);
-  	  	        sensors_h.gps_h.rx_buffer_2_pos = 0;
-  	  	    }
-  	  		enum minmea_sentence_id id = minmea_sentence_id(nmea_sen, false);
-  	  		if(id == MINMEA_SENTENCE_GGA) {
-  	  			ParseStatus status = parse_gps_sentence(nmea_sen, &gps_values);
-  	  			if(status == NORMAL) {
-  	  				gps_good = 1;
-  	  			}
-  	  	    }
-  	  	}
 
   	  	uint64_t recordtime = get_rtc_time();
 
@@ -133,6 +112,10 @@ void TelemetryTask(void *argument) {
   			Rocket_h.fcState.pt4 = PT_calc(PT4_h, adc_values[ADC_PT4_I]);
   			Rocket_h.fcState.pt5 = PT_calc(PT5_h, adc_values[ADC_PT5_I]);
 
+  			Rocket_h.fcState.fluctus_apogee_state = fluctus_threshold(adc_values[FLUCTUS_APOGEE_CHANNEL]);
+  			Rocket_h.fcState.fluctus_1k_state = fluctus_threshold(adc_values[FLUCTUS_1K_CHANNEL]);
+  			Rocket_h.fcState.fluctus_5k_state = fluctus_threshold(adc_values[FLUCTUS_5K_CHANNEL]);
+
   			Rocket_h.fcState.bus24v_voltage = bus_voltage_calc(adc_values[ADC_24V_BUS_I], POWER_24V_RES_A, POWER_24V_RES_B);
   			Rocket_h.fcState.bus12v_voltage = bus_voltage_calc(adc_values[ADC_12V_BUS_I], POWER_12V_RES_A, POWER_12V_RES_B);
   			Rocket_h.fcState.bus5v_voltage = bus_voltage_calc(adc_values[ADC_5V_BUS_I], POWER_5V_RES_A, POWER_5V_RES_B);
@@ -147,22 +130,15 @@ void TelemetryTask(void *argument) {
   			Rocket_h.fcState.vlv2_current = current_sense_calc(adc_values[ADC_VLV2_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
   			Rocket_h.fcState.vlv3_current = current_sense_calc(adc_values[ADC_VLV3_CURRENT_I], VALVE_SHUNT_RES, DIVIDER_VALVE);
 
-  			if(gps_good) {
-  				Rocket_h.fcState.gps_lat = gps_values.latitude;
-  				Rocket_h.fcState.gps_long = gps_values.longitude;
-  				Rocket_h.fcState.gps_alt = gps_values.altitude;
-  				Rocket_h.fcState.gps_sats = gps_values.sats_tracked;
-  			}
-
   			if(!TC_stat) {
-  				if(!isnan(TCvalues[0])) {
-  					Rocket_h.fcState.tc1 = TCvalues[0];
+  				if(!isnan(TCvalues[2])) {
+  					Rocket_h.fcState.tc1 = TCvalues[2];
   				}
   				if(!isnan(TCvalues[1])) {
   					Rocket_h.fcState.tc2 = TCvalues[1];
   				}
-  				if(!isnan(TCvalues[2])) {
-  					Rocket_h.fcState.tc3 = TCvalues[2];
+  				if(!isnan(TCvalues[0])) {
+  					Rocket_h.fcState.tc3 = TCvalues[0];
   				}
   			}
   			Rocket_h.fcState.board_temp = TC_board_temp;

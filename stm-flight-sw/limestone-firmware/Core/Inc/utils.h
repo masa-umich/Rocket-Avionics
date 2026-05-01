@@ -71,6 +71,8 @@ float current_sense_calc(uint16_t raw, uint16_t res, uint8_t divider);
 // resB is the resistance between the ADC pin and GND
 float bus_voltage_calc(uint16_t raw, uint32_t resA, uint32_t resB);
 
+uint8_t fluctus_threshold(uint16_t raw);
+
 void reset_board();
 
 void PDB_source(uint8_t use_bat);
@@ -92,5 +94,7 @@ int send_msg_to_device(Target_Device device, Message *msg, TickType_t wait);
 // does not take "ownership" of the message, it is up to you to not free the memory if this function is successful, and free the memory if
 // this is not successful (if that is intended).
 int send_raw_msg_to_all_devices(Target_Device device, Raw_message *msg, TickType_t wait);
+
+void set_valve_within(Valve_Channel valve, Valve_State_t desiredState);
 
 #endif

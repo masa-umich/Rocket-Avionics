@@ -16,6 +16,9 @@
 #include "log_errors.h"
 #include "timers.h"
 
+#define EEPROM_BOOT_PARAMS_ADDR		(uint16_t)0x2000 // stay clear of board config
+#define EEPROM_RADIO_PARAM_ADDR		EEPROM_BOOT_PARAMS_ADDR - 1
+
 typedef struct {
 	PT_t *pt1;
 	PT_t *pt2;
@@ -47,6 +50,14 @@ typedef struct {
 	uint8_t	drogue_para_index;
 	uint8_t main_para_index;
 } EEPROM_conf_t;
+
+int get_radio_state(uint8_t blocking);
+
+void set_radio_state(uint8_t state);
+
+uint8_t write_autosequence_params(void * buf, size_t len);
+
+uint8_t read_autosequence_params(void * buf, size_t len);
 
 void prepare_eeprom_config();
 

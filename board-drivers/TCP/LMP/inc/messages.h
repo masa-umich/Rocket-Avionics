@@ -34,6 +34,7 @@ typedef enum {
 	BOARD_BAY_2 = 0x02, // Bay Board 2
 	BOARD_BAY_3 = 0x03, // Bay Board 3
 	BOARD_FR = 0x04,	// Flight Recorder
+	BOARD_GS = 0x05,	// Ground Station
 } BoardId;
 
 typedef enum {
@@ -54,7 +55,11 @@ typedef enum {
 	DEVICE_CMD_PDB_SRC_BAT = 0x04,
 	DEVICE_CMD_PDB_COTS_OFF = 0x05,
 	DEVICE_CMD_PDB_COTS_ON = 0x06,
-	DEVICE_CMD_BUILD_INFO = 0x07
+	DEVICE_CMD_BUILD_INFO = 0x07,
+	DEVICE_CMD_RADIO_ON = 0x08,
+	DEVICE_CMD_RADIO_OFF = 0x09,
+	DEVICE_CMD_LOGGING_ON = 0x0A,
+	DEVICE_CMD_LOGGING_OFF = 0x0B,
 } DeviceCMDId;
 
 #define MAX_TELEMETRY_CHANNELS MAX_TELEM_CHANNELS

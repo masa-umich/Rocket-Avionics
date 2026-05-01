@@ -2,15 +2,15 @@
  *  git-hash.h
  *
  *  Auto-generated during the STM32 pre-build steps
- *  Last generated: Sat, 07 Mar 2026 01:01:19 -0500
+ *  Last generated: Sat, 25 Apr 2026 21:04:21 -0400
  */
 
 #ifndef INC_GIT_HASH_H_
 #define INC_GIT_HASH_H_
 
-#define GIT_HASH        "5230710"
-#define GIT_BRANCH      "handoff-dev"
-#define BUILD_TIME      "Sat, 07 Mar 2026 01:01:19 -0500"
+#define GIT_HASH        "6c638b5"
+#define GIT_BRANCH      "main"
+#define BUILD_TIME      "Sat, 25 Apr 2026 21:04:21 -0400"
 #define BUILD_TYPE      "Debug"
 
 #endif /* INC_GIT_HASH_H_ */

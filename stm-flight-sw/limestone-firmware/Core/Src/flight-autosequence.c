@@ -14,22 +14,56 @@ void setup_autosequence() {
 }
 
 void AutosequenceTask(void *argument) {
+	Autos_boot_t * boot_params = (Autos_boot_t *) argument;
 	for(;;) {
 		osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
-		uint32_t flags = osEventFlagsWait(autos_events, AUTOS_ARM_FLAG, osFlagsWaitAny, osWaitForever);
+		uint32_t flags = boot_params->phase > AUTOS_STATE_DEARMED ? (boot_params->phase < AUTOS_STATE_DONE ? AUTOS_ARM_FLAG : 0) : osEventFlagsWait(autos_events, AUTOS_ARM_FLAG, osFlagsWaitAny, osWaitForever);
 		if(!(flags & osFlagsError) && (flags & AUTOS_ARM_FLAG)) {
 			osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
 			log_message(FC_STAT_ARMED, -1);
-			update_state_in_telem(AUTOS_STATE_ARMED);
+			update_state_in_telem(boot_params->phase > AUTOS_STATE_DEARMED ? boot_params->phase : AUTOS_STATE_ARMED);
+			if(boot_params->phase == AUTOS_STATE_DEARMED) {
+				Autos_boot_t arm_state = {0};
+				arm_state.phase = AUTOS_STATE_ARMED;
+				update_boot_params(&arm_state);
+			}
 #ifndef AUTOS_TEST
-			execute_flight_autosequence();
+			uint8_t exit_stat = execute_flight_autosequence(boot_params);
 #else
-			coldflow_autosequence();
+			uint8_t exit_stat = coldflow_autosequence(boot_params);
+
+			if(!exit_stat) {
+				update_state_in_telem(AUTOS_STATE_DEARMED);
+				Autos_boot_t end_state = {0};
+				end_state.phase = AUTOS_STATE_DEARMED;
+				update_boot_params(&end_state);
+				osDelay(1);
+				boot_params->phase = AUTOS_STATE_DEARMED;
+				continue;
+			}
 #endif
 		}
+		else if(flags & osFlagsError) {
+			osDelay(100);
+			continue;
+		}
+		update_state_in_telem(AUTOS_STATE_DONE);
+		Autos_boot_t done_state = {0};
+		done_state.phase = AUTOS_STATE_DONE;
+		update_boot_params(&done_state);
+		for(;;) {
+			uint32_t end_flags = osEventFlagsWait(autos_events, AUTOS_ABORT_FLAG, osFlagsWaitAny, osWaitForever);
+			if(!(end_flags & osFlagsError) && (end_flags & AUTOS_ABORT_FLAG)) {
+				break;
+			}
+			osDelay(100);
+		}
 		update_state_in_telem(AUTOS_STATE_DEARMED);
-		log_message(FC_STAT_DEARMED, -1);
+		Autos_boot_t end_state = {0};
+		end_state.phase = AUTOS_STATE_DEARMED;
+		update_boot_params(&end_state);
 		osDelay(1);
+		boot_params->phase = AUTOS_STATE_DEARMED;
 	}
 }
 
@@ -105,7 +139,7 @@ uint8_t should_abort() {
 }
 
 void update_state_in_telem(AutoS_SM status) {
-	if(xSemaphoreTake(Rocket_h.fcState_access, portMAX_DELAY) == pdPASS) {
+	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
 		Rocket_h.fcState.auto_sequence_state = status;
 		xSemaphoreGive(Rocket_h.fcState_access);
 	}
@@ -123,6 +157,62 @@ void deployMain() {
 	set_valve_within((Valve_Channel) loaded_config.main_para_index, Valve_Energized);
 }
 
-void coldflow_autosequence() {
+uint8_t coldflow_autosequence(Autos_boot_t * params) {
+	uint8_t entry_state = params->phase;
+	uint32_t start = getTime();
+	while(getTime() - start < 20000 && entry_state < AUTOS_STATE_BURN) {
+		if(valves_open()) {
+			break;
+		}
+		if(should_abort()) {
+			return 0;
+		}
+		wait(100);
+	}
+	if(getTime() - start >= 20000) return 0;
+	for(uint8_t i = entry_state > AUTOS_STATE_BURN ? entry_state : AUTOS_STATE_BURN;i < AUTOS_STATE_DONE;i++) {
+		update_state_in_telem(i);
+		Autos_boot_t cur_state = {0};
+		cur_state.phase = i;
+		update_boot_params(&cur_state);
+		start = getTime();
+		while(getTime() - start < 5000) {
+			if(should_abort()) {
+				return 0;
+			}
+			wait(100);
+		}
+	}
+	return 1;
+}
 
+void update_boot_params(Autos_boot_t * params) {
+	write_autosequence_params((void *)params, sizeof(Autos_boot_t));
+}
+
+uint8_t get_fluctus_apogee() {
+	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+		uint8_t state = Rocket_h.fcState.fluctus_apogee_state;
+		xSemaphoreGive(Rocket_h.fcState_access);
+		return state;
+	}
+	return 0;
+}
+
+uint8_t get_fluctus_5k() {
+	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+		uint8_t state = Rocket_h.fcState.fluctus_5k_state;
+		xSemaphoreGive(Rocket_h.fcState_access);
+		return state;
+	}
+	return 0;
+}
+
+uint8_t get_fluctus_1k() {
+	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+		uint8_t state = Rocket_h.fcState.fluctus_1k_state;
+		xSemaphoreGive(Rocket_h.fcState_access);
+		return state;
+	}
+	return 0;
 }

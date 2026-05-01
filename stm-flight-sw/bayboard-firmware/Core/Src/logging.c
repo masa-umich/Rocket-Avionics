@@ -303,7 +303,7 @@ void log_valve_states() {
 
 void handle_logging() {
 	errormsg_t logmsg;
-	if(xQueueReceive(errorMsgList, (void *)&logmsg, 5) == pdPASS) {
+	if(xQueueReceive(errorMsgList, (void *)&logmsg, 0) == pdPASS) {
 		uint8_t flashstat = write_raw_to_flash(logmsg.content, logmsg.len);
 		if(flashstat == 2) {
 			// Flash is full, send UDP message every 5 seconds
@@ -507,7 +507,7 @@ void send_flash_full() {
 // 0 success, 1 semaphore timeout, 2 flash full, 3 memory error
 int log_lmp_packet(uint8_t *buf, size_t buflen) {
 	uint8_t outbuf[MAX_TELEMETRY_B64_SIZE];
-	uint8_t outlen = base64_encode(buf, buflen, outbuf, MAX_TELEMETRY_B64_SIZE, 1);
+	size_t outlen = base64_encode(buf, buflen, outbuf, MAX_TELEMETRY_B64_SIZE, 1);
 	if(outlen > 0) {
 		outbuf[0] = FLASH_TELEM_MARK;
 		outbuf[outlen] = '\n';

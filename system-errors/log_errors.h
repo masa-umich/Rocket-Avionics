@@ -22,6 +22,8 @@
 #define FIRMWARE_NAME		"Limelight Flight Computer Firmware"
 #elif defined(BAY_BOARD)
 #define FIRMWARE_NAME		"Limelight Bay Board Firmware"
+#elif defined(FLIGHT_RECORDER)
+#define FIRMWARE_NAME		"Limelight Flight Recorder Firmware"
 #else
 #define FIRMWARE_NAME		"Unknown Firmware"
 #endif
@@ -141,6 +143,8 @@
 
 #define FC_ERR_EEPROM_LOAD_AUTOS_ERR			"066 EEPROM config invalid autosequence channels, loading defaults"
 
+#define FC_ERR_RADIO_INIT_FAILED				"067 Radio Init failed"
+
 #elif defined(BAY_BOARD)
 // Bay Board error messages
 #define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"
@@ -198,6 +202,61 @@
 #define BB_ERR_TCP_CLIENT_ERROR_ABORT			"043 TCP client connection aborted"
 #define BB_ERR_TCP_CLIENT_SEND_ABORT			"044 TCP client connection aborted"
 
+#elif defined(FLIGHT_RECORDER)
+// Bay Board error messages
+#define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOBUF		"001 No buffer space - creating client socket"
+#define BB_ERR_TCP_CLIENT_SOCK_CREAT_NOSOCK		"002 No available sockets - creating client socket"
+#define BB_ERR_TCP_CLIENT_SOCK_CREAT_UNKNOWN	"003 Unknown errno - creating client socket, errno "
+
+#define BB_ERR_TCP_CLIENT_CONNECT_NSOCK			"004 NULL socket - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_ERR			"005 Error connecting - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_TIMEO			"006 Connection timed out - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_NRTE			"007 No route - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_ABORT			"008 Timed out - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_NBUF			"009 Buffer error - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_NMEM			"010 Memory error - client connecting"
+#define BB_ERR_TCP_CLIENT_CONNECT_UNKNOWN		"011 Unknown errno - client connecting, errno "
+
+#define BB_ERR_TCP_CLIENT_WAIT_NSOCK			"012 NULL socket - client waiting for packet"
+#define BB_ERR_TCP_CLIENT_WAIT_NOMEM			"013 Memory error - client waiting for packet"
+#define BB_ERR_TCP_CLIENT_WAIT_BUSY				"014 Socket busy - client waiting for packet"
+#define BB_ERR_TCP_CLIENT_WAIT_UNKNOWN			"015 Unknown errno - client waiting for packet, errno "
+
+#define BB_ERR_TCP_CLIENT_READ_NSOCK			"016 NULL socket - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_TIMEOUT			"017 Read timeout - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_CONN_RST			"018 Reset by peer - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_SOCK_NCONN		"019 Not connected - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_NOMEM			"020 No memory - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_NOBUF			"021 No buffer space - client receiving packet"
+#define BB_ERR_TCP_CLIENT_READ_UNKNOWN			"022 Unknown errno - client receiving packet, errno "
+
+#define BB_ERR_TCP_CLIENT_ERROR_RESET			"023 Reset by peer - client socket flagged as error"
+#define BB_ERR_TCP_CLIENT_ERROR_TIMEO			"024 Unresponsive peer - client socket flagged as error"
+#define BB_ERR_TCP_CLIENT_ERROR_CLOSED			"025 Connection closed - client socket flagged as error"
+#define BB_ERR_TCP_CLIENT_ERROR_NOTCONN			"026 Socket not connected - client socket flagged as error"
+#define BB_ERR_TCP_CLIENT_ERROR_UNKNOWN			"027 Unknown errno - client socket flagged as error, errno "
+
+#define BB_ERR_TCP_CLIENT_SAVE_BUFFULL			"028 rxbuffer full - client saving packet"
+#define BB_ERR_TCP_CLIENT_SAVE_NOMEM			"029 No memory - client saving packet"
+
+#define BB_ERR_TCP_CLIENT_SEND_NSOCK			"030 NULL socket - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_SOCK_BUSY		"031 Netconn busy - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_NPCB				"032 NULL PCB - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_NNETCONN			"033 NULL netconn - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_MEM_ERR			"034 Internal memory error - client sending packet"
+#define BB_ERR_TCP_CLIENT_SEND_UNKNOWN			"035 Unknown errno - client sending packet, errno "
+#define BB_ERR_TCP_CLIENT_SEND_STOPPED			"036 TCP client send thread stopped"
+
+#define FR_ERR_TCP_CLIENT_INIT_THREAD			"037 TCP client thread not started"
+#define FR_ERR_TCP_CLIENT_INIT_MEM_ERR			"038 TCP client memory issue on init"
+
+#define BB_ERR_TCP_CLIENT_READ_ABORT			"039 TCP client connection aborted"
+#define BB_ERR_TCP_CLIENT_ERROR_ABORT			"040 TCP client connection aborted"
+#define BB_ERR_TCP_CLIENT_SEND_ABORT			"041 TCP client connection aborted"
+
+#define FR_ERR_UDP_TELEM_RECV_SIZE_ERR			"042 UDP Telemetry receive size error"
+#define FR_ERR_FLASH_INIT_FAILED				"043 Flash chip init failed, chip #"
+
 #endif
 
 // General status messages
@@ -238,6 +297,13 @@
 #define BB_STAT_TCP_CLIENT_CLOSED				"502 TCP client disconnected"
 #define BB_STAT_STARTING_IDENTIFY				"503 Bay Board starting as Bay Board "
 #define BB_STAT_TCP_CLIENT_INIT					"504 TCP client initialized"
+
+#elif defined(FLIGHT_RECORDER)
+#define BB_STAT_TCP_CLIENT_CONNECTED			"501 TCP client connected"
+#define BB_STAT_TCP_CLIENT_CLOSED				"502 TCP client disconnected"
+#define FR_STAT_TCP_CLIENT_INIT					"504 TCP client initialized"
+#define FR_STAT_LOGGING_ON						"505 Flight Recorder telemetry logging enabled"
+#define FR_STAT_LOGGING_OFF						"506 Flight Recorder telemetry logging disabled"
 
 #endif
 
@@ -289,11 +355,28 @@
 #define BB_ERR_PERI_TYPE_ADS					6
 #define BB_ERR_PERI_TYPE_CONNECT				7
 
+#elif defined(FLIGHT_RECORDER)
+#define BB_ERR_TYPE_TCP_CLIENT_CONNECT			0
+#define BB_ERR_TYPE_TCP_CLIENT_RECV				1
+#define BB_ERR_TYPE_TCP_CLIENT_SEND				2
+#define FR_ERR_TYPE_TELEM_OVERTIME				3
+#define FR_ERR_TYPE_UNKNOWN_LMP					4
+#define FR_ERR_TYPE_TFTP_EEPROM_WRITE			5
+#define FR_ERR_TYPE_TFTP_EEPROM_READ			6
+#define FR_ERR_TYPE_TELEM_NUPDATED				7
+#define FR_ERR_TYPE_TELEM_MEM_ERR				8
+#define FR_ERR_TYPE_UDP_TELEM					9
+
+// Flight Computer peripheral error message types
+#define BB_ERR_PERI_TYPE_CONNECT				0
+
 #endif
 
 #define FC_PDB_SRC_GSE_ACK_MSG					"PDB source switched to GSE power"
 #define FC_PDB_SRC_BAT_ACK_MSG					"PDB source switched to battery power"
 #define FC_PDB_COTS_ON_ACK_MSG					"PDB COTS supply turned on"
 #define FC_PDB_COTS_OFF_ACK_MSG					"PDB COTS supply turned off"
+#define FC_RADIO_ON_ACK_MSG						"Radio broadcasting turned on"
+#define FC_RADIO_OFF_ACK_MSG					"Radio broadcasting turned off"
 
 #endif /* INC_LOG_ERRORS_H_ */

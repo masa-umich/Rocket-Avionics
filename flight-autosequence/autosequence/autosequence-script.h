@@ -28,5 +28,6 @@ extern const uint32_t APOGEE_AGREEMENT_WINDOW; // 2 seconds
 
 void execute_flight_autosequence();
 
+int execute_flight_autosequence(Autos_boot_t * boot_params);
 
 #endif

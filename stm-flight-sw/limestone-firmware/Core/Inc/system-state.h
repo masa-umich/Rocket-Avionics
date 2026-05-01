@@ -13,6 +13,7 @@
 #include "LSM6DSO32XTR.h"
 #include "messages.h"
 #include "log_errors.h"
+#include "stdlib.h"
 
 typedef struct {
 	float pt1;
@@ -55,6 +56,9 @@ typedef struct {
 	float auto_sequence_state;
 
 	uint64_t timestamp; // Only used to monitor how "fresh" the data is
+	uint8_t fluctus_apogee_state;
+	uint8_t fluctus_5k_state;
+	uint8_t fluctus_1k_state;
 } Flight_Computer_State_t;
 
 typedef struct {
@@ -158,5 +162,7 @@ int unpack_bb_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks);
 int unpack_fr_telemetry(TelemetryMessage *msg, uint8_t timeout_ticks);
 
 Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredState);
+
+uint8_t serialize_radio_telem(uint8_t * buf, size_t len, TickType_t timeout);
 
 #endif /* INC_SYSTEM_STATE_H_ */

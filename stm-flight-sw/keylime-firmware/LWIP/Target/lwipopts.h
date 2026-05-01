@@ -51,34 +51,54 @@
 /* Parameters set in STM32CubeMX LwIP Configuration GUI -*/
 /*----- Default value in ETH configuration GUI in CubeMx: 1524 -----*/
 #define ETH_RX_BUFFER_SIZE 1536
+/*----- Default Value for MEMP_NUM_UDP_PCB: 4 ---*/
+#define MEMP_NUM_UDP_PCB 8
+/*----- Default Value for MEMP_NUM_TCP_PCB: 5 ---*/
+#define MEMP_NUM_TCP_PCB 8
 /*----- Value in opt.h for MEM_ALIGNMENT: 1 -----*/
 #define MEM_ALIGNMENT 4
 /*----- Default Value for MEM_SIZE: 1600 ---*/
 #define MEM_SIZE 32232
-/*----- Default Value for H7 devices: 0x30044000 -----*/
+/*----- Default Value for H7 devices: 0x30004000 -----*/
 #define LWIP_RAM_HEAP_POINTER 0x30000200
+/*----- Default Value for MEMP_NUM_TCP_SEG: 16 ---*/
+#define MEMP_NUM_TCP_SEG 32
+/*----- Default Value for MEMP_NUM_SYS_TIMEOUT: 3 ---*/
+#define MEMP_NUM_SYS_TIMEOUT 16
+/*----- Default Value for MEMP_NUM_NETBUF: 2 ---*/
+#define MEMP_NUM_NETBUF 64
+/*----- Default Value for MEMP_NUM_NETCONN: 4 ---*/
+#define MEMP_NUM_NETCONN 10
+/*----- Default Value for MEMP_NUM_TCPIP_MSG_INPKT: 8 ---*/
+#define MEMP_NUM_TCPIP_MSG_INPKT 64
+/*----- Default Value for MEMP_NUM_NETDB: 1 ---*/
+#define MEMP_NUM_NETDB 4
+/*----- Default Value for MEMP_NUM_API_MSG: 8 ---*/
+#define MEMP_NUM_API_MSG 10
 /*----- Value supported for H7 devices: 1 -----*/
 #define LWIP_SUPPORT_CUSTOM_PBUF 1
+/*----- Default Value for PBUF_POOL_SIZE: 16 ---*/
+#define PBUF_POOL_SIZE 64
+/*----- Default Value for PBUF_POOL_BUFSIZE: 592 ---*/
+#define PBUF_POOL_BUFSIZE 1536
 /*----- Value in opt.h for LWIP_ETHERNET: LWIP_ARP || PPPOE_SUPPORT -*/
 #define LWIP_ETHERNET 1
 /*----- Value in opt.h for LWIP_DNS_SECURE: (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT) -*/
 #define LWIP_DNS_SECURE 7
-/*----- Value in opt.h for TCP_SND_QUEUELEN: (4*TCP_SND_BUF + (TCP_MSS - 1))/TCP_MSS -----*/
-#define TCP_SND_QUEUELEN 9
-/*----- Value in opt.h for TCP_SNDLOWAT: LWIP_MIN(LWIP_MAX(((TCP_SND_BUF)/2), (2 * TCP_MSS) + 1), (TCP_SND_BUF) - 1) -*/
-#define TCP_SNDLOWAT 1071
-/*----- Value in opt.h for TCP_SNDQUEUELOWAT: LWIP_MAX(TCP_SND_QUEUELEN)/2, 5) -*/
-#define TCP_SNDQUEUELOWAT 5
-/*----- Value in opt.h for TCP_WND_UPDATE_THRESHOLD: LWIP_MIN(TCP_WND/4, TCP_MSS*4) -----*/
-#define TCP_WND_UPDATE_THRESHOLD 536
+/*----- Default Value for TCP_SYNMAXRTX: 6 ---*/
+#define TCP_SYNMAXRTX 0
+/*----- Default Value for TCP_MSS: 536 ---*/
+#define TCP_MSS 1460
+/*----- Default Value for TCP_SND_BUF: 2920 ---*/
+#define TCP_SND_BUF 5840
 /*----- Value in opt.h for LWIP_NETIF_LINK_CALLBACK: 0 -----*/
 #define LWIP_NETIF_LINK_CALLBACK 1
 /*----- Value in opt.h for TCPIP_THREAD_STACKSIZE: 0 -----*/
-#define TCPIP_THREAD_STACKSIZE 1024
+#define TCPIP_THREAD_STACKSIZE 6400
 /*----- Value in opt.h for TCPIP_THREAD_PRIO: 1 -----*/
 #define TCPIP_THREAD_PRIO 24
 /*----- Value in opt.h for TCPIP_MBOX_SIZE: 0 -----*/
-#define TCPIP_MBOX_SIZE 6
+#define TCPIP_MBOX_SIZE 64
 /*----- Value in opt.h for SLIPIF_THREAD_STACKSIZE: 0 -----*/
 #define SLIPIF_THREAD_STACKSIZE 1024
 /*----- Value in opt.h for SLIPIF_THREAD_PRIO: 1 -----*/
@@ -88,13 +108,25 @@
 /*----- Value in opt.h for DEFAULT_THREAD_PRIO: 1 -----*/
 #define DEFAULT_THREAD_PRIO 3
 /*----- Value in opt.h for DEFAULT_UDP_RECVMBOX_SIZE: 0 -----*/
-#define DEFAULT_UDP_RECVMBOX_SIZE 6
+#define DEFAULT_UDP_RECVMBOX_SIZE 64
 /*----- Value in opt.h for DEFAULT_TCP_RECVMBOX_SIZE: 0 -----*/
-#define DEFAULT_TCP_RECVMBOX_SIZE 6
+#define DEFAULT_TCP_RECVMBOX_SIZE 64
 /*----- Value in opt.h for DEFAULT_ACCEPTMBOX_SIZE: 0 -----*/
-#define DEFAULT_ACCEPTMBOX_SIZE 6
+#define DEFAULT_ACCEPTMBOX_SIZE 32
+/*----- Default Value for LWIP_TCPIP_TIMEOUT: 0 ---*/
+#define LWIP_TCPIP_TIMEOUT 1
+/*----- Default Value for LWIP_TCP_KEEPALIVE: 0 ---*/
+#define LWIP_TCP_KEEPALIVE 1
+/*----- Default Value for LWIP_SO_SNDTIMEO: 0 ---*/
+#define LWIP_SO_SNDTIMEO 1
+/*----- Default Value for LWIP_SO_RCVTIMEO: 0 ---*/
+#define LWIP_SO_RCVTIMEO 1
 /*----- Value in opt.h for RECV_BUFSIZE_DEFAULT: INT_MAX -----*/
 #define RECV_BUFSIZE_DEFAULT 2000000000
+/*----- Default Value for LWIP_SNTP: 0 ---*/
+#define LWIP_SNTP 1
+/*----- Default Value for LWIP_TFTP: 0 ---*/
+#define LWIP_TFTP 1
 /*----- Value in opt.h for LWIP_STATS: 1 -----*/
 #define LWIP_STATS 0
 /*----- Value in opt.h for CHECKSUM_GEN_IP: 1 -----*/
@@ -115,7 +147,8 @@
 #define CHECKSUM_CHECK_ICMP6 0
 /*-----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
-
+#define IP_SOF_BROADCAST      1
+#define IP_SOF_BROADCAST_RECV 1
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

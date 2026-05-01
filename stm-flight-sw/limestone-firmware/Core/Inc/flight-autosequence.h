@@ -12,7 +12,9 @@
 #include "log_errors.h"
 #include "logging.h"
 #include "system-state.h"
-#include "autosequence-script.h"
+#include "eeprom-config.h"
+
+extern EEPROM_conf_t loaded_config;
 
 #define AUTOSEQUENCE_TASK_STACK		(uint32_t) 512 * 4
 
@@ -33,7 +35,7 @@ typedef struct {
 } IMU_values;
 
 typedef enum {
-	AUTOS_STATE_DEARMED = 0x00,
+	AUTOS_STATE_DEARMED = 0x00, // Before handoff, not handled by autosequence script
 	AUTOS_STATE_ARMED = 0x01,
 	AUTOS_STATE_BURN = 0x02,
     AUTOS_STATE_SUPERSONIC = 0x03,
@@ -41,11 +43,18 @@ typedef enum {
     AUTOS_STATE_WAIT_DROGUE = 0x05,
     AUTOS_STATE_WAIT_MAIN = 0x06,
     AUTOS_STATE_WAIT_GROUND = 0x07,
-    AUTOS_STATE_DONE = 0x08
+    AUTOS_STATE_DONE = 0x08 // After autosequence ends, not set or handled by autosequence script
 
 } AutoS_SM; // TODO ADD TO THIS
 
+typedef struct {
+	AutoS_SM phase;
+	uint32_t sec_to_next_phase;
+} Autos_boot_t;
+
 void AutosequenceTask(void *argument);
+
+uint8_t coldflow_autosequence(Autos_boot_t * params);
 
 void setup_autosequence();
 
@@ -59,13 +68,11 @@ void trigger_abort();
 
 uint32_t getTime(); // gets time in ms
 
-uint32_t time_since(uint32_t time_other);
+void deployPilot(); // function to deploy pilot chute
 
-void deployPilot(); // function to deploy pilot chute // TODO implement
+void deployDrogue(); // function to deploy drogue chute
 
-void deployDrogue(); // function to deploy drogue chute // TODO implement
-
-void deployMain(); // function to deploy main chute // TODO implement
+void deployMain(); // function to deploy main chute
 
 void wait(uint32_t ms); // wait function in ms
 
@@ -80,5 +87,13 @@ uint8_t valves_open(); // returns 1 if both valves are open, 0 otherwise
 uint8_t should_abort(); // returns 1 if the autosequence should abort, 0 otherwise
 
 void update_state_in_telem(AutoS_SM status); // update state machine channel in telemetry
+
+void update_boot_params(Autos_boot_t * params);
+
+uint8_t get_fluctus_apogee();
+
+uint8_t get_fluctus_5k();
+
+uint8_t get_fluctus_1k();
 
 #endif /* INC_FLIGHT_AUTOSEQUENCE_H_ */

@@ -348,3 +348,127 @@ Valve_State_t set_and_update_valve(Valve_Channel valve, Valve_State_t desiredSta
 		 return HAL_GPIO_ReadPin(Rocket_h.fcValves[valve].VLV_EN_GPIO_Port, Rocket_h.fcValves[valve].VLV_EN_GPIO_Pin);
 	 }
 }
+
+void pack_uint16(float value, uint8_t * buf) {
+	if(isnan(value)) {
+		memset(buf, 0, 2);
+	}
+	else {
+		uint16_t converted_value = (uint16_t) value;
+		memcpy(buf, &converted_value, 2);
+	}
+}
+
+void pack_int16(float value, uint8_t * buf) {
+	if(isnan(value)) {
+		memset(buf, 0, 2);
+	}
+	else {
+		int16_t converted_value = (int16_t) value;
+		memcpy(buf, &converted_value, 2);
+	}
+}
+
+void pack_uint8(float value, uint8_t * buf) {
+	if(isnan(value)) {
+		memset(buf, 0, 1);
+	}
+	else {
+		uint8_t converted_value = (uint8_t) value;
+		memcpy(buf, &converted_value, 1);
+	}
+}
+
+int comp(const void *a, const void *b) {
+     if(*((float *)a) < *((float *)b)) {
+    	 return -1;
+     }
+     else if(*((float *)a) > *((float *)b)) {
+    	 return 1;
+     }
+     else {
+    	 return 0;
+     }
+}
+
+float median_pres(float * arr, size_t len) {
+	qsort(arr, len, sizeof(float), comp);
+
+	if(len % 2 == 0) {
+		return ((arr[len/2] + arr[(len/2) - 1]) / 2.0);
+	}
+	else {
+		return arr[len/2];
+	}
+}
+
+uint8_t serialize_radio_telem(uint8_t * buf, size_t len, TickType_t timeout) {
+	if(len < RADIO_PACKET_LENGTH) {
+		return 0;
+	}
+
+	if(xSemaphoreTake(Rocket_h.fcState_access, timeout) == pdPASS) {
+		memcpy(buf + 0, &(Rocket_h.fcState.gps_lat), 4);
+		memcpy(buf + 4, &(Rocket_h.fcState.gps_long), 4);
+		pack_uint16(Rocket_h.fcState.gps_alt, buf + 8);
+		pack_int16(Rocket_h.fcState.imu1_A.XL_x * 100, buf + 10);
+		pack_int16(Rocket_h.fcState.imu1_A.XL_y * 100, buf + 12);
+		pack_int16(Rocket_h.fcState.imu1_A.XL_z * 100, buf + 14);
+		pack_int16(Rocket_h.fcState.imu1_W.G_x, buf + 16);
+		pack_int16(Rocket_h.fcState.imu1_W.G_y, buf + 18);
+		pack_int16(Rocket_h.fcState.imu1_W.G_z, buf + 20);
+		pack_uint16(Rocket_h.fcState.bar1 * 10, buf + 22);
+		pack_uint16(Rocket_h.fcState.bar2 * 10, buf + 24);
+		pack_uint16(Rocket_h.fcState.bus24v_voltage * 1000, buf + 26);
+		pack_int16(Rocket_h.fcState.board_temp, buf + 28);
+		pack_uint8(Rocket_h.fcState.auto_sequence_state, buf + 30);
+		//pack_uint8(Rocket_h.fcState.fluctus_state, buf + 31);
+		uint8_t fluctus_mask = (Rocket_h.fcState.fluctus_5k_state << 2) | (Rocket_h.fcState.fluctus_1k_state << 1) | (Rocket_h.fcState.fluctus_apogee_state << 0);
+		memcpy(buf + 31, &fluctus_mask, 1);
+
+		uint64_t ms_time = Rocket_h.fcState.timestamp / 1000000;
+		memcpy(buf + 40, &ms_time, 8);
+
+		xSemaphoreGive(Rocket_h.fcState_access);
+
+		float chamber_pres[3] = {0};
+		float fuel_pres[3] = {0};
+		float ox_pres[3] = {0};
+		float copv_pres[4] = {0};
+		if(xSemaphoreTake(Rocket_h.bb1State_access, timeout) == pdPASS) {
+			copv_pres[0] = Rocket_h.bb1State.pt1;
+			copv_pres[1] = Rocket_h.bb1State.pt2;
+			copv_pres[2] = Rocket_h.bb1State.pt3;
+
+			fuel_pres[0] = Rocket_h.bb1State.pt4;
+			fuel_pres[1] = Rocket_h.bb1State.pt7;
+			fuel_pres[2] = Rocket_h.bb1State.pt8;
+			xSemaphoreGive(Rocket_h.bb1State_access);
+			if(xSemaphoreTake(Rocket_h.bb2State_access, timeout) == pdPASS) {
+				copv_pres[3] = Rocket_h.bb2State.pt1;
+
+				ox_pres[0] = Rocket_h.bb2State.pt4;
+				ox_pres[1] = Rocket_h.bb2State.pt5;
+				ox_pres[2] = Rocket_h.bb2State.pt6;
+				xSemaphoreGive(Rocket_h.bb2State_access);
+				if(xSemaphoreTake(Rocket_h.bb3State_access, timeout) == pdPASS) {
+					chamber_pres[0] = Rocket_h.bb3State.pt3;
+					chamber_pres[1] = Rocket_h.bb3State.pt4;
+					chamber_pres[2] = Rocket_h.bb3State.pt5;
+					xSemaphoreGive(Rocket_h.bb3State_access);
+
+					pack_uint16(median_pres(chamber_pres, 3), buf + 32);
+					pack_uint16(median_pres(fuel_pres, 3), buf + 34);
+					pack_uint16(median_pres(ox_pres, 3), buf + 36);
+					pack_uint16(median_pres(copv_pres, 4), buf + 38);
+
+					return 1;
+				}
+				return 0;
+			}
+			return 0;
+		}
+		return 0;
+	}
+	return 0;
+}

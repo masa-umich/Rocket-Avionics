@@ -29,7 +29,12 @@
 #include <string.h>
 
 /* USER CODE BEGIN 0 */
-
+#include "log_errors.h"
+#include "logging.h"
+#include "sntp.h"
+#include "eeprom-config.h"
+#include "remote-config.h"
+#include "udptelemetry.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -37,7 +42,7 @@ static void ethernet_link_status_updated(struct netif *netif);
 void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
-
+extern ip4_addr_t fr_addr;
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -63,10 +68,10 @@ osThreadAttr_t attributes;
 void MX_LWIP_Init(void)
 {
   /* IP addresses initialization */
-  IP_ADDRESS[0] = 192;
-  IP_ADDRESS[1] = 168;
-  IP_ADDRESS[2] = 50;
-  IP_ADDRESS[3] = 10;
+  IP_ADDRESS[0] = 0;
+  IP_ADDRESS[1] = 0;
+  IP_ADDRESS[2] = 0;
+  IP_ADDRESS[3] = 0;
   NETMASK_ADDRESS[0] = 255;
   NETMASK_ADDRESS[1] = 255;
   NETMASK_ADDRESS[2] = 255;
@@ -77,6 +82,10 @@ void MX_LWIP_Init(void)
   GATEWAY_ADDRESS[3] = 0;
 
 /* USER CODE BEGIN IP_ADDRESSES */
+  IP_ADDRESS[0] = ip4_addr1(&fr_addr);
+  IP_ADDRESS[1] = ip4_addr2(&fr_addr);
+  IP_ADDRESS[2] = ip4_addr3(&fr_addr);
+  IP_ADDRESS[3] = ip4_addr4(&fr_addr);
 /* USER CODE END IP_ADDRESSES */
 
   /* Initialize the LwIP stack with RTOS */
@@ -101,6 +110,18 @@ void MX_LWIP_Init(void)
 
   /* Create the Ethernet link handler thread */
 /* USER CODE BEGIN H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
+  sntp_setoperatingmode(SNTP_OPMODE_LISTENONLY);
+  if(netif_is_link_up(&gnetif)) {
+	sntp_init();
+	tftp_init(&my_tftp_ctx);
+  	init_network_logging(0, fr_addr);
+  	init_udp_telem();
+  }
+  else {
+  	// ethernet link down
+  	log_message(ERR_LINK_INIT_DOWN, -1);
+  }
+
   memset(&attributes, 0x0, sizeof(osThreadAttr_t));
   attributes.name = "EthLink";
   attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
@@ -130,11 +151,25 @@ static void ethernet_link_status_updated(struct netif *netif)
   if (netif_is_up(netif))
   {
 /* USER CODE BEGIN 5 */
+	  init_network_logging(1, fr_addr);
+	  sntp_init();
+	  client_reinit();
+	  tftp_init(&my_tftp_ctx);
+	  init_udp_telem();
+
+	  log_message(STAT_LINK_UP, -1);
 /* USER CODE END 5 */
   }
   else /* netif is down */
   {
 /* USER CODE BEGIN 6 */
+	  deinit_network_logging();
+	  sntp_stop();
+	  client_stop();
+	  tftp_cleanup();
+	  deinit_udp_telem();
+
+	  log_message(STAT_LINK_DOWN, -1);
 /* USER CODE END 6 */
   }
 }

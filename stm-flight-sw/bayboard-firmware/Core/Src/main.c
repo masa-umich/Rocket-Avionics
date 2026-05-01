@@ -210,10 +210,11 @@ void start_led_timer(TickType_t delay, uint32_t reload, uint8_t force) {
 	}
 }
 
-void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force) {
+void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force, uint8_t startMode) {
 	if(xSemaphoreTake(timer_mutex, 0) == pdPASS) {
 		if(timers.buzzTimer) {
 			if(force || xTimerIsTimerActive(timers.buzzTimer) != pdPASS) {
+				HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, startMode);
 				vTimerSetTimerID(timers.buzzTimer, (void *)reload);
 				xTimerChangePeriod(timers.buzzTimer, delay, 0);
 			}
@@ -366,25 +367,28 @@ int main(void)
 	  		  // eeprom load error, defaults loaded
 	  		  load_eeprom_defaults(&loaded_config, &bb_num);
 	  		  log_message(ERR_EEPROM_LOAD_COMM_ERR, -1);
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -2: {
 	  		  // eeprom tc gain value error
+	  		  load_eeprom_defaults(&loaded_config, &bb_num);
 	  		  log_message(ERR_EEPROM_LOAD_TC_ERR, -1);
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -3: {
 	  		  // eeprom valve conf error
+	  		  load_eeprom_defaults(&loaded_config, &bb_num);
 	  		  log_message(ERR_EEPROM_LOAD_VLV_ERR, -1);
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  case -4: {
 	  		  // invalid bb number
+	  		  load_eeprom_defaults(&loaded_config, &bb_num);
 	  		  log_message(BB_ERR_EEPROM_LOAD_BB_NUM_ERR, -1);
-	  		  start_buzz_timer(500, UINT32_MAX, 1);
+	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
 	  	  default: {
@@ -399,7 +403,7 @@ int main(void)
 	  // eeprom init error, defaults loaded
 	  load_eeprom_defaults(&loaded_config, &bb_num);
 	  log_message(ERR_EEPROM_INIT, -1);
-	  start_buzz_timer(500, UINT32_MAX, 1);
+	  start_buzz_timer(500, UINT32_MAX, 1, 0);
   }
   bb_addr = loaded_config.bayboardIP;
   char logmsg[sizeof(BB_STAT_STARTING_IDENTIFY) + 3];
@@ -1044,6 +1048,7 @@ void StartAndMonitor(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
+  osDelay(1);
 
   	// Signal end of critical section
 
@@ -1056,8 +1061,8 @@ void StartAndMonitor(void *argument)
 		start_led_timer(250, UINT32_MAX, 1);
 	}
 
-	HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
-	start_buzz_timer(1000, 0, 0);
+	//HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, 1);
+	start_buzz_timer(1000, 0, 0, 1);
 
     setup_system_state();
 
