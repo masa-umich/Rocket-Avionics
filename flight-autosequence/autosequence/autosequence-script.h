@@ -2,7 +2,7 @@
 #define AUTOSEQUENCE_SCRIPT_H
 
 #include "main.h"
-#include "stm-flight-sw/limestone-firmware/Core/Inc/flight-autosequence.h"
+#include "flight-autosequence.h"
 #include <stdlib.h>
 #include <stdint.h>
 #include "ad-helpers.h"
