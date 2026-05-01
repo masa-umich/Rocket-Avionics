@@ -148,28 +148,6 @@ int buffer_eq(float* buf, int size, float search_value) {
 }
 
 
-float fix_reading(float reading, float* buf, int size, DetectorType type) {
-    switch (type) {
-        case IMU_DTR:
-            if (reading <= ACCEL_MIN || reading >= ACCEL_MAX)
-                return mean(size, buf);
-            return reading;
-
-        case BARO_DTR:
-            if (reading <= BARO_MIN || reading >= BARO_MAX)
-                return mean(size, buf);
-            return reading;
-
-        case TEMP_DTR:
-            if (reading <= TEMP_C_MIN || reading >= TEMP_C_MAX)
-                return mean(size, buf);
-            return reading;
-
-        default:
-            return reading;
-    }
-}
-
 float linreg_slope(float *buf, int start, int n) {
     float sum_y = 0, sum_xy = 0;
     for (int i = 0; i < n; i++) {

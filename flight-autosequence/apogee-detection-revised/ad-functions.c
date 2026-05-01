@@ -153,4 +153,26 @@ void clear(Detector * detector) {
     detector->slope = 0;
 }
 
+float fix_reading(float reading, float* buf, int size, DetectorType type) {
+    switch (type) {
+        case IMU_DTR:
+            if (reading <= ACCEL_MIN || reading >= ACCEL_MAX)
+                return mean(size, buf);
+            return reading;
+
+        case BARO_DTR:
+            if (reading <= BARO_MIN || reading >= BARO_MAX)
+                return mean(size, buf);
+            return reading;
+
+        case TEMP_DTR:
+            if (reading <= TEMP_C_MIN || reading >= TEMP_C_MAX)
+                return mean(size, buf);
+            return reading;
+
+        default:
+            return reading;
+    }
+}
+
 

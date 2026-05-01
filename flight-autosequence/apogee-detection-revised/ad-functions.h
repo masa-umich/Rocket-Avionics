@@ -2,6 +2,7 @@
 #define AD_FUNCTIONS_H
 
 #include "stdint.h"
+#include "ad-helpers.h"
 #include <math.h>
 
 //used with the barometer and the IMU
@@ -99,5 +100,7 @@ void compute_fallback_times(float altitude, float velocity, float accel,
                             float* h_apogee, float* h_5k, float* h_1k);
 
 void clear(Detector * detector);
+
+float fix_reading(float reading, float* buf, int size, DetectorType type);
 
 #endif
