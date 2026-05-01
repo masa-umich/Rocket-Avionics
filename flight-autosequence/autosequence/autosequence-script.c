@@ -14,7 +14,7 @@ const uint32_t period = 20; // ms, greater than sampling period of 20 ms
 const uint32_t APOGEE_AGREEMENT_WINDOW = 2 * 1000; // 2 seconds -- how long after fluctus apogee detection we should trust our script's apogee detection for agreement purposes
 
  
-int execute_flight_autosequence(Autos_boot_t *boot_data){
+int execute_flight_autosequence(Autos_boot_t *boot_params){
     // starts by waiting for valves to open
     //const uint32_t period = pdMS_TO_TICKS(50); // 20 Hz should be good
     FlightPhase phase = ST_DETECT_VALVES_OPEN;

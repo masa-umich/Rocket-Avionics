@@ -25,9 +25,6 @@ extern const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS; // 15 seconds
 extern const uint32_t LOCKOUT_END_TIME; // 30 seconds, hard cutoff for lockout phase end
 extern const uint32_t APOGEE_AGREEMENT_WINDOW; // 2 seconds
 
-
-void execute_flight_autosequence();
-
 int execute_flight_autosequence(Autos_boot_t * boot_params);
 
 #endif
