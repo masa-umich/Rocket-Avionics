@@ -1,3 +1,13 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "matplotlib>=3.10.9",
+#     "numpy>=2.4.4",
+#     "pandas>=3.0.2",
+#     "tk>=0.1.0",
+# ]
+# ///
+
 import pandas as pd
 import matplotlib
 matplotlib.use('TkAgg')

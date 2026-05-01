@@ -34,7 +34,7 @@ void AutosequenceTask(void *argument) {
 			int exit_stat = coldflow_autosequence(*boot_params);
 #endif
 
-			if(exit_stat < 0) {
+			if(exit_stat != 0) {
 				update_state_in_telem(AUTOS_STATE_DEARMED);
 				Autos_boot_t end_state = {0};
 				end_state.phase = AUTOS_STATE_DEARMED;
