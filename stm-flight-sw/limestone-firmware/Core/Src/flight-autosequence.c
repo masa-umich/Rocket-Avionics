@@ -18,14 +18,14 @@ void AutosequenceTask(void *argument) {
 	Autos_boot_t * boot_params = (Autos_boot_t *) argument;
 	for(;;) {
 		osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
-		uint32_t flags = boot_params->phase > AUTOS_STATE_DEARMED ? (boot_params->phase < AUTOS_STATE_DONE ? AUTOS_ARM_FLAG : 0) : osEventFlagsWait(autos_events, AUTOS_ARM_FLAG, osFlagsWaitAny, osWaitForever);
+		uint32_t flags = boot_params->phase > ST_DISARMED ? (boot_params->phase < ST_DONE ? AUTOS_ARM_FLAG : 0) : osEventFlagsWait(autos_events, AUTOS_ARM_FLAG, osFlagsWaitAny, osWaitForever);
 		if(!(flags & osFlagsError) && (flags & AUTOS_ARM_FLAG)) {
 			osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
 			log_message(FC_STAT_ARMED, -1);
-			update_state_in_telem(boot_params->phase > AUTOS_STATE_DEARMED ? boot_params->phase : AUTOS_STATE_ARMED);
-			if(boot_params->phase == AUTOS_STATE_DEARMED) {
+			update_state_in_telem(boot_params->phase > ST_DISARMED ? boot_params->phase : ST_DETECT_VALVES_OPEN);
+			if(boot_params->phase == ST_DISARMED) {
 				Autos_boot_t arm_state = {0};
-				arm_state.phase = AUTOS_STATE_ARMED;
+				arm_state.phase = ST_DETECT_VALVES_OPEN;
 				update_boot_params(&arm_state);
 			}
 #ifndef AUTOS_TEST
@@ -35,12 +35,12 @@ void AutosequenceTask(void *argument) {
 #endif
 
 			if(exit_stat != 0) {
-				update_state_in_telem(AUTOS_STATE_DEARMED);
+				update_state_in_telem(ST_DISARMED);
 				Autos_boot_t end_state = {0};
-				end_state.phase = AUTOS_STATE_DEARMED;
+				end_state.phase = ST_DISARMED;
 				update_boot_params(&end_state);
 				osDelay(1);
-				boot_params->phase = AUTOS_STATE_DEARMED;
+				boot_params->phase = ST_DISARMED;
 				continue;
 			}
 		}
@@ -48,9 +48,9 @@ void AutosequenceTask(void *argument) {
 			osDelay(100);
 			continue;
 		}
-		update_state_in_telem(AUTOS_STATE_DONE);
+		update_state_in_telem(ST_DONE);
 		Autos_boot_t done_state = {0};
-		done_state.phase = AUTOS_STATE_DONE;
+		done_state.phase = ST_DONE;
 		update_boot_params(&done_state);
 		for(;;) {
 			uint32_t end_flags = osEventFlagsWait(autos_events, AUTOS_ABORT_FLAG, osFlagsWaitAny, osWaitForever);
@@ -59,12 +59,12 @@ void AutosequenceTask(void *argument) {
 			}
 			osDelay(100);
 		}
-		update_state_in_telem(AUTOS_STATE_DEARMED);
+		update_state_in_telem(ST_DISARMED);
 		Autos_boot_t end_state = {0};
-		end_state.phase = AUTOS_STATE_DEARMED;
+		end_state.phase = ST_DISARMED;
 		update_boot_params(&end_state);
 		osDelay(1);
-		boot_params->phase = AUTOS_STATE_DEARMED;
+		boot_params->phase = ST_DISARMED;
 	}
 }
 
@@ -139,7 +139,7 @@ uint8_t should_abort() {
 	return ((flags & AUTOS_ABORT_FLAG) == AUTOS_ABORT_FLAG);
 }
 
-void update_state_in_telem(AutoS_SM status) {
+void update_state_in_telem(FlightPhase status) {
 	if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
 		Rocket_h.fcState.auto_sequence_state = status;
 		xSemaphoreGive(Rocket_h.fcState_access);
@@ -161,7 +161,7 @@ void deployMain() {
 int coldflow_autosequence(Autos_boot_t params) {
 	uint8_t entry_state = params.phase;
 	uint32_t start = getTime();
-	while(getTime() - start < 20000 && entry_state < AUTOS_STATE_BURN) {
+	while(getTime() - start < 20000 && entry_state < ST_WAIT_MECO) {
 		if(valves_open()) {
 			break;
 		}
@@ -171,7 +171,7 @@ int coldflow_autosequence(Autos_boot_t params) {
 		wait(100);
 	}
 	if(getTime() - start >= 20000) return -1;
-	for(uint8_t i = entry_state > AUTOS_STATE_BURN ? entry_state : AUTOS_STATE_BURN;i < AUTOS_STATE_DONE;i++) {
+	for(uint8_t i = entry_state > ST_WAIT_MECO ? entry_state : ST_WAIT_MECO;i < ST_DONE;i++) {
 		update_state_in_telem(i);
 		Autos_boot_t cur_state = {0};
 		cur_state.phase = i;

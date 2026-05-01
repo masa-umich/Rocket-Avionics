@@ -68,17 +68,17 @@ typedef struct {
     float slope;
 } Detector;
 
-//What 'state' is our apogee-detection system in? 
+//What 'state' is our apogee-detection system in?
 typedef enum {
 	ST_DISARMED = 0x00,
-    ST_DETECT_VALVES_OPEN,
-    ST_MACH_LOCKOUT,
-    ST_WAIT_MECO,
-    ST_WAIT_APOGEE,
-    ST_WAIT_DROGUE,
-    ST_WAIT_MAIN,
-    ST_WAIT_GROUND,
-    ST_DONE
+    ST_DETECT_VALVES_OPEN = 0x01,
+    ST_WAIT_MECO = 0x02,
+    ST_MACH_LOCKOUT = 0x03,
+    ST_WAIT_APOGEE = 0x04,
+    ST_WAIT_DROGUE = 0x05,
+    ST_WAIT_MAIN = 0x06,
+    ST_WAIT_GROUND = 0x07,
+    ST_DONE = 0x08
 } FlightPhase;
 
 
