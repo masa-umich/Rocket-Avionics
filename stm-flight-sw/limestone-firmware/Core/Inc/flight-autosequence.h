@@ -36,8 +36,21 @@ typedef struct {
 } IMU_values;
 
 typedef struct {
-	FlightPhase phase;
-	uint32_t sec_to_next_phase;
+    FlightPhase phase;
+    uint32_t current_time_in_flight;
+
+    uint32_t fallback_apogee_time;
+    uint32_t fallback_5k_time;
+    uint32_t fallback_1k_time;
+
+    uint8_t apogee_detection_worked;
+    uint8_t fallback_timers_worked;
+    uint8_t constant_timers_worked;
+
+    uint8_t fluctus_apogee_detected;
+    uint32_t fluctus_apogee_timestamp;
+    uint8_t fluctus_disabled;
+    uint8_t heights_recorded;
 } Autos_boot_t;
 
 void AutosequenceTask(void *argument);
