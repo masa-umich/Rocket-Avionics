@@ -18,12 +18,12 @@ void AutosequenceTask(void *argument) {
 	Autos_boot_t * boot_params = (Autos_boot_t *) argument;
 	for(;;) {
 		osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
-		uint32_t flags = boot_params->phase > ST_DISARMED ? (boot_params->phase < ST_DONE ? AUTOS_ARM_FLAG : 0) : osEventFlagsWait(autos_events, AUTOS_ARM_FLAG, osFlagsWaitAny, osWaitForever);
+		uint32_t flags = boot_params->phase > ST_DETECT_VALVES_OPEN ? (boot_params->phase < ST_DONE ? AUTOS_ARM_FLAG : 0) : osEventFlagsWait(autos_events, AUTOS_ARM_FLAG, osFlagsWaitAny, osWaitForever);
 		if(!(flags & osFlagsError) && (flags & AUTOS_ARM_FLAG)) {
 			osEventFlagsClear(autos_events, AUTOS_ARM_FLAG | AUTOS_ABORT_FLAG | AUTOS_OX_FLAG | AUTOS_FUEL_FLAG);
 			log_message(FC_STAT_ARMED, -1);
-			update_state_in_telem(boot_params->phase > ST_DISARMED ? boot_params->phase : ST_DETECT_VALVES_OPEN);
-			if(boot_params->phase == ST_DISARMED) {
+			update_state_in_telem(boot_params->phase > ST_DETECT_VALVES_OPEN ? boot_params->phase : ST_DETECT_VALVES_OPEN);
+			if(boot_params->phase <= ST_DETECT_VALVES_OPEN) {
 				Autos_boot_t arm_state = {0};
 				arm_state.phase = ST_DETECT_VALVES_OPEN;
 				update_boot_params(&arm_state);
