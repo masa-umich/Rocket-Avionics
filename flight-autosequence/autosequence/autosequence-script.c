@@ -162,12 +162,20 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     ignition_timestamp = getTime();
 
                     // set ground temp at handoff for calculating altitude for non-standard atmosphere conditions
-                    uint8_t idx_temp = (temp_C_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                    T_GROUND = temp_C_detector.average[idx_temp];
-
+                    if (temp_C_detector.avg_size >= AD_CAPACITY){
+                        T_GROUND = mean(temp_C_detector.average);
+                    } else {
+                        uint8_t idx_temp = (temp_C_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        T_GROUND = temp_C_detector.average[idx_temp];
+                    }
+                    
                     // set ground temp at handoff
-                    uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                    P_GROUND = baro_detector.average[idx_baro];
+                    if (baro_detector.avg_size >= AD_CAPACITY){
+                        P_GROUND = mean(baro_detector.average);
+                    } else {
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        P_GROUND = baro_detector.average[idx_baro];
+                    }
 
                     // calculate drogue and main deploy pressures based on ground temp and pressure
                     DROGUE_DEPLOY_PRESSURE = compute_pressure(DROGUE_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
@@ -297,8 +305,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_DROGUE;
                         boot_params.phase = phase;
                         apogee_timestamp = current_time;
-                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        apogee_altitude = compute_height(baro_detector.average[idx_baro]);
+                        apogee_altitude = compute_height(mean(baro_detector.average));
                         
                         apogee_detection_worked = 0;
                         fallback_timers_worked = 0;
@@ -369,8 +376,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_MAIN;
                         boot_params.phase = phase;
                         drogue_timestamp = current_time;
-                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        drogue_altitude = compute_height(baro_detector.average[idx_baro]);
+                        drogue_altitude = compute_height(mean(baro_detector.average));
                     }
                 }
                 break;
@@ -422,8 +428,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_GROUND;
                         boot_params.phase = phase;
                         main_timestamp = current_time; 
-                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        main_altitude = baro_detector.average[idx_baro];
+                        main_altitude = compute_height(mean(baro_detector.average));
                     }
                 }
                 break;
