@@ -72,7 +72,7 @@ void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force, uint8_t 
 
 #define TELEMETRY_HZ		(uint32_t)50
 
-#define FC_EEPROM_LEN		(uint16_t)98
+#define FC_EEPROM_LEN		(uint16_t)100
 //#define EEPROM_OVERRIDE // Override EEPROM configuration. Use this when setting the EEPROM config on a board for the first time
 #define RESTART_AFTER_CONFIG
 
@@ -121,6 +121,9 @@ void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force, uint8_t 
 #define FC_EEPROM_DROGUE_DEFAULT			1
 #define FC_EEPROM_MAIN_DEFAULT				2
 
+#define FC_EEPROM_FUEL_ISO_DEFAULT			1
+#define FC_EEPROM_OX_ISO_DEFAULT			0
+
 #define FC_MAC_ADDR_1		0x00
 #define FC_MAC_ADDR_2		0x80
 #define FC_MAC_ADDR_3		0xE1
@@ -135,7 +138,7 @@ void start_buzz_timer(TickType_t delay, uint32_t reload, uint8_t force, uint8_t 
 #define ERROR_UDP_PORT		(uint16_t)1234
 #define TELEM_UDP_PORT		(uint16_t)6767
 
-#define RADIO_PACKET_LENGTH		48
+#define RADIO_PACKET_LENGTH		49
 
 #define ERROR_MSG_TYPES		(size_t)32 // Should be a multiple of 2
 #define PERI_ERROR_MSG_TYPES	(size_t)8

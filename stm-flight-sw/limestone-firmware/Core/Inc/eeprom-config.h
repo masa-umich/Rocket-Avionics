@@ -49,6 +49,9 @@ typedef struct {
 	uint8_t pilot_para_index;
 	uint8_t	drogue_para_index;
 	uint8_t main_para_index;
+
+	uint8_t fuel_iso_index;
+	uint8_t ox_iso_index;
 } EEPROM_conf_t;
 
 int get_radio_state(uint8_t blocking);

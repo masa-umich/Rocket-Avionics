@@ -280,6 +280,65 @@ void LEDTimer(TimerHandle_t xTimer) {
 
     vTimerSetTimerID(xTimer, (void *)toggleCount);
 }
+
+static void Enable_GPIO_Clock(GPIO_TypeDef *port) {
+    if (port == GPIOA) __HAL_RCC_GPIOA_CLK_ENABLE();
+    else if (port == GPIOB) __HAL_RCC_GPIOB_CLK_ENABLE();
+    else if (port == GPIOC) __HAL_RCC_GPIOC_CLK_ENABLE();
+    else if (port == GPIOD) __HAL_RCC_GPIOD_CLK_ENABLE();
+    else if (port == GPIOE) __HAL_RCC_GPIOE_CLK_ENABLE();
+    else if (port == GPIOF) __HAL_RCC_GPIOF_CLK_ENABLE();
+    else if (port == GPIOG) __HAL_RCC_GPIOG_CLK_ENABLE();
+    else if (port == GPIOH) __HAL_RCC_GPIOH_CLK_ENABLE();
+#ifdef GPIOI
+    else if (port == GPIOI) __HAL_RCC_GPIOI_CLK_ENABLE();
+#endif
+    else if (port == GPIOJ) __HAL_RCC_GPIOJ_CLK_ENABLE();
+    else if (port == GPIOK) __HAL_RCC_GPIOK_CLK_ENABLE();
+}
+
+void clear_i2c_bus(GPIO_TypeDef * scl_port, uint16_t scl_pin, GPIO_TypeDef * sda_port, uint16_t sda_pin) {
+	Enable_GPIO_Clock(scl_port);
+	Enable_GPIO_Clock(sda_port);
+
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    GPIO_InitStruct.Pin = scl_pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(scl_port, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = sda_pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(sda_port, &GPIO_InitStruct);
+
+    HAL_GPIO_WritePin(sda_port, sda_pin, GPIO_PIN_SET);
+
+    for (uint8_t i = 0; i < 9; i++) {
+        if (HAL_GPIO_ReadPin(sda_port, sda_pin) == GPIO_PIN_SET) {
+            break;
+        }
+
+        HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_RESET);
+        HAL_Delay(1);
+
+        HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_SET);
+        HAL_Delay(1);
+    }
+
+    HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_SET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(sda_port, sda_pin, GPIO_PIN_RESET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(sda_port, sda_pin, GPIO_PIN_SET);
+    HAL_Delay(1);
+
+    HAL_GPIO_DeInit(sda_port, sda_pin);
+    HAL_GPIO_DeInit(scl_port, scl_pin);
+}
 /* USER CODE END 0 */
 
 /**
@@ -322,6 +381,9 @@ int main(void)
   // Force reset RTC registers in case something got corrupted
   __HAL_RCC_BACKUPRESET_FORCE();
   __HAL_RCC_BACKUPRESET_RELEASE();
+
+  clear_i2c_bus(GPIOB, GPIO_PIN_6, GPIOB, GPIO_PIN_7);
+  clear_i2c_bus(GPIOC, GPIO_PIN_11, GPIOC, GPIO_PIN_9);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -422,6 +484,8 @@ int main(void)
 	  		  loaded_config.pilot_para_index = FC_EEPROM_PILOT_DEFAULT;
 	  		  loaded_config.drogue_para_index = FC_EEPROM_DROGUE_DEFAULT;
 	  		  loaded_config.main_para_index = FC_EEPROM_MAIN_DEFAULT;
+	  		  loaded_config.fuel_iso_index = FC_EEPROM_FUEL_ISO_DEFAULT;
+	  		  loaded_config.ox_iso_index = FC_EEPROM_OX_ISO_DEFAULT;
 	  		  start_buzz_timer(500, UINT32_MAX, 1, 0);
 	  		  break;
 	  	  }
@@ -439,6 +503,15 @@ int main(void)
 	  log_message(ERR_EEPROM_INIT, -1);
 	  start_buzz_timer(500, UINT32_MAX, 1, 0);
   }
+  char channel_assign[] = FC_STAT_AUTOS_VALVES;
+  channel_assign[46] = loaded_config.ox_mpv_index + 1 + '0';
+  channel_assign[59] = loaded_config.fuel_mpv_index + 1 + '0';
+  channel_assign[69] = loaded_config.pilot_para_index + 1 + '0';
+  channel_assign[80] = loaded_config.drogue_para_index + 1 + '0';
+  channel_assign[89] = loaded_config.main_para_index + 1 + '0';
+  channel_assign[102] = loaded_config.fuel_iso_index + 1 + '0';
+  channel_assign[113] = loaded_config.ox_iso_index + 1 + '0';
+  log_message(channel_assign, -1);
   fc_addr = loaded_config.flightcomputerIP;
   log_message(STAT_VERSION_INFO, -1);
 
@@ -1480,6 +1553,7 @@ void StartAndMonitor(void *argument)
 
 	uint32_t onlineTick = HAL_GetTick();
 	uint32_t heartTick = HAL_GetTick();
+	uint32_t domeisoTick = HAL_GetTick();
 	uint8_t startup_delay = 0;
 	uint8_t gps_init = 0;
 	/* Infinite loop */
@@ -1502,6 +1576,23 @@ void StartAndMonitor(void *argument)
 			if(startup_delay < 5) {
 				startup_delay++;
 			}
+
+			if(telemcounter == 0) {
+				log_telemetry();
+				telemcounter = 0; // 4hz
+			}
+			else {
+				telemcounter--;
+			}
+
+			if(statecounter == 0) {
+				log_valve_states();
+				statecounter = 1; // 2hz
+			}
+			else {
+				statecounter--;
+			}
+
 			refresh_log_timers();
 
 			int num_limes = num_devices(LimeWire_d);
@@ -1572,21 +1663,63 @@ void StartAndMonitor(void *argument)
 				}
 				num_limewires = num_limes;
 			}
+		}
 
-			if(telemcounter == 0) {
-				log_telemetry();
-				telemcounter = 0; // 4hz
-			}
-			else {
-				telemcounter--;
+		if(HAL_GetTick() - domeisoTick > 100) {
+			domeisoTick = HAL_GetTick();
+
+			int bb1_conn = num_devices(BayBoard1_d);
+			if(bb1_conn >= 0) {
+				if(bb1_conn > 0) {
+					if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+						uint8_t cur_autos_state = Rocket_h.fcState.auto_sequence_state;
+						xSemaphoreGive(Rocket_h.fcState_access);
+
+						if(cur_autos_state > ST_DETECT_VALVES_OPEN && cur_autos_state < ST_DONE) {
+							if(xSemaphoreTake(Rocket_h.bb1Valve_access, 5) == pdPASS) {
+								Valve_State_t iso_state = Rocket_h.bb1ValveStates[loaded_config.fuel_iso_index];
+								xSemaphoreGive(Rocket_h.bb1Valve_access);
+
+								if(iso_state == Valve_Deenergized) {
+									Message dome_force_msg = {0};
+				    				dome_force_msg.type = MSG_VALVE_COMMAND;
+				    				dome_force_msg.data.valve_command.valve_state = 0x01;
+				    				dome_force_msg.data.valve_command.valve_id = generate_valve_id(BOARD_BAY_1, (Valve_Channel) loaded_config.fuel_iso_index);
+				      				if(send_msg_to_device(BayBoard1_d, &dome_force_msg, 5) != 0) {
+				      				// Server not up, target device not connected, or txbuffer is full
+				      				}
+								}
+							}
+						}
+					}
+				}
 			}
 
-			if(statecounter == 0) {
-				log_valve_states();
-				statecounter = 1; // 2hz
-			}
-			else {
-				statecounter--;
+			int bb2_conn = num_devices(BayBoard2_d);
+			if(bb2_conn >= 0) {
+				if(bb2_conn > 0) {
+					if(xSemaphoreTake(Rocket_h.fcState_access, 5) == pdPASS) {
+						uint8_t cur_autos_state = Rocket_h.fcState.auto_sequence_state;
+						xSemaphoreGive(Rocket_h.fcState_access);
+
+						if(cur_autos_state > ST_DETECT_VALVES_OPEN && cur_autos_state < ST_DONE) {
+							if(xSemaphoreTake(Rocket_h.bb2Valve_access, 5) == pdPASS) {
+								Valve_State_t iso_state = Rocket_h.bb2ValveStates[loaded_config.ox_iso_index];
+								xSemaphoreGive(Rocket_h.bb2Valve_access);
+
+								if(iso_state == Valve_Deenergized) {
+									Message dome_force_msg = {0};
+				    				dome_force_msg.type = MSG_VALVE_COMMAND;
+				    				dome_force_msg.data.valve_command.valve_state = 0x01;
+				    				dome_force_msg.data.valve_command.valve_id = generate_valve_id(BOARD_BAY_2, (Valve_Channel) loaded_config.ox_iso_index);
+				      				if(send_msg_to_device(BayBoard2_d, &dome_force_msg, 5) != 0) {
+				      				// Server not up, target device not connected, or txbuffer is full
+				      				}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 

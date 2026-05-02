@@ -455,6 +455,7 @@ void StartDefaultTask(void *argument)
 			  telem_msg.data.telemetry.telemetry_data[GS_FUEL_PRES] = uart_data.fuel_pres;
 			  telem_msg.data.telemetry.telemetry_data[GS_OX_PRES] = uart_data.ox_pres;
 			  telem_msg.data.telemetry.telemetry_data[GS_COPV_PRES] = uart_data.copv_pres;
+			  telem_msg.data.telemetry.telemetry_data[GS_RECOVERY_PRES] = uart_data.recovery_pres;
 			  telem_msg.data.telemetry.telemetry_data[GS_RSSI] = uart_data.rssi;
 			  telem_msg.data.telemetry.telemetry_data[GS_SNR] = uart_data.snr;
 

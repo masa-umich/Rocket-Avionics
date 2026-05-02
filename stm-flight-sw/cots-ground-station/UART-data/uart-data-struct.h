@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#define UART_DATA_LENGTH		(size_t)56
+#define UART_DATA_LENGTH		(size_t)57
 #define UART_HEADER_LENGTH		(size_t)4
 #define UART_PACKET_LENGTH 		UART_DATA_LENGTH + UART_HEADER_LENGTH
 
@@ -35,6 +35,7 @@ typedef struct {
 	uint16_t fuel_pres; // psi
 	uint16_t ox_pres; // psi
 	uint16_t copv_pres; // psi
+	uint8_t recovery_pres; // psi
 	float rssi;
 	float snr;
 
@@ -65,12 +66,13 @@ static inline int serialize_radio(UART_Data_t * data_h, uint8_t * buf, size_t le
 	memcpy(buf + 34, &(data_h->fuel_pres), 2);
 	memcpy(buf + 36, &(data_h->ox_pres), 2);
 	memcpy(buf + 38, &(data_h->copv_pres), 2);
-	memcpy(buf + 40, &(data_h->rssi), 4);
-	memcpy(buf + 44, &(data_h->snr), 4);
+	memcpy(buf + 40, &(data_h->recovery_pres), 1);
+	memcpy(buf + 41, &(data_h->rssi), 4);
+	memcpy(buf + 45, &(data_h->snr), 4);
 
-	memcpy(buf + 48, &(data_h->ms_epoch), 8);
+	memcpy(buf + 49, &(data_h->ms_epoch), 8);
 
-	memcpy(buf + 56, &UART_PACKET_HEADER, sizeof(UART_PACKET_HEADER));
+	memcpy(buf + 57, &UART_PACKET_HEADER, sizeof(UART_PACKET_HEADER));
 
 	return UART_PACKET_LENGTH;
 }
@@ -102,10 +104,11 @@ static inline int deserialize_radio(UART_Data_t * data_h, uint8_t * buf, size_t 
 	memcpy(&(data_h->fuel_pres), buf + 34, 2);
 	memcpy(&(data_h->ox_pres), buf + 36, 2);
 	memcpy(&(data_h->copv_pres), buf + 38, 2);
-	memcpy(&(data_h->rssi), buf + 40, 4);
-	memcpy(&(data_h->snr), buf + 44, 4);
+	memcpy(&(data_h->recovery_pres), buf + 40, 1);
+	memcpy(&(data_h->rssi), buf + 41, 4);
+	memcpy(&(data_h->snr), buf + 45, 4);
 
-	memcpy(&(data_h->ms_epoch), buf + 48, 8);
+	memcpy(&(data_h->ms_epoch), buf + 49, 8);
 
 	return UART_PACKET_LENGTH;
 }

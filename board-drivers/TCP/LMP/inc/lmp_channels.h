@@ -238,7 +238,7 @@
 #define FR_BAR_2_I                      13
 #define FR_BOARD_TEMP_I                 14
 
-#define GS_TELEMETRY_CHANNELS			21
+#define GS_TELEMETRY_CHANNELS			22
 #define GS_GPS_LAT						0
 #define GS_GPS_LONG						1
 #define GS_GPS_ALT						2
@@ -258,8 +258,9 @@
 #define GS_FUEL_PRES					16
 #define GS_OX_PRES						17
 #define GS_COPV_PRES					18
-#define GS_RSSI							19
-#define GS_SNR							20
+#define GS_RECOVERY_PRES				19
+#define GS_RSSI							20
+#define GS_SNR							21
 
 
 #endif /* INC_LMP_CHANNELS_H_ */

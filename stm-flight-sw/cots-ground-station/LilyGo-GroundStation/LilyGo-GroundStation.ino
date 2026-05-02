@@ -10,7 +10,7 @@ HardwareSerial Nucleo_GS(2);
 #define RADIO_BW                406.25
 #define RADIO_SYNCWORD          0x12
 
-#define RADIO_PACKET_LENGTH     48
+#define RADIO_PACKET_LENGTH     49
 
 #define DISP_INIT_LINE_SPACE    11
 
@@ -298,8 +298,9 @@ void parse_radio(UART_Data_t * uart_dst, uint8_t * buf) {
 	memcpy(&(uart_dst->fuel_pres), buf + 34, 2);
 	memcpy(&(uart_dst->ox_pres), buf + 36, 2);
 	memcpy(&(uart_dst->copv_pres), buf + 38, 2);
+  memcpy(&(uart_dst->recovery_pres), buf + 40, 1);
 
-  memcpy(&(uart_dst->ms_epoch), buf + 40, 8);
+  memcpy(&(uart_dst->ms_epoch), buf + 41, 8);
 }
 
 void drawRadio() {

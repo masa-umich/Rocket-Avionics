@@ -129,6 +129,65 @@ void __malloc_unlock(struct _reent *r) {
         (void)xTaskResumeAll();
     }
 }
+
+static void Enable_GPIO_Clock(GPIO_TypeDef *port) {
+    if (port == GPIOA) __HAL_RCC_GPIOA_CLK_ENABLE();
+    else if (port == GPIOB) __HAL_RCC_GPIOB_CLK_ENABLE();
+    else if (port == GPIOC) __HAL_RCC_GPIOC_CLK_ENABLE();
+    else if (port == GPIOD) __HAL_RCC_GPIOD_CLK_ENABLE();
+    else if (port == GPIOE) __HAL_RCC_GPIOE_CLK_ENABLE();
+    else if (port == GPIOF) __HAL_RCC_GPIOF_CLK_ENABLE();
+    else if (port == GPIOG) __HAL_RCC_GPIOG_CLK_ENABLE();
+    else if (port == GPIOH) __HAL_RCC_GPIOH_CLK_ENABLE();
+#ifdef GPIOI
+    else if (port == GPIOI) __HAL_RCC_GPIOI_CLK_ENABLE();
+#endif
+    else if (port == GPIOJ) __HAL_RCC_GPIOJ_CLK_ENABLE();
+    else if (port == GPIOK) __HAL_RCC_GPIOK_CLK_ENABLE();
+}
+
+void clear_i2c_bus(GPIO_TypeDef * scl_port, uint16_t scl_pin, GPIO_TypeDef * sda_port, uint16_t sda_pin) {
+	Enable_GPIO_Clock(scl_port);
+	Enable_GPIO_Clock(sda_port);
+
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    GPIO_InitStruct.Pin = scl_pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(scl_port, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = sda_pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(sda_port, &GPIO_InitStruct);
+
+    HAL_GPIO_WritePin(sda_port, sda_pin, GPIO_PIN_SET);
+
+    for (uint8_t i = 0; i < 9; i++) {
+        if (HAL_GPIO_ReadPin(sda_port, sda_pin) == GPIO_PIN_SET) {
+            break;
+        }
+
+        HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_RESET);
+        HAL_Delay(1);
+
+        HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_SET);
+        HAL_Delay(1);
+    }
+
+    HAL_GPIO_WritePin(scl_port, scl_pin, GPIO_PIN_SET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(sda_port, sda_pin, GPIO_PIN_RESET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(sda_port, sda_pin, GPIO_PIN_SET);
+    HAL_Delay(1);
+
+    HAL_GPIO_DeInit(sda_port, sda_pin);
+    HAL_GPIO_DeInit(scl_port, scl_pin);
+}
 /* USER CODE END 0 */
 
 /**
@@ -173,6 +232,8 @@ int main(void)
   // Force reset RTC registers in case something got corrupted
   __HAL_RCC_BACKUPRESET_FORCE();
   __HAL_RCC_BACKUPRESET_RELEASE();
+
+  clear_i2c_bus(GPIOB, GPIO_PIN_6, GPIOB, GPIO_PIN_7);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */

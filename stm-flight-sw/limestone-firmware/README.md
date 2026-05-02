@@ -77,6 +77,8 @@ The networking for Limelight's avionics can be split into 3 main pieces:
 | 96      | BOP Piston Valve Channel | uint8_t |
 | 97      | Drogue Chute Valve Channel | uint8_t |
 | 98      | Main Chute Valve Channel | uint8_t |
+| 99      | Fuel Dome Iso Channel    | uint8_t |
+| 100     | Ox Dome Iso Channel      | uint8_t |
 
 ### Notes
 The PT configuration floats are **little-endian**, but the IP addresses are

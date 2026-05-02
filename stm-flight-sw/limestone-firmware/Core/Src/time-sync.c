@@ -82,7 +82,7 @@ uint64_t get_rtc_time() {
 		if(__HAL_RTC_IS_CALENDAR_INITIALIZED(rtc) == 0) {
 			xSemaphoreGive(RTC_mutex);
 			// RTC not set yet
-			return 0;
+			return ((uint64_t) HAL_GetTick()) * 1000000ULL;
 		}
 		HAL_RTC_GetTime(rtc, &sTime, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(rtc, &sDate, RTC_FORMAT_BIN);
@@ -103,8 +103,8 @@ uint64_t get_rtc_time() {
 	time.tm_isdst = 0;
 
 	time_t sec = mktime(&time);
-	int32_t us = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) / 6250.0) * 1e6;
-	return (sec * 1e9) + (us * 1e3);
+	int32_t us = (((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) * 160;
+	return (sec * 1000000000ULL) + (us * 1000ULL);
 }
 
 // outbuf MUST have at least 24 bytes of space. It will not be null terminated
@@ -132,7 +132,7 @@ void get_iso_time(char *outbuf, int buf_size) {
 		memcpy(outbuf, "0000-00-00T00:00:00.000Z", 24);
 		return;
 	}
-	int16_t ms = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) * 1e3) / 6250;
+	int16_t ms = ((((int32_t) 6249) - ((int32_t) sTime.SubSeconds)) * 1000) / 6250;
 
 	snprintf(outbuf, buf_size, "%04u-%02u-%02uT%02u:%02u:%02u.%03u", 2000 + (uint16_t) sDate.Year, sDate.Month, sDate.Date, sTime.Hours, sTime.Minutes, sTime.Seconds, ms);
 	outbuf[23] = 'Z';

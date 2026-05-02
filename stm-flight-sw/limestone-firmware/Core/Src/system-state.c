@@ -426,8 +426,10 @@ uint8_t serialize_radio_telem(uint8_t * buf, size_t len, TickType_t timeout) {
 		uint8_t fluctus_mask = (Rocket_h.fcState.fluctus_5k_state << 2) | (Rocket_h.fcState.fluctus_1k_state << 1) | (Rocket_h.fcState.fluctus_apogee_state << 0);
 		memcpy(buf + 31, &fluctus_mask, 1);
 
+		pack_uint8(Rocket_h.fcState.pt1, buf + 40);
+
 		uint64_t ms_time = Rocket_h.fcState.timestamp / 1000000;
-		memcpy(buf + 40, &ms_time, 8);
+		memcpy(buf + 41, &ms_time, 8);
 
 		xSemaphoreGive(Rocket_h.fcState_access);
 

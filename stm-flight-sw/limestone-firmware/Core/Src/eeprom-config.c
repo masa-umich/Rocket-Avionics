@@ -219,6 +219,8 @@ int load_eeprom_config(EEPROM_conf_t *conf) {
 	conf->pilot_para_index = buffer[95];
 	conf->drogue_para_index = buffer[96];
 	conf->main_para_index = buffer[97];
+	conf->fuel_iso_index = buffer[98];
+	conf->ox_iso_index = buffer[99];
 
 	int ret = 0;
 	if(conf->tc1_gain > 0x0E || conf->tc2_gain > 0x0E || conf->tc3_gain > 0x0E) {
@@ -238,12 +240,14 @@ int load_eeprom_config(EEPROM_conf_t *conf) {
 		ret = -3;
 	}
 
-	if(conf->ox_mpv_index > 4 || conf->fuel_mpv_index > 4 || conf->pilot_para_index > 2 || conf->drogue_para_index > 2 || conf->main_para_index > 2) {
+	if(conf->ox_mpv_index > 4 || conf->fuel_mpv_index > 4 || conf->pilot_para_index > 2 || conf->drogue_para_index > 2 || conf->main_para_index > 2 || conf->fuel_iso_index > 4 || conf->ox_iso_index > 4) {
 		conf->ox_mpv_index = FC_EEPROM_OX_MPV_DEFAULT;
 		conf->fuel_mpv_index = FC_EEPROM_FUEL_MPV_DEFAULT;
 		conf->pilot_para_index = FC_EEPROM_PILOT_DEFAULT;
 		conf->drogue_para_index = FC_EEPROM_DROGUE_DEFAULT;
 		conf->main_para_index = FC_EEPROM_MAIN_DEFAULT;
+		conf->fuel_iso_index = FC_EEPROM_FUEL_ISO_DEFAULT;
+		conf->ox_iso_index = FC_EEPROM_OX_ISO_DEFAULT;
 		ret = -4;
 	}
 
@@ -285,9 +289,11 @@ void load_eeprom_defaults(EEPROM_conf_t *conf) {
 	IP4_ADDR(&(conf->bayboard3IP), FC_EEPROM_BB3IP_DEFAULT_1, FC_EEPROM_BB3IP_DEFAULT_2, FC_EEPROM_BB3IP_DEFAULT_3, FC_EEPROM_BB3IP_DEFAULT_4);
 	IP4_ADDR(&(conf->flightrecordIP), FC_EEPROM_FRIP_DEFAULT_1, FC_EEPROM_FRIP_DEFAULT_2, FC_EEPROM_FRIP_DEFAULT_3, FC_EEPROM_FRIP_DEFAULT_4);
 
-	conf->ox_mpv_index = 0;
-	conf->fuel_mpv_index = 1;
-	conf->pilot_para_index = 0;
-	conf->drogue_para_index = 1;
-	conf->main_para_index = 2;
+	conf->ox_mpv_index = FC_EEPROM_OX_MPV_DEFAULT;
+	conf->fuel_mpv_index = FC_EEPROM_FUEL_MPV_DEFAULT;
+	conf->pilot_para_index = FC_EEPROM_PILOT_DEFAULT;
+	conf->drogue_para_index = FC_EEPROM_DROGUE_DEFAULT;
+	conf->main_para_index = FC_EEPROM_MAIN_DEFAULT;
+	conf->fuel_iso_index = FC_EEPROM_FUEL_ISO_DEFAULT;
+	conf->ox_iso_index = FC_EEPROM_OX_ISO_DEFAULT;
 }

@@ -217,8 +217,3 @@ uint8_t get_fluctus_1k() {
 	}
 	return 0;
 }
-
-void log_autos_info(Autos_boot_t * params) {
-	char logmsg[sizeof(STAT_AVAILABLE_FLASH) + 37];
-	snprintf(logmsg, sizeof(logmsg), STAT_AVAILABLE_FLASH "%" PRIu32 "B: %" PRIu32 "KB/512MB %u%%", available, available >> 10, percent);
-}

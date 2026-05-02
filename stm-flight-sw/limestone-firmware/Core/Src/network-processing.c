@@ -78,12 +78,14 @@ void ProcessPackets(void *argument) {
 				    		}
 				    		else {
 				    			if(get_valve_board(parsedmsg.data.valve_command.valve_id) == BOARD_BAY_3) {
-				    				Valve_Channel target_channel = get_valve(parsedmsg.data.valve_command.valve_id);
-				    				if(target_channel == ((Valve_Channel) loaded_config.ox_mpv_index)) {
-				    					trigger_Ox();
-				    				}
-				    				if(target_channel == ((Valve_Channel) loaded_config.fuel_mpv_index)) {
-				    					trigger_Fuel();
+				    				if(parsedmsg.data.valve_command.valve_state == 0x00) {
+				    					Valve_Channel target_channel = get_valve(parsedmsg.data.valve_command.valve_id);
+				    					if(target_channel == ((Valve_Channel) loaded_config.ox_mpv_index)) {
+				    						trigger_Ox();
+				    					}
+				    					if(target_channel == ((Valve_Channel) loaded_config.fuel_mpv_index)) {
+				    						trigger_Fuel();
+				    					}
 				    				}
 				    			}
 				    			// Relay to Bay Boards

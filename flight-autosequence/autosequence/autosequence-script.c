@@ -1,7 +1,7 @@
 #include "autosequence-script.h"
 
 
-const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15 * 1000; // 15 seconds
+const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 20 * 1000; // 15 seconds
 const uint32_t LOCKOUT_END_TIME = 30 * 1000; // 30 seconds, hard cutoff for lockout phase end
 
 const uint32_t APOGEE_CONSTANT_TIMER = 60 * 1000; // 60 seconds in milliseconds
@@ -17,7 +17,7 @@ const uint32_t APOGEE_AGREEMENT_WINDOW = 2 * 1000; // 2 seconds -- how long afte
 int execute_flight_autosequence(Autos_boot_t boot_params){
     // starts by waiting for valves to open
     //const uint32_t period = pdMS_TO_TICKS(50); // 20 Hz should be good
-    FlightPhase phase = ST_DETECT_VALVES_OPEN;
+    FlightPhase phase = boot_params.phase > ST_DISARMED ? boot_params.phase : ST_DETECT_VALVES_OPEN;
     uint32_t last = getTime();
 
     // initialize detectors for pressure, accleration, and temperature
@@ -108,12 +108,19 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
     // Fluctus FC detection timers
     uint32_t fluctus_apogee_timestamp = 0;
 
+#warning "this should not be permanent"
+    handoff_timestamp = getTime();
+
     // infinite loop to run the sequence, broken by RTOS interrupts
     for (;;){
         if (should_abort()) {
             return -1;
             //return;
         }
+        update_state_in_telem(phase);
+		Autos_boot_t boot_state = {0};
+		boot_state.phase = phase;
+		update_boot_params(&boot_state);
 
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
@@ -395,7 +402,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
 
             case ST_DONE: {
                 // enter low power mode once on ground
-                // return
+                return 0;
                 break;
             }
 
