@@ -429,8 +429,13 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_MAIN;
                         boot_params.phase = phase;
                         drogue_timestamp = current_time;
-                        drogue_altitude = compute_height(mean(baro_detector.avg_size, baro_detector.average));
-                    }
+    drogue_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
+
+	                    {
+	                    	char logmsg[sizeof(FC_STAT_AUTOS_5K_DETECT) + 13];
+	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_5K_DETECT, (uint16_t) drogue_altitude, drogue_timestamp / 1000);
+	                    	log_message(logmsg, -1);
+	                    }                    }
                 }
                 break;
             }
@@ -481,8 +486,13 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_GROUND;
                         boot_params.phase = phase;
                         main_timestamp = current_time; 
-                        main_altitude = compute_height(mean(baro_detector.avg_size, baro_detector.average));
-                    }
+                        main_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
+
+	                    {
+	                    	char logmsg[sizeof(FC_STAT_AUTOS_1K_DETECT) + 13];
+	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_1K_DETECT, (uint16_t) main_altitude, main_timestamp / 1000);
+	                    	log_message(logmsg, -1);
+	                    }                    }
                 }
                 break;
             } 
