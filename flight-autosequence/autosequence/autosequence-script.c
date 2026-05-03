@@ -121,6 +121,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
     UNUSED(fluctus_1k_detected);
 
     // Fluctus FC detection timers
+    uint8_t override_calc_fallback_timers = 0;
     uint32_t fluctus_apogee_timestamp = 0;
 
     if (boot_params.phase > ST_DETECT_VALVES_OPEN) {
@@ -133,6 +134,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
         fluctus_apogee_detected  = boot_params.fluctus_apogee_detected;
         fluctus_apogee_timestamp = boot_params.fluctus_apogee_timestamp;
         heights_recorded         = boot_params.heights_recorded;
+        MAIN_DEPLOY_PRESSURE     = boot_params.main_deploy_pressure;
+        DROGUE_DEPLOY_PRESSURE   = boot_params.drogue_deploy_pressure;
     }
 
     // infinite loop to run the sequence, broken by RTOS interrupts
@@ -142,9 +145,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
             return -1;
         }
         update_state_in_telem(phase);
-		Autos_boot_t boot_state = {0};
-		boot_state.phase = phase;
-		update_boot_params(&boot_state);
+		update_boot_params(&boot_params);
 
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
@@ -186,6 +187,9 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     // calculate drogue and main deploy pressures based on ground temp and pressure
                     DROGUE_DEPLOY_PRESSURE = compute_pressure(DROGUE_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
                     MAIN_DEPLOY_PRESSURE = compute_pressure(MAIN_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
+
+                    boot_params.drogue_deploy_pressure = DROGUE_DEPLOY_PRESSURE;
+                    boot_params.main_deploy_pressure = MAIN_DEPLOY_PRESSURE;
                     clear(&baro_detector);
 
                     {
@@ -235,23 +239,50 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     }
                 }
 
+                if (get_fluctus_apogee() && !fluctus_disabled) {
+                    fluctus_apogee_detected = 1;
+                    override_calc_fallback_timers = 1;
+                    boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
+                    fluctus_apogee_timestamp = time_since(ignition_timestamp);
+                    boot_params.fluctus_apogee_timestamp = fluctus_apogee_timestamp;
+                    phase = ST_WAIT_APOGEE;
+                    boot_params.phase = phase;
+                }
+                else {
+                    override_calc_fallback_timers = 0;
+                }
                 break;
             } 
 
             // cannot take pressure readings while above mach 1
             case ST_MACH_LOCKOUT:{
                 // stay in lockout until we can take reliable barometer readings again, then transition to apogee detection
-                if (time_since(ignition_timestamp) >= LOCKOUT_END_TIME){
+                if(imu_y_detector.avg_size >= AD_CAPACITY) {
+                    if (time_since(ignition_timestamp) >= LOCKOUT_END_TIME){
+                        phase = ST_WAIT_APOGEE;
+                        boot_params.phase = phase;
+
+                        heights_recorded = 0;
+                        boot_params.heights_recorded = heights_recorded;
+
+                        fluctus_apogee_detected = 0;
+                        boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
+
+                        log_message(FC_STAT_AUTOS_LOCKOUT_END, -1);
+                    }
+                }
+
+                if (get_fluctus_apogee() && !fluctus_disabled) {
+                    fluctus_apogee_detected = 1;
+                    override_calc_fallback_timers = 1;
+                    boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
+                    fluctus_apogee_timestamp = time_since(ignition_timestamp);
+                    boot_params.fluctus_apogee_timestamp = fluctus_apogee_timestamp;
                     phase = ST_WAIT_APOGEE;
                     boot_params.phase = phase;
-
-                    heights_recorded = 0;
-                    boot_params.heights_recorded = heights_recorded;
-
-                    fluctus_apogee_detected = 0;
-                    boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
-
-                    log_message(FC_STAT_AUTOS_LOCKOUT_END, -1);
+                }
+                else {
+                    override_calc_fallback_timers = 0;
                 }
                 
                 break;
@@ -275,90 +306,109 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 }
 
                 // insert altitude readings into buffer once 
-                if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) { 
-                    if (loop_ctr % ALT_BUF_ELT_SPACING == 0) {
-                        altitude_readings[altitude_buf_size] = compute_height((bar1 + bar2)/ 2.0f); // in meters
-                        time_readings[altitude_buf_size] = time_since(ignition_timestamp) / 1000.0f; // in seconds
-                        altitude_buf_size++;
+                if (!override_calc_fallback_timers) {
+                    if (altitude_buf_size < ALTITUDE_BUFFER_SIZE) { 
+                        if (loop_ctr % ALT_BUF_ELT_SPACING == 0) {
+                            altitude_readings[altitude_buf_size] = compute_height((bar1 + bar2)/ 2.0f); // in meters
+                            time_readings[altitude_buf_size] = time_since(ignition_timestamp) / 1000.0f; // in seconds
+                            altitude_buf_size++;
+                        }
                     }
-                }
-                // if buffer is full -> fit a quadratic curve to get estimate of velocity 
-                // and acceleration, then compute fallback times
-                else if (!heights_recorded) {
-                    quadr_curve_fit(altitude_readings, time_readings,
-                        &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
-                    
-                    if (post_lockout_accel < 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
-                        approximated_accel = -sqrt(post_lockout_accel*-G); // average acceleration during descent (assuming linear change from post-lockout accel to -G at apogee)
+                    // if buffer is full -> fit a quadratic curve to get estimate of velocity 
+                    // and acceleration, then compute fallback times
+                    else if (!heights_recorded) {
+                        quadr_curve_fit(altitude_readings, time_readings,
+                            &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
+                        
+                        if (post_lockout_accel < 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
+                            approximated_accel = -sqrt(post_lockout_accel*-G); // average acceleration during descent (assuming linear change from post-lockout accel to -G at apogee)
+                        }
+                        else {
+                            approximated_accel = -0.1; // if something went wrong with curve fitting, set accel to -0.1 so fallback timers will never predict apogee
+                        }
+                        
+                        heights_recorded = 1;
+                        boot_params.heights_recorded = heights_recorded;
+                        fallback_apogee_time = time_since(ignition_timestamp);
+                        fallback_5k_time = time_since(ignition_timestamp);
+                        fallback_1k_time = time_since(ignition_timestamp);
+                        compute_fallback_times(post_lockout_alt, post_lockout_vel, approximated_accel,
+                                            &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time,
+                                            &fallback_apogee_altitude, &fallback_5k_altitude, &fallback_1k_altitude);
+
+                        boot_params.fallback_apogee_time = fallback_apogee_time;
+                        boot_params.fallback_5k_time = fallback_5k_time;
+                        boot_params.fallback_1k_time = fallback_1k_time;
+
+                        {
+                        	char logmsg[sizeof(FC_STAT_AUTOS_FALLBACK_CALC) + 16];
+                        	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FALLBACK_CALC, (uint32_t) (ignition_timestamp / 1000), (uint16_t) (fallback_apogee_time / 1000), (uint16_t) (fallback_5k_time / 1000), (uint16_t) (fallback_1k_time / 1000));
+                        	log_message(logmsg, -1);
+                        }
                     }
-                    else {
-                        approximated_accel = -0.1; // if something went wrong with curve fitting, set accel to -0.1 so fallback timers will never predict apogee
+
+                    // check if apogee detected with barometer detector, if we have enough barometer readings
+                    else if(baro_detector.avg_size >= AD_CAPACITY) {
+                        // NEW LOGIC: Also check if baro_speed drops below zero
+                        uint32_t current_time = time_since(ignition_timestamp);
+                        uint8_t apogee_by_detection = detect_event(&baro_detector, phase);
+                        uint8_t apogee_by_fallback = current_time >= fallback_apogee_time;
+                        uint8_t apogee_by_constant_timer = current_time >= APOGEE_CONSTANT_TIMER;
+
+                        uint8_t script_apogee_detected = apogee_by_detection || apogee_by_fallback || apogee_by_constant_timer;
+                        uint8_t fluctus_apogee_correct = fluctus_apogee_detected && !fluctus_disabled;
+                        uint8_t fluctus_apogee_agreement = script_apogee_detected && fluctus_apogee_correct;
+
+                        uint8_t fluctus_override = fluctus_apogee_correct && 
+                        (time_since(ignition_timestamp) - fluctus_apogee_timestamp) > APOGEE_AGREEMENT_WINDOW;
+                        uint8_t script_detection_only = script_apogee_detected && fluctus_disabled;
+
+                        if (fluctus_apogee_agreement || fluctus_override || script_detection_only) {
+                            apogee_flag = 1;
+                            phase = ST_WAIT_DROGUE;
+                            boot_params.phase = phase;
+                            apogee_timestamp = current_time;
+                            apogee_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
+                            
+                            apogee_detection_worked = 0;
+                            fallback_timers_worked = 0;
+                            constant_timers_worked = 0;
+
+                            if (apogee_by_detection) {
+                                apogee_detection_worked = 1;
+                                log_message(FC_STAT_AUTOS_APOGEE_SCRIPT, -1);
+                            } 
+                            else if (apogee_by_fallback){
+                                fallback_timers_worked = 1;
+                                log_message(FC_STAT_AUTOS_APOGEE_FALLBACK, -1);
+                            }
+                            else if (apogee_by_constant_timer){
+                                constant_timers_worked = 1;
+                                log_message(FC_STAT_AUTOS_APOGEE_CONSTANT, -1);
+                            }
+
+    	                    {
+    	                    	char logmsg[sizeof(FC_STAT_AUTOS_APOGEE_DETECT) + 13];
+    	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_APOGEE_DETECT, (uint16_t) apogee_altitude, apogee_timestamp / 1000);
+    	                    	log_message(logmsg, -1);
+    	                    }
+
+                            boot_params.apogee_detection_worked = apogee_detection_worked;
+                            boot_params.fallback_timers_worked = fallback_timers_worked;
+                            boot_params.constant_timers_worked = constant_timers_worked;
+                        }
                     }
-                    
-                    heights_recorded = 1;
-                    boot_params.heights_recorded = heights_recorded;
-                    fallback_apogee_time = time_since(ignition_timestamp);
-                    fallback_5k_time = time_since(ignition_timestamp);
-                    fallback_1k_time = time_since(ignition_timestamp);
-                    compute_fallback_times(post_lockout_alt, post_lockout_vel, approximated_accel,
-                                        &fallback_apogee_time, &fallback_5k_time, &fallback_1k_time,
-                                        &fallback_apogee_altitude, &fallback_5k_altitude, &fallback_1k_altitude);
-
-                    boot_params.fallback_apogee_time = fallback_apogee_time;
-                    boot_params.fallback_5k_time = fallback_5k_time;
-                    boot_params.fallback_1k_time = fallback_1k_time;
-
-                    {
-                    	char logmsg[sizeof(FC_STAT_AUTOS_FALLBACK_CALC) + 16];
-                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FALLBACK_CALC, (uint32_t) (ignition_timestamp / 1000), (uint16_t) (fallback_apogee_time / 1000), (uint16_t) (fallback_5k_time / 1000), (uint16_t) (fallback_1k_time / 1000));
-                    	log_message(logmsg, -1);
-                    }
-                }
-
-                // check if apogee detected with barometer detector, if we have enough barometer readings
-                else if(baro_detector.avg_size >= AD_CAPACITY) {
-                    // NEW LOGIC: Also check if baro_speed drops below zero
-                    uint32_t current_time = time_since(ignition_timestamp);
-                    uint8_t apogee_by_detection = detect_event(&baro_detector, phase);
-                    uint8_t apogee_by_fallback = current_time >= fallback_apogee_time;
-                    uint8_t apogee_by_constant_timer = current_time >= APOGEE_CONSTANT_TIMER;
-
-                    uint8_t script_apogee_detected = apogee_by_detection || apogee_by_fallback || apogee_by_constant_timer;
-                    uint8_t fluctus_apogee_correct = fluctus_apogee_detected && !fluctus_disabled;
-                    uint8_t fluctus_apogee_agreement = script_apogee_detected && fluctus_apogee_correct;
-
-                    uint8_t fluctus_override = fluctus_apogee_correct && 
-                    (time_since(ignition_timestamp) - fluctus_apogee_timestamp) > APOGEE_AGREEMENT_WINDOW;
-
-                    if (fluctus_apogee_agreement || fluctus_override) {
+                }   
+                else {
+                    if ((time_since(ignition_timestamp) - fluctus_apogee_timestamp) > APOGEE_AGREEMENT_WINDOW) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         boot_params.phase = phase;
-                        apogee_timestamp = current_time;
                         apogee_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
                         
                         apogee_detection_worked = 0;
                         fallback_timers_worked = 0;
                         constant_timers_worked = 0;
-
-                        if (apogee_by_detection) {
-                            apogee_detection_worked = 1;
-                            log_message(FC_STAT_AUTOS_APOGEE_SCRIPT, -1);
-                        } 
-                        else if (apogee_by_fallback){
-                            fallback_timers_worked = 1;
-                            log_message(FC_STAT_AUTOS_APOGEE_FALLBACK, -1);
-                        }
-                        else if (apogee_by_constant_timer){
-                            constant_timers_worked = 1;
-                            log_message(FC_STAT_AUTOS_APOGEE_CONSTANT, -1);
-                        }
-
-	                    {
-	                    	char logmsg[sizeof(FC_STAT_AUTOS_APOGEE_DETECT) + 13];
-	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_APOGEE_DETECT, (uint16_t) apogee_altitude, apogee_timestamp / 1000);
-	                    	log_message(logmsg, -1);
-	                    }
 
                         boot_params.apogee_detection_worked = apogee_detection_worked;
                         boot_params.fallback_timers_worked = fallback_timers_worked;
