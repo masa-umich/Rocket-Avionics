@@ -41,6 +41,7 @@ void AutosequenceTask(void *argument) {
 				update_boot_params(&end_state);
 				osDelay(1);
 				boot_params->phase = ST_DISARMED;
+				log_message(FC_STAT_AUTOS_ABORT, -1);
 				continue;
 			}
 		}
@@ -52,6 +53,7 @@ void AutosequenceTask(void *argument) {
 		Autos_boot_t done_state = {0};
 		done_state.phase = ST_DONE;
 		update_boot_params(&done_state);
+		log_message(FC_STAT_AUTOS_DONE, -1);
 		for(;;) {
 			uint32_t end_flags = osEventFlagsWait(autos_events, AUTOS_ABORT_FLAG, osFlagsWaitAny, osWaitForever);
 			if(!(end_flags & osFlagsError) && (end_flags & AUTOS_ABORT_FLAG)) {
@@ -65,6 +67,7 @@ void AutosequenceTask(void *argument) {
 		update_boot_params(&end_state);
 		osDelay(1);
 		boot_params->phase = ST_DISARMED;
+		log_message(FC_STAT_AUTOS_DISARM, -1);
 	}
 }
 

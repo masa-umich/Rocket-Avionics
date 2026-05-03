@@ -68,9 +68,9 @@ const osThreadAttr_t defaultTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
-osThreadId_t telemetryTaskHandle;
-const osThreadAttr_t telemetry_task_attr = {
-  .name = "telemetryTask",
+osThreadId_t logListenTaskHandle;
+const osThreadAttr_t log_listen_task_attr = {
+  .name = "logListenTask",
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
@@ -851,6 +851,8 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN 5 */
 
   telemetrySendTaskHandle = osThreadNew(TelemetrySend, NULL, &telemetry_send_task_attr);
+
+  logListenTaskHandle = osThreadNew(LogListener, NULL, &log_listen_task_attr);
 
   // Start packet handler
   packetTaskHandle = osThreadNew(ProcessPackets, NULL, &packet_task_attr);
