@@ -51,6 +51,9 @@ typedef struct {
     uint32_t fluctus_apogee_timestamp;
     uint8_t fluctus_disabled;
     uint8_t heights_recorded;
+
+    float main_deploy_pressure;
+    float drogue_deploy_pressure;
 } Autos_boot_t;
 
 void AutosequenceTask(void *argument);
