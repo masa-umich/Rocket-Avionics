@@ -134,8 +134,8 @@ void compute_fallback_times(float altitude, float velocity, float accel,
 
 
 float compute_pressure(float altitude, float ground_temp, float ground_pressure) {
-    float exp = -G * MOLAR_MASS_AIR / (R_GAS_CONST * LAPSE_RATE);
-    return ground_pressure * powf(1 - (LAPSE_RATE * altitude) / ground_temp, exp);
+    float exp = G * MOLAR_MASS_AIR / (R_GAS_CONST * LAPSE_RATE);
+    return ground_pressure * powf(1.0f - (LAPSE_RATE * altitude) / ground_temp, exp);
 }
 
 void clear(Detector * detector) {

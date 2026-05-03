@@ -41,7 +41,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
     Detector temp_C_detector = {0};
 
     // timestamps of key events, to be set when events are detected
-    uint32_t handoff_timestamp = 0;
+    uint32_t handoff_timestamp = getTime();
     uint32_t ignition_timestamp = (boot_params.phase > ST_DETECT_VALVES_OPEN) ? getTime() - boot_params.current_time_in_flight : 0;
     uint32_t meco_timestamp = 0;
     uint32_t apogee_timestamp = 0;
@@ -266,6 +266,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
             // cannot take pressure readings while above mach 1
             case ST_MACH_LOCKOUT:{
                 // stay in lockout until we can take reliable barometer readings again, then transition to apogee detection
+                insert(&imu_y_detector, imu1_y, imu2_y, phase, IMU_DTR);
+
                 if(imu_y_detector.avg_size >= AD_CAPACITY) {
                     if (time_since(ignition_timestamp) >= LOCKOUT_END_TIME){
                         phase = ST_WAIT_APOGEE;
