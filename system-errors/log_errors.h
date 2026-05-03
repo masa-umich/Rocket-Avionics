@@ -313,6 +313,9 @@
 #define FC_STAT_AUTOS_FLUCTUS_1K				"532 Fluctus detected 1k"
 #define FC_STAT_AUTOS_1K_DETECT					"533 1K detected at altitude %u, 1k time: %lu"
 #define FC_STAT_AUTOS_LAND_DETECT				"534 Landing detected, time: %lu"
+#define FC_STAT_AUTOS_FLUCTUS_APOGEE_MECO		"535 Fluctus detected apogee during MECO detection, at time %lu"
+#define FC_STAT_AUTOS_FLUCTUS_APOGEE_LOCKOUT	"536 Fluctus detected apogee during lockout, at time %lu"
+#define FC_STAT_AUTOS_APOGEE_DETECT_FORCE		"537 Apogee detection forced by Fluctus, altitude %u, apogee time: %lu"
 
 
 // Bay Board status messages

@@ -247,6 +247,12 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     boot_params.fluctus_apogee_timestamp = fluctus_apogee_timestamp;
                     phase = ST_WAIT_APOGEE;
                     boot_params.phase = phase;
+
+                    {
+                    	char logmsg[sizeof(FC_STAT_AUTOS_FLUCTUS_APOGEE_MECO) + 8];
+                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FLUCTUS_APOGEE_MECO, fluctus_apogee_timestamp / 1000);
+                    	log_message(logmsg, -1);
+                    }
                 }
                 else {
                     override_calc_fallback_timers = 0;
@@ -280,6 +286,12 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     boot_params.fluctus_apogee_timestamp = fluctus_apogee_timestamp;
                     phase = ST_WAIT_APOGEE;
                     boot_params.phase = phase;
+
+                    {
+                    	char logmsg[sizeof(FC_STAT_AUTOS_FLUCTUS_APOGEE_LOCKOUT) + 8];
+                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FLUCTUS_APOGEE_LOCKOUT, fluctus_apogee_timestamp / 1000);
+                    	log_message(logmsg, -1);
+                    }
                 }
                 else {
                     override_calc_fallback_timers = 0;
@@ -414,6 +426,12 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         boot_params.apogee_detection_worked = apogee_detection_worked;
                         boot_params.fallback_timers_worked = fallback_timers_worked;
                         boot_params.constant_timers_worked = constant_timers_worked;
+
+	                    {
+	                    	char logmsg[sizeof(FC_STAT_AUTOS_APOGEE_DETECT_FORCE) + 13];
+	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_APOGEE_DETECT_FORCE, (uint16_t) apogee_altitude, apogee_timestamp / 1000);
+	                    	log_message(logmsg, -1);
+	                    }
                     }
                 }
                 loop_ctr++;
