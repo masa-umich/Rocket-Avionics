@@ -256,6 +256,8 @@
 
 #define FR_ERR_UDP_TELEM_RECV_SIZE_ERR			"042 UDP Telemetry receive size error"
 #define FR_ERR_FLASH_INIT_FAILED				"043 Flash chip init failed, chip #"
+#define FR_ERR_LOG_UDP_INIT						"044 Log UDP listener failed to init"
+#define FR_ERR_UDP_LOG_RECV_SIZE_ERR			"042 UDP log receive size error"
 
 #endif
 
@@ -291,6 +293,30 @@
 #define FC_STAT_ARMED							"513 Flight Autosequence armed"
 #define FC_STAT_DEARMED							"514 Flight Autosequence dearmed"
 #define FC_STAT_AUTOS_VALVES					"515 EEPROM valve channel assignments: Ox MPV: -, Fuel MPV: -, Pilot: -, Drogue: -, Main: -, Fuel Iso: -, Ox Iso: -"
+
+#define FC_STAT_AUTOS_ABORT						"516 Autosequence ending in an abort or timeout"
+#define FC_STAT_AUTOS_DONE						"517 Autosequence ended"
+#define FC_STAT_AUTOS_DISARM					"518 Autosequence disarmed"
+#define FC_STAT_AUTOS_ENTER						"519 Autosequence entering in phase %u"
+#define FC_STAT_AUTOS_MPV_OPEN					"520 Detected MPVs open, ignition time: %lu, ground temp: %i, ground pres: %i, drogue pres: %i, main pres: %i"
+#define FC_STAT_AUTOS_MECO						"521 Detected MECO via IMUs, MECO timestamp: %lu"
+#define FC_STAT_AUTOS_LOCKOUT					"522 Lockout timer ended while waiting for MECO, forcing transition to ST_WAIT_APOGEE"
+#define FC_STAT_AUTOS_LOCKOUT_END				"523 Lockout phase ending"
+#define FC_STAT_AUTOS_FLUCTUS_APOGEE			"524 Fluctus detected apogee"
+#define FC_STAT_AUTOS_FALLBACK_CALC				"525 Fallback timers calculated, ignition time: %lu, apogee fallback: %u, 5k fallback: %u, 1k fallback: %u"
+#define FC_STAT_AUTOS_APOGEE_SCRIPT				"526 Apogee detected by script"
+#define FC_STAT_AUTOS_APOGEE_FALLBACK			"527 Apogee detected by fallback timer"
+#define FC_STAT_AUTOS_APOGEE_CONSTANT			"528 Apogee detected by constant timer"
+#define FC_STAT_AUTOS_APOGEE_DETECT				"529 Apogee detected at altitude %u, apogee time: %lu"
+#define FC_STAT_AUTOS_FLUCTUS_5K				"530 Fluctus detected 5k"
+#define FC_STAT_AUTOS_5K_DETECT					"531 5K detected at altitude %u, 5k time: %lu"
+#define FC_STAT_AUTOS_FLUCTUS_1K				"532 Fluctus detected 1k"
+#define FC_STAT_AUTOS_1K_DETECT					"533 1K detected at altitude %u, 1k time: %lu"
+#define FC_STAT_AUTOS_LAND_DETECT				"534 Landing detected, time: %lu"
+#define FC_STAT_AUTOS_FLUCTUS_APOGEE_MECO		"535 Fluctus detected apogee during MECO detection, at time %lu"
+#define FC_STAT_AUTOS_FLUCTUS_APOGEE_LOCKOUT	"536 Fluctus detected apogee during lockout, at time %lu"
+#define FC_STAT_AUTOS_APOGEE_DETECT_FORCE		"537 Apogee detection forced by Fluctus, altitude %u, apogee time: %lu"
+
 
 // Bay Board status messages
 #elif defined(BAY_BOARD)

@@ -31,4 +31,8 @@ void TelemetrySend(void *argument);
 
 void log_udp_telemetry(uint8_t *message, uint16_t msg_len);
 
+void LogListener(void *argument);
+
+void log_udp_log(uint8_t *message, uint16_t msg_len);
+
 #endif /* INC_UDPTELEMETRY_H_ */

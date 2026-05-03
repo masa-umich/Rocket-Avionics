@@ -76,4 +76,6 @@ void refresh_log_timers();
 
 void generate_space_string(uint32_t available, char *logstring, int numbytes);
 
+void write_log_to_flash(uint8_t *buf, size_t buflen);
+
 #endif /* INC_LOGGING_H_ */
