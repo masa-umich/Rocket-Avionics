@@ -1,6 +1,6 @@
 #include "ad-functions.h"
 
-const float G = 9.8f;                           // gravity
+const float G = 9.80665f;                           // gravity
 const float MOLAR_MASS_AIR = 0.02896f;          // kg/mol
 const float R_GAS_CONST = 8.315f;               // gas constant
 const float GAMMA = 1.4f;
@@ -17,7 +17,7 @@ const float MAIN_DEPLOY_ALTITUDE = 304.8f;       // m, for reference
 float DROGUE_DEPLOY_PRESSURE = 825.0f;    // hPa, to be set at launch
 float MAIN_DEPLOY_PRESSURE = 975.0f;      // hPa, to be set at launch
 float P_GROUND = 1013.25f;             // hPa
-float T_GROUND = 293.0f;               // Kelvin (20 deg C)
+float T_GROUND = 20.0f;               // Celsius
 //float P_TROPOPAUSE = 226.32f;             // hPa  // TO-DO DOUBLE CHECK THIS
 //float T_TROPOPAUSE = 216.65f;             // Kelvin (-56.5 deg C)
 //float ALT_TROPOPAUSE = 11000.0f;              // meters
@@ -25,8 +25,8 @@ float T_GROUND = 293.0f;               // Kelvin (20 deg C)
 
 
 // THRESHOLD VALUES FOR BAD DATA
-const float ACCEL_MIN = -100.0f; // m/s^2
-const float ACCEL_MAX = 100.0f;  // m/s^2
+const float ACCEL_MIN = -200.0f; // m/s^2
+const float ACCEL_MAX = 200.0f;  // m/s^2
 // no max accel threshold because accel readings during burn will be very high
 
 const float BARO_MIN = 200.0f; // hPa
@@ -35,8 +35,8 @@ const float BARO_MAX = 1100.0f; // hPa
 const float TEMP_C_MIN = -10.0f; // Celsius
 const float TEMP_C_MAX = 50.0f; // Celsius
 
-const float PILOT_TERM_VEL = 6.0f; // m/s, terminal velocity with drogue chute deployed (for fallback timer calculations)
-const float DROGUE_TERM_VEL = 5.5f;   // m/s, terminal velocity with main chute deployed (for fallback timer calculations)
+const float PILOT_TERM_VEL = 6.0f; // m/s, terminal velocity with pilot chute deployed (for fallback timer calculations)
+const float DROGUE_TERM_VEL = 5.5f;   // m/s, terminal velocity with drogue chute deployed (for fallback timer calculations)
 //If we 'miss' a reading from a sensor, don't pass in bad data! Pass 0.0f
 //Reason: this insert module will be used for barometer temp, barometer pressure, 
 //and IMU x acceleration (up)
@@ -101,8 +101,9 @@ int detect_event(Detector * detector, FlightPhase phase) {
 // 1) tropospheric formula below tropopause, and
 // 2) isothermal formula above tropopause
 float compute_height(float avg_pressure) {
-    float scale_height_trop = -R_GAS_CONST * LAPSE_RATE / (G * MOLAR_MASS_AIR);
-    float estimated_height = (T_GROUND / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_GROUND, scale_height_trop));
+    float ground_temp_K = T_GROUND + 273.15f; // convert to Kelvin
+    float scale_height_trop = R_GAS_CONST * LAPSE_RATE / (G * MOLAR_MASS_AIR);
+    float estimated_height = (ground_temp_K / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_GROUND, scale_height_trop));
     return estimated_height;
 }
 
@@ -129,13 +130,18 @@ void compute_fallback_times(float altitude, float velocity, float accel,
     // time to 300m altitude (descending pass: use minus root)
     float t_1k = t_5k + (*h_5k - MAIN_DEPLOY_ALTITUDE) / DROGUE_TERM_VEL; // after 5k, we assume we immediately hit terminal velocity with main chute
     *h_1k = MAIN_DEPLOY_ALTITUDE;
+    if (*h_5k < MAIN_DEPLOY_ALTITUDE) {
+        t_1k = t_5k;
+        *h_1k = *h_5k;
+    }
     *one_k_time += (uint32_t)(t_1k * 1000);
 }
 
 
-float compute_pressure(float altitude, float ground_temp, float ground_pressure) {
-    float exp = G * MOLAR_MASS_AIR / (R_GAS_CONST * LAPSE_RATE);
-    return ground_pressure * powf(1.0f - (LAPSE_RATE * altitude) / ground_temp, exp);
+float compute_pressure(float altitude) {
+    float ground_temp_K = T_GROUND + 273.15f; // convert to Kelvin
+    float exponent = G * MOLAR_MASS_AIR / (R_GAS_CONST * LAPSE_RATE);
+    return P_GROUND * powf(1.0f - (LAPSE_RATE * altitude) / ground_temp_K, exponent);
 }
 
 void clear(Detector * detector) {

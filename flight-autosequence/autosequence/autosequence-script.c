@@ -78,7 +78,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
     float altitude_readings[ALTITUDE_BUFFER_SIZE] = {0}; // in meters
     float time_readings[ALTITUDE_BUFFER_SIZE] = {0};      // in seconds
     uint8_t heights_recorded = 0;
-    int loop_ctr = 0;
+    uint16_t loop_ctr = 0;
 
     // initialize baro and imu values 
     float bar1 = 0.0f;
@@ -137,6 +137,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
         heights_recorded         = boot_params.heights_recorded;
         MAIN_DEPLOY_PRESSURE     = boot_params.main_deploy_pressure;
         DROGUE_DEPLOY_PRESSURE   = boot_params.drogue_deploy_pressure;
+        T_GROUND                  = boot_params.t_ground;
+        P_GROUND                  = boot_params.p_ground;
     }
 
     // infinite loop to run the sequence, broken by RTOS interrupts
@@ -169,28 +171,23 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     boot_params.phase = phase;
                     ignition_timestamp = getTime();
 
-                    // set ground temp at handoff for calculating altitude for non-standard atmosphere conditions
-                    if (temp_C_detector.avg_size >= AD_CAPACITY){
-                        T_GROUND = mean(AD_CAPACITY, temp_C_detector.average);
-                    } else {
-                        uint8_t idx_temp = (temp_C_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        T_GROUND = temp_C_detector.average[idx_temp];
-                    }
+                    // set ground temp at handoff for calculating altitude
+                    uint8_t idx_temp = (temp_C_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                    T_GROUND = temp_C_detector.average[idx_temp];
                     
                     // set ground temp at handoff
-                    if (baro_detector.avg_size >= AD_CAPACITY){
-                        P_GROUND = mean(AD_CAPACITY, baro_detector.average);
-                    } else {
-                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        P_GROUND = baro_detector.average[idx_baro];
-                    }
-
+                    uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                    P_GROUND = baro_detector.average[idx_baro];
+                
                     // calculate drogue and main deploy pressures based on ground temp and pressure
-                    DROGUE_DEPLOY_PRESSURE = compute_pressure(DROGUE_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
-                    MAIN_DEPLOY_PRESSURE = compute_pressure(MAIN_DEPLOY_ALTITUDE, T_GROUND, P_GROUND);
+                    DROGUE_DEPLOY_PRESSURE = compute_pressure(DROGUE_DEPLOY_ALTITUDE);
+                    MAIN_DEPLOY_PRESSURE = compute_pressure(MAIN_DEPLOY_ALTITUDE);
 
                     boot_params.drogue_deploy_pressure = DROGUE_DEPLOY_PRESSURE;
                     boot_params.main_deploy_pressure = MAIN_DEPLOY_PRESSURE;
+
+                    boot_params.t_ground = T_GROUND;
+                    boot_params.p_ground = P_GROUND;
                     clear(&baro_detector);
 
                     {
@@ -210,7 +207,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
             
             // enters at launch, waiting for main engine cutoff
             case ST_WAIT_MECO: {
-                // insert accel and baro readings here
+                // insert accel readings here
                 insert(&imu_y_detector, imu1_y, imu2_y, phase, IMU_DTR);
 
                 // check if imu detector is full of readings
@@ -236,6 +233,12 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         boot_params.phase = phase;
                         clear(&imu_y_detector);
 
+                        heights_recorded = 0;
+                        boot_params.heights_recorded = heights_recorded;
+
+                        fluctus_apogee_detected = 0;
+                        boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
+
                         log_message(FC_STAT_AUTOS_LOCKOUT, -1);
                     }
                 }
@@ -256,31 +259,22 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     	log_message(logmsg, -1);
                     }
                 }
-                else {
-                    override_calc_fallback_timers = 0;
-                    boot_params.override_calc_fallback_timers = override_calc_fallback_timers;
-                }
                 break;
             } 
 
             // cannot take pressure readings while above mach 1
             case ST_MACH_LOCKOUT:{
-                // stay in lockout until we can take reliable barometer readings again, then transition to apogee detection
-                insert(&imu_y_detector, imu1_y, imu2_y, phase, IMU_DTR);
+                if (time_since(ignition_timestamp) >= LOCKOUT_END_TIME){
+                    phase = ST_WAIT_APOGEE;
+                    boot_params.phase = phase;
 
-                if(imu_y_detector.avg_size >= AD_CAPACITY) {
-                    if (time_since(ignition_timestamp) >= LOCKOUT_END_TIME){
-                        phase = ST_WAIT_APOGEE;
-                        boot_params.phase = phase;
+                    heights_recorded = 0;
+                    boot_params.heights_recorded = heights_recorded;
 
-                        heights_recorded = 0;
-                        boot_params.heights_recorded = heights_recorded;
+                    fluctus_apogee_detected = 0;
+                    boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
 
-                        fluctus_apogee_detected = 0;
-                        boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
-
-                        log_message(FC_STAT_AUTOS_LOCKOUT_END, -1);
-                    }
+                    log_message(FC_STAT_AUTOS_LOCKOUT_END, -1);
                 }
 
                 if (get_fluctus_apogee() && !fluctus_disabled) {
@@ -297,11 +291,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     	char logmsg[sizeof(FC_STAT_AUTOS_FLUCTUS_APOGEE_LOCKOUT) + 8];
                     	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FLUCTUS_APOGEE_LOCKOUT, fluctus_apogee_timestamp / 1000);
                     	log_message(logmsg, -1);
-                    }
-                }
-                else {
-                    override_calc_fallback_timers = 0;
-                    boot_params.override_calc_fallback_timers = override_calc_fallback_timers;
+                    }        
                 }
                 
                 break;
@@ -340,7 +330,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                             &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
                         
                         if (post_lockout_accel < 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
-                            approximated_accel = -sqrt(post_lockout_accel*-G); // average acceleration during descent (assuming linear change from post-lockout accel to -G at apogee)
+                            approximated_accel = -sqrt(post_lockout_accel*-G); // geometric mean to lean towards G
                         }
                         else {
                             approximated_accel = -0.1; // if something went wrong with curve fitting, set accel to -0.1 so fallback timers will never predict apogee
@@ -360,7 +350,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         boot_params.fallback_1k_time = fallback_1k_time;
 
                         {
-                        	char logmsg[sizeof(FC_STAT_AUTOS_FALLBACK_CALC) + 16];
+                            char logmsg[sizeof(FC_STAT_AUTOS_FALLBACK_CALC) + 16];
                         	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FALLBACK_CALC, (uint32_t) (ignition_timestamp / 1000), (uint16_t) (fallback_apogee_time / 1000), (uint16_t) (fallback_5k_time / 1000), (uint16_t) (fallback_1k_time / 1000));
                         	log_message(logmsg, -1);
                         }
@@ -387,7 +377,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                             phase = ST_WAIT_DROGUE;
                             boot_params.phase = phase;
                             apogee_timestamp = current_time;
-                            apogee_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
+                            uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                            apogee_altitude = compute_height(baro_detector.average[idx_baro]);
                             
                             apogee_detection_worked = 0;
                             fallback_timers_worked = 0;
@@ -424,7 +415,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_DROGUE;
                         boot_params.phase = phase;
                         apogee_timestamp = time_since(ignition_timestamp);
-                        apogee_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
+                        apogee_altitude = compute_height((bar1 + bar2) / 2.0f);
 
                         apogee_detection_worked = 0;
                         fallback_timers_worked = 0;
@@ -482,7 +473,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         }
                     }
 
-                    if (get_fluctus_5k()) {
+                    if (get_fluctus_5k() && !fluctus_disabled) {
                         drogue_flag = 1;
                         fluctus_5k_detected = 1;
 
@@ -493,7 +484,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_MAIN;
                         boot_params.phase = phase;
                         drogue_timestamp = current_time;
-                        drogue_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        drogue_altitude = compute_height(baro_detector.average[idx_baro]);
 
 	                    {
 	                    	char logmsg[sizeof(FC_STAT_AUTOS_5K_DETECT) + 13];
@@ -542,7 +534,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         }
                     }
 
-                    if (get_fluctus_1k()) {
+                    if (get_fluctus_1k() && !fluctus_disabled) {
                         main_flag = 1;
                         fluctus_1k_detected = 1;
                         log_message(FC_STAT_AUTOS_FLUCTUS_1K, -1);
@@ -552,7 +544,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_GROUND;
                         boot_params.phase = phase;
                         main_timestamp = current_time; 
-                        main_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
+                        uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        main_altitude = compute_height(baro_detector.average[idx_baro]);
 
 	                    {
 	                    	char logmsg[sizeof(FC_STAT_AUTOS_1K_DETECT) + 13];

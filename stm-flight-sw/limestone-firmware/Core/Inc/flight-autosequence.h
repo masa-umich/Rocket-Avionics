@@ -57,6 +57,9 @@ typedef struct {
 
     float main_deploy_pressure;
     float drogue_deploy_pressure;
+
+    float t_ground;
+    float p_ground;
 } Autos_boot_t;
 
 void AutosequenceTask(void *argument);
