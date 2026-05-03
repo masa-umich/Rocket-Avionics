@@ -133,6 +133,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
         constant_timers_worked   = boot_params.constant_timers_worked;
         fluctus_apogee_detected  = boot_params.fluctus_apogee_detected;
         fluctus_apogee_timestamp = boot_params.fluctus_apogee_timestamp;
+        override_calc_fallback_timers = boot_params.override_calc_fallback_timers;
         heights_recorded         = boot_params.heights_recorded;
         MAIN_DEPLOY_PRESSURE     = boot_params.main_deploy_pressure;
         DROGUE_DEPLOY_PRESSURE   = boot_params.drogue_deploy_pressure;
@@ -242,6 +243,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 if (get_fluctus_apogee() && !fluctus_disabled) {
                     fluctus_apogee_detected = 1;
                     override_calc_fallback_timers = 1;
+                    boot_params.override_calc_fallback_timers = override_calc_fallback_timers;
                     boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
                     fluctus_apogee_timestamp = time_since(ignition_timestamp);
                     boot_params.fluctus_apogee_timestamp = fluctus_apogee_timestamp;
@@ -256,6 +258,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 }
                 else {
                     override_calc_fallback_timers = 0;
+                    boot_params.override_calc_fallback_timers = override_calc_fallback_timers;
                 }
                 break;
             } 
@@ -281,6 +284,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 if (get_fluctus_apogee() && !fluctus_disabled) {
                     fluctus_apogee_detected = 1;
                     override_calc_fallback_timers = 1;
+                    boot_params.override_calc_fallback_timers = override_calc_fallback_timers;
                     boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
                     fluctus_apogee_timestamp = time_since(ignition_timestamp);
                     boot_params.fluctus_apogee_timestamp = fluctus_apogee_timestamp;
@@ -295,6 +299,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 }
                 else {
                     override_calc_fallback_timers = 0;
+                    boot_params.override_calc_fallback_timers = override_calc_fallback_timers;
                 }
                 
                 break;

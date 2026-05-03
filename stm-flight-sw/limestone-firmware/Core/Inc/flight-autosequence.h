@@ -49,6 +49,9 @@ typedef struct {
 
     uint8_t fluctus_apogee_detected;
     uint32_t fluctus_apogee_timestamp;
+
+    uint8_t override_calc_fallback_timers;
+
     uint8_t fluctus_disabled;
     uint8_t heights_recorded;
 
