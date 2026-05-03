@@ -27,12 +27,12 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
         phase = ST_DETECT_VALVES_OPEN;
         boot_params.phase = phase;
     }
+
     {
     	char logmsg[sizeof(FC_STAT_AUTOS_ENTER) + 1];
     	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_ENTER, (uint8_t) phase);
     	log_message(logmsg, -1);
     }
-
     uint32_t last = getTime();
 
     // initialize detectors for pressure, acceleration, and temperature
@@ -398,14 +398,15 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                             boot_params.constant_timers_worked = constant_timers_worked;
                         }
                     }
-                }   
+                }
                 else {
                     if ((time_since(ignition_timestamp) - fluctus_apogee_timestamp) > APOGEE_AGREEMENT_WINDOW) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         boot_params.phase = phase;
+                        apogee_timestamp = time_since(ignition_timestamp);
                         apogee_altitude = compute_height(mean(AD_CAPACITY, baro_detector.average));
-                        
+
                         apogee_detection_worked = 0;
                         fallback_timers_worked = 0;
                         constant_timers_worked = 0;
@@ -459,6 +460,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     if (get_fluctus_5k()) {
                         drogue_flag = 1;
                         fluctus_5k_detected = 1;
+
                         log_message(FC_STAT_AUTOS_FLUCTUS_5K, -1);
                     }
 
