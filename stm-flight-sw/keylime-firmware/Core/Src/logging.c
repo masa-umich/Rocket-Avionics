@@ -256,6 +256,24 @@ void handle_logging() {
 	}
 }
 
+void write_log_to_flash(uint8_t *buf, size_t buflen) {
+	if(buflen + 2 > 256) {
+		return;
+	}
+
+	uint8_t outbuf[256];
+	outbuf[0] = FLASH_MSG_MARK;
+	outbuf[buflen + 1] = '\n';
+	memcpy(outbuf + 1, buf, buflen);
+	uint8_t stat = write_raw_to_flash(outbuf, buflen + 2);
+	if(stat == 2) {
+		if(lastflashfull == 0 || HAL_GetTick() - lastflashfull > 5000) {
+			send_flash_full();
+			lastflashfull = HAL_GetTick();
+		}
+	}
+}
+
 void prepare_flash_dump() {
 	xSemaphoreTake(flash_mutex, portMAX_DELAY);
 	for(int i = 0;i < 4;i++) {
