@@ -101,7 +101,7 @@ int detect_event(Detector * detector, FlightPhase phase) {
 // 1) tropospheric formula below tropopause, and
 // 2) isothermal formula above tropopause
 float compute_height(float avg_pressure) {
-    float scale_height_trop = -R_GAS_CONST * LAPSE_RATE / (G * MOLAR_MASS_AIR);
+    float scale_height_trop = R_GAS_CONST * LAPSE_RATE / (G * MOLAR_MASS_AIR);
     float estimated_height = (T_GROUND / LAPSE_RATE) * (1.0f - powf(avg_pressure / P_GROUND, scale_height_trop));
     return estimated_height;
 }
@@ -134,7 +134,7 @@ void compute_fallback_times(float altitude, float velocity, float accel,
 
 
 float compute_pressure(float altitude, float ground_temp, float ground_pressure) {
-    float exp = -G * MOLAR_MASS_AIR / (R_GAS_CONST * LAPSE_RATE);
+    float exp = G * MOLAR_MASS_AIR / (R_GAS_CONST * LAPSE_RATE);
     return ground_pressure * powf(1 - (LAPSE_RATE * altitude) / ground_temp, exp);
 }
 

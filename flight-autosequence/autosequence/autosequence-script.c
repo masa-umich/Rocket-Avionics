@@ -164,15 +164,15 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
 
                     // set ground temp at handoff for calculating altitude for non-standard atmosphere conditions
                     if (temp_C_detector.avg_size >= AD_CAPACITY){
-                        T_GROUND = mean(temp_C_detector.average);
+                        T_GROUND = mean(temp_C_detector.avg_size, temp_C_detector.average) + 273.15f;
                     } else {
                         uint8_t idx_temp = (temp_C_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
-                        T_GROUND = temp_C_detector.average[idx_temp];
+                        T_GROUND = temp_C_detector.average[idx_temp] + 273.15f;
                     }
                     
                     // set ground temp at handoff
                     if (baro_detector.avg_size >= AD_CAPACITY){
-                        P_GROUND = mean(baro_detector.average);
+                        P_GROUND = mean(baro_detector.avg_size, baro_detector.average);
                     } else {
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                         P_GROUND = baro_detector.average[idx_baro];
@@ -338,7 +338,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                             phase = ST_WAIT_DROGUE;
                             boot_params.phase = phase;
                             apogee_timestamp = current_time;
-                            apogee_altitude = compute_height(mean(baro_detector.average));
+                            apogee_altitude = compute_height(mean(baro_detector.avg_size, baro_detector.average));
                             
                             apogee_detection_worked = 0;
                             fallback_timers_worked = 0;
@@ -362,12 +362,13 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 }   
 
                 else {
-                    if ((time_since(ignition_timestamp) - fluctus_apogee_timestamp) > APOGEE_AGREEMENT_WINDOW) {
+                    uint32_t current_time = time_since(ignition_timestamp);
+                    if ((current_time - fluctus_apogee_timestamp) > APOGEE_AGREEMENT_WINDOW) {
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         boot_params.phase = phase;
                         apogee_timestamp = current_time;
-                        apogee_altitude = compute_height(mean(baro_detector.average));
+                        apogee_altitude = compute_height(mean(baro_detector.avg_size, baro_detector.average));
 
                         apogee_detection_worked = 0;
                         fallback_timers_worked = 0;
@@ -428,7 +429,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_MAIN;
                         boot_params.phase = phase;
                         drogue_timestamp = current_time;
-                        drogue_altitude = compute_height(mean(baro_detector.average));
+                        drogue_altitude = compute_height(mean(baro_detector.avg_size, baro_detector.average));
                     }
                 }
                 break;
@@ -480,7 +481,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         phase = ST_WAIT_GROUND;
                         boot_params.phase = phase;
                         main_timestamp = current_time; 
-                        main_altitude = compute_height(mean(baro_detector.average));
+                        main_altitude = compute_height(mean(baro_detector.avg_size, baro_detector.average));
                     }
                 }
                 break;
