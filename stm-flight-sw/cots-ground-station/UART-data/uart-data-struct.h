@@ -5,6 +5,9 @@
  *      Author: felix
  */
 
+#ifndef INC_UART_RADIO_H_
+#define INC_UART_RADIO_H_
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -116,3 +119,5 @@ static inline int deserialize_radio(UART_Data_t * data_h, uint8_t * buf, size_t 
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* INC_UART_RADIO_H_ */
