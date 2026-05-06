@@ -84,7 +84,7 @@ typedef enum {
 
 float compute_height(float avg_pressure);
 
-float compute_pressure(float altitude, float ground_temp, float ground_pressure);
+float compute_pressure(float altitude);
 
 //Safely inserts data from barometers & imus using a circular buffer. 
 //If we 'miss' a reading from a sensor, don't pass in bad data! Pass 0.0f
