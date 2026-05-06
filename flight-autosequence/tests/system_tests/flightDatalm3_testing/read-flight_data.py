@@ -37,7 +37,7 @@ def load_pf2(filename):
                 if len(parts) >= 2:
                     try:
                         data_rows.append({
-                            'time_s':          float(parts[0]),
+                            'time_s':            float(parts[0]),
                             'baro-altitude (m)': float(parts[1]) * 0.3048
                         })
                     except ValueError:
@@ -103,19 +103,17 @@ def run_gui(flight_filename, results_filename, start_row, events, kinematics, fa
 
     # ── Build figure ─────────────────────────────────────────────────────────
     fig, ax1 = plt.subplots(figsize=(11, 6))
-    fig.patch.set_facecolor('#1e1e2e')
-    ax1.set_facecolor('#1e1e2e')
-    ax1.tick_params(colors='#cdd6f4')
-    ax1.xaxis.label.set_color('#cdd6f4')
-    ax1.yaxis.label.set_color('#89b4fa')
+    fig.patch.set_facecolor('#ffffff')
+    ax1.set_facecolor('#ffffff')
+    ax1.tick_params(colors='#222222')
+    ax1.xaxis.label.set_color('#222222')
+    ax1.yaxis.label.set_color('#1a56db')
     for spine in ax1.spines.values():
-        spine.set_edgecolor('#45475a')
+        spine.set_edgecolor('#cccccc')
     ax1.set_xlabel('Time (s)')
-    ax1.set_ylabel('Altitude (m)', color='#89b4fa')
-    ax1.grid(True, linestyle='--', alpha=0.25, color='#585b70')
+    ax1.set_ylabel('Altitude (m)', color='#1a56db')
+    ax1.grid(True, linestyle='--', alpha=0.4, color='#dddddd')
 
-    # Each entry: [label, hex_color, artist]
-    # We use a plain list so button callbacks can index into it by position
     layer_data = []
 
     def add(label, color, artist):
@@ -123,119 +121,114 @@ def run_gui(flight_filename, results_filename, start_row, events, kinematics, fa
 
     # Altitude
     ln, = ax1.plot(df['time_s'], df['baro-altitude (m)'],
-                   color='#89b4fa', linewidth=2)
-    add('Altitude', '#89b4fa', ln)
+                   color='#1a56db', linewidth=2.5)
+    add('Altitude', '#1a56db', ln)
 
     # Acceleration (twin axis)
     if has_accel:
         ax2 = ax1.twinx()
-        ax2.set_facecolor('#1e1e2e')
-        ax2.tick_params(colors='#cdd6f4')
-        ax2.yaxis.label.set_color('#fab387')
+        ax2.set_facecolor('#ffffff')
+        ax2.tick_params(colors='#222222')
+        ax2.yaxis.label.set_color('#e8500a')
         for spine in ax2.spines.values():
-            spine.set_edgecolor('#45475a')
-        ax2.set_ylabel('Vert. Accel. (m/s²)', color='#fab387')
+            spine.set_edgecolor('#cccccc')
+        ax2.set_ylabel('Vert. Accel. (m/s²)', color='#e8500a')
         ln2, = ax2.plot(df['time_s'], df['vert-accel (m/s2)'],
-                        color='#fab387', linewidth=1.5, alpha=0.8)
-        add('Vert. Acceleration', '#fab387', ln2)
+                        color='#e8500a', linewidth=2, alpha=0.9)
+        add('Vert. Acceleration', '#e8500a', ln2)
 
-    # Event vlines
-    event_colors = ['#f38ba8','#a6e3a1','#cba6f7','#f9e2af',
-                    '#89dceb','#b4befe','#eba0ac','#94e2d5']
+    # Event vlines — vivid saturated colors, thick
+    event_colors = ['#e60026', '#1e8c1e', '#7c3aed', '#c47d00',
+                    '#0090b5', '#0047ab', '#c4003c', '#007a6e']
     for i, (name, t) in enumerate(events.items()):
         c = event_colors[i % len(event_colors)]
-        vl = ax1.axvline(x=t, color=c, linestyle=':', linewidth=1.8, alpha=0.85)
+        vl = ax1.axvline(x=t, color=c, linestyle=':', linewidth=2.5, alpha=1.0)
         add(name, c, vl)
 
-    # Fallback vlines
+    # Fallback vlines — dash-dot, even thicker
     if fallback:
         fb_map = {
-            'Fallback Apogee':        (fallback.get('Apogee time'),       '#f38ba8'),
-            'Fallback Drogue Deploy': (fallback.get('Drogue deploy time'), '#fab387'),
-            'Fallback Main Deploy':   (fallback.get('Main deploy time'),   '#a6e3a1'),
+            'Fallback Apogee':        (fallback.get('Apogee time'),        '#e60026'),
+            'Fallback Drogue Deploy': (fallback.get('Drogue deploy time'), '#e8500a'),
+            'Fallback Main Deploy':   (fallback.get('Main deploy time'),   '#1e8c1e'),
         }
         for name, (t, c) in fb_map.items():
             if t is not None:
-                vl = ax1.axvline(x=t, color=c, linestyle='-.', linewidth=2.5, alpha=0.9)
+                vl = ax1.axvline(x=t, color=c, linestyle='-.', linewidth=3.0, alpha=1.0)
                 add(name, c, vl)
 
     # Kinematic curves
     if kinematics and fallback and 'Lockout Ends At' in events:
-        t0   = events['Lockout Ends At'] + kinematics.get('Delay after lockout', 0) / 1000.0
-        h0   = kinematics.get('Altitude')
-        v0   = kinematics.get('Velocity')
-        a0   = kinematics.get('Acceleration')
+        t0 = events['Lockout Ends At'] + kinematics.get('Delay after lockout', 0) / 1000.0
+        h0 = kinematics.get('Altitude')
+        v0 = kinematics.get('Velocity')
+        a0 = kinematics.get('Acceleration')
 
         t_ap = fallback.get('Apogee time');        h_ap = fallback.get('Apogee altitude')
         t_dr = fallback.get('Drogue deploy time'); h_dr = fallback.get('Drogue deploy altitude')
         t_mn = fallback.get('Main deploy time');   h_mn = fallback.get('Main deploy altitude')
 
         if None not in (h0, v0, a0):
-            dur  = -v0 / a0
-            t_r  = np.linspace(0, dur, 300)
+            dur = -v0 / a0
+            t_r = np.linspace(0, dur, 300)
             ln_c, = ax1.plot(t0 + t_r, h0 + v0*t_r + 0.5*a0*t_r**2,
-                             color='#f38ba8', linestyle='--', linewidth=2, alpha=0.85)
-            add('Predicted coast', '#f38ba8', ln_c)
+                             color='#e60026', linestyle='--', linewidth=2.5, alpha=1.0)
+            add('Predicted coast', '#e60026', ln_c)
 
             if None not in (t_ap, t_dr, h_ap, h_dr):
                 ln_d, = ax1.plot([t_ap, t_dr], [h_ap, h_dr],
-                                 color='#fab387', linestyle='--', linewidth=2, alpha=0.85)
-                add('Predicted drogue descent', '#fab387', ln_d)
+                                 color='#e8500a', linestyle='--', linewidth=2.5, alpha=1.0)
+                add('Predicted drogue descent', '#e8500a', ln_d)
 
             if None not in (t_dr, t_mn, h_dr, h_mn):
                 ln_m, = ax1.plot([t_dr, t_mn], [h_dr, h_mn],
-                                 color='#eba0ac', linestyle='--', linewidth=2, alpha=0.85)
-                add('Predicted main descent', '#eba0ac', ln_m)
+                                 color='#c4003c', linestyle='--', linewidth=2.5, alpha=1.0)
+                add('Predicted main descent', '#c4003c', ln_m)
 
-    title = f'Altitude vs Time — {os.path.basename(flight_filename)}'
-    ax1.set_title(title, color='#cdd6f4', fontsize=12, pad=10)
+    ax1.set_title(f'Altitude vs Time — {os.path.basename(flight_filename)}',
+                  color='#222222', fontsize=12, pad=10)
     fig.tight_layout()
 
     # ── Tkinter window ────────────────────────────────────────────────────────
     root = tk.Tk()
     root.title("Flight Data")
-    root.configure(bg='#1e1e2e')
+    root.configure(bg='#f5f5f5')
 
-    # Canvas (left)
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
     canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-    # Sidebar (right)
-    sidebar = tk.Frame(root, bg='#181825', width=200)
+    sidebar = tk.Frame(root, bg='#ebebeb', width=200)
     sidebar.pack(side=tk.RIGHT, fill=tk.Y)
     sidebar.pack_propagate(False)
 
-    tk.Label(sidebar, text='LAYERS', bg='#181825', fg='#6c7086',
+    tk.Label(sidebar, text='LAYERS', bg='#ebebeb', fg='#888888',
              font=('Courier', 9, 'bold'), pady=10).pack()
 
     ttk.Separator(sidebar, orient='horizontal').pack(fill=tk.X, padx=10, pady=4)
 
-    btn_frame = tk.Frame(sidebar, bg='#181825')
+    btn_frame = tk.Frame(sidebar, bg='#ebebeb')
     btn_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=4)
 
-    # One button per layer — callback closes over index i only
     buttons = []
 
     def make_callback(i):
         def toggle():
             artist = layer_data[i][2]
             artist.set_visible(not artist.get_visible())
-            # Update button appearance
             if artist.get_visible():
                 buttons[i].config(relief=tk.RAISED,
                                   bg=layer_data[i][1],
                                   fg=_contrast(layer_data[i][1]))
             else:
                 buttons[i].config(relief=tk.SUNKEN,
-                                  bg='#313244', fg='#585b70')
-            canvas.draw()   # synchronous redraw — guaranteed to update
+                                  bg='#cccccc', fg='#999999')
+            canvas.draw()
         return toggle
 
     def _contrast(hex_color):
-        """Return black or white depending on background luminance."""
         r, g, b = mcolors.to_rgb(hex_color)
-        return '#11111b' if (0.299*r + 0.587*g + 0.114*b) > 0.55 else '#cdd6f4'
+        return '#ffffff' if (0.299*r + 0.587*g + 0.114*b) < 0.55 else '#111111'
 
     for i, (label, hex_col, _) in enumerate(layer_data):
         btn = tk.Button(

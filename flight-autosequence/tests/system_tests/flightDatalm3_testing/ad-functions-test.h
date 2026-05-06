@@ -9,7 +9,7 @@
 #define ALT_BUF_ELT_SPACING 3
 // size of the array of readings we maintain during the flight
 // used with the barometer and the IMU
-#define AD_CAPACITY 11          
+#define AD_CAPACITY 21          
 
 // --- PHYSICS CONSTANTS ---
 extern const float G;                         // gravity
@@ -68,9 +68,6 @@ typedef enum {
     ST_WAIT_GROUND,
     ST_DONE
 } FlightPhase;
-
-
-float vector_magnitude(float x, float y, float z);
 
 float mean(int size, float *arr);
 

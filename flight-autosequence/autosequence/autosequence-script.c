@@ -1,19 +1,22 @@
 #include "autosequence-script.h"
 
 
-const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 20 * 1000; // 15 seconds
-const uint32_t LOCKOUT_END_TIME = 30 * 1000; // 30 seconds, hard cutoff for lockout phase end
-
-const uint32_t APOGEE_CONSTANT_TIMER = 60 * 1000; // 60 seconds in milliseconds
-const uint32_t DROGUE_CONSTANT_TIMER = 1200 * 1000; // 1200 seconds in milliseconds
-const uint32_t MAIN_CONSTANT_TIMER = 1500 * 1000; // 1500 seconds in milliseconds
+// CONSTANT TIMER DEFINITIONS - MODIFY BEFORE LAUNCH
+const uint32_t APOGEE_CONSTANT_TIMER = 60 * 1000;           // 60 seconds in milliseconds
+const uint32_t DROGUE_CONSTANT_TIMER = 120 * 1000;          // 1200 seconds in milliseconds
+const uint32_t MAIN_CONSTANT_TIMER = 1500 * 1000;           // 1500 seconds in milliseconds
 
 
-// System defs
-const uint32_t period = 20; // ms, greater than sampling period of 20 ms
-const uint32_t APOGEE_AGREEMENT_WINDOW = 2 * 1000; // 2 seconds -- how long after fluctus apogee detection we should trust our script's apogee detection for agreement purposes
+// SAMPLING PERIOD
+const uint32_t period = 20;                                 // 20 ms, sampling period
 
- 
+
+// TIMEOUT DEFINITIONS 
+const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15 * 1000;    // 15 seconds in ms
+const uint32_t LOCKOUT_END_TIME = 30 * 1000;                // 30 seconds in ms, hard cutoff for lockout phase end
+const uint32_t APOGEE_AGREEMENT_WINDOW = 3 * 1000;          // 3 seconds in ms
+
+
 int execute_flight_autosequence(Autos_boot_t boot_params){
     // starts by waiting for valves to open
     uint8_t fluctus_disabled = 0;
