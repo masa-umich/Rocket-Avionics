@@ -879,6 +879,7 @@ void StartDefaultTask(void *argument)
   log_message(STAT_STARTUP_DONE, -1);
 
   uint32_t startTick = HAL_GetTick();
+  uint32_t heartTick = HAL_GetTick();
   uint8_t logdelay = 0;
   for(;;) {
 	//size_t freemem = xPortGetFreeHeapSize();
@@ -894,7 +895,17 @@ void StartDefaultTask(void *argument)
 		//size_t freemem = xPortGetFreeHeapSize();
 		refresh_log_timers();
 	}
-	  osDelay(5);
+
+	// Send heartbeat
+	if(HAL_GetTick() - heartTick > 1000) {
+		heartTick = HAL_GetTick();
+		if(is_client_connected() > 0) {
+			Message heartbeat = {0};
+			heartbeat.type = MSG_HEARTBEAT;
+			send_msg_to_device(&heartbeat, 5);
+		}
+	}
+	osDelay(5);
   }
   /* USER CODE END 5 */
 }
