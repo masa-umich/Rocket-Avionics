@@ -41,7 +41,12 @@ typedef struct {
     uint8_t constant_timers_worked;
 
     uint8_t fluctus_apogee_detected;
+    uint8_t fluctus_5k_detected;
+    uint8_t fluctus_1k_detected;
+    
     uint32_t fluctus_apogee_timestamp;
+    uint32_t fluctus_5k_timestamp;
+    uint32_t fluctus_1k_timestamp;
 
     uint8_t override_calc_fallback_timers;
 
