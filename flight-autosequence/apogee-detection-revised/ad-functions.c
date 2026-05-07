@@ -5,11 +5,11 @@
 const float ACCEL_MIN = -200.0f;                            // m/s^2
 const float ACCEL_MAX = 200.0f;                             // m/s^2
 
-const float BARO_MIN = 200.0f;                              // hPa
-const float BARO_MAX = 1100.0f;                             // hPa TODO: adjust max based on expected max altitude
+const float BARO_MIN = 50.0f;                              // hPa
+const float BARO_MAX = 1200.0f;                             // hPa TODO: adjust max based on expected max altitude
 
-const float TEMP_C_MIN = -10.0f;                            // Celsius
-const float TEMP_C_MAX = 50.0f;                             // Celsius
+const float TEMP_C_MIN = -40.0f;                            // Celsius
+const float TEMP_C_MAX = 60.0f;                             // Celsius
 
 
 // TERMINAL VELOCITY ESTIMATES FOR FALLBACK TIMER CALCULATIONS
@@ -33,8 +33,8 @@ const float MAIN_DEPLOY_ALTITUDE = 304.8f + 75.0f;                  // m, for re
 // DEPLOYMENT PRESSURES AND GROUND PRESSURE AND TEMP VARIABLES - SET IN STATE 1
 float DROGUE_DEPLOY_PRESSURE = 825.0f;                      // hPa, to be set at ignition
 float MAIN_DEPLOY_PRESSURE = 975.0f;                        // hPa, to be set at ignition
-float P_GROUND = 1013.25f;                                  // hPa, to be set at ignition
-float T_GROUND = 15.0f;                                     // Celsius, to be set at ignition
+float P_GROUND = 934.57f;                                  // hPa, to be set at ignition, default ground pressure at 25C and 700 m (FAR)
+float T_GROUND = 25.0f;                                     // Celsius, to be set at ignition
 
 
 // inserts data into detector buffer

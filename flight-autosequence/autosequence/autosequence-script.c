@@ -6,7 +6,7 @@ const uint32_t period = 20;                                 // 20 ms, sampling p
 
 
 // TIMEOUT DEFINITIONS 
-const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15 * 1000;    // 15 seconds in ms
+const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 20 * 1000;    // 20 seconds in ms
 const uint32_t LOCKOUT_END_TIME = 30 * 1000;                // 30 seconds in ms, hard cutoff for lockout phase end
 const uint32_t AGREEMENT_WINDOW = 3 * 1000;          // 3 seconds in ms
 
@@ -319,10 +319,11 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                             &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
                         
                         if (post_lockout_accel < 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
-                            approximated_accel = -sqrt(post_lockout_accel*-G); // geometric mean to lean towards G
+                            approximated_accel = -G; // geometric mean to lean towards G
                         }
                         else {
                             approximated_accel = -0.1; // if something went wrong with curve fitting, set accel to -0.1 so fallback timers will never predict apogee
+                            post_lockout_vel = 50.0;
                         }
                         
                         heights_recorded = 1;
@@ -364,7 +365,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                             }
                         }
                         if (trigger_apogee) {
-                            apogee_flag = 1;
                             phase = ST_WAIT_DROGUE;
                             boot_params.phase = phase;
                             apogee_timestamp = current_time;
@@ -396,7 +396,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 }
                 else {
                     if ((time_since(ignition_timestamp) - fluctus_apogee_timestamp) > AGREEMENT_WINDOW) {
-                        apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         boot_params.phase = phase;
                         apogee_timestamp = time_since(ignition_timestamp);
