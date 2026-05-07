@@ -317,7 +317,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         quadr_curve_fit(altitude_readings, time_readings,
                             &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
                         
-                        if (post_lockout_accel < 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
+                        if (post_lockout_accel < 0 && post_lockout_vel > 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
                             approximated_accel = -G; // geometric mean to lean towards G
                         }
                         else {
