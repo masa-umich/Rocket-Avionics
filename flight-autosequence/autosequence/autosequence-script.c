@@ -8,7 +8,7 @@ const uint32_t period = 20;                                 // 20 ms, sampling p
 // TIMEOUT DEFINITIONS 
 const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 20 * 1000;    // 20 seconds in ms
 const uint32_t LOCKOUT_END_TIME = 30 * 1000;                // 30 seconds in ms, hard cutoff for lockout phase end
-const uint32_t AGREEMENT_WINDOW = 3 * 1000;          // 3 seconds in ms
+const uint32_t AGREEMENT_WINDOW = 1 * 1000;          // 3 seconds in ms
 
 
 int execute_flight_autosequence(Autos_boot_t boot_params){
@@ -132,7 +132,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
     }
 
     // infinite loop to run the sequence, broken by RTOS interrupts
-    uint32_t num_cycles = 0;
     for (;;){
         if (should_abort()) {
             return -1;
@@ -554,10 +553,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
         }//end switch(phase)
 
         // boot_params update
-        if (num_cycles % 20 == 0)
-            boot_params.current_time_in_flight = time_since(ignition_timestamp);
+        boot_params.current_time_in_flight = time_since(ignition_timestamp);
         
-        num_cycles++;
         vTaskDelayUntil(&last, period);
     }
 }

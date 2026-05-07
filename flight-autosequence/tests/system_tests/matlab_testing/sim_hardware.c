@@ -42,10 +42,10 @@
 #  define FLUCTUS_APOGEE_FLIGHT_MS  51900U   /* placeholder: 60 s  */
 #endif
 #ifndef FLUCTUS_5K_FLIGHT_MS
-#  define FLUCTUS_5K_FLIGHT_MS     197000U   /* placeholder: 246 s */
+#  define FLUCTUS_5K_FLIGHT_MS     200000U   /* placeholder: 246 s */
 #endif
 #ifndef FLUCTUS_1K_FLIGHT_MS
-#  define FLUCTUS_1K_FLIGHT_MS     254000U   /* placeholder: 295 s */
+#  define FLUCTUS_1K_FLIGHT_MS     250000U   /* placeholder: 295 s */
 #endif
 
 /* Constant temperature returned for both barometer sensors [°C].
@@ -195,7 +195,7 @@ void get_sensor_data(float *bar1_hPa, float *bar2_hPa,
     imu2->XL_x = 0.0f; imu2->XL_y = ax; imu2->XL_z = 0.0f;
     imu2->W_x  = 0.0f; imu2->W_y  = 0.0f; imu2->W_z = 0.0f;
 
-    s_sample_idx+= 2;
+    s_sample_idx+= 1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
