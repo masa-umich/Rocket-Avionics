@@ -429,6 +429,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         boot_params.fluctus_5k_detected = fluctus_5k_detected;
                         fluctus_5k_timestamp = time_since(ignition_timestamp);
                         boot_params.fluctus_5k_timestamp = fluctus_5k_timestamp;
+
+                        log_message(FC_STAT_AUTOS_FLUCTUS_5K, -1);
                     }
                 }
                 
@@ -457,6 +459,10 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                         drogue_altitude = compute_height(baro_detector.average[idx_baro]);
 
+                        if(script_detected) {
+                        	log_message(FC_STAT_AUTOS_5K_BY_SCRIPT, -1);
+                        }
+
 	                    {
 	                    	char logmsg[sizeof(FC_STAT_AUTOS_5K_DETECT) + 13];
 	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_5K_DETECT, (uint16_t) drogue_altitude, drogue_timestamp / 1000);
@@ -478,6 +484,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         boot_params.fluctus_1k_detected = fluctus_1k_detected;
                         fluctus_1k_timestamp = time_since(ignition_timestamp);
                         boot_params.fluctus_1k_timestamp = fluctus_1k_timestamp;
+
+                        log_message(FC_STAT_AUTOS_FLUCTUS_1K, -1);
                     }
                 }
 
@@ -506,6 +514,10 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         main_timestamp = current_time; 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                         main_altitude = compute_height(baro_detector.average[idx_baro]);
+
+                        if(script_detected) {
+                        	log_message(FC_STAT_AUTOS_1K_BY_SCRIPT, -1);
+                        }
 
 	                    {
 	                    	char logmsg[sizeof(FC_STAT_AUTOS_1K_DETECT) + 13];

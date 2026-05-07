@@ -318,6 +318,8 @@
 #define FC_STAT_AUTOS_APOGEE_DETECT_FORCE		"537 Apogee detection forced by Fluctus, altitude %u, apogee time: %lu"
 #define FC_STAT_RADIO_ON						"538 " FC_RADIO_ON_ACK_MSG
 #define FC_STAT_RADIO_OFF						"539 " FC_RADIO_OFF_ACK_MSG
+#define FC_STAT_AUTOS_5K_BY_SCRIPT				"540 5K detected by script"
+#define FC_STAT_AUTOS_1K_BY_SCRIPT				"541 1K detected by script"
 
 
 // Bay Board status messages
