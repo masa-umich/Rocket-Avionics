@@ -239,6 +239,7 @@ void ProcessPackets(void *argument) {
 				    			case DEVICE_CMD_RADIO_ON: {
 				    				set_broadcast_state(1);
 				    				set_radio_state(1);
+				    				log_message(FC_STAT_RADIO_ON, -1);
 				    				Message dev_cmd_ack = {0};
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
@@ -253,6 +254,7 @@ void ProcessPackets(void *argument) {
 				    			case DEVICE_CMD_RADIO_OFF: {
 				    				set_broadcast_state(0);
 				    				set_radio_state(0);
+				    				log_message(FC_STAT_RADIO_OFF, -1);
 				    				Message dev_cmd_ack = {0};
 				    				dev_cmd_ack.type = MSG_DEVICE_ACK;
 				    				dev_cmd_ack.data.device_ack.board_id = BOARD_FC;
