@@ -26,8 +26,8 @@ const float LAPSE_RATE = 0.0065f;                           // Celsius per meter
 
 
 // DEPLOYMENT ALTITUDE DEFINITIONS
-const float DROGUE_DEPLOY_ALTITUDE = 1524.0f;               // m, for reference
-const float MAIN_DEPLOY_ALTITUDE = 304.8f;                  // m, for reference
+const float DROGUE_DEPLOY_ALTITUDE = 1524.0f + 75.0f;               // m, for reference
+const float MAIN_DEPLOY_ALTITUDE = 304.8f + 75.0f;                  // m, for reference
 
 
 // DEPLOYMENT PRESSURES AND GROUND PRESSURE AND TEMP VARIABLES - SET IN STATE 1
