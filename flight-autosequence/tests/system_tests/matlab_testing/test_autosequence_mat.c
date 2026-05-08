@@ -14,7 +14,7 @@ const uint32_t AGREEMENT_WINDOW = 1.0 * 1000;          // 1 seconds in ms
 
 int execute_flight_autosequence(Autos_boot_t boot_params){
     // starts by waiting for valves to open
-    uint8_t fluctus_disabled = 0;
+    uint8_t fluctus_disabled = 1;
     FlightPhase phase = boot_params.phase;
 
     if (boot_params.phase > ST_DETECT_VALVES_OPEN) {
@@ -300,7 +300,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         quadr_curve_fit(altitude_readings, time_readings,
                             &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
                         
-                        if (post_lockout_accel < 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
+                        if (post_lockout_accel < 0 && post_lockout_vel > 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
                             approximated_accel = -G; // geometric mean to lean towards G
                         }
                         else {
@@ -497,50 +497,51 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
             } 
 
             case ST_DONE: {
-                printf("\n");
-                printf("=================================================\n");
-                printf("          FLIGHT AUTOSEQUENCE RESULTS            \n");
-                printf("=================================================\n");
-                printf("\n");
+                FILE *outfile = fopen("tests/system_tests/matlab_testing/test_autosequence_mat.out", "w");
+                fprintf(outfile, "\n");
+                fprintf(outfile, "=================================================\n");
+                fprintf(outfile, "          FLIGHT AUTOSEQUENCE RESULTS            \n");
+                fprintf(outfile, "=================================================\n");
+                fprintf(outfile, "\n");
 
-                printf("--- FLAGS ---\n");
-                printf("MECO Detected:           %d\n", MECO_flag);
-                printf("Apogee Detected:         %d\n", apogee_flag);
-                printf("  - Detection Worked:    %d\n", apogee_detection_worked);
-                printf("  - Fallback Worked:     %d\n", fallback_timers_worked);
-                printf("Drogue Deployed:         %d\n", drogue_flag);
-                printf("Main Deployed:           %d\n", main_flag);
-                printf("Landed:                  %d\n", landed_flag);
-                printf("\n");
+                fprintf(outfile, "--- FLAGS ---\n");
+                fprintf(outfile, "MECO Detected:           %d\n", MECO_flag);
+                fprintf(outfile, "Apogee Detected:         %d\n", apogee_flag);
+                fprintf(outfile, "  - Detection Worked:    %d\n", apogee_detection_worked);
+                fprintf(outfile, "  - Fallback Worked:     %d\n", fallback_timers_worked);
+                fprintf(outfile, "Drogue Deployed:         %d\n", drogue_flag);
+                fprintf(outfile, "Main Deployed:           %d\n", main_flag);
+                fprintf(outfile, "Landed:                  %d\n", landed_flag);
+                fprintf(outfile, "\n");
 
-                printf("--- TIMESTAMPS (ms since ignition) ---\n");
-                printf("MECO Timestamp:          %lu ms\n",  (unsigned long)meco_timestamp);
-                printf("Apogee Timestamp:        %lu ms\n",  (unsigned long)apogee_timestamp);
-                printf("Drogue Timestamp:        %lu ms\n",  (unsigned long)drogue_timestamp);
-                printf("Main Timestamp:          %lu ms\n",  (unsigned long)main_timestamp);
-                printf("Landed Timestamp:        %lu ms\n",  (unsigned long)landed_timestamp);
-                printf("\n");
+                fprintf(outfile, "--- TIMESTAMPS (ms since ignition) ---\n");
+                fprintf(outfile, "MECO Timestamp:          %lu ms\n",  (unsigned long)meco_timestamp);
+                fprintf(outfile, "Apogee Timestamp:        %lu ms\n",  (unsigned long)apogee_timestamp);
+                fprintf(outfile, "Drogue Timestamp:        %lu ms\n",  (unsigned long)drogue_timestamp);
+                fprintf(outfile, "Main Timestamp:          %lu ms\n",  (unsigned long)main_timestamp);
+                fprintf(outfile, "Landed Timestamp:        %lu ms\n",  (unsigned long)landed_timestamp);
+                fprintf(outfile, "\n");
 
-                printf("--- KEY ALTITUDES ---\n");
-                printf("Apogee Altitude:         %.2f m\n", apogee_altitude);
-                printf("Drogue Deploy Altitude:  %.2f m\n", drogue_altitude);
-                printf("Main Deploy Altitude:    %.2f m\n", main_altitude);
-                printf("\n");
+                fprintf(outfile, "--- KEY ALTITUDES ---\n");
+                fprintf(outfile, "Apogee Altitude:         %.2f m\n", apogee_altitude);
+                fprintf(outfile, "Drogue Deploy Altitude:  %.2f m\n", drogue_altitude);
+                fprintf(outfile, "Main Deploy Altitude:    %.2f m\n", main_altitude);
+                fprintf(outfile, "\n");
 
-                printf("--- POST LOCKOUT KINEMATICS ---\n");
-                printf("Altitude:                %.2f m\n",  post_lockout_alt);
-                printf("Velocity:                %.2f m/s\n", post_lockout_vel);
-                printf("Acceleration:            %.2f m/s^2\n", approximated_accel);
-                printf("\n");
+                fprintf(outfile, "--- POST LOCKOUT KINEMATICS ---\n");
+                fprintf(outfile, "Altitude:                %.2f m\n",  post_lockout_alt);
+                fprintf(outfile, "Velocity:                %.2f m/s\n", post_lockout_vel);
+                fprintf(outfile, "Acceleration:            %.2f m/s^2\n", approximated_accel);
+                fprintf(outfile, "\n");
 
-                printf("--- FALLBACK TIMER PREDICTIONS ---\n");
-                printf("Apogee time:             %lu ms\n",  (unsigned long)fallback_apogee_time);
-                printf("Drogue deploy time:      %lu ms\n",  (unsigned long)fallback_5k_time);
-                printf("Main deploy time:        %lu ms\n",  (unsigned long)fallback_1k_time);
-                printf("Apogee altitude:         %.2f m\n",  fallback_apogee_altitude);
-                printf("Drogue deploy altitude:  %.2f m\n",  fallback_5k_altitude);
-                printf("Main deploy altitude:    %.2f m\n",  fallback_1k_altitude);
-                printf("=================================================\n");
+                fprintf(outfile, "--- FALLBACK TIMER PREDICTIONS ---\n");
+                fprintf(outfile, "Apogee time:             %lu ms\n",  (unsigned long)fallback_apogee_time);
+                fprintf(outfile, "Drogue deploy time:      %lu ms\n",  (unsigned long)fallback_5k_time);
+                fprintf(outfile, "Main deploy time:        %lu ms\n",  (unsigned long)fallback_1k_time);
+                fprintf(outfile, "Apogee altitude:         %.2f m\n",  fallback_apogee_altitude);
+                fprintf(outfile, "Drogue deploy altitude:  %.2f m\n",  fallback_5k_altitude);
+                fprintf(outfile, "Main deploy altitude:    %.2f m\n",  fallback_1k_altitude);
+                fprintf(outfile, "=================================================\n");
 
                 return 0;
             }

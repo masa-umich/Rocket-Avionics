@@ -32,10 +32,6 @@ typedef struct {
 #  define UNUSED(x) ((void)(x))
 #endif
 
-/* ── Path to the sensor-data CSV (override at compile time if needed) ───── */
-#ifndef SIM_CSV_FILE
-#  define SIM_CSV_FILE "tests/system_tests/AI_generated_testing/sim_sensor_data.csv"
-#endif
 
 /* ── Simulated time ──────────────────────────────────────────────────────── */
 

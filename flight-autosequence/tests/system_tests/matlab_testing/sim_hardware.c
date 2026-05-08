@@ -26,7 +26,7 @@
 
 /* Path to the 3-row data file. */
 #ifndef SIM_DATA_FILE
-#  define SIM_DATA_FILE "tests/system_tests/matlab_testing/data.txt"
+#  define SIM_DATA_FILE "tests/system_tests/matlab_testing/data-3000.txt"
 #endif
 
 /* Sim-time (ms) at which valves_open() first returns 1.
@@ -39,13 +39,13 @@
 /* Fluctus broadcast times, in ms after ignition.
  * Update these once you know your flight profile from the data.    */
 #ifndef FLUCTUS_APOGEE_FLIGHT_MS
-#  define FLUCTUS_APOGEE_FLIGHT_MS  51900U   /* placeholder: 60 s  */
+#  define FLUCTUS_APOGEE_FLIGHT_MS  4300U  
 #endif
 #ifndef FLUCTUS_5K_FLIGHT_MS
-#  define FLUCTUS_5K_FLIGHT_MS     200000U   /* placeholder: 246 s */
+#  define FLUCTUS_5K_FLIGHT_MS      9900U   
 #endif
 #ifndef FLUCTUS_1K_FLIGHT_MS
-#  define FLUCTUS_1K_FLIGHT_MS     250000U   /* placeholder: 295 s */
+#  define FLUCTUS_1K_FLIGHT_MS      10000U  
 #endif
 
 /* Constant temperature returned for both barometer sensors [°C].
