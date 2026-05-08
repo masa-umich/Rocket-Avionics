@@ -145,7 +145,7 @@ void compute_fallback_times(float altitude, float velocity, float accel,
 float compute_pressure(float altitude) {
     float ground_temp_K = T_GROUND + 273.15f; // convert to Kelvin
     float exponent = G * MOLAR_MASS_AIR / (R_GAS_CONST * LAPSE_RATE);
-    return P_GROUND * powf(1.0f - (LAPSE_RATE * altitude) / ground_temp_K, exponent);; // convert Pa to hPa
+    return P_GROUND * powf(1.0f - (LAPSE_RATE * altitude) / ground_temp_K, exponent); // convert Pa to hPa
 }
 
 
