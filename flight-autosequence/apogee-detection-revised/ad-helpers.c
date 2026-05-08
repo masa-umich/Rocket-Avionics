@@ -6,6 +6,10 @@
  */
 #include "ad-helpers.h"
 
+
+// fits a quadratic curve to the given altitude and time arrays 
+// and uses the coefficients to compute instantaneous acceleration, velocity, and altitude 
+// at the time of lockout (last element in the arrays)
 void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, float* vel, float* alt, int size) {
     int N = size;
 
@@ -47,7 +51,7 @@ void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, fl
               - M01 * (M10 * M22 - M12 * M20)
               + M02 * (M10 * M21 - M11 * M20);
 
-    if (fabsf(det) < 1e-2f) {
+    if (fabsf(det) < 1e-4f) {
         *inst_accel = 0.0f;
         *vel        = 0.0f;
         *alt        = h0;
@@ -80,6 +84,8 @@ void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, fl
     *alt        = c + h0;  // un-shift back to original altitude frame
 }
 
+
+// returns the mean of a given array
 float mean(int size, float *arr) {
     if (size == 0)
         return 0.0f;
@@ -90,20 +96,27 @@ float mean(int size, float *arr) {
     return (sum / (float)size);
 }
 
+
+// returns the min of two integers
 int min(int x, int y) {
     if(x < y)
         return x;
     else return y;
 }
 
+
+// returns the max of two integers
 int max(int x, int y) {
     if(x > y)
         return x;
     else return y;
 }
 
-int buffer_lt(float* buf, int size, float search_value) {
-    if (size < AD_CAPACITY)
+
+// returns 1 if at least 80% of the values in the buffer
+// are less than the search value, else returns 0
+int buffer_lt(float* buf, int size, int cap, float search_value) {
+    if (size < cap)
         return 0;
 
     int count = 0;
@@ -117,8 +130,11 @@ int buffer_lt(float* buf, int size, float search_value) {
     return 0;
 }
 
-int buffer_gt(float* buf, int size, float search_value) {
-    if (size < AD_CAPACITY)
+
+// returns 1 if at least 80% of the values in the buffer
+// are greater than the search value, else returns 0
+int buffer_gt(float* buf, int size, int cap, float search_value) {
+    if (size < cap)
         return 0;
 
     int count = 0;
@@ -132,8 +148,11 @@ int buffer_gt(float* buf, int size, float search_value) {
     return 0;
 }
 
-int buffer_eq(float* buf, int size, float search_value) {
-    if (size < AD_CAPACITY)
+
+// returns 1 if at least 80% of the values in the buffer
+// are nearly equal to the search value, else returns 0
+int buffer_eq(float* buf, int size, int cap, float search_value) {
+    if (size < cap)
         return 0;
 
     int count = 0;
@@ -148,6 +167,7 @@ int buffer_eq(float* buf, int size, float search_value) {
 }
 
 
+// returns the slope of the buffer using linear regression
 float linreg_slope(float *buf, int start, int n) {
     float sum_y = 0, sum_xy = 0;
     for (int i = 0; i < n; i++) {

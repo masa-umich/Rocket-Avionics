@@ -11,8 +11,8 @@ const float DROGUE_DEPLOY_ALTITUDE = 1524.0f;     // m
 const float MAIN_DEPLOY_ALTITUDE = 300.0f;        // m
 float GROUND_ALTITUDE = 700.0f;                   // m
 
-const float ACCEL_MIN = -100.0f; // m/s^2, anything less than this is likely bad data (but we allow for high positive accel during burn)
-const float ACCEL_MAX = 100.0f;  // m/s^2, anything above this is likely bad data
+const float ACCEL_MIN = -200.0f; // m/s^2, anything less than this is likely bad data (but we allow for high positive accel during burn)
+const float ACCEL_MAX = 200.0f;  // m/s^2, anything above this is likely bad data
 
 const float ALT_MIN = 0.0f;  // meters (allow for some negative drift if starting at 0)
 const float ALT_MAX = 15000.0f; // meters 
@@ -176,9 +176,6 @@ void quadr_curve_fit(float* altitude_arr, float* time_arr, float* inst_accel, fl
     *alt        = c + h0;  // un-shift back to original altitude frame
 }
 
-float vector_magnitude(float x, float y, float z) {
-    return sqrtf(x*x + y*y + z*z);
-}
 
 float mean(int size, float *arr) {
     if (size == 0)

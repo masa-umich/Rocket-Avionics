@@ -1,7 +1,8 @@
 #include "test-autosequence-flightdata_lm3.h"
+#include "math.h"
 
 const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15 * 1000; // 15 seconds
-const uint32_t LOCKOUT_END_TIME = 30 * 1000; // 30 seconds, hard cutoff for lockout phase end
+const uint32_t LOCKOUT_END_TIME = 10 * 1000; // 30 seconds, hard cutoff for lockout phase end
 
 const uint32_t APOGEE_CONSTANT_TIMER = 60 * 1000; // 60 seconds in milliseconds
 const uint32_t DROGUE_CONSTANT_TIMER = 1200 * 1000; // 1200 seconds in milliseconds
@@ -111,7 +112,7 @@ int execute_flight_autosequence(){
                 // check if accel detector is full of readings
                 if(accel_detector.avg_size >= AD_CAPACITY) {
                     // check if MECO detected - when accel becomes negative
-                    if (detect_event(&accel_detector, phase) || time_since(ignition_timestamp) > MAX_BURN_DURATION_MS) {
+                    if (detect_event(&accel_detector, phase) || time_since(ignition_timestamp) > LOCKOUT_END_TIME) {
                         MECO_flag = 1;
                         meco_timestamp = time_since(ignition_timestamp);
                         phase = ST_MACH_LOCKOUT;
@@ -146,7 +147,7 @@ int execute_flight_autosequence(){
                     quadr_curve_fit(altitude_readings, time_readings,
                         &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
                     
-                    approximated_accel = -sqrt(post_lockout_accel*-G); // average acceleration during descent (assuming linear change from post-lockout accel to -G at apogee)
+                    approximated_accel = -sqrtf(post_lockout_accel*-G); // average acceleration during descent (assuming linear change from post-lockout accel to -G at apogee)
 
                     heights_recorded = 1;
                     fallback_apogee_time = time_since(ignition_timestamp);
@@ -170,7 +171,8 @@ int execute_flight_autosequence(){
                         apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         apogee_timestamp = current_time;
-                        apogee_altitude = computed_altitude;
+                        uint8_t idx_alt = (alt_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        apogee_altitude = alt_detector.average[idx_alt];
                         
                         if (apogee_by_detection) {
                             apogee_detection_worked = 1;
@@ -219,7 +221,8 @@ int execute_flight_autosequence(){
                         drogue_flag = 1;
                         phase = ST_WAIT_MAIN;
                         drogue_timestamp = current_time;
-                        drogue_altitude = computed_altitude;
+                        uint8_t idx_alt = (alt_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
+                        drogue_altitude = alt_detector.average[idx_alt];
                     }
                 }
                 break;
@@ -263,7 +266,6 @@ int execute_flight_autosequence(){
                         
                         uint8_t idx_alt = (alt_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                         main_altitude = alt_detector.average[idx_alt];
-                        main_altitude = computed_altitude;
                     }
                 }
                 break;

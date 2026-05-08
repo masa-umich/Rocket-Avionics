@@ -1,14 +1,15 @@
-#include "autosequence-script.h"
-
+#include "test_autosequence_AI.h"
+#include <stdio.h>
 
 // SAMPLING PERIOD
 const uint32_t period = 20;                                 // 20 ms, sampling period
 
 
 // TIMEOUT DEFINITIONS 
-const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 20 * 1000;    // 20 seconds in ms
+const uint32_t MAX_HANDOFF_TO_VALVE_OPEN_MS = 15 * 1000;    // 15 seconds in ms
 const uint32_t LOCKOUT_END_TIME = 30 * 1000;                // 30 seconds in ms, hard cutoff for lockout phase end
-const uint32_t AGREEMENT_WINDOW = 1 * 1000;          // 3 seconds in ms
+const uint32_t APOGEE_AGREEMENT_WINDOW = 3 * 1000;          // 3 seconds in ms
+
 
 
 int execute_flight_autosequence(Autos_boot_t boot_params){
@@ -25,11 +26,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
         boot_params.phase = phase;
     }
 
-    {
-    	char logmsg[sizeof(FC_STAT_AUTOS_ENTER) + 1];
-    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_ENTER, (uint8_t) phase);
-    	log_message(logmsg, -1);
-    }
     uint32_t last = getTime();
 
     // initialize detectors for pressure, acceleration, and temperature
@@ -99,17 +95,26 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
     // flags
     uint8_t apogee_detection_worked = 0;
     uint8_t fallback_timers_worked = 0;
+    uint8_t MECO_flag = 0;
+    uint8_t apogee_flag = 0;
+    uint8_t drogue_flag = 0;
+    uint8_t main_flag = 0;
+    uint8_t landed_flag = 0;
 
     // Fluctus FC detection flags
     uint8_t fluctus_apogee_detected = 0;
     uint8_t fluctus_5k_detected = 0;
     uint8_t fluctus_1k_detected = 0;
 
+    UNUSED(MECO_flag);
+    UNUSED(apogee_flag);
+    UNUSED(landed_flag);
+    UNUSED(fluctus_5k_detected);
+    UNUSED(fluctus_1k_detected);
+
     // Fluctus FC detection timers
     uint8_t override_calc_fallback_timers = 0;
     uint32_t fluctus_apogee_timestamp = 0;
-    uint32_t fluctus_5k_timestamp = 0;
-    uint32_t fluctus_1k_timestamp = 0;
 
     if (boot_params.phase > ST_DETECT_VALVES_OPEN) {
         fallback_apogee_time     = boot_params.fallback_apogee_time;
@@ -118,11 +123,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
         apogee_detection_worked  = boot_params.apogee_detection_worked;
         fallback_timers_worked   = boot_params.fallback_timers_worked;
         fluctus_apogee_detected  = boot_params.fluctus_apogee_detected;
-        fluctus_5k_detected = boot_params.fluctus_5k_detected;
-        fluctus_1k_detected = boot_params.fluctus_1k_detected;
         fluctus_apogee_timestamp = boot_params.fluctus_apogee_timestamp;
-        fluctus_5k_timestamp = boot_params.fluctus_5k_timestamp;
-        fluctus_1k_timestamp = boot_params.fluctus_1k_timestamp;
         override_calc_fallback_timers = boot_params.override_calc_fallback_timers;
         heights_recorded         = boot_params.heights_recorded;
         MAIN_DEPLOY_PRESSURE     = boot_params.main_deploy_pressure;
@@ -132,12 +133,13 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
     }
 
     // infinite loop to run the sequence, broken by RTOS interrupts
+    uint32_t num_cycles = 0;
     for (;;){
         if (should_abort()) {
             return -1;
         }
-        update_state_in_telem(phase);
-		update_boot_params(&boot_params);
+        //update_state_in_telem(phase);
+		//update_boot_params(&boot_params);
 
         // get sensor data at the beginning of each loop iteration
         get_sensor_data(&bar1, &bar2,
@@ -179,11 +181,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     boot_params.p_ground = P_GROUND;
                     clear(&baro_detector);
 
-                    {
-                    	char logmsg[sizeof(FC_STAT_AUTOS_MPV_OPEN) + 24];
-                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_MPV_OPEN, ignition_timestamp / 1000, (int) T_GROUND, (int) P_GROUND, (int) DROGUE_DEPLOY_PRESSURE, (int) MAIN_DEPLOY_PRESSURE);
-                    	log_message(logmsg, -1);
-                    }
                 }
 
                 // if we wait too long without valves opening, ABORT!
@@ -203,16 +200,12 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 if(imu_y_detector.avg_size >= AD_CAPACITY) {
                     // check if MECO detected - when accel becomes negative
                     if (detect_event(&imu_y_detector, phase)) {
+                        MECO_flag = 1;
                         meco_timestamp = time_since(ignition_timestamp);
                         phase = ST_MACH_LOCKOUT;
                         boot_params.phase = phase;
                         clear(&imu_y_detector);
 
-	                    {
-	                    	char logmsg[sizeof(FC_STAT_AUTOS_MECO) + 8];
-	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_MECO, meco_timestamp / 1000);
-	                    	log_message(logmsg, -1);
-	                    }
                     }
 
                     // if accelerometers don't work just go straight to apogee detection 
@@ -227,7 +220,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         fluctus_apogee_detected = 0;
                         boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
 
-                        log_message(FC_STAT_AUTOS_LOCKOUT, -1);
                     }
                 }
 
@@ -241,11 +233,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     phase = ST_WAIT_APOGEE;
                     boot_params.phase = phase;
 
-                    {
-                    	char logmsg[sizeof(FC_STAT_AUTOS_FLUCTUS_APOGEE_MECO) + 8];
-                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FLUCTUS_APOGEE_MECO, fluctus_apogee_timestamp / 1000);
-                    	log_message(logmsg, -1);
-                    }
                 }
                 break;
             } 
@@ -262,7 +249,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     fluctus_apogee_detected = 0;
                     boot_params.fluctus_apogee_detected = fluctus_apogee_detected;
 
-                    log_message(FC_STAT_AUTOS_LOCKOUT_END, -1);
                 }
 
                 if (get_fluctus_apogee() && !fluctus_disabled) {
@@ -275,11 +261,7 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     phase = ST_WAIT_APOGEE;
                     boot_params.phase = phase;
 
-                    {
-                    	char logmsg[sizeof(FC_STAT_AUTOS_FLUCTUS_APOGEE_LOCKOUT) + 8];
-                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FLUCTUS_APOGEE_LOCKOUT, fluctus_apogee_timestamp / 1000);
-                    	log_message(logmsg, -1);
-                    }        
+      
                 }
                 
                 break;
@@ -298,7 +280,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         fluctus_apogee_timestamp = time_since(ignition_timestamp);
                         boot_params.fluctus_apogee_timestamp = fluctus_apogee_timestamp;
 
-                        log_message(FC_STAT_AUTOS_FLUCTUS_APOGEE, -1);
                     }
                 }
 
@@ -317,12 +298,11 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         quadr_curve_fit(altitude_readings, time_readings,
                             &post_lockout_accel, &post_lockout_vel, &post_lockout_alt, ALTITUDE_BUFFER_SIZE);
                         
-                        if (post_lockout_accel < 0 && post_lockout_vel > 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
-                            approximated_accel = -G; // geometric mean to lean towards G
+                        if (post_lockout_accel < 0) { // sanity check to make sure curve fitting worked and we got a negative acceleration value
+                            approximated_accel = -sqrt(-G*post_lockout_accel); // geometric mean to lean towards G
                         }
                         else {
                             approximated_accel = -0.1; // if something went wrong with curve fitting, set accel to -0.1 so fallback timers will never predict apogee
-                            post_lockout_vel = 50.0;
                         }
                         
                         heights_recorded = 1;
@@ -338,32 +318,25 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         boot_params.fallback_5k_time = fallback_5k_time;
                         boot_params.fallback_1k_time = fallback_1k_time;
 
-                        {
-                            char logmsg[sizeof(FC_STAT_AUTOS_FALLBACK_CALC) + 16];
-                        	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_FALLBACK_CALC, (uint32_t) (ignition_timestamp / 1000), (uint16_t) (fallback_apogee_time / 1000), (uint16_t) (fallback_5k_time / 1000), (uint16_t) (fallback_1k_time / 1000));
-                        	log_message(logmsg, -1);
-                        }
                     }
 
                     // check if apogee detected with barometer detector, if we have enough barometer readings
                     else if(baro_detector.avg_size >= AD_CAPACITY) {
+                        // NEW LOGIC: Also check if baro_speed drops below zero
                         uint32_t current_time = time_since(ignition_timestamp);
-                        
                         uint8_t apogee_by_detection = detect_event(&baro_detector, phase);
-                        uint8_t apogee_by_fallback  = (current_time >= fallback_apogee_time);
-                        uint8_t script_detected     = apogee_by_detection || apogee_by_fallback;
+                        uint8_t apogee_by_fallback = current_time >= fallback_apogee_time;
 
-                        uint8_t trigger_apogee = 0;
+                        uint8_t script_apogee_detected = apogee_by_detection || apogee_by_fallback;
+                        uint8_t fluctus_apogee_correct = fluctus_apogee_detected && !fluctus_disabled;
+                        uint8_t fluctus_apogee_agreement = script_apogee_detected && fluctus_apogee_correct;
 
-                        if (fluctus_disabled) {
-                            trigger_apogee = script_detected;
-                        } else {
-                            uint8_t window_expired = (current_time - fluctus_apogee_timestamp) > AGREEMENT_WINDOW;
-                            if (fluctus_apogee_detected && (script_detected || window_expired)) {
-                                trigger_apogee = 1;
-                            }
-                        }
-                        if (trigger_apogee) {
+                        uint8_t fluctus_override = fluctus_apogee_correct && 
+                        (time_since(ignition_timestamp) - fluctus_apogee_timestamp) > APOGEE_AGREEMENT_WINDOW;
+                        uint8_t script_detection_only = script_apogee_detected && fluctus_disabled;
+
+                        if (fluctus_apogee_agreement || fluctus_override || script_detection_only) {
+                            apogee_flag = 1;
                             phase = ST_WAIT_DROGUE;
                             boot_params.phase = phase;
                             apogee_timestamp = current_time;
@@ -375,18 +348,11 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
 
                             if (apogee_by_detection) {
                                 apogee_detection_worked = 1;
-                                log_message(FC_STAT_AUTOS_APOGEE_SCRIPT, -1);
                             } 
                             else if (apogee_by_fallback){
                                 fallback_timers_worked = 1;
-                                log_message(FC_STAT_AUTOS_APOGEE_FALLBACK, -1);
                             }
 
-    	                    {
-    	                    	char logmsg[sizeof(FC_STAT_AUTOS_APOGEE_DETECT) + 13];
-    	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_APOGEE_DETECT, (uint16_t) apogee_altitude, apogee_timestamp / 1000);
-    	                    	log_message(logmsg, -1);
-    	                    }
 
                             boot_params.apogee_detection_worked = apogee_detection_worked;
                             boot_params.fallback_timers_worked = fallback_timers_worked;
@@ -394,7 +360,8 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     }
                 }
                 else {
-                    if ((time_since(ignition_timestamp) - fluctus_apogee_timestamp) > AGREEMENT_WINDOW) {
+                    if ((time_since(ignition_timestamp) - fluctus_apogee_timestamp) > APOGEE_AGREEMENT_WINDOW) {
+                        apogee_flag = 1;
                         phase = ST_WAIT_DROGUE;
                         boot_params.phase = phase;
                         apogee_timestamp = time_since(ignition_timestamp);
@@ -406,11 +373,6 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                         boot_params.apogee_detection_worked = apogee_detection_worked;
                         boot_params.fallback_timers_worked = fallback_timers_worked;
 
-	                    {
-	                    	char logmsg[sizeof(FC_STAT_AUTOS_APOGEE_DETECT_FORCE) + 13];
-	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_APOGEE_DETECT_FORCE, (uint16_t) apogee_altitude, apogee_timestamp / 1000);
-	                    	log_message(logmsg, -1);
-	                    }
                     }
                 }
                 loop_ctr++;
@@ -421,52 +383,45 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
             case ST_WAIT_DROGUE: {
                 deployPilot();
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
-
-                if (!fluctus_5k_detected){
-                    if (get_fluctus_5k()) {
-                        fluctus_5k_detected = 1;
-                        boot_params.fluctus_5k_detected = fluctus_5k_detected;
-                        fluctus_5k_timestamp = time_since(ignition_timestamp);
-                        boot_params.fluctus_5k_timestamp = fluctus_5k_timestamp;
-
-                        log_message(FC_STAT_AUTOS_FLUCTUS_5K, -1);
-                    }
-                }
                 
                 if(baro_detector.avg_size >= AD_CAPACITY) {
-                    uint32_t current_time = time_since(ignition_timestamp);
-                    
-                    uint8_t fiveK_by_detection = detect_event(&baro_detector, phase) && !fallback_timers_worked;
-                    uint8_t fiveK_by_fallback  = (current_time >= fallback_5k_time) && fallback_timers_worked;
-                    uint8_t script_detected     = fiveK_by_detection || fiveK_by_fallback;
+                    uint32_t current_time = time_since(ignition_timestamp); 
 
-                    uint8_t trigger_drogue = 0;
+                    uint8_t fiveK_by_detection = detect_event(&baro_detector, phase);
+                    uint8_t fiveK_by_fallback = current_time >= fallback_5k_time;
 
-                    if (fluctus_disabled) {
-                        trigger_drogue = script_detected;
-                    } else {
-                        uint8_t window_expired = (current_time - fluctus_5k_timestamp) > AGREEMENT_WINDOW;
-                        if (fluctus_5k_detected && (script_detected || window_expired)) {
-                            trigger_drogue = 1;
+                    // TIER 1: If apogee logic worked, strictly lock out ALL timers.
+                    if (apogee_detection_worked) {
+                        if (fiveK_by_detection) {
+                            drogue_flag = 1;
+                        }
+                    } 
+                    // TIER 2: Apogee failed, so we fall back to computed timers.
+                    else if (fallback_timers_worked) {
+                        if (fiveK_by_fallback) {
+                            drogue_flag = 1;
+                        }
+                    } 
+                    // TIER 4: Use barometer detection if nothing works, which is fine because we're trusting fluctus equally
+                    else {
+                        if (fiveK_by_detection) {
+                            drogue_flag = 1;
                         }
                     }
 
-                    if (trigger_drogue) {
+                    if (get_fluctus_5k() && !fluctus_disabled) {
+                        drogue_flag = 1;
+                        fluctus_5k_detected = 1;
+
+                    }
+
+                    if (drogue_flag) {
                         phase = ST_WAIT_MAIN;
                         boot_params.phase = phase;
                         drogue_timestamp = current_time;
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                         drogue_altitude = compute_height(baro_detector.average[idx_baro]);
 
-                        if(script_detected) {
-                        	log_message(FC_STAT_AUTOS_5K_BY_SCRIPT, -1);
-                        }
-
-	                    {
-	                    	char logmsg[sizeof(FC_STAT_AUTOS_5K_DETECT) + 13];
-	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_5K_DETECT, (uint16_t) drogue_altitude, drogue_timestamp / 1000);
-	                    	log_message(logmsg, -1);
-	                    }
                     }
                 }
                 break;
@@ -477,52 +432,43 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                 deployDrogue();
                 insert(&baro_detector, bar1, bar2, phase, BARO_DTR);
 
-                if (!fluctus_1k_detected){
-                    if (get_fluctus_1k()) {
-                        fluctus_1k_detected = 1;
-                        boot_params.fluctus_1k_detected = fluctus_1k_detected;
-                        fluctus_1k_timestamp = time_since(ignition_timestamp);
-                        boot_params.fluctus_1k_timestamp = fluctus_1k_timestamp;
-
-                        log_message(FC_STAT_AUTOS_FLUCTUS_1K, -1);
-                    }
-                }
-
                 if(baro_detector.avg_size >= AD_CAPACITY) {
                     uint32_t current_time = time_since(ignition_timestamp);
-                    
-                    uint8_t oneK_by_detection = detect_event(&baro_detector, phase) && !fallback_timers_worked;
-                    uint8_t oneK_by_fallback  = (current_time >= fallback_1k_time) && fallback_timers_worked;
-                    uint8_t script_detected     = oneK_by_detection || oneK_by_fallback;
 
-                    uint8_t trigger_main = 0;
+                    uint8_t oneK_by_detection = detect_event(&baro_detector, phase);
+                    uint8_t oneK_by_fallback = current_time >= fallback_1k_time;
 
-                    if (fluctus_disabled) {
-                        trigger_main = script_detected;
-                    } else {
-                        uint8_t window_expired = (current_time - fluctus_1k_timestamp) > AGREEMENT_WINDOW;
-                        if (fluctus_1k_detected && (script_detected || window_expired)) {
-                            trigger_main = 1;
+                    // TIER 1: Primary Method (Apogee logic worked, rely strictly on altitude)
+                    if (apogee_detection_worked) {
+                        if (oneK_by_detection) {
+                            main_flag = 1;
+                        }
+                    }
+                    // TIER 2: Secondary Method (Apogee failed, rely strictly on calculated fallback)
+                    else if (fallback_timers_worked) {
+                        if (oneK_by_fallback) {
+                            main_flag = 1;
+                        }
+                    }
+                    // TIER 4: Use barometer detection if nothing works, which is fine because we're trusting fluctus equally
+                    else {
+                        if (oneK_by_detection) {
+                            main_flag = 1;
                         }
                     }
 
+                    if (get_fluctus_1k() && !fluctus_disabled) {
+                        main_flag = 1;
+                        fluctus_1k_detected = 1;
+                    }
 
-                    if (trigger_main) {
+                    if (main_flag) {
                         phase = ST_WAIT_GROUND;
                         boot_params.phase = phase;
                         main_timestamp = current_time; 
                         uint8_t idx_baro = (baro_detector.avg_index - 1 + AD_CAPACITY) % AD_CAPACITY;
                         main_altitude = compute_height(baro_detector.average[idx_baro]);
 
-                        if(script_detected) {
-                        	log_message(FC_STAT_AUTOS_1K_BY_SCRIPT, -1);
-                        }
-
-	                    {
-	                    	char logmsg[sizeof(FC_STAT_AUTOS_1K_DETECT) + 13];
-	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_1K_DETECT, (uint16_t) main_altitude, main_timestamp / 1000);
-	                    	log_message(logmsg, -1);
-	                    }
                     }
                 }
                 break;
@@ -538,13 +484,9 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
                     if (detect_event(&baro_detector, phase)) {
                         phase = ST_DONE;
                         boot_params.phase = phase;
+                        landed_flag = 1;
                         landed_timestamp = time_since(ignition_timestamp);
 
-	                    {
-	                    	char logmsg[sizeof(FC_STAT_AUTOS_LAND_DETECT) + 8];
-	                    	snprintf(logmsg, sizeof(logmsg), FC_STAT_AUTOS_LAND_DETECT, landed_timestamp / 1000);
-	                    	log_message(logmsg, -1);
-	                    }
                     }
                 }
 
@@ -553,9 +495,52 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
             } 
 
             case ST_DONE: {
-                // enter low power mode once on ground
+                printf("\n");
+                printf("=================================================\n");
+                printf("          FLIGHT AUTOSEQUENCE RESULTS            \n");
+                printf("=================================================\n");
+                printf("\n");
+
+                printf("--- FLAGS ---\n");
+                printf("MECO Detected:           %d\n", MECO_flag);
+                printf("Apogee Detected:         %d\n", apogee_flag);
+                printf("  - Detection Worked:    %d\n", apogee_detection_worked);
+                printf("  - Fallback Worked:     %d\n", fallback_timers_worked);
+                printf("Drogue Deployed:         %d\n", drogue_flag);
+                printf("Main Deployed:           %d\n", main_flag);
+                printf("Landed:                  %d\n", landed_flag);
+                printf("\n");
+
+                printf("--- TIMESTAMPS (ms since ignition) ---\n");
+                printf("MECO Timestamp:          %lu ms\n",  (unsigned long)meco_timestamp);
+                printf("Apogee Timestamp:        %lu ms\n",  (unsigned long)apogee_timestamp);
+                printf("Drogue Timestamp:        %lu ms\n",  (unsigned long)drogue_timestamp);
+                printf("Main Timestamp:          %lu ms\n",  (unsigned long)main_timestamp);
+                printf("Landed Timestamp:        %lu ms\n",  (unsigned long)landed_timestamp);
+                printf("\n");
+
+                printf("--- KEY ALTITUDES ---\n");
+                printf("Apogee Altitude:         %.2f m\n", apogee_altitude);
+                printf("Drogue Deploy Altitude:  %.2f m\n", drogue_altitude);
+                printf("Main Deploy Altitude:    %.2f m\n", main_altitude);
+                printf("\n");
+
+                printf("--- POST LOCKOUT KINEMATICS ---\n");
+                printf("Altitude:                %.2f m\n",  post_lockout_alt);
+                printf("Velocity:                %.2f m/s\n", post_lockout_vel);
+                printf("Acceleration:            %.2f m/s^2\n", approximated_accel);
+                printf("\n");
+
+                printf("--- FALLBACK TIMER PREDICTIONS ---\n");
+                printf("Apogee time:             %lu ms\n",  (unsigned long)fallback_apogee_time);
+                printf("Drogue deploy time:      %lu ms\n",  (unsigned long)fallback_5k_time);
+                printf("Main deploy time:        %lu ms\n",  (unsigned long)fallback_1k_time);
+                printf("Apogee altitude:         %.2f m\n",  fallback_apogee_altitude);
+                printf("Drogue deploy altitude:  %.2f m\n",  fallback_5k_altitude);
+                printf("Main deploy altitude:    %.2f m\n",  fallback_1k_altitude);
+                printf("=================================================\n");
+
                 return 0;
-                break;
             }
 
             default: {
@@ -565,8 +550,25 @@ int execute_flight_autosequence(Autos_boot_t boot_params){
         }//end switch(phase)
 
         // boot_params update
-        boot_params.current_time_in_flight = time_since(ignition_timestamp);
+        if (num_cycles % 20 == 0)
+            boot_params.current_time_in_flight = time_since(ignition_timestamp);
         
-        vTaskDelayUntil(&last, period);
+        num_cycles++;
+        //vTaskDelayUntil(&last, period);
     }
+
+    
+}
+
+
+int main(int argc, char *argv[]) {
+    Autos_boot_t boot = {0};
+    boot.phase = ST_DISARMED;
+
+    int result = execute_flight_autosequence(boot);
+
+    if (result == -1) printf("[MAIN] Autosequence aborted.\n");
+    if (result == -2) printf("[MAIN] Timed out waiting for valves.\n");
+
+    return result;
 }

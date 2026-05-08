@@ -3,7 +3,6 @@
 
 #include "main.h"
 #include <stdint.h>
-#include "temp-header.h"
 #include <stdio.h>
 #include "apogee-detection-revised/ad-helpers.h"
 #include "time.h"
