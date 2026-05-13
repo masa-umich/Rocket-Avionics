@@ -65,6 +65,6 @@ void BroadcastRadio(void *argument) {
 		        SX1280_ClearIrqStatus(0xFFFF);
 			}
 		}
-		osDelay(50);
+		osDelay(4000);
 	}
 }
